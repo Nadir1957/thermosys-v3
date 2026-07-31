@@ -1,0 +1,39 @@
+{
+  "name": "thermosys-hvac-workstation",
+  "version": "3.1.0",
+  "description": "Thermosys v3 — Station de Travail HVAC Professionnelle | HVAC Professional Workstation",
+  "private": true,
+  
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static build — no compilation needed'",
+    "deploy": "vercel --prod",
+    "lint": "echo 'No linter configured'"
+  },
+  "dependencies": {
+    "sharp": "^0.33.0"
+  },
+  "devDependencies": {
+    "html-minifier-terser": "^7.2.0",
+    "javascript-obfuscator": "^5.4.3",
+    "vercel": "^35.0.0"
+  },
+  "keywords": [
+    "hvac",
+    "cvc",
+    "thermosys",
+    "gemini",
+    "ai",
+    "algeria",
+    "refrigerant",
+    "loto",
+    "re2020",
+    "ocr",
+    "sharp"
+  ],
+  "author": "Nadir Mouissat — Thermosys HVAC Platform",
+  "license": "UNLICENSED"
+}

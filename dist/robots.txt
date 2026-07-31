@@ -1,0 +1,12 @@
+# Hvacium — robots.txt
+# Contrôle d'indexation SEO
+
+User-agent: *
+Allow: /
+
+# Pages à ne pas indexer
+Disallow: /api/
+Disallow: /*.json$
+
+# Sitemap (à créer lors du lancement officiel)
+# Sitemap: https://hvacium.com/sitemap.xml

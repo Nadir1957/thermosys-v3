@@ -1,0 +1,1346 @@
+[
+  [
+    "Serpentin gelé. Filtre bouché, débit insuffisant, réfrigérant faible.",
+    "Frozen coil. Clogged filter, insufficient flow, low refrigerant."
+  ],
+  [
+    "Bac plein. Vérifier pompe relevage et évacuation.",
+    "Full drain pan. Check condensate pump and drain."
+  ],
+  [
+    "Haute pression déclenchée",
+    "High pressure tripped"
+  ],
+  [
+    "Condenseur encrassé, débit air insuffisant.",
+    "Dirty condenser, insufficient airflow."
+  ],
+  [
+    "Ventilateur bloqué, condensateur HS.",
+    "Fan blocked, capacitor faulty."
+  ],
+  [
+    "Vanne détente électronique HS",
+    "Electronic expansion valve (EEV) faulty"
+  ],
+  [
+    "VDE bloquée ou bobine HS.",
+    "EEV stuck or coil faulty."
+  ],
+  [
+    "Sonde débranchée ou HS.",
+    "Sensor disconnected or faulty."
+  ],
+  [
+    "Sonde coupée ou débranchée.",
+    "Sensor open or disconnected."
+  ],
+  [
+    "Défaut carte contrôleur UI",
+    "Indoor unit (IDU) controller board fault"
+  ],
+  [
+    "Carte PCB HS. Vérifier 220V.",
+    "PCB faulty. Check 220V supply."
+  ],
+  [
+    "Pression HP > seuil. Condenseur sale, débit réduit.",
+    "HP pressure > threshold. Dirty condenser, reduced airflow."
+  ],
+  [
+    "Réfrigérant insuffisant, filtre bouché.",
+    "Insufficient refrigerant, clogged filter."
+  ],
+  [
+    "Surcharge, mauvaise phase, compresseur grippé.",
+    "Overload, phase fault, seized compressor."
+  ],
+  [
+    "T° ambiante trop élevée, compresseur dégradé.",
+    "Ambient temp too high, degraded compressor."
+  ],
+  [
+    "Ventilateur bloqué, alimentation incorrecte.",
+    "Fan blocked, incorrect power supply."
+  ],
+  [
+    "Température refoulement haute",
+    "High discharge temperature"
+  ],
+  [
+    "Réfrigérant insuffisant, VDE défaillante.",
+    "Insufficient refrigerant, EEV faulty."
+  ],
+  [
+    "Moteur ventilateur DC bloqué",
+    "DC fan motor locked"
+  ],
+  [
+    "Pale bloquée, roulement HS.",
+    "Blade blocked, bearing faulty."
+  ],
+  [
+    "Sonde température extérieure",
+    "Outdoor temperature sensor"
+  ],
+  [
+    "Sonde coupée. Résistance cible: 10kΩ à 25°C.",
+    "Sensor open. Target resistance: 10kΩ at 25°C."
+  ],
+  [
+    "Capteur pression HP défaillant",
+    "HP pressure sensor faulty"
+  ],
+  [
+    "Capteur déconnecté, vérifier alimentation 5V.",
+    "Sensor disconnected, check 5V supply."
+  ],
+  [
+    "Coupure phase, fusible grillé.",
+    "Phase cut, blown fuse."
+  ],
+  [
+    "Surintensité onduleur",
+    "Inverter overcurrent"
+  ],
+  [
+    "Surintensité compresseur",
+    "Compressor overcurrent"
+  ],
+  [
+    "Compresseur dégradé, tension incorrecte.",
+    "Degraded compressor, incorrect voltage."
+  ],
+  [
+    "Réfrigérant insuffisant, VDE partiellement bloquée.",
+    "Insufficient refrigerant, EEV partially blocked."
+  ],
+  [
+    "Réfrigérant insuffisant",
+    "Insufficient refrigerant"
+  ],
+  [
+    "Fuite détectée. Test étanchéité, réparer, recharger.",
+    "Leak detected. Leak test, repair, recharge."
+  ],
+  [
+    "Sous-tension réseau",
+    "Low supply voltage"
+  ],
+  [
+    "Tension < 195V. Vérifier réseau, section câbles.",
+    "Voltage < 195V. Check supply, cable section."
+  ],
+  [
+    "Défaut communication UI/UE",
+    "IDU/ODU communication fault"
+  ],
+  [
+    "Câble signal coupé, bornier desserré.",
+    "Signal cable cut, loose terminal."
+  ],
+  [
+    "Condenseur sale, débit air réduit.",
+    "Dirty condenser, reduced airflow."
+  ],
+  [
+    "Fuite réfrigérant, filtre bouché.",
+    "Refrigerant leak, clogged filter."
+  ],
+  [
+    "Câble coupé ou erreur adressage DIP.",
+    "Cable cut or DIP addressing error."
+  ],
+  [
+    "Sonde ambiance intérieure",
+    "Indoor ambient sensor"
+  ],
+  [
+    "Thermistance HS. Mesurer résistance.",
+    "Thermistor faulty. Measure resistance."
+  ],
+  [
+    "Sonde serpentin intérieur",
+    "Indoor coil sensor"
+  ],
+  [
+    "Sonde débranchée ou hors plage.",
+    "Sensor disconnected or out of range."
+  ],
+  [
+    "Sonde T° ambiante défaillante",
+    "Ambient temperature sensor faulty"
+  ],
+  [
+    "Thermistance coupée. Cible: 10kΩ à 25°C.",
+    "Thermistor open. Target: 10kΩ at 25°C."
+  ],
+  [
+    "Sonde serpentin UI défaillante",
+    "IDU coil sensor faulty"
+  ],
+  [
+    "Thermistance défectueuse.",
+    "Defective thermistor."
+  ],
+  [
+    "Sonde T° extérieure défaillante",
+    "Outdoor temperature sensor faulty"
+  ],
+  [
+    "Sonde HS ou débranchée.",
+    "Sensor faulty or disconnected."
+  ],
+  [
+    "Surchauffe ou sonde HS. Vérifier ventilation.",
+    "Overheating or faulty sensor. Check ventilation."
+  ],
+  [
+    "Pression réfrigérant anormale",
+    "Abnormal refrigerant pressure"
+  ],
+  [
+    "HP ou BP hors limite. Vérifier réfrigérant.",
+    "HP or LP out of range. Check refrigerant."
+  ],
+  [
+    "Surtension réseau",
+    "High supply voltage"
+  ],
+  [
+    "Tension < 185V. Section câbles insuffisante.",
+    "Voltage < 185V. Insufficient cable section."
+  ],
+  [
+    "Anomalie alimentation triphasée",
+    "Three-phase supply fault"
+  ],
+  [
+    "Déséquilibre phases, phase manquante.",
+    "Phase imbalance, missing phase."
+  ],
+  [
+    "Câble communication coupé.",
+    "Communication cable cut."
+  ],
+  [
+    "Surchauffe ou surintensité compresseur.",
+    "Compressor overheating or overcurrent."
+  ],
+  [
+    "Surintensité compresseur onduleur",
+    "Inverter compressor overcurrent"
+  ],
+  [
+    "Court-circuit enroulements. Mesurer résistance.",
+    "Winding short-circuit. Measure resistance."
+  ],
+  [
+    "Phase manquante ou inversée.",
+    "Missing or reversed phase."
+  ],
+  [
+    "Condenseur encrassé, surcharge réfrigérant.",
+    "Dirty condenser, refrigerant overcharge."
+  ],
+  [
+    "Basse pression déclenchée",
+    "Low pressure tripped"
+  ],
+  [
+    "Réfrigérant insuffisant ou dégradé.",
+    "Insufficient or degraded refrigerant."
+  ],
+  [
+    "Compresseur dégradé. Mesurer courants.",
+    "Degraded compressor. Measure currents."
+  ],
+  [
+    "Défaut communication",
+    "Communication fault"
+  ],
+  [
+    "Sonde température défaillante",
+    "Temperature sensor faulty"
+  ],
+  [
+    "Moteur ventilateur UI défaillant",
+    "IDU fan motor faulty"
+  ],
+  [
+    "Moteur ventilateur UE défaillant",
+    "ODU fan motor faulty"
+  ],
+  [
+    "Mode dégivrage actif",
+    "Defrost mode active"
+  ],
+  [
+    "Pression HP > pressostat. Vérifier condenseur.",
+    "HP > pressure switch. Check condenser."
+  ],
+  [
+    "Défaut module DC",
+    "DC module fault"
+  ],
+  [
+    "Surtension sur module. Vérifier alimentation.",
+    "Overvoltage on module. Check power supply."
+  ],
+  [
+    "Réfrigérant insuffisant (alerte)",
+    "Insufficient refrigerant (alert)"
+  ],
+  [
+    "Fuite en cours. Test étanchéité immédiat.",
+    "Leak in progress. Immediate leak test required."
+  ],
+  [
+    "Protection compresseur générale",
+    "General compressor protection"
+  ],
+  [
+    "Protection thermique ou surintensité.",
+    "Thermal protection or overcurrent."
+  ],
+  [
+    "Thermistance défectueuse. Résistance cible: 10kΩ à 25°C.",
+    "Defective thermistor. Target resistance: 10kΩ at 25°C."
+  ],
+  [
+    "Thermistance extérieure HS.",
+    "Outdoor thermistor faulty."
+  ],
+  [
+    "Sonde sur tuyau refoulement défectueuse.",
+    "Discharge pipe sensor faulty."
+  ],
+  [
+    "Câble 2 fils signal coupé ou bornier desserré.",
+    "2-wire signal cable cut or loose terminal."
+  ],
+  [
+    "Défaut module onduleur DC",
+    "DC inverter module fault"
+  ],
+  [
+    "Module IGBT défaillant. Vérifier bus DC.",
+    "IGBT module faulty. Check DC bus."
+  ],
+  [
+    "Courant > limite. Mesurer absorption, vérifier charge.",
+    "Current > limit. Measure draw, check load."
+  ],
+  [
+    "Défaut moteur ventilateur UI",
+    "IDU fan motor fault"
+  ],
+  [
+    "Moteur bloqué, condensateur HS.",
+    "Motor locked, capacitor faulty."
+  ],
+  [
+    "Défaut moteur ventilateur UE",
+    "ODU fan motor fault"
+  ],
+  [
+    "Dégivrage actif (normal)",
+    "Defrost active (normal)"
+  ],
+  [
+    "Normal en chauffage. Si bloqué: vérifier sonde ext.",
+    "Normal in heating mode. If stuck: check outdoor sensor."
+  ],
+  [
+    "HP > 4.15 MPa. Condenseur sale, débit bloqué.",
+    "HP > 4.15 MPa. Dirty condenser, blocked airflow."
+  ],
+  [
+    "BP < 0.15 MPa. Réfrigérant insuffisant.",
+    "LP < 0.15 MPa. Insufficient refrigerant."
+  ],
+  [
+    "Tension < 190V. Vérifier réseau Sonelgaz.",
+    "Voltage < 190V. Check power supply."
+  ],
+  [
+    "Laisser refroidir 30 min, vérifier ventilation UE.",
+    "Allow 30 min cooldown, check ODU ventilation."
+  ],
+  [
+    "Protection phase (triphasé)",
+    "Phase protection (three-phase)"
+  ],
+  [
+    "Phase manquante ou déséquilibre.",
+    "Missing phase or imbalance."
+  ],
+  [
+    "Réfrigérant insuffisant. Tester étanchéité.",
+    "Insufficient refrigerant. Leak test required."
+  ],
+  [
+    "Thermistance HS. Résistance cible: 10kΩ à 25°C.",
+    "Thermistor faulty. Target resistance: 10kΩ at 25°C."
+  ],
+  [
+    "Sonde T° extérieure HS",
+    "Outdoor temperature sensor faulty"
+  ],
+  [
+    "Thermistance extérieure défectueuse.",
+    "Defective outdoor thermistor."
+  ],
+  [
+    "Sonde défaillante.",
+    "Sensor faulty."
+  ],
+  [
+    "Câble signal coupé. Vérifier câblage 2 fils SL.",
+    "Signal cable cut. Check 2-wire SL wiring."
+  ],
+  [
+    "Défaut module onduleur UE",
+    "ODU inverter module fault"
+  ],
+  [
+    "Module IGBT HS. Vérifier ventilation, bus DC.",
+    "IGBT module faulty. Check ventilation, DC bus."
+  ],
+  [
+    "Défaut moteur DC ventilateur UI",
+    "IDU DC fan motor fault"
+  ],
+  [
+    "Moteur bloqué ou sonde Hall défaillante.",
+    "Motor locked or Hall sensor faulty."
+  ],
+  [
+    "Défaut moteur DC ventilateur UE",
+    "ODU DC fan motor fault"
+  ],
+  [
+    "Pale bloquée ou moteur DC HS.",
+    "Blade blocked or DC motor faulty."
+  ],
+  [
+    "VDE défaillante",
+    "EEV faulty"
+  ],
+  [
+    "VDE bloquée, bobine HS ou câblage défectueux.",
+    "EEV stuck, coil faulty or defective wiring."
+  ],
+  [
+    "Réfrigérant insuffisant, VDE bloquée.",
+    "Insufficient refrigerant, EEV blocked."
+  ],
+  [
+    "Réfrigérant insuffisant, compresseur dégradé.",
+    "Insufficient refrigerant, degraded compressor."
+  ],
+  [
+    "Surintensité. Vérifier alimentation et charge.",
+    "Overcurrent. Check power supply and load."
+  ],
+  [
+    "T° serpentin < 2°C. Filtre bouché.",
+    "Coil temp < 2°C. Clogged filter."
+  ],
+  [
+    "Dégivrage actif",
+    "Defrost active"
+  ],
+  [
+    "Normal en chauffage. Si fréquent: sonde HS.",
+    "Normal in heating. If frequent: sensor faulty."
+  ],
+  [
+    "Erreur communication série",
+    "Serial communication error"
+  ],
+  [
+    "Problème carte principale. Vérifier PCB.",
+    "Main board issue. Check PCB."
+  ],
+  [
+    "Serpentin gelé. Filtre bouché.",
+    "Frozen coil. Clogged filter."
+  ],
+  [
+    "Compresseur chaud. Vérifier ventilation UE.",
+    "Compressor hot. Check ODU ventilation."
+  ],
+  [
+    "Protection surintensité système",
+    "System overcurrent protection"
+  ],
+  [
+    "Surintensité générale. Vérifier alimentation.",
+    "General overcurrent. Check power supply."
+  ],
+  [
+    "Câble interne déconnecté.",
+    "Internal cable disconnected."
+  ],
+  [
+    "UI en modes opposés. Vérifier réglages.",
+    "IDUs in opposing modes. Check settings."
+  ],
+  [
+    "Protection surintensité AC",
+    "AC overcurrent protection"
+  ],
+  [
+    "Courant > seuil. Vérifier tension réseau.",
+    "Current > threshold. Check supply voltage."
+  ],
+  [
+    "Défaut VDE (EXV)",
+    "EEV (EXV) fault"
+  ],
+  [
+    "EXV bloquée, bobine HS.",
+    "EXV stuck, coil faulty."
+  ],
+  [
+    "Thermistance HS. 10kΩ à 25°C.",
+    "Thermistor faulty. 10kΩ at 25°C."
+  ],
+  [
+    "Sonde défaillante ou débranchée.",
+    "Sensor faulty or disconnected."
+  ],
+  [
+    "BP < réglage. Réfrigérant insuffisant.",
+    "LP < setpoint. Insufficient refrigerant."
+  ],
+  [
+    "Moteur en surcharge. Vérifier alimentation.",
+    "Motor overloaded. Check power supply."
+  ],
+  [
+    "Moteur DC HS ou bloqué.",
+    "DC motor faulty or locked."
+  ],
+  [
+    "Module chaud ou défaillant. Vérifier ventilation.",
+    "Module hot or faulty. Check ventilation."
+  ],
+  [
+    "Câblage EXV défaillant ou bobine HS.",
+    "EXV wiring faulty or coil faulty."
+  ],
+  [
+    "Défaut sonde température évaporateur",
+    "Evaporator temperature sensor fault"
+  ],
+  [
+    "Sonde NTC ouverte ou court-circuitée. Vérifier câblage et résistance.",
+    "NTC sensor open or short-circuited. Check wiring and resistance."
+  ],
+  [
+    "Défaut sonde extérieure",
+    "Outdoor sensor fault"
+  ],
+  [
+    "Sonde extérieure défaillante. Mesurer résistance NTC vs tableau constructeur.",
+    "Outdoor sensor faulty. Measure NTC resistance vs manufacturer table."
+  ],
+  [
+    "HP anormalement élevée. Vérifier ventilateurs, condenseur encrassé, surcharge réfrigérant.",
+    "Abnormally high HP. Check fans, dirty condenser, refrigerant overcharge."
+  ],
+  [
+    "BP trop basse. Fuite réfrigérant, filtre déshydrateur bouché, EEV défaillant.",
+    "LP too low. Refrigerant leak, clogged drier filter, EEV faulty."
+  ],
+  [
+    "Courant compresseur excessif. Vérifier alimentation triphasée, tension, séquence phases.",
+    "Excessive compressor current. Check three-phase supply, voltage, phase sequence."
+  ],
+  [
+    "Bus de communication COMM coupé. Vérifier câblage, adressage et alimentation.",
+    "COMM bus cut. Check wiring, addressing and power supply."
+  ],
+  [
+    "Protection antigel évaporateur",
+    "Evaporator anti-freeze protection"
+  ],
+  [
+    "Température évaporateur trop basse. Débit insuffisant, filtre à air bouché.",
+    "Evaporator temperature too low. Insufficient flow, clogged air filter."
+  ],
+  [
+    "Erreur sonde décharge",
+    "Discharge sensor error"
+  ],
+  [
+    "Sonde température refoulement hors plage. Remplacer capteur NTC.",
+    "Discharge temperature sensor out of range. Replace NTC sensor."
+  ],
+  [
+    "Protection température refoulement",
+    "Discharge temperature protection"
+  ],
+  [
+    "T° refoulement >115°C. Charge réfrigérant insuffisante ou EEV défaillant.",
+    "Discharge temp >115°C. Insufficient refrigerant charge or EEV faulty."
+  ],
+  [
+    "Défaut inverter / variateur",
+    "Inverter / drive fault"
+  ],
+  [
+    "Module IGBT surchauffé ou défaillant. Vérifier refroidissement variateur.",
+    "IGBT module overheated or faulty. Check drive cooling."
+  ],
+  [
+    "Déséquilibre courant moteur",
+    "Motor current imbalance"
+  ],
+  [
+    "Bobinage compresseur déséquilibré. Mesurer résistances bobines (déséquilibre >5%).",
+    "Compressor winding imbalanced. Measure winding resistances (imbalance >5%)."
+  ],
+  [
+    "Transducteur BP défaillant. Contrôler signal et alimentation 5V.",
+    "LP transducer faulty. Check signal and 5V supply."
+  ],
+  [
+    "Démarrage compresseur impossible",
+    "Compressor start failure"
+  ],
+  [
+    "3 tentatives de démarrage échouées. Vérifier alimentation, contacteur, bobinages.",
+    "3 failed start attempts. Check power supply, contactor, windings."
+  ],
+  [
+    "Défaut sonde température intérieure",
+    "Indoor temperature sensor fault"
+  ],
+  [
+    "Sonde NTC UC ouverte/CC. Résistance à 25°C : 10kΩ.",
+    "IDU NTC sensor open/short. Resistance at 25°C: 10kΩ."
+  ],
+  [
+    "Défaut sonde évaporateur",
+    "Evaporator sensor fault"
+  ],
+  [
+    "Sonde NTC serpentin UC défaillante. Vérifier câblage carte UC.",
+    "IDU coil NTC sensor faulty. Check IDU board wiring."
+  ],
+  [
+    "Défaut sonde température extérieure",
+    "Outdoor temperature sensor fault"
+  ],
+  [
+    "NTC UE ouverte. Remplacement nécessaire si R hors gamme.",
+    "ODU NTC open. Replacement required if R out of range."
+  ],
+  [
+    "Défaut sonde condenseur",
+    "Condenser sensor fault"
+  ],
+  [
+    "Sonde température condenseur HS. Vérifier continuité et résistance.",
+    "Condenser temperature sensor faulty. Check continuity and resistance."
+  ],
+  [
+    "HP > seuil protection. Condenseur encrassé, ventilateur UE HS.",
+    "HP > protection threshold. Dirty condenser, ODU fan faulty."
+  ],
+  [
+    "BP anormalement basse. Sous-charge, filtre bouché, EEV défaillant.",
+    "Abnormally low LP. Undercharge, clogged filter, EEV faulty."
+  ],
+  [
+    "Courant > In × 1.3. Court-circuit bobine ou blocage mécanique.",
+    "Current > In × 1.3. Winding short-circuit or mechanical lockup."
+  ],
+  [
+    "Signal COMM (DC) absent. Vérifier câble 2 fils entre UC et UE.",
+    "COMM (DC) signal absent. Check 2-wire cable between IDU and ODU."
+  ],
+  [
+    "Défaut dégivrage",
+    "Defrost fault"
+  ],
+  [
+    "Dégivrage non terminé dans le délai max. Sonde serpentin UE défaillante.",
+    "Defrost not completed within max time. ODU coil sensor faulty."
+  ],
+  [
+    "T_refoulement > 120°C. Charge réfrigérant faible ou EEV bloqué.",
+    "Discharge temp > 120°C. Low refrigerant charge or EEV blocked."
+  ],
+  [
+    "Défaut variateur",
+    "Drive fault"
+  ],
+  [
+    "Erreur carte variateur. Vérifier tensions DC bus, IGBT, condensateurs.",
+    "Drive board error. Check DC bus voltages, IGBT, capacitors."
+  ],
+  [
+    "Défaut capteur courant",
+    "Current sensor fault"
+  ],
+  [
+    "Erreur type réfrigérant",
+    "Refrigerant type error"
+  ],
+  [
+    "Réfrigérant détecté différent de la configuration. Vérifier charges et capteurs.",
+    "Detected refrigerant differs from configuration. Check charges and sensors."
+  ],
+  [
+    "Sonde température ambiante UC défaillante",
+    "IDU ambient temperature sensor faulty"
+  ],
+  [
+    "NTC UC hors plage. R à 25°C = 10kΩ. Remplacer si mesuré hors plage.",
+    "IDU NTC out of range. R at 25°C = 10kΩ. Replace if measured out of range."
+  ],
+  [
+    "Sonde température serpentin UC défaillante",
+    "IDU coil temperature sensor faulty"
+  ],
+  [
+    "NTC serpentin évaporateur HS. Vérifier câblage.",
+    "Evaporator coil NTC faulty. Check wiring."
+  ],
+  [
+    "Sonde température extérieure défaillante",
+    "Outdoor temperature sensor faulty"
+  ],
+  [
+    "NTC UE défaillante. Remplacement carte si sonde intégrée.",
+    "ODU NTC faulty. Replace board if sensor is integrated."
+  ],
+  [
+    "HP trop élevée. Vérifier ventilateurs, encrassement condenseur, charge réfrigérant.",
+    "HP too high. Check fans, condenser fouling, refrigerant charge."
+  ],
+  [
+    "Communication UC-UE coupée",
+    "IDU-ODU communication cut"
+  ],
+  [
+    "Fil COMM coupé ou court-circuit. Vérifier câblage 3 fils UC↔UE.",
+    "COMM wire cut or short-circuit. Check 3-wire IDU↔ODU wiring."
+  ],
+  [
+    "Serpentin UC < 0°C. Filtre air bouché, débit insuffisant.",
+    "IDU coil < 0°C. Clogged air filter, insufficient flow."
+  ],
+  [
+    "Sonde T° refoulement HS. Vérifier NTC sur ligne refoulement.",
+    "Discharge temp sensor faulty. Check NTC on discharge line."
+  ],
+  [
+    "Mémoire carte UC corrompue. Réinitialiser ou remplacer carte principale.",
+    "IDU board memory corrupted. Reset or replace main board."
+  ],
+  [
+    "Défaut séquence phases",
+    "Phase sequence fault"
+  ],
+  [
+    "Séquence de phases incorrecte (RST). Inverser 2 phases alimentation triphasée.",
+    "Incorrect phase sequence (RST). Swap 2 phases of three-phase supply."
+  ],
+  [
+    "Déséquilibre tension réseau",
+    "Supply voltage imbalance"
+  ],
+  [
+    "Déséquilibre tension >10%. Vérifier réseau électrique.",
+    "Voltage imbalance >10%. Check electrical supply."
+  ],
+  [
+    "Défaut condensateur DC bus",
+    "DC bus capacitor fault"
+  ],
+  [
+    "Condensateurs variateur défaillants. Mesurer capacité et ESR.",
+    "Drive capacitors faulty. Measure capacitance and ESR."
+  ],
+  [
+    "Fuite réfrigérant détectée",
+    "Refrigerant leak detected"
+  ],
+  [
+    "Capteur gaz activé (R32/R290). Vérifier étanchéité circuit.",
+    "Gas sensor triggered (R32/R290). Check circuit leak tightness."
+  ],
+  [
+    "Câble signal absent ou défaillant entre UC et UE.",
+    "Signal cable absent or faulty between IDU and ODU."
+  ],
+  [
+    "Incompatibilité capacité UC et UE. Vérifier modèles associés.",
+    "IDU/ODU capacity mismatch. Check associated models."
+  ],
+  [
+    "Défaut compresseur — protection",
+    "Compressor fault — protection"
+  ],
+  [
+    "Compresseur non démarré après 3 tentatives. Vérifier condensateurs démarrage.",
+    "Compressor failed to start after 3 attempts. Check start capacitors."
+  ],
+  [
+    "Moteur ventilateur UE en surintensité ou blocage mécanique.",
+    "ODU fan motor overcurrent or mechanical lockup."
+  ],
+  [
+    "Ventilateur UC bloqué. Corps étranger ou roulement défaillant.",
+    "IDU fan blocked. Foreign body or faulty bearing."
+  ],
+  [
+    "Sonde échangeur UC défaillante",
+    "IDU heat exchanger sensor faulty"
+  ],
+  [
+    "NTC échangeur UC hors gamme. Vérifier R à 25°C.",
+    "IDU heat exchanger NTC out of range. Check R at 25°C."
+  ],
+  [
+    "NTC extérieur défaillante.",
+    "Outdoor NTC faulty."
+  ],
+  [
+    "Sonde échangeur UE défaillante",
+    "ODU heat exchanger sensor faulty"
+  ],
+  [
+    "NTC condenseur/évaporateur UE HS.",
+    "ODU condenser/evaporator NTC faulty."
+  ],
+  [
+    "Sonde décharge compresseur HS",
+    "Compressor discharge sensor faulty"
+  ],
+  [
+    "NTC refoulement compresseur défaillante.",
+    "Compressor discharge NTC faulty."
+  ],
+  [
+    "NTC aspiration défaillante.",
+    "Suction NTC faulty."
+  ],
+  [
+    "Pressostat HP ouvert. Vérifier condenseur, charge, ventilateurs.",
+    "HP pressure switch open. Check condenser, charge, fans."
+  ],
+  [
+    "T° échangeur UC trop basse. Filtre air bouché ou débit insuffisant.",
+    "IDU heat exchanger temp too low. Clogged air filter or insufficient flow."
+  ],
+  [
+    "Défaut variateur — surchauffe",
+    "Drive fault — overheating"
+  ],
+  [
+    "IGBT variateur surchauffé. Vérifier refroidissement module.",
+    "Drive IGBT overheated. Check module cooling."
+  ],
+  [
+    "Défaut cycle réfrigérant",
+    "Refrigerant cycle fault"
+  ],
+  [
+    "ΔT ou pressions anormaux. Vérifier charge et organes de détente.",
+    "Abnormal ΔT or pressures. Check charge and expansion devices."
+  ],
+  [
+    "Défaut rotation compresseur",
+    "Compressor rotation fault"
+  ],
+  [
+    "Compresseur ne tourne pas. Vérifier alimentation et bobinages.",
+    "Compressor not rotating. Check power supply and windings."
+  ],
+  [
+    "Câble COMM interrompu. Vérifier signaux.",
+    "COMM cable interrupted. Check signals."
+  ],
+  [
+    "Défaut réponse UE. Vérifier carte UE.",
+    "ODU response fault. Check ODU board."
+  ],
+  [
+    "HP anormale. Condenseur encrassé ou surcharge réfrigérant.",
+    "Abnormal HP. Dirty condenser or refrigerant overcharge."
+  ],
+  [
+    "Sonde T° ambiante UC défaillante",
+    "IDU ambient temperature sensor faulty"
+  ],
+  [
+    "NTC UC HS. Résistance hors plage.",
+    "IDU NTC faulty. Resistance out of range."
+  ],
+  [
+    "Sonde T° échangeur UC défaillante",
+    "IDU heat exchanger temperature sensor faulty"
+  ],
+  [
+    "NTC serpentin UC défaillante.",
+    "IDU coil NTC faulty."
+  ],
+  [
+    "NTC extérieur hors gamme.",
+    "Outdoor NTC out of range."
+  ],
+  [
+    "Sonde condenseur UE défaillante",
+    "ODU condenser sensor faulty"
+  ],
+  [
+    "NTC condenseur UE défaillante.",
+    "ODU condenser NTC faulty."
+  ],
+  [
+    "Défaut ventilateur UC",
+    "IDU fan fault"
+  ],
+  [
+    "Moteur ventilateur UC bloqué ou surintensité.",
+    "IDU fan motor locked or overcurrent."
+  ],
+  [
+    "Dégivrage non terminé dans le délai imparti.",
+    "Defrost not completed within allotted time."
+  ],
+  [
+    "Défaut carte variateur",
+    "Drive board fault"
+  ],
+  [
+    "Carte variateur défaillante. Vérifier alimentation, bus DC, IGBT.",
+    "Drive board faulty. Check power supply, DC bus, IGBT."
+  ],
+  [
+    "Température enroulement trop élevée. Vérifier alimentation et ventilation.",
+    "Winding temperature too high. Check power supply and ventilation."
+  ],
+  [
+    "Surintensité phase compresseur. Vérifier bobinages et alimentation.",
+    "Compressor phase overcurrent. Check windings and power supply."
+  ],
+  [
+    "Pressostat HP ouvert. Condenseur encrassé ou charge excessive.",
+    "HP pressure switch open. Dirty condenser or excessive charge."
+  ],
+  [
+    "Sonde température UC",
+    "IDU temperature sensor"
+  ],
+  [
+    "Sonde serpentin évaporateur",
+    "Evaporator coil sensor"
+  ],
+  [
+    "NTC extérieur HS. Vérifier câblage et valeur de résistance.",
+    "Outdoor NTC faulty. Check wiring and resistance value."
+  ],
+  [
+    "Ventilateur UE en anomalie. Corps étranger ou moteur HS.",
+    "ODU fan abnormal. Foreign body or motor faulty."
+  ],
+  [
+    "Défaut commande variateur",
+    "Drive control fault"
+  ],
+  [
+    "Erreur contrôle IPM. Vérifier IGBT et signaux de commande.",
+    "IPM control error. Check IGBT and control signals."
+  ],
+  [
+    "Module IPM surchauffé. Vérifier dissipateur et pâte thermique.",
+    "IPM module overheated. Check heatsink and thermal paste."
+  ],
+  [
+    "NTC refoulement défaillante.",
+    "Discharge NTC faulty."
+  ],
+  [
+    "T° serpentin < seuil antigel. Débit air insuffisant.",
+    "Coil temp < anti-freeze threshold. Insufficient airflow."
+  ],
+  [
+    "Tension réseau hors tolérance. Vérifier alimentation et disjoncteur.",
+    "Supply voltage out of tolerance. Check supply and circuit breaker."
+  ],
+  [
+    "Erreur EEPROM — données système",
+    "EEPROM error — system data"
+  ],
+  [
+    "Données configuration corrompues. Réinitialiser ou remplacer carte.",
+    "Configuration data corrupted. Reset or replace board."
+  ],
+  [
+    "Signal COMM absent ou perturbé.",
+    "COMM signal absent or disturbed."
+  ],
+  [
+    "HP > seuil. Condenser bouché, surchargé en réfrigérant.",
+    "HP > threshold. Condenser blocked, refrigerant overcharged."
+  ],
+  [
+    "BP trop basse. Sous-charge réfrigérant ou obstruction.",
+    "LP too low. Refrigerant undercharge or obstruction."
+  ],
+  [
+    "Sonde ambiance UC défaillante",
+    "IDU ambient sensor faulty"
+  ],
+  [
+    "NTC serpentin évaporateur UC HS.",
+    "IDU evaporator coil NTC faulty."
+  ],
+  [
+    "NTC échangeur condenseur/évaporateur UE HS.",
+    "ODU condenser/evaporator heat exchanger NTC faulty."
+  ],
+  [
+    "Défaut courant inverter",
+    "Inverter current fault"
+  ],
+  [
+    "Surintensité module IPM. Vérifier compresseur et câblage.",
+    "IPM module overcurrent. Check compressor and wiring."
+  ],
+  [
+    "IGBT surchauffé. Vérifier dissipateur et ventilateur variateur.",
+    "IGBT overheated. Check heatsink and drive fan."
+  ],
+  [
+    "Gel détecté sur serpentin UC. Filtre bouché ou débit faible.",
+    "Frost detected on IDU coil. Clogged filter or low airflow."
+  ],
+  [
+    "NTC température ambiante UC HS. Résistance anormale.",
+    "IDU ambient temperature NTC faulty. Abnormal resistance."
+  ],
+  [
+    "Sonde échangeur défaillante",
+    "Heat exchanger sensor faulty"
+  ],
+  [
+    "Pression HP excessive. Vérifier condenseur et charge.",
+    "Excessive HP pressure. Check condenser and charge."
+  ],
+  [
+    "T° serpentin UC < 0°C. Filtre bouché.",
+    "IDU coil temp < 0°C. Clogged filter."
+  ],
+  [
+    "Défaut variateur fréquence",
+    "Frequency drive fault"
+  ],
+  [
+    "Module variateur défaillant. Vérifier bus DC et IGBT.",
+    "Drive module faulty. Check DC bus and IGBT."
+  ],
+  [
+    "T° refoulement > limite. Charge réfrigérant faible.",
+    "Discharge temp > limit. Low refrigerant charge."
+  ],
+  [
+    "HP trop élevée. Condenseur bouché ou surcharge.",
+    "HP too high. Condenser blocked or overcharge."
+  ],
+  [
+    "BP anormale. Fuite ou filtre sec bouché.",
+    "Abnormal LP. Leak or clogged drier filter."
+  ],
+  [
+    "Surintensité compresseur.",
+    "Compressor overcurrent."
+  ],
+  [
+    "T° refoulement trop élevée. Surchauffe vapeur insuffisante.",
+    "Discharge temp too high. Insufficient superheat."
+  ],
+  [
+    "Courant IPM excessif. Vérifier câblage et compresseur.",
+    "Excessive IPM current. Check wiring and compressor."
+  ],
+  [
+    "Gel serpentin UC. Filtre air obstrué.",
+    "IDU coil frost. Air filter obstructed."
+  ],
+  [
+    "Mémoire carte corrompue. Réinitialiser ou remplacer.",
+    "Board memory corrupted. Reset or replace."
+  ],
+  [
+    "Défaut séquence phase",
+    "Phase sequence fault"
+  ],
+  [
+    "Séquence phases incorrecte sur alimentation triphasée.",
+    "Incorrect phase sequence on three-phase supply."
+  ],
+  [
+    "Défaut IGBT variateur",
+    "Drive IGBT fault"
+  ],
+  [
+    "Module IGBT défaillant. Mesurer en mode diode.",
+    "IGBT module faulty. Measure in diode mode."
+  ],
+  [
+    "IPM surchauffé. Vérifier ventilateur et radiateur.",
+    "IPM overheated. Check fan and heatsink."
+  ],
+  [
+    "HP > seuil trip. Vérifier condenseur et ventilateur UE.",
+    "HP > trip threshold. Check condenser and ODU fan."
+  ],
+  [
+    "Câble COMM UC↔UE coupé ou défaillant.",
+    "IDU↔ODU COMM cable cut or faulty."
+  ],
+  [
+    "T° serpentin < 0°C. Filtre bouché ou débit insuffisant.",
+    "Coil temp < 0°C. Clogged filter or insufficient flow."
+  ],
+  [
+    "Défaut variateur IPM",
+    "IPM drive fault"
+  ],
+  [
+    "Courant IPM excessif ou court-circuit. Vérifier en mode diode.",
+    "Excessive IPM current or short-circuit. Check in diode mode."
+  ],
+  [
+    "Radiateur IGBT chaud. Nettoyer ailettes et vérifier pâte thermique.",
+    "IGBT heatsink hot. Clean fins and check thermal paste."
+  ],
+  [
+    "3 tentatives de démarrage échouées. Bobinages ou alimentation.",
+    "3 failed start attempts. Windings or power supply."
+  ],
+  [
+    "Transformateur courant (CT) défaillant.",
+    "Current transformer (CT) faulty."
+  ],
+  [
+    "Défaut vitesse ventilateur UC",
+    "IDU fan speed fault"
+  ],
+  [
+    "Ventilateur UC ne tourne pas à la vitesse demandée.",
+    "IDU fan not running at requested speed."
+  ],
+  [
+    "Perte de charge réfrigérant",
+    "Refrigerant charge loss"
+  ],
+  [
+    "Fuite réfrigérant. BP trop basse, surchauffe excessive.",
+    "Refrigerant leak. LP too low, excessive superheat."
+  ],
+  [
+    "HP excessive. Vérifier ventilateur, condenseur, suivi pression.",
+    "Excessive HP. Check fan, condenser, pressure monitoring."
+  ],
+  [
+    "Erreur communication réseau",
+    "Network communication error"
+  ],
+  [
+    "Bus LCC (Lennox Comfort Control) en défaut.",
+    "LCC bus (Lennox Comfort Control) faulty."
+  ],
+  [
+    "T° refoulement > 130°C. Surchauffe vapeur trop élevée.",
+    "Discharge temp > 130°C. Excessive superheat."
+  ],
+  [
+    "Déséquilibre ou surintensité phases compresseur.",
+    "Compressor phase imbalance or overcurrent."
+  ],
+  [
+    "Tension réseau hors ±10%. Vérifier alimentation.",
+    "Supply voltage outside ±10%. Check power supply."
+  ],
+  [
+    "Condensateurs variateur vieux ou défaillants.",
+    "Drive capacitors old or faulty."
+  ],
+  [
+    "Défaut IGBT — module IPM",
+    "IGBT fault — IPM module"
+  ],
+  [
+    "Module IPM défaillant. Test mode diode multimètre.",
+    "IPM module faulty. Test in multimeter diode mode."
+  ],
+  [
+    "Transducteur HP ouvert ou court-circuit. Mesurer signal 0-5V ou 4-20mA.",
+    "HP transducer open or short-circuit. Measure 0-5V or 4-20mA signal."
+  ],
+  [
+    "Capteur courant (CT) ouvert. Remplacer capteur ou carte variateur.",
+    "Current sensor (CT) open. Replace sensor or drive board."
+  ],
+  [
+    "Sonde T° refoulement ouverte.",
+    "Discharge temperature sensor open."
+  ],
+  [
+    "BP trop basse. Sous-charge ou obstruction.",
+    "LP too low. Undercharge or obstruction."
+  ],
+  [
+    "T° refoulement > 115°C. Charge insuffisante",
+    "Discharge temp > 115°C. Insufficient charge"
+  ],
+  [
+    "BP trop basse. Fuite ou obstruction circuit.",
+    "LP too low. Leak or circuit obstruction."
+  ],
+  [
+    "NTC ambiante UC hors gamme.",
+    "IDU ambient NTC out of range."
+  ],
+  [
+    "Bus de communication UC↔UE interrompu.",
+    "IDU↔ODU communication bus interrupted."
+  ],
+  [
+    "NTC serpentin UC hors gamme.",
+    "IDU coil NTC out of range."
+  ],
+  [
+    "Pression BP anormalement basse.",
+    "Abnormally low LP pressure."
+  ],
+  [
+    "Courant phase compresseur excessif.",
+    "Compressor phase current excessive."
+  ],
+  [
+    "Perte signal communication UC↔UE.",
+    "IDU↔ODU communication signal lost."
+  ],
+  [
+    "Signal COMM interrompu.",
+    "COMM signal interrupted."
+  ],
+  [
+    "NTC UE hors gamme.",
+    "ODU NTC out of range."
+  ],
+  [
+    "NTC ambiance UC hors plage.",
+    "IDU ambient NTC out of range."
+  ],
+  [
+    "NTC serpentin UC HS.",
+    "IDU coil NTC faulty."
+  ],
+  [
+    "BP anormale. Fuite ou obstruction.",
+    "Abnormal LP. Leak or obstruction."
+  ],
+  [
+    "NTC hors plage de mesure. Remplacer capteur.",
+    "NTC out of measurement range. Replace sensor."
+  ],
+  [
+    "BP trop basse. Charge insuffisante ou obstruction circuit.",
+    "LP too low. Insufficient charge or circuit obstruction."
+  ],
+  [
+    "Permuter deux phases sur le bornier.",
+    "Swap two phases on the terminal block."
+  ],
+  [
+    "Conflit adresses sur le bus.",
+    "Address conflict on the bus."
+  ],
+  [
+    "Tension > 265V. Protection surtension.",
+    "Voltage > 265V. Overvoltage protection."
+  ],
+  [
+    "Normal en chauffage. Si permanent: sonde HS.",
+    "Normal in heating. If permanent: sensor faulty."
+  ],
+  [
+    "Normal en chauffage. Max 12 min.",
+    "Normal in heating. Max 12 min."
+  ],
+  [
+    "Condenseur encrasé, débit insuffisant.",
+    "Dirty condenser, insufficient airflow."
+  ],
+  [
+    "Condenseur encrasé, ventilateur HS.",
+    "Dirty condenser, fan faulty."
+  ],
+  [
+    "Condenseur encrasé, surcharge réfrigérant.",
+    "Dirty condenser, refrigerant overcharge."
+  ],
+  [
+    "Insufficient refrigerant, VDE bloquée.",
+    "Insufficient refrigerant, EEV blocked."
+  ],
+  [
+    "Insufficient refrigerant, compresseur dégradé.",
+    "Insufficient refrigerant, degraded compressor."
+  ],
+  [
+    "Insufficient refrigerant ou dégradé.",
+    "Insufficient or degraded refrigerant."
+  ],
+  [
+    "Court-circuit enroulements compresseur.",
+    "Compressor winding short-circuit."
+  ],
+  [
+    "Thermistance hors plage.",
+    "Thermistor out of range."
+  ],
+  [
+    "Thermistance sur tuyau refoulement HS.",
+    "Thermistor on discharge pipe faulty."
+  ],
+  [
+    "BP < réglage. Insufficient refrigerant.",
+    "LP < setpoint. Insufficient refrigerant."
+  ],
+  [
+    "Code informatif uniquement.",
+    "Informational code only."
+  ],
+  [
+    "Sonde court-circuit ou circuit ouvert. Remplacer NTC.",
+    "Sensor short-circuit or open. Replace NTC."
+  ],
+  [
+    "Defective thermistor. Résistance cible: 10kΩ à 25°C.",
+    "Defective thermistor. Target: 10kΩ at 25°C."
+  ],
+  [
+    "Insufficient refrigerant. Tester étanchéité.",
+    "Insufficient refrigerant. Leak test required."
+  ],
+  [
+    "Fonctionnement normal.",
+    "Normal operation."
+  ],
+  [
+    "NTC UC hors plage.",
+    "IDU NTC out of range."
+  ]
+]
