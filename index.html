@@ -102,7 +102,7 @@
 <div class="msrch"><input type="search" id="globalSearchInput" placeholder="Recherche..." oninput="globalSearch()"></div>
 <button class="mn active" id="mn-home" onclick="goPage('home')">&#127968; <span id="mn_home">ACCUEIL</span></button>
 <button class="mn" id="mn-catalogue" onclick="goPage('catalogue')">&#128230; <span id="mn_cat">CATALOGUE</span></button>
-<button class="mn" id="mn-devis" onclick="goPage('devis')">&#128203; <span id="mn_devis">DEVIS</span></button>
+<button class="mn" id="mn-devis" onclick="goPage('devis');if(typeof loadDvFavorites==='function')loadDvFavorites();">&#128203; <span id="mn_devis">DEVIS</span></button>
 <button class="mn" id="mn-historique" onclick="goPage('historique')">&#128196; <span id="mn_hist">JOURNAL</span></button>
 <button class="mn" id="mn-obd" onclick="goPage('obd')">&#128268; <span id="mn_obd">OBD</span></button>
 <button class="mn" id="mn-fluides" onclick="goPage('fluides')">&#127786; <span id="mn_fl">FLUIDES</span></button>
@@ -257,19 +257,18 @@
   <button class="btn bp" onclick="loadDevisFromCloud()" data-fr="Charger" data-en="Load">Charger</button>
 </div>
 </div></div>
-<div class="panel"><div class="ph" id="t_add_line">AJOUTER UNE LIGNE</div>
+<div class="panel"><div class="ph" data-fr="AJOUTER UN ÉQUIPEMENT" data-en="ADD EQUIPMENT">AJOUTER UN ÉQUIPEMENT</div>
 <div style="display:flex;flex-direction:column;gap:6px">
-<select class="fsel" id="dvProd" style="width:100%"><option value="" id="t_choose_prod">Choisir equipement...</option></select>
-<div class="frow"><span class="flb" id="t_qty">Qte :</span><input class="fi" id="dvQty" type="number" value="1" min="1" style="max-width:70px"><span class="flb" id="t_pu">PU (DA) :</span><input class="fi" id="dvPU" type="number" placeholder="0" style="max-width:100px"></div>
-<button class="btn bp" id="t_add_btn" onclick="addDvLine()">+ Ajouter ligne</button>
-</div></div>
-<div class="panel"><div class="ph" data-fr="ÉQUIPEMENT PERSONNALISÉ (hors catalogue)" data-en="CUSTOM EQUIPMENT (not in catalog)">ÉQUIPEMENT PERSONNALISÉ (hors catalogue)</div>
-<div style="display:flex;flex-direction:column;gap:6px">
+<div class="frow" style="gap:6px"><select class="fsel" id="dvFavList" style="flex:1"><option value="" data-fr="⭐ Mes favoris..." data-en="⭐ My favorites...">⭐ Mes favoris...</option></select>
+<button class="btn bp" onclick="insertDvFavorite()" data-fr="Insérer" data-en="Insert">Insérer</button></div>
 <input class="fi" id="dvCustomBrand" placeholder="Marque..." style="width:100%">
 <input class="fi" id="dvCustomRef" placeholder="Référence..." style="width:100%">
 <input class="fi" id="dvCustomDes" placeholder="Désignation..." style="width:100%">
 <div class="frow"><span class="flb" data-fr="Qte :" data-en="Qty:">Qte :</span><input class="fi" id="dvCustomQty" type="number" value="1" min="1" style="max-width:70px"><span class="flb" data-fr="PU :" data-en="Unit price:">PU :</span><input class="fi" id="dvCustomPU" type="number" placeholder="0" style="max-width:100px"></div>
-<button class="btn bp" onclick="addDvLineCustom()" data-fr="+ Ajouter équipement personnalisé" data-en="+ Add custom equipment">+ Ajouter équipement personnalisé</button>
+<div class="frow" style="gap:6px">
+<button class="btn bp" style="flex:1" onclick="addDvLineCustom()" data-fr="+ Ajouter au devis" data-en="+ Add to quote">+ Ajouter au devis</button>
+<button class="btn bp" style="flex:1" onclick="saveDvFavorite()" data-fr="☆ Enregistrer en favori" data-en="☆ Save as favorite">☆ Enregistrer en favori</button>
+</div>
 </div></div>
 </div>
 <div class="panel"><div class="ph" id="t_lines">LIGNES DEVIS</div>
@@ -3463,6 +3462,75 @@ function addDvLineCustom() {
   ['dvCustomBrand','dvCustomRef','dvCustomDes'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.value = '';
   });
+}
+
+// ═══════════════════════════════════════════════
+// DEVIS — Favoris personnels (nomenclature utilisateur), table projects, module 'dv_favoris'
+// Une seule ligne par utilisateur, data.items = tableau des favoris
+// ═══════════════════════════════════════════════
+async function _dvGetFavRow(){
+  var userRes = await _sb.auth.getUser();
+  var user = userRes && userRes.data ? userRes.data.user : null;
+  if (!user) return null;
+  var res = await _sb.from('projects').select('id,data').eq('module','dv_favoris').eq('user_id', user.id).maybeSingle();
+  return { user: user, row: (res && res.data) || null };
+}
+
+async function loadDvFavorites(){
+  var fr = (typeof lang!=='undefined' && lang==='fr');
+  var sel = document.getElementById('dvFavList');
+  if (!sel || typeof _sb === 'undefined' || !_sb) return;
+  var ctx = await _dvGetFavRow();
+  if (!ctx || !ctx.user) return;
+  var items = (ctx.row && ctx.row.data && ctx.row.data.items) || [];
+  var placeholder = '<option value="" data-fr="⭐ Mes favoris..." data-en="⭐ My favorites...">'+(fr?'⭐ Mes favoris...':'⭐ My favorites...')+'</option>';
+  sel.innerHTML = placeholder + items.map(function(it, i){
+    return '<option value="'+i+'">'+(it.brand?it.brand+' — ':'')+it.des+'</option>';
+  }).join('');
+}
+
+async function insertDvFavorite(){
+  var fr = (typeof lang!=='undefined' && lang==='fr');
+  var sel = document.getElementById('dvFavList');
+  var idx = sel ? sel.value : '';
+  if (idx === '') { showToast(fr?'Sélectionnez un favori':'Select a favorite','w'); return; }
+  var ctx = await _dvGetFavRow();
+  if (!ctx || !ctx.row) return;
+  var items = (ctx.row.data && ctx.row.data.items) || [];
+  var it = items[parseInt(idx)];
+  if (!it) return;
+  var setVal = function(id,v){ var el=document.getElementById(id); if(el) el.value=v||''; };
+  setVal('dvCustomBrand', it.brand);
+  setVal('dvCustomRef', it.ref);
+  setVal('dvCustomDes', it.des);
+  setVal('dvCustomPU', it.pu||0);
+  showToast(fr?'Favori inséré, ajustez la quantité':'Favorite inserted, adjust quantity', 's');
+}
+
+async function saveDvFavorite(){
+  var fr = (typeof lang!=='undefined' && lang==='fr');
+  if (typeof _sb === 'undefined' || !_sb) { showToast(fr?'Connexion requise':'Login required','w'); return; }
+  var brand = (document.getElementById('dvCustomBrand')||{}).value.trim();
+  var ref   = (document.getElementById('dvCustomRef')||{}).value.trim();
+  var des   = (document.getElementById('dvCustomDes')||{}).value.trim();
+  var pu    = parseFloat((document.getElementById('dvCustomPU')||{}).value)||0;
+  if (!des) { showToast(fr?'Indiquez au moins une désignation avant d\'enregistrer':'Enter a description before saving','w'); return; }
+
+  var ctx = await _dvGetFavRow();
+  if (!ctx || !ctx.user) { showToast(fr?'Connexion requise':'Login required','w'); return; }
+
+  var items = (ctx.row && ctx.row.data && ctx.row.data.items) || [];
+  items.push({brand:brand, ref:ref, des:des, pu:pu});
+
+  var res;
+  if (ctx.row) {
+    res = await _sb.from('projects').update({data:{items:items}, updated_at:new Date().toISOString()}).eq('id', ctx.row.id);
+  } else {
+    res = await _sb.from('projects').insert({user_id:ctx.user.id, module:'dv_favoris', name:(fr?'Mes favoris':'My favorites'), data:{items:items}});
+  }
+  if (res.error) { showToast((fr?'Erreur : ':'Error: ')+res.error.message, 'e'); return; }
+  showToast(fr?'Ajouté aux favoris':'Added to favorites', 's');
+  loadDvFavorites();
 }
 
 function renderDevis() {
