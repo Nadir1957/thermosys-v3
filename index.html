@@ -263,6 +263,14 @@
 <div class="frow"><span class="flb" id="t_qty">Qte :</span><input class="fi" id="dvQty" type="number" value="1" min="1" style="max-width:70px"><span class="flb" id="t_pu">PU (DA) :</span><input class="fi" id="dvPU" type="number" placeholder="0" style="max-width:100px"></div>
 <button class="btn bp" id="t_add_btn" onclick="addDvLine()">+ Ajouter ligne</button>
 </div></div>
+<div class="panel"><div class="ph" data-fr="ÉQUIPEMENT PERSONNALISÉ (hors catalogue)" data-en="CUSTOM EQUIPMENT (not in catalog)">ÉQUIPEMENT PERSONNALISÉ (hors catalogue)</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<input class="fi" id="dvCustomBrand" placeholder="Marque..." style="width:100%">
+<input class="fi" id="dvCustomRef" placeholder="Référence..." style="width:100%">
+<input class="fi" id="dvCustomDes" placeholder="Désignation..." style="width:100%">
+<div class="frow"><span class="flb" data-fr="Qte :" data-en="Qty:">Qte :</span><input class="fi" id="dvCustomQty" type="number" value="1" min="1" style="max-width:70px"><span class="flb" data-fr="PU :" data-en="Unit price:">PU :</span><input class="fi" id="dvCustomPU" type="number" placeholder="0" style="max-width:100px"></div>
+<button class="btn bp" onclick="addDvLineCustom()" data-fr="+ Ajouter équipement personnalisé" data-en="+ Add custom equipment">+ Ajouter équipement personnalisé</button>
+</div></div>
 </div>
 <div class="panel"><div class="ph" id="t_lines">LIGNES DEVIS</div>
 <div class="tw"><table class="tbl"><thead><tr><th id="t_dv_ref">Ref</th><th id="t_dv_nom">Equipement</th><th id="t_dv_qty">Qte</th><th id="t_dv_pu">PU</th><th id="t_dv_total">Total</th><th></th></tr></thead><tbody id="dvBody"></tbody></table></div>
@@ -3440,6 +3448,23 @@ function addDvLine() {
   logHist('Devis: '+p.brand+' '+p.n+' ×'+qty);
 }
 
+function addDvLineCustom() {
+  var fr = (typeof lang!=='undefined' && lang==='fr');
+  var brand = (document.getElementById('dvCustomBrand')||{}).value.trim();
+  var ref   = (document.getElementById('dvCustomRef')||{}).value.trim();
+  var des   = (document.getElementById('dvCustomDes')||{}).value.trim();
+  var qty   = parseInt((document.getElementById('dvCustomQty')||{}).value)||1;
+  var prix  = parseFloat((document.getElementById('dvCustomPU')||{}).value)||0;
+  if (!des) { showToast(fr?'Indiquez au moins une désignation':'Enter at least a description','w'); return; }
+  devisLines.push({id:Date.now(), brand:brand||(fr?'Personnalisé':'Custom'), ref:ref||'—', des:des, qty:qty, prix:prix, tot:qty*prix});
+  renderDevis(); saveDevis();
+  showToast(des+(fr?' ajouté':' added'), 's');
+  logHist('Devis (perso): '+(brand||'—')+' '+des+' ×'+qty);
+  ['dvCustomBrand','dvCustomRef','dvCustomDes'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.value = '';
+  });
+}
+
 function renderDevis() {
   var body = document.getElementById('dvBody'); if (!body) return;
   body.innerHTML = devisLines.map(function(l) {
@@ -3470,7 +3495,7 @@ function exportDv() {
   var cur     = getCurrency();
   var total   = devisLines.reduce(function(s,l){return s+l.tot;},0);
   var dvRem   = parseFloat((document.getElementById('dvRemise')||{value:'0'}).value)||0;
-  var dvTva   = parseFloat((document.getElementById('dvTVA')||{value:'19'}).value)||0;
+  var dvTva   = parseFloat((document.getElementById('dvTVA')||{value:'0'}).value)||0;
   var totalHTR = total*(1-dvRem/100);
   var totalTTC = totalHTR*(1+dvTva/100);
   var now     = new Date();
@@ -3520,7 +3545,7 @@ function exportDv() {
     +'<tfoot>'
     +'<tr><td colspan="4" style="text-align:right">'+(L?'Total HT':'Total (excl. VAT)')+' :</td><td style="text-align:right">'+fmtMoney(total)+'</td></tr>'
     +(dvRem>0?'<tr><td colspan="4" style="text-align:right;color:#c62828">'+(L?'Remise':'Discount')+' ('+dvRem+'%) :</td><td style="text-align:right;color:#c62828">-'+fmtMoney(total-totalHTR)+'</td></tr>'+'<tr><td colspan="4" style="text-align:right">'+(L?'HT net':'Net excl. VAT')+' :</td><td style="text-align:right">'+fmtMoney(totalHTR)+'</td></tr>':'')
-    +'<tr><td colspan="4" style="text-align:right">'+(L?'TVA':'VAT')+' ('+dvTva+'%) :</td><td style="text-align:right">'+fmtMoney(totalTTC-totalHTR)+'</td></tr>'
+    +'<tr><td colspan="4" style="text-align:right">'+(L?'Taxe/VAT':'Tax/VAT')+' ('+dvTva+'%) :</td><td style="text-align:right">'+fmtMoney(totalTTC-totalHTR)+'</td></tr>'
     +'<tr class="tot-row"><td colspan="4" style="text-align:right;letter-spacing:1px">'+(L?'TOTAL TTC :':'TOTAL (incl. VAT) :')+'</td><td style="text-align:right">'+fmtMoney(totalTTC)+'</td></tr>'
     +'</tfoot>'
     +'</table>'
@@ -3528,7 +3553,7 @@ function exportDv() {
     +'<div class="info-box"><div class="info-title">'+(L?'Signature client':'Client signature')+'</div><div style="height:18mm"></div></div>'
     +'<div class="info-box"><div class="info-title">'+(L?'Cachet société':'Company stamp')+'</div><div style="height:18mm"></div></div>'
     +'</div>'
-    +'<div class="footer">Thermosys HVAC Workstation v3 — '+ref+' — '+(L?'Données indicatives, TVA non incluse.':'Indicative data, VAT not included.')+'</div>'
+    +'<div class="footer">Thermosys HVAC Workstation v3 — '+ref+' — '+(L?'Données indicatives, à vérifier avant signature.':'Indicative data, verify before signing.')+'</div>'
     +'</div>'
     +'<script>function _dvpdfLoad(u){return new Promise(function(r,j){var s=document.createElement("script");s.src=u;s.onload=r;s.onerror=j;document.head.appendChild(s);});}function _dvpdfPrint(){setTimeout(function(){window.print();},300);}function _dvpdfDownload(){var el=document.querySelector(".page");if(!el||!window.html2canvas){_dvpdfPrint();return;}html2canvas(el,{scale:2,useCORS:true,backgroundColor:"#ffffff"}).then(function(canvas){var jsPDFlib=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;if(!jsPDFlib){_dvpdfPrint();return;}var doc=new jsPDFlib({orientation:"portrait",unit:"mm",format:"a4"});var img=canvas.toDataURL("image/jpeg",0.95);var _dvImgH=canvas.height*210/canvas.width;doc.addImage(img,"JPEG",0,0,210,_dvImgH);var _dvRef=(document.title||"Devis").split(" ")[0]||"Devis";doc.save(_dvRef+".pdf");}).catch(function(e){_dvpdfPrint();});}window.onload=function(){Promise.all([_dvpdfLoad("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"),_dvpdfLoad("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js")]).then(function(){setTimeout(_dvpdfDownload,600);}).catch(function(e){_dvpdfPrint();});};<\/script>'
     +'</body></html>');
