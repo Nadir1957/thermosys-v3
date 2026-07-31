@@ -222,7 +222,7 @@
 <div class="frow"><span class="flb" id="t_ref">Ref devis :</span><input class="fi" id="dvRef" placeholder="DV-2025-001"></div>
 <div class="frow"><span class="flb" id="t_site">Site :</span><input class="fi" id="dvSite" placeholder="Adresse..."></div>
 <div class="frow"><span class="flb" data-fr="SIRET / RC :" data-en="Tax ID / Reg. No.:">SIRET / RC :</span><input class="fi" id="dvSiret" placeholder="123 456 789 00011" style="font-family:var(--fmo);font-size:11px"></div>
-<div class="frow"><span class="flb" data-fr="Remise (%) :" data-en="Discount (%):">Remise (%) :</span><input class="fi" id="dvRemise" type="number" value="0" min="0" max="100" style="max-width:70px" oninput="renderDevis()"><span class="flb" style="margin-left:8px" data-fr="TVA (%) :" data-en="VAT (%):">TVA (%) :</span><input class="fi" id="dvTVA" type="number" value="19" min="0" max="30" style="max-width:70px" oninput="renderDevis()"></div>
+<div class="frow"><span class="flb" data-fr="Remise (%) :" data-en="Discount (%):">Remise (%) :</span><input class="fi" id="dvRemise" type="number" value="0" min="0" max="100" style="max-width:70px" oninput="renderDevis()"><span class="flb" style="margin-left:8px" data-fr="Taxe/VAT (%) :" data-en="Tax/VAT (%):">Taxe/VAT (%) :</span><input class="fi" id="dvTVA" type="number" value="0" min="0" max="30" style="max-width:70px" oninput="renderDevis()"></div>
 <div class="frow"><span class="flb" id="t_devise_lbl">Devise :</span><select class="fsel" id="dvDevise" onchange="updateDevise()" style="max-width:200px">
   <option value="DZD" selected="selected" data-fr="🇩🇿 DZD — Dinar algérien" data-en="🇩🇿 DZD — Algerian Dinar">🇩🇿 DZD — Dinar algérien</option>
   <option value="USD" data-fr="🇺🇸 USD — Dollar américain" data-en="🇺🇸 USD — US Dollar">🇺🇸 USD — Dollar américain</option>
@@ -3450,7 +3450,7 @@ function renderDevis() {
   }).join('');
   var ht=devisLines.reduce(function(s,l){return s+l.tot;},0);
   var rem=parseFloat((document.getElementById('dvRemise')||{value:'0'}).value)||0;
-  var tva=parseFloat((document.getElementById('dvTVA')||{value:'19'}).value)||19;
+  var tva=parseFloat((document.getElementById('dvTVA')||{value:'0'}).value)||0;
   var htR=ht*(1-rem/100), ttc=htR*(1+tva/100);
   var tot=document.getElementById('dvTotal');
   var lblExcl=(lang==='fr'?'HT':'Excl. VAT'), lblVat=(lang==='fr'?'TVA':'VAT'), lblIncl=(lang==='fr'?'TTC':'Incl. VAT');
@@ -4439,7 +4439,7 @@ async function loadDevisFromCloud(){
   setVal('dvSite', p.site);
   setVal('dvSiret', p.siret);
   setVal('dvRemise', p.remise||0);
-  setVal('dvTVA', p.tva!=null?p.tva:19);
+  setVal('dvTVA', p.tva!=null?p.tva:0);
   setVal('dvDevise', p.devise||'DZD');
 
   if (typeof devisLines !== 'undefined') { devisLines = p.lines || []; }
