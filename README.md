@@ -1,142 +1,61 @@
-# ⚡ Hvacium v5.1
+# ⚡ Thermosys v3
 
-**Station de Travail HVAC | Expert Grade**  
-*Outil professionnel de diagnostic, maintenance et dépannage CVC/Réfrigération*
+**Station de travail professionnelle CVC/Froid — Bilingue FR/EN**
+
+Application web complète destinée aux ingénieurs en génie climatique, bureaux d'études, techniciens HVAC et installateurs frigoristes.
 
 ---
 
 ## 🎯 À propos
 
-Hvacium est une application web professionnelle conçue pour les **ingénieurs en génie climatique** et les **techniciens en froid et climatisation**.  
-Elle fonctionne comme un fichier HTML unique autonome, utilisable **hors-ligne** sur chantier, en cave technique ou en local frigorifique.
+Thermosys v3 est un outil professionnel de calcul, de dimensionnement et de conformité réglementaire pour le génie climatique et la réfrigération. Conçu et développé par Nadir Mouissat, avec la validation technique de plusieurs ingénieurs spécialisés en automatisme et régulation.
+
+L'application fonctionne comme un fichier HTML unique déployé sur Vercel, accessible en ligne, avec authentification et gestion des utilisateurs.
 
 ---
 
-## ✅ Fonctionnalités
+## ✅ Modules principaux
 
-### 🏭 Catalogue Constructeurs — 49 marques
-- Daikin · Mitsubishi · Atlantic · Trane · Carrier · Toshiba · LG · Samsung
-- Danfoss · Belimo · Siemens Acvatix · Honeywell · Johnson Controls · IMI Hydronic
-- Copeland · Bitzer · Bock · Frascold · Hanbell · Schneider SpaceLogic
-- *(44 constructeurs Domestic / Commercial / Industrial)*
+- **HYDRAULIQUE** — débit/diamètre, pertes de charge, pompe/HMT, vase d'expansion, séparateur, collecteur, guide de préréglage vannes, gaines d'air (ASHRAE), tuyauterie frigorifique, **sélection Refnet multi-marques** (Daikin, Toshiba, Gree, Midea, Hisense, Panasonic, Trane, LG, Fujitsu — données sourcées documentation constructeur officielle)
+- **VANNES** — dimensionnement Kvs (IEC 60534)
+- **DÉSENFUMAGE** — calculs conformes IT246 / EN12101 / NFPA92
+- **CHARGE** — charges thermiques et frigorifiques
+- **RE2020** — vérification seuils réglementaires par pays
+- **SCOP/COP** — performance saisonnière, coût énergétique, rentabilité PAC
+- **TEWI** — impact environnemental total équivalent
+- **FLUIDES** — réfrigérants, huiles, F-Gas 2025
+- **CODES ERREUR** — base de données multi-constructeurs
+- **NORMES** — référentiel réglementaire
+- **LOTO** — consignation/déconsignation avec export PDF
+- **MAINT** — checklists de maintenance par équipement
+- **DEVIS** — génération de devis multi-devises
+- **CERTIFICAT** — export PDF de conformité
+- **CONVERT** — conversions d'unités
+- **OCR-IA** — lecture de plaques signalétiques
 
-### 🔧 Diagnostic & Calculs
-- Calcul **SH / SC** (Surchauffe / Sous-refroidissement) en temps réel
-- Diagnostic **F-Gas 2025** (Règlement UE 2024/573)
-- Matrice IPM — Surcharge (Daikin · Mitsubishi · Hisense)
-- Tables de saturation fluides frigorigènes (R32, R410A, R134a, R290, R744…)
-- Rapport de diagnostic PDF exportable
+## 🔐 Authentification
 
-### 📡 Bluetooth BLE — Manomètre connecté
-- Connexion manomètre BLE (Testo 557s · Viecar EA400 · OBDLink MX+)
-- Affichage BP/HP/T° en temps réel
-- **Auto-save toutes les 30s** — données récupérées au redémarrage
-- Mode simulation pour démo sans manomètre
+Système de comptes utilisateurs via Supabase — inscription libre avec approbation manuelle par l'administrateur, garantissant un accès contrôlé pendant la phase de bêta.
 
-### 📷 OCR — Lecture d'étiquette
-- Scan d'étiquette constructeur par caméra
-- Identification automatique du code erreur / référence
-- Fallback photo upload si caméra indisponible
+## 🌍 Bilingue natif
 
-### 💧 Module Vannes & Hydraulique
-- Guide préréglage hydraulique EN 15232 / RT2025
-- Vannes 3V/4V · PICV · Danfoss AMV · Belimo EPIV
-- Calcul DN, Kvs, débit, ΔP
-
-### ⚡ Module Automate & Bus
-- Protocoles : Modbus RTU/TCP · BACnet MS/TP · KNX · LonWorks
-- Fiches I/O, boucles de régulation, logique
-
-### 📋 DATA 2024-2025
-- Normes : NF C18-510 · NF DTU 65.11 · EN 378:2021
-- Consignation électrique / frigorifique
-- RT2025 · RE2020 · F-Gas
-
-### 🔒 Consignation NF C18-510
-- Protocole consignation 5 étapes
-- Rapport consignation exportable
-
----
-
-## 📱 Compatibilité
-
-| Navigateur / OS | Application | BLE Manomètre | OCR Caméra |
-|---|---|---|---|
-| Chrome Android (HTTPS) | ✅ | ✅ | ✅ |
-| Chrome Desktop (HTTPS) | ✅ | ✅ | ✅ |
-| Edge Desktop (HTTPS) | ✅ | ✅ | ✅ |
-| Samsung Internet | ✅ | ⚠️ partiel | ✅ |
-| Safari iPhone | ✅ | ❌ Apple bloque | ⚠️ |
-| Firefox | ✅ | ❌ | ✅ |
-| Fichier local file:// | ✅ | ❌ | ❌ |
-
-> **Recommandé :** Chrome ou Edge sur Android, servi en HTTPS.
-
----
+Toutes les interfaces et exports PDF sont disponibles en français et en anglais.
 
 ## 🚀 Déploiement
 
-### Vercel (recommandé)
-```bash
-# 1. Cloner le repo
-git clone https://github.com/votre-username/hvacium.git
-cd hvacium
+Hébergé sur Vercel : [thermosys-v3.vercel.app](https://thermosys-v3.vercel.app)
 
-# 2. Pousser sur Vercel
+```
+cd dist
 vercel --prod
 ```
 
-### GitHub Pages
-```bash
-# Activer GitHub Pages sur la branche main
-# Le fichier index.html est servi automatiquement
-```
-
-### Local (développement)
-```bash
-# Python
-python -m http.server 8080
-
-# Node.js
-npx serve .
-```
-Ouvrir `http://localhost:8080` — BLE et caméra fonctionnels en localhost.
-
----
-
-## 📁 Structure du projet
-
-```
-hvacium/
-├── index.html          # Application complète (fichier unique)
-├── vercel.json         # Headers sécurité + permissions BLE/caméra
-├── robots.txt          # Contrôle indexation SEO
-└── README.md           # Ce fichier
-```
-
----
-
 ## ⚖️ Mentions légales
 
-**© 2026 Hvacium — Propriété Intellectuelle. Tous droits réservés.**
+© 2026 Thermosys — Tous droits réservés.
 
-Ce logiciel est protégé par les lois internationales sur la propriété intellectuelle.  
-Toute reproduction, distribution ou modification sans autorisation écrite est interdite.
-
-> ⚠️ **Avertissement légal :** Hvacium est un outil d'aide à la décision.  
-> Il ne remplace en aucun cas l'expertise physique d'un technicien certifié.  
-> Hvacium décline toute responsabilité en cas de saisie erronée, mauvaise interprétation  
-> des résultats ou dommages consécutifs à une intervention non conforme aux normes  
-> en vigueur (NF C18-510 · NF DTU 65.11 · EN 378:2021).
-
----
+**Avertissement légal :** Thermosys est un outil d'aide à la décision technique. Les méthodes de calcul s'appuient sur les normes et référentiels cités dans l'application (ASHRAE, EN, IT246, IEC 60534, etc.), mais ne constituent pas une certification officielle. Il ne remplace en aucun cas l'expertise et la validation d'un ingénieur ou technicien qualifié. Toute utilisation professionnelle doit faire l'objet d'une vérification indépendante avant exécution.
 
 ## 📞 Contact
 
-**Hvacium** — Application HVAC Professionnelle  
-🌐 [hvacium.com](https://hvacium.com)  
-📧 contact@hvacium.com
-
----
-
-*Données techniques à jour au 29/04/2026 — Version 5.1.0 build 20260429*
+Nadir Mouissat
