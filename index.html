@@ -3565,7 +3565,9 @@ function exportDv() {
   var dvRem   = parseFloat((document.getElementById('dvRemise')||{value:'0'}).value)||0;
   var dvTva   = parseFloat((document.getElementById('dvTVA')||{value:'0'}).value)||0;
   var totalHTR = total*(1-dvRem/100);
-  var totalTTC = totalHTR*(1+dvTva/100);
+  var totalHTRr = Math.round(totalHTR);
+  var tvaMontant = Math.round(totalHTRr*dvTva/100);
+  var totalTTC = totalHTRr + tvaMontant;
   var now     = new Date();
   if (!devisLines.length) { showToast(L?'Aucune ligne à exporter':'No lines to export','w'); return; }
   var rows = devisLines.map(function(l,i){
@@ -3613,7 +3615,7 @@ function exportDv() {
     +'<tfoot>'
     +'<tr><td colspan="4" style="text-align:right">'+(L?'Total HT':'Total (excl. VAT)')+' :</td><td style="text-align:right">'+fmtMoney(total)+'</td></tr>'
     +(dvRem>0?'<tr><td colspan="4" style="text-align:right;color:#c62828">'+(L?'Remise':'Discount')+' ('+dvRem+'%) :</td><td style="text-align:right;color:#c62828">-'+fmtMoney(total-totalHTR)+'</td></tr>'+'<tr><td colspan="4" style="text-align:right">'+(L?'HT net':'Net excl. VAT')+' :</td><td style="text-align:right">'+fmtMoney(totalHTR)+'</td></tr>':'')
-    +'<tr><td colspan="4" style="text-align:right">'+(L?'Taxe/VAT':'Tax/VAT')+' ('+dvTva+'%) :</td><td style="text-align:right">'+fmtMoney(totalTTC-totalHTR)+'</td></tr>'
+    +'<tr><td colspan="4" style="text-align:right">'+(L?'Taxe/VAT':'Tax/VAT')+' ('+dvTva+'%) :</td><td style="text-align:right">'+fmtMoney(tvaMontant)+'</td></tr>'
     +'<tr class="tot-row"><td colspan="4" style="text-align:right;letter-spacing:1px">'+(L?'TOTAL TTC :':'TOTAL (incl. VAT) :')+'</td><td style="text-align:right">'+fmtMoney(totalTTC)+'</td></tr>'
     +'</tfoot>'
     +'</table>'
