@@ -1171,53 +1171,53 @@
 
 <div id="hyd6" class="tp2">
 <div class="panel">
-  <div class="ph">🎯 GUIDE PRÉRÉGLAGE HYDRAULIQUE — EN 14336 / EN ISO 4064</div>
+  <div class="ph" data-fr="🎯 GUIDE PRÉRÉGLAGE HYDRAULIQUE — EN 14336 / EN ISO 4064" data-en="🎯 HYDRAULIC PRE-SETTING GUIDE — EN 14336 / EN ISO 4064">🎯 GUIDE PRÉRÉGLAGE HYDRAULIQUE — EN 14336 / EN ISO 4064</div>
   <div class="tabs" id="preregl-tabs" style="flex-wrap:wrap;gap:3px;margin-bottom:8px">
-    <button class="tab active" onclick="prereglTab('calc')" id="prt-calc">📐 Calculateur ΔP/Débit</button>
-    <button class="tab" onclick="prereglTab('palier')" id="prt-palier">🎚️ Paliers de Réglage</button>
-    <button class="tab" onclick="prereglTab('dh')" id="prt-dh">🌡️ Confort été (DH)</button>
+    <button class="tab active" onclick="prereglTab('calc')" id="prt-calc" data-fr="📐 Calculateur ΔP/Débit" data-en="📐 ΔP/Flow Calculator">📐 Calculateur ΔP/Débit</button>
+    <button class="tab" onclick="prereglTab('palier')" id="prt-palier" data-fr="🎚️ Paliers de Réglage" data-en="🎚️ Setting Levels">🎚️ Paliers de Réglage</button>
+    <button class="tab" onclick="prereglTab('dh')" id="prt-dh" data-fr="🌡️ Confort été (DH)" data-en="🌡️ Summer Comfort (DH)">🌡️ Confort été (DH)</button>
   </div>
   <div id="prc-calc" class="tp2 active">
     <div class="g2">
       <div>
-        <div class="ph" style="font-size:10px">DONNÉES CIRCUIT</div>
-        <div class="frow"><span class="flb">Puissance (kW) :</span><input class="fi" id="pr-kw" type="number" value="20" style="max-width:90px"></div>
-        <div class="frow"><span class="flb">ΔT nominal (°C) :</span><input class="fi" id="pr-dt" type="number" value="10" step="0.5" style="max-width:80px"></div>
-        <div class="frow"><span class="flb">Longueur équiv. (m) :</span><input class="fi" id="pr-l" type="number" value="80" style="max-width:80px"></div>
-        <div class="frow"><span class="flb">Fluide :</span>
+        <div class="ph" style="font-size:10px" data-fr="DONNÉES CIRCUIT" data-en="CIRCUIT DATA">DONNÉES CIRCUIT</div>
+        <div class="frow"><span class="flb" data-fr="Puissance (kW) :" data-en="Power (kW):">Puissance (kW) :</span><input class="fi" id="pr-kw" type="number" value="20" style="max-width:90px"></div>
+        <div class="frow"><span class="flb" data-fr="ΔT nominal (°C) :" data-en="Nominal ΔT (°C):">ΔT nominal (°C) :</span><input class="fi" id="pr-dt" type="number" value="10" step="0.5" style="max-width:80px"></div>
+        <div class="frow"><span class="flb" data-fr="Longueur équiv. (m) :" data-en="Equiv. length (m):">Longueur équiv. (m) :</span><input class="fi" id="pr-l" type="number" value="80" style="max-width:80px"></div>
+        <div class="frow"><span class="flb" data-fr="Fluide :" data-en="Fluid:">Fluide :</span>
           <select class="fsel" id="pr-fluid">
-            <option value="1000">Eau (1000 kg/m³)</option>
-            <option value="1040">Glycol 30%</option>
-            <option value="1060">Glycol 40%</option>
+            <option value="1000" data-fr="Eau (1000 kg/m³)" data-en="Water (1000 kg/m³)">Eau (1000 kg/m³)</option>
+            <option value="1040" data-fr="Glycol 30%" data-en="Glycol 30%">Glycol 30%</option>
+            <option value="1060" data-fr="Glycol 40%" data-en="Glycol 40%">Glycol 40%</option>
           </select>
         </div>
-        <div class="frow"><span class="flb">Régime :</span>
+        <div class="frow"><span class="flb" data-fr="Régime :" data-en="Regime:">Régime :</span>
           <select class="fsel" id="pr-regime">
-            <option value="80_60">Haute T° 80/60°C</option>
-            <option value="60_40">Moyenne T° 60/40°C</option>
-            <option value="45_35" selected="selected">Basse T° 45/35°C (PAC)</option>
-            <option value="7_12">Froid 7/12°C (chiller)</option>
-            <option value="14_18">Froid 14/18°C (poutres)</option>
+            <option value="80_60" data-fr="Haute T° 80/60°C" data-en="High temp 80/60°C">Haute T° 80/60°C</option>
+            <option value="60_40" data-fr="Moyenne T° 60/40°C" data-en="Medium temp 60/40°C">Moyenne T° 60/40°C</option>
+            <option value="45_35" selected="selected" data-fr="Basse T° 45/35°C (PAC)" data-en="Low temp 45/35°C (HP)">Basse T° 45/35°C (PAC)</option>
+            <option value="7_12" data-fr="Froid 7/12°C (chiller)" data-en="Cold 7/12°C (chiller)">Froid 7/12°C (chiller)</option>
+            <option value="14_18" data-fr="Froid 14/18°C (poutres)" data-en="Cold 14/18°C (beams)">Froid 14/18°C (poutres)</option>
           </select>
         </div>
-        <div class="frow"><span class="flb">Vanne équilibrage :</span>
+        <div class="frow"><span class="flb" data-fr="Vanne équilibrage :" data-en="Balancing valve:">Vanne équilibrage :</span>
           <select class="fsel" id="pr-valve-brand" onchange="document.getElementById('kvs-manual-row').style.display=this.value==='generic'?'flex':'none'">
             <option value="imi">IMI TA-COMPACT / STAD</option>
             <option value="ta">Tour &amp; Andersson STAD</option>
             <option value="danfoss">Danfoss MSV-F2</option>
             <option value="belimo">Belimo PICCV</option>
-            <option value="generic">Générique (Kvs manuel)</option>
+            <option value="generic" data-fr="Générique (Kvs manuel)" data-en="Generic (manual Kvs)">Générique (Kvs manuel)</option>
           </select>
         </div>
         <div class="frow" id="kvs-manual-row" style="display:none">
-          <span class="flb">Kvs (m³/h) :</span>
+          <span class="flb" data-fr="Kvs (m³/h) :" data-en="Kvs (m³/h):">Kvs (m³/h) :</span>
           <input class="fi" id="pr-kvs" type="number" value="2.5" step="0.1" style="max-width:80px">
         </div>
-        <button class="btn bp" onclick="calcPrereglDP()" style="width:100%;margin-top:8px">📐 Calculer ΔP &amp; Préréglage</button>
+        <button class="btn bp" onclick="calcPrereglDP()" style="width:100%;margin-top:8px" data-fr="📐 Calculer ΔP &amp; Préréglage" data-en="📐 Calculate ΔP &amp; Pre-setting">📐 Calculer ΔP &amp; Préréglage</button>
       </div>
       <div>
-        <div class="ph" style="font-size:10px">RÉSULTATS</div>
-        <div class="res" id="preregl-result" style="white-space:pre-wrap;font-size:11px;min-height:200px">Saisir les données et calculer.</div>
+        <div class="ph" style="font-size:10px" data-fr="RÉSULTATS" data-en="RESULTS">RÉSULTATS</div>
+        <div class="res" id="preregl-result" style="white-space:pre-wrap;font-size:11px;min-height:200px" data-fr="Saisir les données et calculer." data-en="Enter data and calculate.">Saisir les données et calculer.</div>
         <div id="preregl-table-cont" style="margin-top:10px;overflow-x:auto"></div>
       </div>
     </div>
@@ -1225,11 +1225,11 @@
   <div id="prc-palier" class="tp2" style="display:none">
     <div class="g2">
       <div>
-        <div class="ph" style="font-size:10px">GÉNÉRATEUR TABLE PALIERS</div>
-        <div class="frow"><span class="flb">Débit nominal (m³/h) :</span><input class="fi" id="pal-q" type="number" value="1.5" step="0.1" style="max-width:90px"></div>
-        <div class="frow"><span class="flb">ΔP disponible (kPa) :</span><input class="fi" id="pal-dp" type="number" value="20" style="max-width:80px"></div>
-        <div class="frow"><span class="flb">Kvs vanne (m³/h) :</span><input class="fi" id="pal-kvs" type="number" value="2.5" step="0.1" style="max-width:80px"></div>
-        <div class="frow"><span class="flb">Marque :</span>
+        <div class="ph" style="font-size:10px" data-fr="GÉNÉRATEUR TABLE PALIERS" data-en="SETTING TABLE GENERATOR">GÉNÉRATEUR TABLE PALIERS</div>
+        <div class="frow"><span class="flb" data-fr="Débit nominal (m³/h) :" data-en="Nominal flow (m³/h):">Débit nominal (m³/h) :</span><input class="fi" id="pal-q" type="number" value="1.5" step="0.1" style="max-width:90px"></div>
+        <div class="frow"><span class="flb" data-fr="ΔP disponible (kPa) :" data-en="Available ΔP (kPa):">ΔP disponible (kPa) :</span><input class="fi" id="pal-dp" type="number" value="20" style="max-width:80px"></div>
+        <div class="frow"><span class="flb" data-fr="Kvs vanne (m³/h) :" data-en="Valve Kvs (m³/h):">Kvs vanne (m³/h) :</span><input class="fi" id="pal-kvs" type="number" value="2.5" step="0.1" style="max-width:80px"></div>
+        <div class="frow"><span class="flb" data-fr="Marque :" data-en="Brand:">Marque :</span>
           <select class="fsel" id="pal-brand">
             <option value="imi">IMI STAD / TA-COMPACT-P</option>
             <option value="ta">Tour &amp; Andersson STAD</option>
@@ -1237,26 +1237,26 @@
             <option value="belimo">Belimo PICCV</option>
           </select>
         </div>
-        <button class="btn bp" onclick="genPaliers()" style="width:100%;margin-top:8px">🎚️ Générer paliers</button>
-        <div class="ph" style="font-size:10px;margin-top:12px">PALIERS DE RÉFÉRENCE CONSTRUCTEUR</div>
+        <button class="btn bp" onclick="genPaliers()" style="width:100%;margin-top:8px" data-fr="🎚️ Générer paliers" data-en="🎚️ Generate settings">🎚️ Générer paliers</button>
+        <div class="ph" style="font-size:10px;margin-top:12px" data-fr="PALIERS DE RÉFÉRENCE CONSTRUCTEUR" data-en="MANUFACTURER REFERENCE SETTINGS">PALIERS DE RÉFÉRENCE CONSTRUCTEUR</div>
         <div class="tw"><table class="tbl" style="font-size:10px">
-          <thead><tr><th>Palier</th><th>Ouv.%</th><th>Kv m³/h</th><th>ΔP kPa</th><th>Application</th></tr></thead>
+          <thead><tr><th data-fr="Palier" data-en="Setting">Palier</th><th data-fr="Ouv.%" data-en="Open.%">Ouv.%</th><th>Kv m³/h</th><th>ΔP kPa</th><th data-fr="Application" data-en="Application">Application</th></tr></thead>
           <tbody>
-            <tr><td style="color:var(--ac);font-weight:700">1</td><td>10%</td><td>0.08–0.12</td><td>&gt;50</td><td>Branches terminales</td></tr>
+            <tr><td style="color:var(--ac);font-weight:700">1</td><td>10%</td><td>0.08–0.12</td><td>&gt;50</td><td data-fr="Branches terminales" data-en="Terminal branches">Branches terminales</td></tr>
             <tr><td style="color:var(--ac);font-weight:700">2</td><td>20%</td><td>0.25–0.40</td><td>25–50</td><td>Fan-coils &lt;2 kW</td></tr>
             <tr><td style="color:var(--ac);font-weight:700">3</td><td>30%</td><td>0.50–0.80</td><td>15–25</td><td>Fan-coils 2–5 kW</td></tr>
             <tr><td style="color:var(--ac);font-weight:700">4</td><td>40%</td><td>0.90–1.40</td><td>10–15</td><td>Fan-coils 5–10 kW</td></tr>
             <tr><td style="color:var(--ac);font-weight:700">5</td><td>55%</td><td>1.50–2.20</td><td>6–10</td><td>CTA / 10–20 kW</td></tr>
-            <tr><td style="color:var(--ac);font-weight:700">6</td><td>70%</td><td>2.50–3.50</td><td>3–6</td><td>Colonnes montantes</td></tr>
-            <tr><td style="color:var(--ac);font-weight:700">7</td><td>85%</td><td>4.0–6.0</td><td>1–3</td><td>Antennes</td></tr>
-            <tr><td style="color:var(--ac);font-weight:700">8</td><td>100%</td><td>Kvs max</td><td>Mesure</td><td>Collecteur général</td></tr>
+            <tr><td style="color:var(--ac);font-weight:700">6</td><td>70%</td><td>2.50–3.50</td><td>3–6</td><td data-fr="Colonnes montantes" data-en="Rising columns">Colonnes montantes</td></tr>
+            <tr><td style="color:var(--ac);font-weight:700">7</td><td>85%</td><td>4.0–6.0</td><td>1–3</td><td data-fr="Antennes" data-en="Branches">Antennes</td></tr>
+            <tr><td style="color:var(--ac);font-weight:700">8</td><td>100%</td><td data-fr="Kvs max" data-en="Max Kvs">Kvs max</td><td data-fr="Mesure" data-en="Measured">Mesure</td><td data-fr="Collecteur général" data-en="Main collector">Collecteur général</td></tr>
           </tbody>
         </table></div>
       </div>
       <div>
-        <div class="ph" style="font-size:10px">TABLE PALIERS CALCULÉE</div>
+        <div class="ph" style="font-size:10px" data-fr="TABLE PALIERS CALCULÉE" data-en="CALCULATED SETTINGS TABLE">TABLE PALIERS CALCULÉE</div>
         <div id="palier-table-cont" style="overflow-x:auto"></div>
-        <div class="res" id="palier-result" style="margin-top:8px;font-size:11px;white-space:pre-wrap">Renseigner les données et générer.</div>
+        <div class="res" id="palier-result" style="margin-top:8px;font-size:11px;white-space:pre-wrap" data-fr="Renseigner les données et générer." data-en="Enter data and generate.">Renseigner les données et générer.</div>
       </div>
     </div>
   </div>
@@ -2973,12 +2973,19 @@ function rptLoadVoices() {
 
 /* ─ Get selected voice ───────────────────────────────────────────────── */
 function rptGetVoice() {
+  var fr = lang==='fr';
+  var target = fr ? 'fr' : 'en';
   var name = (document.getElementById('rpt-voice')||{}).value||'';
   var all  = window.speechSynthesis.getVoices();
-  if (name) return all.find(function(v){return v.name===name;})||null;
+  if (name) {
+    var chosen = all.find(function(v){return v.name===name;});
+    // Sécurité : n'honorer la sélection manuelle QUE si elle correspond encore
+    // à la langue active — évite qu'une voix FR reste utilisée après bascule
+    // vers l'anglais (ou inversement), ce qui produisait un rendu "franglais".
+    if (chosen && chosen.lang.toLowerCase().indexOf(target) === 0) return chosen;
+  }
   // Auto: pick best available
-  var fr = lang==='fr';
-  var pool = all.filter(function(v){return v.lang.startsWith(fr?'fr':'en');});
+  var pool = all.filter(function(v){return v.lang.toLowerCase().indexOf(target) === 0;});
   if (!pool.length) pool = all;
   pool.sort(function(a,b){
     var s=function(v){var n=(v.name||'').toLowerCase();
