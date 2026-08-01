@@ -1438,6 +1438,7 @@
       <div id="rsCloudListWrap" style="display:none;gap:6px;margin-top:6px" class="frow">
         <select class="fsel" id="rsCloudList" style="flex:1"></select>
         <button class="btn bp" onclick="loadReseauFromCloud()" data-fr="Charger" data-en="Load">Charger</button>
+        <button class="btn bd" onclick="deleteReseauFromCloud()" title="Supprimer ce réseau" data-fr="🗑️" data-en="🗑️">🗑️</button>
       </div>
       <button class="btn bp" onclick="exportReseau()" style="width:100%;margin-top:6px" data-fr="⬇ Export PDF" data-en="⬇ Export PDF">⬇ Export PDF</button>
     </div>
@@ -4819,6 +4820,20 @@ async function loadReseauFromCloud(){
   renderReseau();
   showToast(fr?'Réseau chargé':'Network loaded', 's');
   if (typeof logHist === 'function') logHist('Réseau chargé: '+(res.data.name||''));
+}
+
+async function deleteReseauFromCloud(){
+  var fr = (typeof lang!=='undefined' && lang==='fr');
+  var sel = document.getElementById('rsCloudList');
+  var id = sel ? sel.value : '';
+  if (!id) { showToast(fr?'Sélectionnez un réseau à supprimer':'Select a network to delete', 'w'); return; }
+  var selectedText = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '';
+
+  var res = await _sb.from('projects').delete().eq('id', id);
+  if (res.error) { showToast((fr?'Erreur : ':'Error: ')+res.error.message, 'e'); return; }
+  showToast((fr?'Réseau supprimé : ':'Network deleted: ')+selectedText, 's');
+  if (typeof logHist === 'function') logHist('Réseau supprimé: '+selectedText);
+  toggleReseauCloudList();
 }
 
 function buildReseauSVGPrint(){
