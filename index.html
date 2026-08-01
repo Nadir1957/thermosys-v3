@@ -1407,6 +1407,11 @@
   <div class="g2">
     <div>
       <div class="ph" style="font-size:10px" data-fr="AJOUTER UN TRONÇON" data-en="ADD SEGMENT">AJOUTER UN TRONÇON</div>
+      <div class="frow"><span class="flb" data-fr="En aval de :" data-en="Downstream of:">En aval de :</span>
+        <select class="fsel" id="rsParent">
+          <option value="" data-fr="— Départ (source) —" data-en="— Start (source) —">— Départ (source) —</option>
+        </select>
+      </div>
       <div class="frow"><span class="flb" data-fr="Nom (optionnel) :" data-en="Name (optional):">Nom (optionnel) :</span><input class="fi" id="rsName" placeholder="Ex: Colonne montante" style="max-width:160px"></div>
       <div class="frow"><span class="flb" data-fr="Débit Q (m³/h) :" data-en="Flow Q (m³/h):">Débit Q (m³/h) :</span><input class="fi" id="rsQ" type="number" value="10" style="max-width:90px"></div>
       <div class="frow"><span class="flb" data-fr="Diamètre (mm) :" data-en="Diameter (mm):">Diamètre (mm) :</span><input class="fi" id="rsD" type="number" value="40" style="max-width:90px"></div>
@@ -4532,6 +4537,19 @@ function calcSegmentPDC(Q, D, L, fluid){
 var reseauSegments = [];
 var reseauIdCounter = 0;
 
+function populateParentDropdown(){
+  var fr = (typeof lang!=='undefined' && lang==='fr');
+  var sel = document.getElementById('rsParent');
+  if (!sel) return;
+  var current = sel.value;
+  var opts = ['<option value="" data-fr="— Départ (source) —" data-en="— Start (source) —">'+(fr?'— Départ (source) —':'— Start (source) —')+'</option>'];
+  reseauSegments.forEach(function(s){
+    opts.push('<option value="'+s.id+'">'+s.name+'</option>');
+  });
+  sel.innerHTML = opts.join('');
+  if (reseauSegments.some(function(s){ return String(s.id)===current; })) sel.value = current;
+}
+
 function addReseauSegment(){
   var fr = (typeof lang!=='undefined' && lang==='fr');
   var name = (document.getElementById('rsName')||{}).value || ((fr?'Tronçon ':'Segment ')+(reseauSegments.length+1));
@@ -4542,12 +4560,14 @@ function addReseauSegment(){
   var coudes = parseInt((document.getElementById('rsCoudes')||{}).value) || 0;
   var tes = parseInt((document.getElementById('rsTes')||{}).value) || 0;
   var vannes = parseInt((document.getElementById('rsVannes')||{}).value) || 0;
+  var parentVal = (document.getElementById('rsParent')||{}).value || '';
+  var parentId = parentVal ? parseInt(parentVal) : null;
   var calc = calcSegmentPDC(Q, D, L, fluid);
   var sumK = coudes*0.9 + tes*1.0 + vannes*0.2;
   var dPSing = sumK * (fluid*calc.v*calc.v/2);
   var dPTotal = calc.dP + dPSing;
   reseauIdCounter++;
-  reseauSegments.push({id:reseauIdCounter, name:name, Q:Q, D:D, L:L, fluid:fluid, coudes:coudes, tes:tes, vannes:vannes, dPLin:calc.dP, dPSing:dPSing, dP:dPTotal, v:calc.v});
+  reseauSegments.push({id:reseauIdCounter, parentId:parentId, name:name, Q:Q, D:D, L:L, fluid:fluid, coudes:coudes, tes:tes, vannes:vannes, dPLin:calc.dP, dPSing:dPSing, dP:dPTotal, v:calc.v});
   renderReseau();
   showToast(name+(fr?' ajouté':' added'), 's');
   var nameEl = document.getElementById('rsName'); if (nameEl) nameEl.value = '';
@@ -4557,7 +4577,19 @@ function addReseauSegment(){
 }
 
 function rmReseauSegment(id){
-  reseauSegments = reseauSegments.filter(function(s){ return s.id !== id; });
+  // Suppression en cascade : retire aussi tous les tronçons rattachés (directement ou indirectement) à celui-ci
+  var toRemove = [id];
+  var changed = true;
+  while (changed) {
+    changed = false;
+    reseauSegments.forEach(function(s){
+      if (s.parentId!=null && toRemove.indexOf(s.parentId)!==-1 && toRemove.indexOf(s.id)===-1) {
+        toRemove.push(s.id);
+        changed = true;
+      }
+    });
+  }
+  reseauSegments = reseauSegments.filter(function(s){ return toRemove.indexOf(s.id)===-1; });
   renderReseau();
 }
 
@@ -4566,13 +4598,45 @@ function clearReseau(){
   renderReseau();
 }
 
+function computeCriticalPath(){
+  var byId = {};
+  reseauSegments.forEach(function(s){ byId[s.id]=s; });
+  var parentIds = {};
+  reseauSegments.forEach(function(s){ if(s.parentId!=null) parentIds[s.parentId]=true; });
+  var leaves = reseauSegments.filter(function(s){ return !parentIds[s.id]; });
+  var best = null;
+  leaves.forEach(function(leaf){
+    var path = [];
+    var cum = 0;
+    var cur = leaf;
+    var guard = 0;
+    while (cur && guard<1000) {
+      path.unshift(cur);
+      cum += cur.dP;
+      cur = cur.parentId!=null ? byId[cur.parentId] : null;
+      guard++;
+    }
+    if (!best || cum > best.total) best = {path:path, total:cum};
+  });
+  return best || {path:[], total:0};
+}
+
 function renderReseau(){
   var fr = (typeof lang!=='undefined' && lang==='fr');
+  populateParentDropdown();
+
+  var crit = reseauSegments.length ? computeCriticalPath() : {path:[], total:0};
+  var critIds = crit.path.map(function(s){ return s.id; });
+
   var body = document.getElementById('rsBody');
   if (body) {
     body.innerHTML = reseauSegments.map(function(s){
       var detail = (fr?'Linéaire':'Linear')+': '+s.dPLin.toFixed(0)+' Pa | '+(fr?'Singulières':'Singular')+': '+s.dPSing.toFixed(0)+' Pa';
-      return '<tr><td>'+s.name+'</td><td>'+s.Q+'</td><td>'+s.D+'</td><td>'+s.L+'</td>'+
+      var parent = s.parentId!=null ? reseauSegments.find(function(x){ return x.id===s.parentId; }) : null;
+      var nameCell = s.name + (parent ? '<div style="font-size:8.5px;color:var(--ts)">↳ '+parent.name+'</div>' : '');
+      var isCrit = critIds.indexOf(s.id)!==-1;
+      var rowStyle = isCrit ? ' style="background:rgba(0,229,255,.07)"' : '';
+      return '<tr'+rowStyle+'><td>'+nameCell+'</td><td>'+s.Q+'</td><td>'+s.D+'</td><td>'+s.L+'</td>'+
         '<td class="neon" title="'+detail+'">'+s.dP.toFixed(0)+' Pa</td>'+
         '<td><button class="btn bd" style="padding:4px 9px;min-height:34px;font-size:11px" data-sid="'+s.id+'" onclick="rmReseauSegment(parseInt(this.getAttribute(\'data-sid\')))">×</button></td></tr>';
     }).join('');
@@ -4585,23 +4649,26 @@ function renderReseau(){
     renderReseauSVG();
     return;
   }
-  var totalDP = reseauSegments.reduce(function(s,seg){ return s+seg.dP; }, 0);
-  var totalDPLin = reseauSegments.reduce(function(s,seg){ return s+seg.dPLin; }, 0);
-  var totalDPSing = reseauSegments.reduce(function(s,seg){ return s+seg.dPSing; }, 0);
-  var totalL = reseauSegments.reduce(function(s,seg){ return s+seg.L; }, 0);
+
+  var totalDP = crit.total;
+  var totalDPLin = crit.path.reduce(function(s,seg){ return s+seg.dPLin; }, 0);
+  var totalDPSing = crit.path.reduce(function(s,seg){ return s+seg.dPSing; }, 0);
+  var totalL = crit.path.reduce(function(s,seg){ return s+seg.L; }, 0);
   var hmt = totalDP/(1000*9.81);
+  var pathNames = crit.path.map(function(s){ return s.name; }).join(' → ');
   var lines = [
-    (fr?'Nombre de tronçons':'Number of segments')+' : '+reseauSegments.length,
-    (fr?'Longueur totale':'Total length')+' : '+totalL.toFixed(1)+' m',
+    (fr?'Nombre de tronçons (réseau complet)':'Number of segments (full network)')+' : '+reseauSegments.length,
+    (fr?'Circuit le plus défavorisé':'Most unfavorable circuit')+' : '+pathNames,
+    (fr?'Longueur du circuit':'Circuit length')+' : '+totalL.toFixed(1)+' m',
     (fr?'  dont pertes linéaires':'  incl. linear losses')+' : '+totalDPLin.toFixed(0)+' Pa',
     (fr?'  dont pertes singulières':'  incl. singular losses')+' : '+totalDPSing.toFixed(0)+' Pa',
-    (fr?'Perte de charge totale':'Total pressure drop')+' : '+totalDP.toFixed(0)+' Pa ('+(totalDP/9810).toFixed(2)+' mCE)',
+    (fr?'Perte de charge du circuit':'Circuit pressure drop')+' : '+totalDP.toFixed(0)+' Pa ('+(totalDP/9810).toFixed(2)+' mCE)',
     '',
     (fr?'HMT pompe suggérée (+10% marge)':'Suggested pump head (+10% margin)')+' : '+(hmt*1.1).toFixed(2)+' m'
   ];
   resEl.textContent = lines.join('\n');
   renderReseauSVG();
-  if (typeof logHist === 'function') logHist((fr?'Réseau: ':'Network: ')+reseauSegments.length+(fr?' tronçons, ΔP totale ':' segments, total ΔP ')+totalDP.toFixed(0)+' Pa');
+  if (typeof logHist === 'function') logHist((fr?'Réseau: ':'Network: ')+reseauSegments.length+(fr?' tronçons, circuit critique ΔP ':' segments, critical circuit ΔP ')+totalDP.toFixed(0)+' Pa');
 }
 
 function renderReseauSVG(){
@@ -4614,30 +4681,67 @@ function renderReseauSVG(){
     return;
   }
 
-  var segW = 150, gapW = 40, h = 130, midY = 55;
-  var totalW = reseauSegments.length*segW + (reseauSegments.length-1)*gapW + 40;
-  var x = 20;
-  var parts = [];
-  parts.push('<svg viewBox="0 0 '+totalW+' '+h+'" style="width:100%;max-width:'+totalW+'px;height:auto" xmlns="http://www.w3.org/2000/svg">');
+  var crit = computeCriticalPath();
+  var critIds = crit.path.map(function(s){ return s.id; });
 
-  reseauSegments.forEach(function(s, i){
-    var thick = Math.max(8, Math.min(28, s.D/2.2));
-    var y1 = midY - thick/2;
-    parts.push('<rect x="'+x+'" y="'+y1+'" width="'+segW+'" height="'+thick+'" rx="3" fill="var(--ac)" fill-opacity="0.22" stroke="var(--ac)" stroke-width="1.5"/>');
-    parts.push('<circle cx="'+x+'" cy="'+midY+'" r="4.5" fill="var(--ac)"/>');
-    parts.push('<circle cx="'+(x+segW)+'" cy="'+midY+'" r="4.5" fill="var(--ac)"/>');
-    parts.push('<text x="'+(x+segW/2)+'" y="'+(midY-thick/2-8)+'" text-anchor="middle" font-size="10" fill="var(--tp)" font-weight="700">'+s.name+'</text>');
-    parts.push('<text x="'+(x+segW/2)+'" y="'+(midY+thick/2+16)+'" text-anchor="middle" font-size="9" fill="var(--ts)">D'+s.D+' L'+s.L+'</text>');
-    parts.push('<text x="'+(x+segW/2)+'" y="'+(midY+thick/2+29)+'" text-anchor="middle" font-size="9.5" fill="var(--ac3)" font-weight="700">'+s.dP.toFixed(0)+' Pa</text>');
-    if (i < reseauSegments.length-1) {
-      var ax = x+segW+gapW/2;
-      parts.push('<text x="'+ax+'" y="'+(midY+4)+'" text-anchor="middle" font-size="14" fill="var(--ac)">→</text>');
+  var byId = {};
+  reseauSegments.forEach(function(s){ byId[s.id]=s; });
+  function depthOf(s){
+    var d=0, cur=s, guard=0;
+    while (cur.parentId!=null && byId[cur.parentId] && guard<1000) { cur = byId[cur.parentId]; d++; guard++; }
+    return d;
+  }
+  var cols = {};
+  reseauSegments.forEach(function(s){
+    var d = depthOf(s);
+    if (!cols[d]) cols[d]=[];
+    cols[d].push(s);
+  });
+  var depths = Object.keys(cols).map(Number);
+  var maxDepth = Math.max.apply(null, depths);
+  var maxRows = Math.max.apply(null, Object.keys(cols).map(function(k){ return cols[k].length; }));
+
+  var segW=150, colGap=60, rowH=70, padTop=20;
+  var totalW = (maxDepth+1)*(segW+colGap) - colGap + 40;
+  var totalH = maxRows*rowH + padTop*2;
+
+  var pos = {};
+  depths.forEach(function(d){
+    cols[d].forEach(function(s, rowIdx){
+      pos[s.id] = {x: 20 + d*(segW+colGap), y: padTop + rowIdx*rowH + rowH/2};
+    });
+  });
+
+  var parts = [];
+  parts.push('<svg viewBox="0 0 '+totalW+' '+totalH+'" style="width:100%;max-width:'+totalW+'px;height:auto" xmlns="http://www.w3.org/2000/svg">');
+
+  reseauSegments.forEach(function(s){
+    if (s.parentId!=null && pos[s.parentId] && pos[s.id]) {
+      var p1 = pos[s.parentId], p2 = pos[s.id];
+      var x1 = p1.x+segW, y1 = p1.y, x2 = p2.x, y2 = p2.y;
+      var midX = (x1+x2)/2;
+      parts.push('<path d="M'+x1+','+y1+' C'+midX+','+y1+' '+midX+','+y2+' '+x2+','+y2+'" fill="none" stroke="var(--ac)" stroke-width="1.5" opacity="0.5"/>');
     }
-    x += segW + gapW;
+  });
+
+  reseauSegments.forEach(function(s){
+    var p = pos[s.id];
+    var thick = Math.max(8, Math.min(26, s.D/2.2));
+    var y1 = p.y - thick/2;
+    var isCrit = critIds.indexOf(s.id)!==-1;
+    var col = isCrit ? 'var(--wn)' : 'var(--ac)';
+    var sw = isCrit ? '2.5' : '1.5';
+    parts.push('<rect x="'+p.x+'" y="'+y1+'" width="'+segW+'" height="'+thick+'" rx="3" fill="'+col+'" fill-opacity="0.22" stroke="'+col+'" stroke-width="'+sw+'"/>');
+    parts.push('<circle cx="'+p.x+'" cy="'+p.y+'" r="4" fill="'+col+'"/>');
+    parts.push('<circle cx="'+(p.x+segW)+'" cy="'+p.y+'" r="4" fill="'+col+'"/>');
+    parts.push('<text x="'+(p.x+segW/2)+'" y="'+(y1-8)+'" text-anchor="middle" font-size="10" fill="var(--tp)" font-weight="700">'+s.name+'</text>');
+    parts.push('<text x="'+(p.x+segW/2)+'" y="'+(p.y+thick/2+16)+'" text-anchor="middle" font-size="9" fill="var(--ts)">D'+s.D+' L'+s.L+'</text>');
+    parts.push('<text x="'+(p.x+segW/2)+'" y="'+(p.y+thick/2+29)+'" text-anchor="middle" font-size="9.5" fill="'+col+'" font-weight="700">'+s.dP.toFixed(0)+' Pa</text>');
   });
 
   parts.push('</svg>');
-  wrap.innerHTML = parts.join('');
+  var legend = '<div style="font-size:9px;color:var(--wn);margin-top:6px">🟧 '+(fr?'Circuit le plus défavorisé (dimensionnant pour la pompe)':'Most unfavorable circuit (pump sizing basis)')+'</div>';
+  wrap.innerHTML = parts.join('') + legend;
 }
 </script>
 
