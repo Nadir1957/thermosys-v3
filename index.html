@@ -1418,6 +1418,11 @@
           <option value="1060" data-fr="Glycol 40%" data-en="Glycol 40%">Glycol 40%</option>
         </select>
       </div>
+      <div class="ph" style="font-size:9.5px;margin-top:8px" data-fr="PERTES SINGULIÈRES (accessoires du tronçon)" data-en="SINGULAR LOSSES (segment fittings)">PERTES SINGULIÈRES (accessoires du tronçon)</div>
+      <div class="frow"><span class="flb" data-fr="Coudes 90° (K≈0,9) :" data-en="90° elbows (K≈0.9):">Coudes 90° (K≈0,9) :</span><input class="fi" id="rsCoudes" type="number" value="0" min="0" style="max-width:70px"></div>
+      <div class="frow"><span class="flb" data-fr="Tés (K≈1,0) :" data-en="Tees (K≈1.0):">Tés (K≈1,0) :</span><input class="fi" id="rsTes" type="number" value="0" min="0" style="max-width:70px"></div>
+      <div class="frow"><span class="flb" data-fr="Vannes (K≈0,2) :" data-en="Valves (K≈0.2):">Vannes (K≈0,2) :</span><input class="fi" id="rsVannes" type="number" value="0" min="0" style="max-width:70px"></div>
+      <div style="font-size:9px;color:var(--ts);margin-bottom:6px" data-fr="Valeurs K indicatives (ordre de grandeur usuel) — à ajuster selon la documentation constructeur de l'accessoire réel." data-en="Indicative K values (typical order of magnitude) — adjust based on the actual fitting's manufacturer documentation.">Valeurs K indicatives (ordre de grandeur usuel) — à ajuster selon la documentation constructeur de l'accessoire réel.</div>
       <button class="btn bp" onclick="addReseauSegment()" style="width:100%;margin-top:4px" data-fr="+ Ajouter le tronçon" data-en="+ Add segment">+ Ajouter le tronçon</button>
       <button class="btn bd" onclick="clearReseau()" style="width:100%;margin-top:4px" data-fr="🗑️ Effacer le réseau" data-en="🗑️ Clear network">🗑️ Effacer le réseau</button>
     </div>
@@ -4532,12 +4537,21 @@ function addReseauSegment(){
   var D = parseFloat((document.getElementById('rsD')||{}).value) || 40;
   var L = parseFloat((document.getElementById('rsL')||{}).value) || 50;
   var fluid = parseFloat((document.getElementById('rsFluid')||{}).value) || 1000;
+  var coudes = parseInt((document.getElementById('rsCoudes')||{}).value) || 0;
+  var tes = parseInt((document.getElementById('rsTes')||{}).value) || 0;
+  var vannes = parseInt((document.getElementById('rsVannes')||{}).value) || 0;
   var calc = calcSegmentPDC(Q, D, L, fluid);
+  var sumK = coudes*0.9 + tes*1.0 + vannes*0.2;
+  var dPSing = sumK * (fluid*calc.v*calc.v/2);
+  var dPTotal = calc.dP + dPSing;
   reseauIdCounter++;
-  reseauSegments.push({id:reseauIdCounter, name:name, Q:Q, D:D, L:L, fluid:fluid, dP:calc.dP, v:calc.v});
+  reseauSegments.push({id:reseauIdCounter, name:name, Q:Q, D:D, L:L, fluid:fluid, coudes:coudes, tes:tes, vannes:vannes, dPLin:calc.dP, dPSing:dPSing, dP:dPTotal, v:calc.v});
   renderReseau();
   showToast(name+(fr?' ajouté':' added'), 's');
   var nameEl = document.getElementById('rsName'); if (nameEl) nameEl.value = '';
+  ['rsCoudes','rsTes','rsVannes'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.value = '0';
+  });
 }
 
 function rmReseauSegment(id){
@@ -4555,8 +4569,9 @@ function renderReseau(){
   var body = document.getElementById('rsBody');
   if (body) {
     body.innerHTML = reseauSegments.map(function(s){
+      var detail = (fr?'Linéaire':'Linear')+': '+s.dPLin.toFixed(0)+' Pa | '+(fr?'Singulières':'Singular')+': '+s.dPSing.toFixed(0)+' Pa';
       return '<tr><td>'+s.name+'</td><td>'+s.Q+'</td><td>'+s.D+'</td><td>'+s.L+'</td>'+
-        '<td class="neon">'+s.dP.toFixed(0)+' Pa</td>'+
+        '<td class="neon" title="'+detail+'">'+s.dP.toFixed(0)+' Pa</td>'+
         '<td><button class="btn bd" style="padding:4px 9px;min-height:34px;font-size:11px" data-sid="'+s.id+'" onclick="rmReseauSegment(parseInt(this.getAttribute(\'data-sid\')))">×</button></td></tr>';
     }).join('');
   }
@@ -4568,11 +4583,15 @@ function renderReseau(){
     return;
   }
   var totalDP = reseauSegments.reduce(function(s,seg){ return s+seg.dP; }, 0);
+  var totalDPLin = reseauSegments.reduce(function(s,seg){ return s+seg.dPLin; }, 0);
+  var totalDPSing = reseauSegments.reduce(function(s,seg){ return s+seg.dPSing; }, 0);
   var totalL = reseauSegments.reduce(function(s,seg){ return s+seg.L; }, 0);
   var hmt = totalDP/(1000*9.81);
   var lines = [
     (fr?'Nombre de tronçons':'Number of segments')+' : '+reseauSegments.length,
     (fr?'Longueur totale':'Total length')+' : '+totalL.toFixed(1)+' m',
+    (fr?'  dont pertes linéaires':'  incl. linear losses')+' : '+totalDPLin.toFixed(0)+' Pa',
+    (fr?'  dont pertes singulières':'  incl. singular losses')+' : '+totalDPSing.toFixed(0)+' Pa',
     (fr?'Perte de charge totale':'Total pressure drop')+' : '+totalDP.toFixed(0)+' Pa ('+(totalDP/9810).toFixed(2)+' mCE)',
     '',
     (fr?'HMT pompe suggérée (+10% marge)':'Suggested pump head (+10% margin)')+' : '+(hmt*1.1).toFixed(2)+' m'
