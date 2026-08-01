@@ -4518,8 +4518,6 @@ async function toggleDevisCloudList(){
   var fr = (typeof lang!=='undefined' && lang==='fr');
   var wrap = document.getElementById('dvCloudListWrap');
   if (!wrap) return;
-  var isHidden = (wrap.style.display === 'none' || !wrap.style.display);
-  if (!isHidden) { wrap.style.display = 'none'; return; }
 
   if (typeof _sb === 'undefined' || !_sb) { showToast(fr?'Connexion requise':'Login required','w'); return; }
   var userRes = await _sb.auth.getUser();
