@@ -1433,6 +1433,8 @@
         <tbody id="rsBody"></tbody>
       </table></div>
       <div class="res" id="rsResult" style="margin-top:8px" data-fr="Ajoutez au moins un tronçon." data-en="Add at least one segment.">Ajoutez au moins un tronçon.</div>
+      <div style="font-size:10px;font-weight:700;color:var(--ac3);margin-top:10px;margin-bottom:4px" data-fr="SCHÉMA DU RÉSEAU (généré automatiquement)" data-en="NETWORK DIAGRAM (auto-generated)">SCHÉMA DU RÉSEAU (généré automatiquement)</div>
+      <div id="rsSvgWrap" style="overflow-x:auto"></div>
     </div>
   </div>
 </div>
@@ -4580,6 +4582,7 @@ function renderReseau(){
   if (!resEl) return;
   if (!reseauSegments.length){
     resEl.textContent = fr?'Ajoutez au moins un tronçon.':'Add at least one segment.';
+    renderReseauSVG();
     return;
   }
   var totalDP = reseauSegments.reduce(function(s,seg){ return s+seg.dP; }, 0);
@@ -4597,7 +4600,44 @@ function renderReseau(){
     (fr?'HMT pompe suggérée (+10% marge)':'Suggested pump head (+10% margin)')+' : '+(hmt*1.1).toFixed(2)+' m'
   ];
   resEl.textContent = lines.join('\n');
+  renderReseauSVG();
   if (typeof logHist === 'function') logHist((fr?'Réseau: ':'Network: ')+reseauSegments.length+(fr?' tronçons, ΔP totale ':' segments, total ΔP ')+totalDP.toFixed(0)+' Pa');
+}
+
+function renderReseauSVG(){
+  var wrap = document.getElementById('rsSvgWrap');
+  if (!wrap) return;
+  var fr = (typeof lang!=='undefined' && lang==='fr');
+
+  if (!reseauSegments.length){
+    wrap.innerHTML = '<div style="font-size:10px;color:var(--ts)">'+(fr?'Le schéma apparaîtra ici après ajout d\'un tronçon.':'Diagram will appear here after adding a segment.')+'</div>';
+    return;
+  }
+
+  var segW = 150, gapW = 40, h = 130, midY = 55;
+  var totalW = reseauSegments.length*segW + (reseauSegments.length-1)*gapW + 40;
+  var x = 20;
+  var parts = [];
+  parts.push('<svg viewBox="0 0 '+totalW+' '+h+'" style="width:100%;max-width:'+totalW+'px;height:auto" xmlns="http://www.w3.org/2000/svg">');
+
+  reseauSegments.forEach(function(s, i){
+    var thick = Math.max(8, Math.min(28, s.D/2.2));
+    var y1 = midY - thick/2;
+    parts.push('<rect x="'+x+'" y="'+y1+'" width="'+segW+'" height="'+thick+'" rx="3" fill="var(--ac)" fill-opacity="0.22" stroke="var(--ac)" stroke-width="1.5"/>');
+    parts.push('<circle cx="'+x+'" cy="'+midY+'" r="4.5" fill="var(--ac)"/>');
+    parts.push('<circle cx="'+(x+segW)+'" cy="'+midY+'" r="4.5" fill="var(--ac)"/>');
+    parts.push('<text x="'+(x+segW/2)+'" y="'+(midY-thick/2-8)+'" text-anchor="middle" font-size="10" fill="var(--tp)" font-weight="700">'+s.name+'</text>');
+    parts.push('<text x="'+(x+segW/2)+'" y="'+(midY+thick/2+16)+'" text-anchor="middle" font-size="9" fill="var(--ts)">D'+s.D+' L'+s.L+'</text>');
+    parts.push('<text x="'+(x+segW/2)+'" y="'+(midY+thick/2+29)+'" text-anchor="middle" font-size="9.5" fill="var(--ac3)" font-weight="700">'+s.dP.toFixed(0)+' Pa</text>');
+    if (i < reseauSegments.length-1) {
+      var ax = x+segW+gapW/2;
+      parts.push('<text x="'+ax+'" y="'+(midY+4)+'" text-anchor="middle" font-size="14" fill="var(--ac)">→</text>');
+    }
+    x += segW + gapW;
+  });
+
+  parts.push('</svg>');
+  wrap.innerHTML = parts.join('');
 }
 </script>
 
