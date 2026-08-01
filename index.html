@@ -1439,6 +1439,7 @@
         <select class="fsel" id="rsCloudList" style="flex:1"></select>
         <button class="btn bp" onclick="loadReseauFromCloud()" data-fr="Charger" data-en="Load">Charger</button>
       </div>
+      <button class="btn bp" onclick="exportReseau()" style="width:100%;margin-top:6px" data-fr="⬇ Export PDF" data-en="⬇ Export PDF">⬇ Export PDF</button>
     </div>
     <div>
       <div class="ph" style="font-size:10px" data-fr="TRONÇONS DU RÉSEAU" data-en="NETWORK SEGMENTS">TRONÇONS DU RÉSEAU</div>
@@ -4818,6 +4819,120 @@ async function loadReseauFromCloud(){
   renderReseau();
   showToast(fr?'Réseau chargé':'Network loaded', 's');
   if (typeof logHist === 'function') logHist('Réseau chargé: '+(res.data.name||''));
+}
+
+function buildReseauSVGPrint(){
+  if (!reseauSegments.length) return '';
+  var crit = computeCriticalPath();
+  var critIds = crit.path.map(function(s){ return s.id; });
+  var byId = {};
+  reseauSegments.forEach(function(s){ byId[s.id]=s; });
+  function depthOf(s){
+    var d=0, cur=s, guard=0;
+    while (cur.parentId!=null && byId[cur.parentId] && guard<1000) { cur = byId[cur.parentId]; d++; guard++; }
+    return d;
+  }
+  var cols = {};
+  reseauSegments.forEach(function(s){ var d=depthOf(s); if(!cols[d])cols[d]=[]; cols[d].push(s); });
+  var depths = Object.keys(cols).map(Number);
+  var maxDepth = Math.max.apply(null, depths);
+  var maxRows = Math.max.apply(null, Object.keys(cols).map(function(k){ return cols[k].length; }));
+  var segW=150, colGap=60, rowH=70, padTop=20;
+  var totalW = (maxDepth+1)*(segW+colGap) - colGap + 40;
+  var totalH = maxRows*rowH + padTop*2;
+  var pos = {};
+  depths.forEach(function(d){ cols[d].forEach(function(s, rowIdx){ pos[s.id]={x:20+d*(segW+colGap), y:padTop+rowIdx*rowH+rowH/2}; }); });
+
+  var AC='#1a3a5a', WN='#c62828', TS='#5a7a9a';
+  var parts = ['<svg viewBox="0 0 '+totalW+' '+totalH+'" width="100%" xmlns="http://www.w3.org/2000/svg">'];
+  reseauSegments.forEach(function(s){
+    if (s.parentId!=null && pos[s.parentId] && pos[s.id]) {
+      var p1=pos[s.parentId], p2=pos[s.id], x1=p1.x+segW, y1=p1.y, x2=p2.x, y2=p2.y, midX=(x1+x2)/2;
+      parts.push('<path d="M'+x1+','+y1+' C'+midX+','+y1+' '+midX+','+y2+' '+x2+','+y2+'" fill="none" stroke="'+AC+'" stroke-width="1.5" opacity="0.5"/>');
+    }
+  });
+  reseauSegments.forEach(function(s){
+    var p=pos[s.id], thick=Math.max(8,Math.min(26,s.D/2.2)), y1=p.y-thick/2;
+    var isCrit = critIds.indexOf(s.id)!==-1;
+    var col = isCrit ? WN : AC;
+    parts.push('<rect x="'+p.x+'" y="'+y1+'" width="'+segW+'" height="'+thick+'" rx="3" fill="'+col+'" fill-opacity="0.15" stroke="'+col+'" stroke-width="'+(isCrit?2.5:1.5)+'"/>');
+    parts.push('<circle cx="'+p.x+'" cy="'+p.y+'" r="4" fill="'+col+'"/><circle cx="'+(p.x+segW)+'" cy="'+p.y+'" r="4" fill="'+col+'"/>');
+    parts.push('<text x="'+(p.x+segW/2)+'" y="'+(y1-8)+'" text-anchor="middle" font-size="10" fill="'+AC+'" font-weight="700">'+s.name+'</text>');
+    parts.push('<text x="'+(p.x+segW/2)+'" y="'+(p.y+thick/2+16)+'" text-anchor="middle" font-size="9" fill="'+TS+'">D'+s.D+' L'+s.L+'</text>');
+    parts.push('<text x="'+(p.x+segW/2)+'" y="'+(p.y+thick/2+29)+'" text-anchor="middle" font-size="9.5" fill="'+col+'" font-weight="700">'+s.dP.toFixed(0)+' Pa</text>');
+  });
+  parts.push('</svg>');
+  return parts.join('');
+}
+
+function exportReseau(){
+  var L = (typeof lang!=='undefined' && lang==='fr');
+  if (!reseauSegments.length) { showToast(L?'Ajoutez au moins un tronçon avant d\'exporter':'Add at least one segment before exporting','w'); return; }
+  var crit = computeCriticalPath();
+  var critIds = crit.path.map(function(s){ return s.id; });
+  var name = (document.getElementById('rsNetworkName')||{}).value || (L?'Reseau HVAC':'HVAC Network');
+  var now = new Date();
+  var dateVal = now.toLocaleDateString();
+
+  var rows = reseauSegments.map(function(s){
+    var isCrit = critIds.indexOf(s.id)!==-1;
+    return '<tr style="'+(isCrit?'background:#fdecea':'background:#fff')+'">'
+      +'<td style="padding:5px 8px;border:1pt solid #dde;font-size:9pt">'+s.name+(isCrit?' ★':'')+'</td>'
+      +'<td style="padding:5px 8px;border:1pt solid #dde;text-align:center;font-size:9pt">'+s.Q+'</td>'
+      +'<td style="padding:5px 8px;border:1pt solid #dde;text-align:center;font-size:9pt">'+s.D+'</td>'
+      +'<td style="padding:5px 8px;border:1pt solid #dde;text-align:center;font-size:9pt">'+s.L+'</td>'
+      +'<td style="padding:5px 8px;border:1pt solid #dde;text-align:right;font-weight:700;font-size:9pt">'+s.dP.toFixed(0)+' Pa</td>'
+      +'</tr>';
+  }).join('');
+
+  var pathNames = crit.path.map(function(s){ return s.name; }).join(' → ');
+  var hmt = (crit.total/(1000*9.81)*1.1).toFixed(2);
+
+  var win = window.open('','_blank','width=900,height=750');
+  if (!win){showToast(L?'Popup bloqué':'Popup blocked','w');return;}
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+name+' — THERMOSYS</title>'
+    +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Times New Roman",serif;background:#e8ecf0;padding:24px 0;color:#1a3a5a;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'@media print{@page{margin:0;size:A4}.no-print{display:none!important}body{background:#fff!important;padding:0!important}}'
+    +'.page{width:210mm;margin:0 auto;background:#fff;padding:14mm 17mm;box-shadow:0 6px 30px rgba(0,0,0,.18);position:relative}'
+    +'.page::before{content:"";position:absolute;inset:6mm;border:1.5pt solid #1a3a5a;pointer-events:none}'
+    +'.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8mm}'
+    +'.logo{font-size:26pt;font-weight:900;letter-spacing:6px;color:#1a3a5a}'
+    +'.doc-type{font-size:14pt;font-weight:700;color:#fff;background:#1a3a5a;padding:3mm 6mm;border-radius:2pt;letter-spacing:1px}'
+    +'.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-bottom:6mm}'
+    +'.info-box{background:#f4f7fc;border-left:3pt solid #1a3a5a;padding:3mm 5mm;border-radius:0 2pt 2pt 0}'
+    +'.info-title{font-size:6.5pt;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#1a3a5a;margin-bottom:2mm}'
+    +'.info-val{font-size:9pt;color:#2a4a6a}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:6mm}'
+    +'th{background:#1a3a5a;color:#fff;padding:5px 8px;font-size:8pt;letter-spacing:1px;text-align:left}'
+    +'th:nth-child(2),th:nth-child(3),th:nth-child(4),th:nth-child(5){text-align:center}'
+    +'.tot-row td{background:#1a3a5a;color:#fff;padding:6px 8px;font-weight:700;font-size:10pt}'
+    +'.footer{text-align:center;font-size:6pt;color:#999;border-top:.5pt solid #ccc;padding-top:3mm;margin-top:4mm;letter-spacing:.3px}'
+    +'.pbtn{display:block;margin:12px auto;padding:11px 28px;background:#1a3a5a;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;width:210mm;font-family:sans-serif;letter-spacing:1px}'
+    +'</style></head><body>'
+    +'<button class="pbtn no-print" onclick="_rspdfDownload()">'+(L?'⊕ IMPRIMER LE CALCUL RÉSEAU':'⊕ PRINT NETWORK CALCULATION')+'</button>'
+    +'<div class="page">'
+    +'<div class="hdr"><div><div class="logo">THERMOSYS</div><div style="font-size:7pt;color:#4a6a8a;letter-spacing:3px;margin-top:2mm">HVAC WORKSTATION v3</div></div>'
+    +'<div><div class="doc-type">'+(L?'CALCUL RÉSEAU':'NETWORK CALC')+'</div><div style="font-size:8pt;color:#555;margin-top:2mm;text-align:right">'+dateVal+'</div></div></div>'
+    +'<div class="info-grid">'
+    +'<div class="info-box"><div class="info-title">'+(L?'Réseau':'Network')+'</div><div class="info-val">'+name+'</div></div>'
+    +'<div class="info-box"><div class="info-title">'+(L?'Circuit le plus défavorisé':'Most unfavorable circuit')+'</div><div class="info-val">'+pathNames+'</div></div>'
+    +'</div>'
+    +'<table><thead><tr><th>'+(L?'Tronçon':'Segment')+'</th><th>Q (m³/h)</th><th>D (mm)</th><th>L (m)</th><th>ΔP</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody>'
+    +'<tfoot>'
+    +'<tr><td colspan="4" style="text-align:right;padding:5px 8px;border:1pt solid #dde">'+(L?'Perte de charge du circuit':'Circuit pressure drop')+' :</td><td style="text-align:right;padding:5px 8px;border:1pt solid #dde;font-weight:700">'+crit.total.toFixed(0)+' Pa ('+(crit.total/9810).toFixed(2)+' mCE)</td></tr>'
+    +'<tr class="tot-row"><td colspan="4" style="text-align:right;letter-spacing:1px">'+(L?'HMT POMPE SUGGÉRÉE (+10%) :':'SUGGESTED PUMP HEAD (+10%):')+'</td><td style="text-align:right">'+hmt+' m</td></tr>'
+    +'</tfoot>'
+    +'</table>'
+    +'<div style="text-align:center;margin:6mm 0">'+buildReseauSVGPrint()+'</div>'
+    +'<div style="font-size:7pt;color:#c62828;text-align:center;margin-bottom:4mm">★ = '+(L?'tronçon(s) du circuit dimensionnant':'segment(s) on the sizing circuit')+'</div>'
+    +'<div class="footer">Thermosys HVAC Workstation v3 — '+(L?'Calcul indicatif, à vérifier avant exécution.':'Indicative calculation, verify before construction.')+'</div>'
+    +'</div>'
+    +'<script>function _rspdfLoad(u){return new Promise(function(r,j){var s=document.createElement("script");s.src=u;s.onload=r;s.onerror=j;document.head.appendChild(s);});}function _rspdfPrint(){setTimeout(function(){window.print();},300);}function _rspdfDownload(){var el=document.querySelector(".page");if(!el||!window.html2canvas){_rspdfPrint();return;}html2canvas(el,{scale:2,useCORS:true,backgroundColor:"#ffffff"}).then(function(canvas){var jsPDFlib=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;if(!jsPDFlib){_rspdfPrint();return;}var doc=new jsPDFlib({orientation:"portrait",unit:"mm",format:"a4"});var img=canvas.toDataURL("image/jpeg",0.95);var _h=canvas.height*210/canvas.width;doc.addImage(img,"JPEG",0,0,210,_h);doc.save("'+name.replace(/[^a-zA-Z0-9]/g,'_')+'.pdf");}).catch(function(e){_rspdfPrint();});}window.onload=function(){Promise.all([_rspdfLoad("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"),_rspdfLoad("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js")]).then(function(){setTimeout(_rspdfDownload,600);}).catch(function(e){_rspdfPrint();});};<\/script>'
+    +'</body></html>');
+  win.document.close();
+  showToast(L?'PDF réseau généré':'Network PDF generated','s');
+  if (typeof logHist === 'function') logHist((L?'Réseau exporté PDF: ':'Network PDF exported: ')+name);
 }
 </script>
 
