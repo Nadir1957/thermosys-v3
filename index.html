@@ -1430,6 +1430,15 @@
       <div style="font-size:9px;color:var(--ts);margin-bottom:6px" data-fr="Valeurs K indicatives (ordre de grandeur usuel) — à ajuster selon la documentation constructeur de l'accessoire réel." data-en="Indicative K values (typical order of magnitude) — adjust based on the actual fitting's manufacturer documentation.">Valeurs K indicatives (ordre de grandeur usuel) — à ajuster selon la documentation constructeur de l'accessoire réel.</div>
       <button class="btn bp" onclick="addReseauSegment()" style="width:100%;margin-top:4px" data-fr="+ Ajouter le tronçon" data-en="+ Add segment">+ Ajouter le tronçon</button>
       <button class="btn bd" onclick="clearReseau()" style="width:100%;margin-top:4px" data-fr="🗑️ Effacer le réseau" data-en="🗑️ Clear network">🗑️ Effacer le réseau</button>
+      <input class="fi" id="rsNetworkName" placeholder="Nom du réseau (ex: Chaufferie bâtiment A)" style="width:100%;margin-top:8px">
+      <div class="frow" style="gap:6px;margin-top:6px">
+        <button class="btn bp" style="flex:1" onclick="saveReseauToCloud()" data-fr="💾 Sauvegarder" data-en="💾 Save">💾 Sauvegarder</button>
+        <button class="btn bp" style="flex:1" onclick="toggleReseauCloudList()" data-fr="📂 Mes réseaux" data-en="📂 My networks">📂 Mes réseaux</button>
+      </div>
+      <div id="rsCloudListWrap" style="display:none;gap:6px;margin-top:6px" class="frow">
+        <select class="fsel" id="rsCloudList" style="flex:1"></select>
+        <button class="btn bp" onclick="loadReseauFromCloud()" data-fr="Charger" data-en="Load">Charger</button>
+      </div>
     </div>
     <div>
       <div class="ph" style="font-size:10px" data-fr="TRONÇONS DU RÉSEAU" data-en="NETWORK SEGMENTS">TRONÇONS DU RÉSEAU</div>
@@ -4742,6 +4751,73 @@ function renderReseauSVG(){
   parts.push('</svg>');
   var legend = '<div style="font-size:9px;color:var(--wn);margin-top:6px">🟧 '+(fr?'Circuit le plus défavorisé (dimensionnant pour la pompe)':'Most unfavorable circuit (pump sizing basis)')+'</div>';
   wrap.innerHTML = parts.join('') + legend;
+}
+
+// ═══════════════════════════════════════════════
+// CALCUL RÉSEAU — Sauvegarde / chargement cloud (table projects, module 'reseau_hyd')
+// ═══════════════════════════════════════════════
+async function saveReseauToCloud(){
+  var fr = (typeof lang!=='undefined' && lang==='fr');
+  if (typeof _sb === 'undefined' || !_sb) { showToast(fr?'Connexion requise':'Login required','w'); return; }
+  if (!reseauSegments.length) { showToast(fr?'Ajoutez au moins un tronçon avant de sauvegarder':'Add at least one segment before saving','w'); return; }
+  var userRes = await _sb.auth.getUser();
+  var user = userRes && userRes.data ? userRes.data.user : null;
+  if (!user) { showToast(fr?'Connexion requise':'Login required','w'); return; }
+
+  var name = (document.getElementById('rsNetworkName')||{}).value.trim() || ((fr?'Réseau ':'Network ')+new Date().toLocaleDateString());
+  var payload = { segments: reseauSegments, idCounter: reseauIdCounter };
+
+  try {
+    var res = await _sb.from('projects').insert({ user_id: user.id, module: 'reseau_hyd', name: name, data: payload });
+    if (res.error) { showToast((fr?'Erreur : ':'Error: ')+res.error.message, 'e'); return; }
+    showToast(fr?'Réseau sauvegardé':'Network saved', 's');
+    if (typeof logHist === 'function') logHist('Réseau sauvegardé: '+name);
+  } catch(e) {
+    showToast(fr?'Erreur de sauvegarde':'Save error', 'e');
+  }
+}
+
+async function toggleReseauCloudList(){
+  var fr = (typeof lang!=='undefined' && lang==='fr');
+  var wrap = document.getElementById('rsCloudListWrap');
+  if (!wrap) return;
+
+  if (typeof _sb === 'undefined' || !_sb) { showToast(fr?'Connexion requise':'Login required','w'); return; }
+  var userRes = await _sb.auth.getUser();
+  var user = userRes && userRes.data ? userRes.data.user : null;
+  if (!user) { showToast(fr?'Connexion requise':'Login required','w'); return; }
+
+  var res = await _sb.from('projects').select('id,name,created_at').eq('module','reseau_hyd').eq('user_id', user.id).order('created_at', {ascending:false});
+  if (res.error) { showToast((fr?'Erreur : ':'Error: ')+res.error.message, 'e'); return; }
+
+  var sel = document.getElementById('rsCloudList');
+  var rows = res.data || [];
+  if (!rows.length) {
+    sel.innerHTML = '<option value="">'+(fr?'Aucun réseau sauvegardé':'No saved networks')+'</option>';
+  } else {
+    sel.innerHTML = rows.map(function(r){
+      var d = new Date(r.created_at).toLocaleDateString();
+      return '<option value="'+r.id+'">'+(r.name||'—')+' ('+d+')</option>';
+    }).join('');
+  }
+  wrap.style.display = 'flex';
+  wrap.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+async function loadReseauFromCloud(){
+  var fr = (typeof lang!=='undefined' && lang==='fr');
+  var id = (document.getElementById('rsCloudList')||{}).value;
+  if (!id) return;
+  var res = await _sb.from('projects').select('data,name').eq('id', id).single();
+  if (res.error || !res.data) { showToast(fr?'Erreur de chargement':'Load error', 'e'); return; }
+
+  var p = res.data.data || {};
+  reseauSegments = p.segments || [];
+  reseauIdCounter = p.idCounter || reseauSegments.length;
+  var nameEl = document.getElementById('rsNetworkName'); if (nameEl) nameEl.value = res.data.name || '';
+  renderReseau();
+  showToast(fr?'Réseau chargé':'Network loaded', 's');
+  if (typeof logHist === 'function') logHist('Réseau chargé: '+(res.data.name||''));
 }
 </script>
 
