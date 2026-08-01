@@ -3544,10 +3544,12 @@ function renderDevis() {
   var ht=devisLines.reduce(function(s,l){return s+l.tot;},0);
   var rem=parseFloat((document.getElementById('dvRemise')||{value:'0'}).value)||0;
   var tva=parseFloat((document.getElementById('dvTVA')||{value:'0'}).value)||0;
-  var htR=ht*(1-rem/100), ttc=htR*(1+tva/100);
+  var htR=Math.round(ht*(1-rem/100));
+  var tvaM=Math.round(htR*tva/100);
+  var ttc=htR+tvaM;
   var tot=document.getElementById('dvTotal');
   var lblExcl=(lang==='fr'?'HT':'Excl. VAT'), lblVat=(lang==='fr'?'TVA':'VAT'), lblIncl=(lang==='fr'?'TTC':'Incl. VAT');
-  if(tot) tot.textContent=(rem>0?fmtMoney(ht)+' (-'+rem+'%) '+lblExcl+': ':' '+lblExcl+': ')+fmtMoney(htR)+' | '+lblVat+' '+tva+'%: '+fmtMoney(ttc-htR)+' | '+lblIncl+': '+fmtMoney(ttc);
+  if(tot) tot.textContent=(rem>0?fmtMoney(ht)+' (-'+rem+'%) '+lblExcl+': ':' '+lblExcl+': ')+fmtMoney(htR)+' | '+lblVat+' '+tva+'%: '+fmtMoney(tvaM)+' | '+lblIncl+': '+fmtMoney(ttc);
 }
 
 function rmDvLine(id) { devisLines=devisLines.filter(function(l){ return l.id!==id; }); renderDevis(); saveDevis(); }
