@@ -260,7 +260,8 @@
 <div class="panel"><div class="ph" data-fr="AJOUTER UN ÉQUIPEMENT" data-en="ADD EQUIPMENT">AJOUTER UN ÉQUIPEMENT</div>
 <div style="display:flex;flex-direction:column;gap:6px">
 <div class="frow" style="gap:6px"><select class="fsel" id="dvFavList" style="flex:1"><option value="" data-fr="⭐ Mes favoris..." data-en="⭐ My favorites...">⭐ Mes favoris...</option></select>
-<button class="btn bp" onclick="insertDvFavorite()" data-fr="Insérer" data-en="Insert">Insérer</button></div>
+<button class="btn bp" onclick="insertDvFavorite()" data-fr="Insérer" data-en="Insert">Insérer</button>
+<button class="btn bd" onclick="deleteDvFavorite()" title="Supprimer ce favori" data-fr="🗑️" data-en="🗑️">🗑️</button></div>
 <input class="fi" id="dvCustomBrand" placeholder="Marque..." style="width:100%">
 <input class="fi" id="dvCustomRef" placeholder="Référence..." style="width:100%">
 <input class="fi" id="dvCustomDes" placeholder="Désignation..." style="width:100%">
@@ -3533,6 +3534,27 @@ async function saveDvFavorite(){
   loadDvFavorites();
 }
 
+async function deleteDvFavorite(){
+  var fr = (typeof lang!=='undefined' && lang==='fr');
+  var sel = document.getElementById('dvFavList');
+  var idx = sel ? sel.value : '';
+  if (idx === '') { showToast(fr?'Sélectionnez un favori à supprimer':'Select a favorite to delete', 'w'); return; }
+
+  var ctx = await _dvGetFavRow();
+  if (!ctx || !ctx.row) { showToast(fr?'Aucun favori trouvé':'No favorites found', 'w'); return; }
+
+  var items = (ctx.row.data && ctx.row.data.items) || [];
+  var i = parseInt(idx);
+  var removed = items[i];
+  if (!removed) return;
+  items.splice(i, 1);
+
+  var res = await _sb.from('projects').update({data:{items:items}, updated_at:new Date().toISOString()}).eq('id', ctx.row.id);
+  if (res.error) { showToast((fr?'Erreur : ':'Error: ')+res.error.message, 'e'); return; }
+  showToast((fr?'Favori supprimé : ':'Favorite deleted: ')+(removed.des||''), 's');
+  loadDvFavorites();
+}
+
 function renderDevis() {
   var body = document.getElementById('dvBody'); if (!body) return;
   body.innerHTML = devisLines.map(function(l) {
@@ -4518,6 +4540,7 @@ async function toggleDevisCloudList(){
     }).join('');
   }
   wrap.style.display = 'flex';
+  wrap.scrollIntoView({behavior:'smooth', block:'center'});
 }
 
 async function loadDevisFromCloud(){
