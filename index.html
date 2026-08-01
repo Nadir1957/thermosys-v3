@@ -4573,7 +4573,7 @@ function renderReseau(){
   var lines = [
     (fr?'Nombre de tronçons':'Number of segments')+' : '+reseauSegments.length,
     (fr?'Longueur totale':'Total length')+' : '+totalL.toFixed(1)+' m',
-    (fr?'Perte de charge totale':'Total pressure drop')+' : '+totalDP.toFixed(0)+' Pa ('+(totalDP/100).toFixed(2)+' mCE)',
+    (fr?'Perte de charge totale':'Total pressure drop')+' : '+totalDP.toFixed(0)+' Pa ('+(totalDP/9810).toFixed(2)+' mCE)',
     '',
     (fr?'HMT pompe suggérée (+10% marge)':'Suggested pump head (+10% margin)')+' : '+(hmt*1.1).toFixed(2)+' m'
   ];
