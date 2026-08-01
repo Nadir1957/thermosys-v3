@@ -1161,7 +1161,7 @@
 <!-- HYDRAULIQUE -->
 <div class="page" id="pg-hydraulique">
 <div class="ptitle"><span id="t_hyd_title">HYDRAULIQUE HVAC — CALCULS</span></div>
-<div class="tabs" style="flex-wrap:wrap;gap:3px"><button class="tab active" onclick="showTab('hyd',0,this)" data-fr="Débit / Diam." data-en="Flow / Diam.">Flow / Diam.</button><button class="tab" onclick="showTab('hyd',1,this)" data-fr="Pertes de charge" data-en="Pressure Drop">Pressure Drop</button><button class="tab" onclick="showTab('hyd',2,this)" data-fr="Pompe / HMT" data-en="Pump / Head">Pump / Head</button><button class="tab" onclick="showTab('hyd',3,this)" data-fr="Vase expansion" data-en="Exp. Vessel">Exp. Vessel</button><button class="tab" onclick="showTab('hyd',4,this)" data-fr="Séparateur" data-en="Separator">Separator</button><button class="tab" onclick="showTab('hyd',5,this)" data-fr="Collecteur" data-en="Manifold">Manifold</button><button class="tab" onclick="showTab('hyd',6,this)" data-fr="Guide Préréglage" data-en="Pre-Setting Guide">🎯 Guide Préréglage</button><button class="tab" onclick="showTab('hyd',7,this)" data-fr="Gaines d'air" data-en="Air Ducts">Air Ducts</button><button class="tab" onclick="showTab('hyd',8,this)" data-fr="Tuyauterie frigo" data-en="Refrigerant Piping">Refrigerant Piping</button><button class="tab" onclick="showTab('hyd',9,this)" data-fr="Refnet" data-en="Refnet">Refnet</button></div>
+<div class="tabs" style="flex-wrap:wrap;gap:3px"><button class="tab active" onclick="showTab('hyd',0,this)" data-fr="Débit / Diam." data-en="Flow / Diam.">Flow / Diam.</button><button class="tab" onclick="showTab('hyd',1,this)" data-fr="Pertes de charge" data-en="Pressure Drop">Pressure Drop</button><button class="tab" onclick="showTab('hyd',2,this)" data-fr="Pompe / HMT" data-en="Pump / Head">Pump / Head</button><button class="tab" onclick="showTab('hyd',3,this)" data-fr="Vase expansion" data-en="Exp. Vessel">Exp. Vessel</button><button class="tab" onclick="showTab('hyd',4,this)" data-fr="Séparateur" data-en="Separator">Separator</button><button class="tab" onclick="showTab('hyd',5,this)" data-fr="Collecteur" data-en="Manifold">Manifold</button><button class="tab" onclick="showTab('hyd',6,this)" data-fr="Guide Préréglage" data-en="Pre-Setting Guide">🎯 Guide Préréglage</button><button class="tab" onclick="showTab('hyd',7,this)" data-fr="Gaines d'air" data-en="Air Ducts">Air Ducts</button><button class="tab" onclick="showTab('hyd',8,this)" data-fr="Tuyauterie frigo" data-en="Refrigerant Piping">Refrigerant Piping</button><button class="tab" onclick="showTab('hyd',9,this)" data-fr="Refnet" data-en="Refnet">Refnet</button><button class="tab" onclick="showTab('hyd',10,this)" data-fr="Calcul réseau" data-en="Network Calc">Network Calc</button></div>
 <div id="hyd0" class="tp2 active"><div class="panel"><div class="ph" id="t_hyd_flow_h">DEBIT &amp; DIAMETRE</div><div class="g2"><div><div class="frow"><span class="flb" id="t_hyd_cap">Capacite (kW) :</span><input class="fi" id="hCap" type="number" value="100" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_dt">deltaT (deg C) :</span><input class="fi" id="hDt" type="number" value="5" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_v">Vitesse (m/s) :</span><input class="fi" id="hV" type="number" value="1.5" step="0.1" style="max-width:90px"></div><button class="btn bp" onclick="calcDebit()" style="width:100%;margin-top:4px" id="t_hyd_calc_flow">Calculer</button></div><div><div class="res" id="hydFlowResult">Flow result</div></div></div></div></div>
 <div id="hyd1" class="tp2"><div class="panel"><div class="ph" id="t_hyd_pdc_h">PERTES DE CHARGE</div><div class="g2"><div><div class="frow"><span class="flb" id="t_hyd_q2">Debit (m3/h) :</span><input class="fi" id="pdcQ" type="number" value="10" style="max-width:90px"></div><div class="frow"><span class="flb">DN (mm) :</span><input class="fi" id="pdcDN" type="number" value="40" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_l" data-fr="Longueur (m) :" data-en="Length (m):">Longueur (m) :</span><input class="fi" id="pdcL" type="number" value="50" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_flu">Fluide :</span><select class="fsel" id="pdcFluid"><option value="1000">Eau (1000)</option><option value="1040">Glycol 30%</option><option value="1060" data-fr="Glycol 40%" data-en="Glycol 40%">Glycol 40%</option></select></div><button class="btn bp" onclick="calcPDC()" style="width:100%;margin-top:4px">Calculer PDC</button></div><div><div class="res" id="pdcResult">PDC result</div></div></div></div></div>
 <div id="hyd2" class="tp2"><div class="panel"><div class="ph" id="t_hyd_pump_h">POMPE / HMT</div><div class="g2"><div><div class="frow"><span class="flb" id="t_hyd_qp">Debit (m3/h) :</span><input class="fi" id="pompeQ" type="number" value="10" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_hmt" data-fr="HMT (m.c.e.) :" data-en="Head (m.w.c.):">HMT (m.c.e.) :</span><input class="fi" id="pompeHMT" type="number" value="15" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_eta">Rendement (%) :</span><input class="fi" id="pompeEta" type="number" value="65" style="max-width:90px"></div><button class="btn bp" onclick="calcPompe()" style="width:100%;margin-top:4px">Calculer</button></div><div><div class="res" id="pompeResult">Pump result</div></div></div></div></div>
@@ -1396,6 +1396,38 @@
       <div class="res" id="rfnResult" data-fr="Résultat Refnet" data-en="Refnet result">Résultat Refnet</div>
       <div style="font-size:10px;font-weight:700;color:var(--ac3);margin-top:10px;margin-bottom:4px" data-fr="TOUS LES SEUILS DE LA MARQUE" data-en="ALL BRAND THRESHOLDS">TOUS LES SEUILS DE LA MARQUE</div>
       <div class="tw" id="rfnTableWrap"><table class="tbl"><tbody id="rfnRefTable"></tbody></table></div>
+    </div>
+  </div>
+</div>
+</div>
+<div id="hyd10" class="tp2">
+<div class="panel">
+  <div class="ph" data-fr="CALCUL DE RÉSEAU — SOMME DES TRONÇONS" data-en="NETWORK CALCULATION — SEGMENT SUM">CALCUL DE RÉSEAU — SOMME DES TRONÇONS</div>
+  <div style="font-size:10px;color:var(--ts);margin-bottom:8px" data-fr="Décrivez votre réseau tronçon par tronçon (en série). L'app additionne automatiquement les pertes de charge de chacun, en réutilisant la même formule que l'onglet « Pertes de charge » (Colebrook-White / Swamee-Jain)." data-en="Describe your network segment by segment (in series). The app automatically sums the pressure drop of each one, reusing the same formula as the « Pressure Drop » tab (Colebrook-White / Swamee-Jain).">Décrivez votre réseau tronçon par tronçon (en série). L'app additionne automatiquement les pertes de charge de chacun, en réutilisant la même formule que l'onglet « Pertes de charge » (Colebrook-White / Swamee-Jain).</div>
+  <div class="g2">
+    <div>
+      <div class="ph" style="font-size:10px" data-fr="AJOUTER UN TRONÇON" data-en="ADD SEGMENT">AJOUTER UN TRONÇON</div>
+      <div class="frow"><span class="flb" data-fr="Nom (optionnel) :" data-en="Name (optional):">Nom (optionnel) :</span><input class="fi" id="rsName" placeholder="Ex: Colonne montante" style="max-width:160px"></div>
+      <div class="frow"><span class="flb" data-fr="Débit Q (m³/h) :" data-en="Flow Q (m³/h):">Débit Q (m³/h) :</span><input class="fi" id="rsQ" type="number" value="10" style="max-width:90px"></div>
+      <div class="frow"><span class="flb" data-fr="Diamètre (mm) :" data-en="Diameter (mm):">Diamètre (mm) :</span><input class="fi" id="rsD" type="number" value="40" style="max-width:90px"></div>
+      <div class="frow"><span class="flb" data-fr="Longueur (m) :" data-en="Length (m):">Longueur (m) :</span><input class="fi" id="rsL" type="number" value="50" style="max-width:90px"></div>
+      <div class="frow"><span class="flb" data-fr="Fluide :" data-en="Fluid:">Fluide :</span>
+        <select class="fsel" id="rsFluid">
+          <option value="1000" data-fr="Eau" data-en="Water">Eau</option>
+          <option value="1040" data-fr="Glycol 30%" data-en="Glycol 30%">Glycol 30%</option>
+          <option value="1060" data-fr="Glycol 40%" data-en="Glycol 40%">Glycol 40%</option>
+        </select>
+      </div>
+      <button class="btn bp" onclick="addReseauSegment()" style="width:100%;margin-top:4px" data-fr="+ Ajouter le tronçon" data-en="+ Add segment">+ Ajouter le tronçon</button>
+      <button class="btn bd" onclick="clearReseau()" style="width:100%;margin-top:4px" data-fr="🗑️ Effacer le réseau" data-en="🗑️ Clear network">🗑️ Effacer le réseau</button>
+    </div>
+    <div>
+      <div class="ph" style="font-size:10px" data-fr="TRONÇONS DU RÉSEAU" data-en="NETWORK SEGMENTS">TRONÇONS DU RÉSEAU</div>
+      <div class="tw"><table class="tbl">
+        <thead><tr><th data-fr="Nom" data-en="Name">Nom</th><th>Q</th><th>D</th><th>L</th><th data-fr="ΔP" data-en="ΔP">ΔP</th><th></th></tr></thead>
+        <tbody id="rsBody"></tbody>
+      </table></div>
+      <div class="res" id="rsResult" style="margin-top:8px" data-fr="Ajoutez au moins un tronçon." data-en="Add at least one segment.">Ajoutez au moins un tronçon.</div>
     </div>
   </div>
 </div>
@@ -4471,6 +4503,82 @@ function calcRefnet(){
     '</div>';
   el.innerHTML = html;
   if (typeof logHist === 'function') logHist('Refnet: '+brand+', '+(ref||'hors plage'));
+}
+</script>
+
+<script>
+// ═══════════════════════════════════════════════
+// CALCUL RÉSEAU — Phase A (somme de tronçons en série)
+// Réutilise fidèlement la formule de calcPDC (Colebrook-White / Swamee-Jain)
+// ═══════════════════════════════════════════════
+function calcSegmentPDC(Q, D, L, fluid){
+  var Dm = D/1000;
+  var A = Math.PI*Dm*Dm/4;
+  var v = Q/(3600*A);
+  var eps = fluid===1000 ? 0.001 : (fluid===1040 ? 0.0028 : 0.0038);
+  var Re = v*Dm*fluid/eps;
+  var f = Re<2300 ? 64/Re : 0.25/Math.pow(Math.log10(0.000046/(3.7*Dm)+5.74/Math.pow(Re,0.9)),2);
+  var dP = f*(L/Dm)*(fluid*v*v/2);
+  return {v:v, Re:Re, f:f, dP:dP};
+}
+
+var reseauSegments = [];
+var reseauIdCounter = 0;
+
+function addReseauSegment(){
+  var fr = (typeof lang!=='undefined' && lang==='fr');
+  var name = (document.getElementById('rsName')||{}).value || ((fr?'Tronçon ':'Segment ')+(reseauSegments.length+1));
+  var Q = parseFloat((document.getElementById('rsQ')||{}).value) || 10;
+  var D = parseFloat((document.getElementById('rsD')||{}).value) || 40;
+  var L = parseFloat((document.getElementById('rsL')||{}).value) || 50;
+  var fluid = parseFloat((document.getElementById('rsFluid')||{}).value) || 1000;
+  var calc = calcSegmentPDC(Q, D, L, fluid);
+  reseauIdCounter++;
+  reseauSegments.push({id:reseauIdCounter, name:name, Q:Q, D:D, L:L, fluid:fluid, dP:calc.dP, v:calc.v});
+  renderReseau();
+  showToast(name+(fr?' ajouté':' added'), 's');
+  var nameEl = document.getElementById('rsName'); if (nameEl) nameEl.value = '';
+}
+
+function rmReseauSegment(id){
+  reseauSegments = reseauSegments.filter(function(s){ return s.id !== id; });
+  renderReseau();
+}
+
+function clearReseau(){
+  reseauSegments = [];
+  renderReseau();
+}
+
+function renderReseau(){
+  var fr = (typeof lang!=='undefined' && lang==='fr');
+  var body = document.getElementById('rsBody');
+  if (body) {
+    body.innerHTML = reseauSegments.map(function(s){
+      return '<tr><td>'+s.name+'</td><td>'+s.Q+'</td><td>'+s.D+'</td><td>'+s.L+'</td>'+
+        '<td class="neon">'+s.dP.toFixed(0)+' Pa</td>'+
+        '<td><button class="btn bd" style="padding:4px 9px;min-height:34px;font-size:11px" data-sid="'+s.id+'" onclick="rmReseauSegment(parseInt(this.getAttribute(\'data-sid\')))">×</button></td></tr>';
+    }).join('');
+  }
+
+  var resEl = document.getElementById('rsResult');
+  if (!resEl) return;
+  if (!reseauSegments.length){
+    resEl.textContent = fr?'Ajoutez au moins un tronçon.':'Add at least one segment.';
+    return;
+  }
+  var totalDP = reseauSegments.reduce(function(s,seg){ return s+seg.dP; }, 0);
+  var totalL = reseauSegments.reduce(function(s,seg){ return s+seg.L; }, 0);
+  var hmt = totalDP/(1000*9.81);
+  var lines = [
+    (fr?'Nombre de tronçons':'Number of segments')+' : '+reseauSegments.length,
+    (fr?'Longueur totale':'Total length')+' : '+totalL.toFixed(1)+' m',
+    (fr?'Perte de charge totale':'Total pressure drop')+' : '+totalDP.toFixed(0)+' Pa ('+(totalDP/100).toFixed(2)+' mCE)',
+    '',
+    (fr?'HMT pompe suggérée (+10% marge)':'Suggested pump head (+10% margin)')+' : '+(hmt*1.1).toFixed(2)+' m'
+  ];
+  resEl.textContent = lines.join('\n');
+  if (typeof logHist === 'function') logHist((fr?'Réseau: ':'Network: ')+reseauSegments.length+(fr?' tronçons, ΔP totale ':' segments, total ΔP ')+totalDP.toFixed(0)+' Pa');
 }
 </script>
 
