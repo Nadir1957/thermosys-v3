@@ -1412,7 +1412,7 @@
           <option value="" data-fr="— Départ (source) —" data-en="— Start (source) —">— Départ (source) —</option>
         </select>
       </div>
-      <div class="frow"><span class="flb" data-fr="Nom (optionnel) :" data-en="Name (optional):">Nom (optionnel) :</span><input class="fi" id="rsName" placeholder="Ex: Colonne montante" style="max-width:160px"></div>
+      <div class="frow"><span class="flb" data-fr="Nom (optionnel) :" data-en="Name (optional):">Nom (optionnel) :</span><input class="fi" id="rsName" data-fr="Ex: Colonne montante" data-en="Ex: Riser" placeholder="Ex: Colonne montante" style="max-width:160px"></div>
       <div class="frow"><span class="flb" data-fr="Débit Q (m³/h) :" data-en="Flow Q (m³/h):">Débit Q (m³/h) :</span><input class="fi" id="rsQ" type="number" value="10" style="max-width:90px"></div>
       <div class="frow"><span class="flb" data-fr="Diamètre (mm) :" data-en="Diameter (mm):">Diamètre (mm) :</span><input class="fi" id="rsD" type="number" value="40" style="max-width:90px"></div>
       <div class="frow"><span class="flb" data-fr="Longueur (m) :" data-en="Length (m):">Longueur (m) :</span><input class="fi" id="rsL" type="number" value="50" style="max-width:90px"></div>
@@ -1430,7 +1430,7 @@
       <div style="font-size:9px;color:var(--ts);margin-bottom:6px" data-fr="Valeurs K indicatives (ordre de grandeur usuel) — à ajuster selon la documentation constructeur de l'accessoire réel." data-en="Indicative K values (typical order of magnitude) — adjust based on the actual fitting's manufacturer documentation.">Valeurs K indicatives (ordre de grandeur usuel) — à ajuster selon la documentation constructeur de l'accessoire réel.</div>
       <button class="btn bp" onclick="addReseauSegment()" style="width:100%;margin-top:4px" data-fr="+ Ajouter le tronçon" data-en="+ Add segment">+ Ajouter le tronçon</button>
       <button class="btn bd" onclick="clearReseau()" style="width:100%;margin-top:4px" data-fr="🗑️ Effacer le réseau" data-en="🗑️ Clear network">🗑️ Effacer le réseau</button>
-      <input class="fi" id="rsNetworkName" placeholder="Nom du réseau (ex: Chaufferie bâtiment A)" style="width:100%;margin-top:8px">
+      <input class="fi" id="rsNetworkName" data-fr="Nom du réseau (ex: Chaufferie bâtiment A)" data-en="Network name (ex: Boiler room building A)" placeholder="Nom du réseau (ex: Chaufferie bâtiment A)" style="width:100%;margin-top:8px">
       <div class="frow" style="gap:6px;margin-top:6px">
         <button class="btn bp" style="flex:1" onclick="saveReseauToCloud()" data-fr="💾 Sauvegarder" data-en="💾 Save">💾 Sauvegarder</button>
         <button class="btn bp" style="flex:1" onclick="toggleReseauCloudList()" data-fr="📂 Mes réseaux" data-en="📂 My networks">📂 Mes réseaux</button>
