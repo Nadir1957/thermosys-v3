@@ -9205,6 +9205,7 @@ var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 _sb.auth.onAuthStateChange(function(event, session){
   if (event === 'PASSWORD_RECOVERY') {
+    window._authRecoveryMode = true;
     document.getElementById('app').style.display = 'none';
     document.getElementById('authGate').style.display = 'flex';
     authShowPanel('authRecovery');
@@ -9286,10 +9287,17 @@ async function authSetNewPassword(){
     return;
   }
   if (typeof showToast === 'function') showToast((typeof lang!=='undefined' && lang==='fr') ? 'Mot de passe mis à jour' : 'Password updated', 's');
+  window._authRecoveryMode = false;
   await authCheckState();
 }
 
 async function authCheckState(){
+  if (window._authRecoveryMode) {
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('authGate').style.display = 'flex';
+    authShowPanel('authRecovery');
+    return;
+  }
   authShowPanel('authLoading');
   var sessionRes = await _sb.auth.getSession();
   var session = sessionRes.data ? sessionRes.data.session : null;
