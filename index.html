@@ -64,6 +64,16 @@
       </div>
     </div>
 
+    <!-- RECOVERY (nouveau mot de passe) -->
+    <div id="authRecovery" style="display:none">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px" id="authRecoveryTitle">Nouveau mot de passe</div>
+      <div style="font-size:11.5px;color:#9ab5cc;margin-bottom:12px" id="authRecoveryTxt">Choisissez un nouveau mot de passe pour votre compte.</div>
+      <input id="authRecoveryPassword" type="password" placeholder="Nouveau mot de passe (6 caractères min.)" autocomplete="new-password" style="width:100%;padding:9px 10px;margin-bottom:8px;border-radius:6px;border:1px solid #2a4a68;background:#0e1c28;color:#fff;font-size:13px;box-sizing:border-box">
+      <input id="authRecoveryPassword2" type="password" placeholder="Confirmer le mot de passe" autocomplete="new-password" style="width:100%;padding:9px 10px;margin-bottom:12px;border-radius:6px;border:1px solid #2a4a68;background:#0e1c28;color:#fff;font-size:13px;box-sizing:border-box">
+      <button onclick="authSetNewPassword()" id="authRecoveryBtn" style="width:100%;padding:10px;border:none;border-radius:6px;background:#1a3a5a;color:#fff;font-weight:600;font-size:13px;cursor:pointer;margin-bottom:8px">Définir le mot de passe</button>
+      <div id="authErrorRecovery" style="color:#ff6b6b;font-size:11.5px;margin-bottom:8px;display:none"></div>
+    </div>
+
     <!-- PENDING -->
     <div id="authPending" style="display:none;text-align:center">
       <div style="font-size:32px;margin-bottom:10px">⏳</div>
@@ -9193,8 +9203,16 @@ var SUPABASE_URL = 'https://qltwswtiyzhzwihzjkwb.supabase.co';
 var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsdHdzd3RpeXpoendpaHpqa3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4OTk1MzYsImV4cCI6MjEwMDQ3NTUzNn0.NapZil3VokS9h2c4D1acyr_aSKpV4oPvHvuyzTAZjB0';
 var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+_sb.auth.onAuthStateChange(function(event, session){
+  if (event === 'PASSWORD_RECOVERY') {
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('authGate').style.display = 'flex';
+    authShowPanel('authRecovery');
+  }
+});
+
 function authShowPanel(id){
-  ['authLoginForm','authSignupForm','authPending','authDisabled','authLoading'].forEach(function(p){
+  ['authLoginForm','authSignupForm','authPending','authDisabled','authLoading','authRecovery'].forEach(function(p){
     var el = document.getElementById(p);
     if (el) el.style.display = (p === id) ? 'block' : 'none';
   });
@@ -9250,6 +9268,25 @@ async function authSignOut(){
   document.getElementById('app').style.display = 'none';
   document.getElementById('authGate').style.display = 'flex';
   authShowPanel('authLoginForm');
+}
+
+async function authSetNewPassword(){
+  authHideError('authErrorRecovery');
+  var p1 = (document.getElementById('authRecoveryPassword')||{}).value || '';
+  var p2 = (document.getElementById('authRecoveryPassword2')||{}).value || '';
+  if (!p1 || !p2) { authShowError('authErrorRecovery', 'Veuillez remplir les deux champs.'); return; }
+  if (p1.length < 6) { authShowError('authErrorRecovery', 'Le mot de passe doit contenir au moins 6 caractères.'); return; }
+  if (p1 !== p2) { authShowError('authErrorRecovery', 'Les deux mots de passe ne correspondent pas.'); return; }
+  var btn = document.getElementById('authRecoveryBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement...'; }
+  var res = await _sb.auth.updateUser({ password: p1 });
+  if (btn) { btn.disabled = false; btn.textContent = 'Définir le mot de passe'; }
+  if (res.error) {
+    authShowError('authErrorRecovery', 'Erreur : ' + res.error.message);
+    return;
+  }
+  if (typeof showToast === 'function') showToast((typeof lang!=='undefined' && lang==='fr') ? 'Mot de passe mis à jour' : 'Password updated', 's');
+  await authCheckState();
 }
 
 async function authCheckState(){
