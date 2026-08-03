@@ -42,57 +42,57 @@
 
     <!-- LOGIN -->
     <div id="authLoginForm">
-      <div style="font-size:13px;font-weight:600;margin-bottom:12px" id="authLoginTitle">Connexion</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px" id="authLoginTitle">Log in</div>
       <input id="authEmail" type="email" placeholder="Email" autocomplete="username" style="width:100%;padding:9px 10px;margin-bottom:8px;border-radius:6px;border:1px solid #2a4a68;background:#0e1c28;color:#fff;font-size:13px;box-sizing:border-box">
-      <input id="authPassword" type="password" placeholder="Mot de passe" autocomplete="current-password" style="width:100%;padding:9px 10px;margin-bottom:12px;border-radius:6px;border:1px solid #2a4a68;background:#0e1c28;color:#fff;font-size:13px;box-sizing:border-box">
-      <button onclick="authSignIn()" id="authSignInBtn" style="width:100%;padding:10px;border:none;border-radius:6px;background:#1a3a5a;color:#fff;font-weight:600;font-size:13px;cursor:pointer;margin-bottom:8px">Se connecter</button>
+      <input id="authPassword" type="password" placeholder="Password" autocomplete="current-password" style="width:100%;padding:9px 10px;margin-bottom:12px;border-radius:6px;border:1px solid #2a4a68;background:#0e1c28;color:#fff;font-size:13px;box-sizing:border-box">
+      <button onclick="authSignIn()" id="authSignInBtn" style="width:100%;padding:10px;border:none;border-radius:6px;background:#1a3a5a;color:#fff;font-weight:600;font-size:13px;cursor:pointer;margin-bottom:8px">Log in</button>
       <div id="authError" style="color:#ff6b6b;font-size:11.5px;margin-bottom:8px;display:none"></div>
       <div style="text-align:center;font-size:12px;color:#7fa8c9;margin-top:10px">
-        <span id="authNoAccountTxt">Pas encore de compte ?</span> <a href="#" onclick="authShowSignup();return false;" style="color:#4fc3f7">Créer un compte</a>
+        <span id="authNoAccountTxt">Don't have an account?</span> <a href="#" onclick="authShowSignup();return false;" style="color:#4fc3f7">Create an account</a>
       </div>
     </div>
 
     <!-- SIGNUP -->
     <div id="authSignupForm" style="display:none">
-      <div style="font-size:13px;font-weight:600;margin-bottom:12px" id="authSignupTitle">Créer un compte</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px" id="authSignupTitle">Create an account</div>
       <input id="authEmailSignup" type="email" placeholder="Email" autocomplete="username" style="width:100%;padding:9px 10px;margin-bottom:8px;border-radius:6px;border:1px solid #2a4a68;background:#0e1c28;color:#fff;font-size:13px;box-sizing:border-box">
-      <input id="authPasswordSignup" type="password" data-fr="Mot de passe (6 caractères min.)" data-en="Password (6 characters min.)" placeholder="Mot de passe (6 caractères min.)" autocomplete="new-password" style="width:100%;padding:9px 10px;margin-bottom:12px;border-radius:6px;border:1px solid #2a4a68;background:#0e1c28;color:#fff;font-size:13px;box-sizing:border-box">
-      <button onclick="authSignUp()" id="authSignUpBtn" style="width:100%;padding:10px;border:none;border-radius:6px;background:#1a3a5a;color:#fff;font-weight:600;font-size:13px;cursor:pointer;margin-bottom:8px" data-fr="Créer mon compte" data-en="Create my account">Créer mon compte</button>
+      <input id="authPasswordSignup" type="password" placeholder="Password (6 characters min.)" autocomplete="new-password" style="width:100%;padding:9px 10px;margin-bottom:12px;border-radius:6px;border:1px solid #2a4a68;background:#0e1c28;color:#fff;font-size:13px;box-sizing:border-box">
+      <button onclick="authSignUp()" id="authSignUpBtn" style="width:100%;padding:10px;border:none;border-radius:6px;background:#1a3a5a;color:#fff;font-weight:600;font-size:13px;cursor:pointer;margin-bottom:8px">Create my account</button>
       <div id="authErrorSignup" style="color:#ff6b6b;font-size:11.5px;margin-bottom:8px;display:none"></div>
       <div style="text-align:center;font-size:12px;color:#7fa8c9;margin-top:10px">
-        <a href="#" onclick="authShowLogin();return false;" style="color:#4fc3f7" id="authBackToLogin">← Retour à la connexion</a>
+        <a href="#" onclick="authShowLogin();return false;" style="color:#4fc3f7" id="authBackToLogin">← Back to login</a>
       </div>
     </div>
 
     <!-- RECOVERY (nouveau mot de passe) -->
     <div id="authRecovery" style="display:none">
-      <div style="font-size:13px;font-weight:600;margin-bottom:12px" id="authRecoveryTitle">Nouveau mot de passe</div>
-      <div style="font-size:11.5px;color:#9ab5cc;margin-bottom:12px" id="authRecoveryTxt">Choisissez un nouveau mot de passe pour votre compte.</div>
-      <input id="authRecoveryPassword" type="password" data-fr="Nouveau mot de passe (6 caractères min.)" data-en="New password (6 characters min.)" placeholder="Nouveau mot de passe (6 caractères min.)" autocomplete="new-password" style="width:100%;padding:9px 10px;margin-bottom:8px;border-radius:6px;border:1px solid #2a4a68;background:#0e1c28;color:#fff;font-size:13px;box-sizing:border-box">
-      <input id="authRecoveryPassword2" type="password" data-fr="Confirmer le mot de passe" data-en="Confirm password" placeholder="Confirmer le mot de passe" autocomplete="new-password" style="width:100%;padding:9px 10px;margin-bottom:12px;border-radius:6px;border:1px solid #2a4a68;background:#0e1c28;color:#fff;font-size:13px;box-sizing:border-box">
-      <button onclick="authSetNewPassword()" id="authRecoveryBtn" style="width:100%;padding:10px;border:none;border-radius:6px;background:#1a3a5a;color:#fff;font-weight:600;font-size:13px;cursor:pointer;margin-bottom:8px" data-fr="Définir le mot de passe" data-en="Set new password">Définir le mot de passe</button>
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px" id="authRecoveryTitle">New password</div>
+      <div style="font-size:11.5px;color:#9ab5cc;margin-bottom:12px" id="authRecoveryTxt">Choose a new password for your account.</div>
+      <input id="authRecoveryPassword" type="password" placeholder="New password (6 characters min.)" autocomplete="new-password" style="width:100%;padding:9px 10px;margin-bottom:8px;border-radius:6px;border:1px solid #2a4a68;background:#0e1c28;color:#fff;font-size:13px;box-sizing:border-box">
+      <input id="authRecoveryPassword2" type="password" placeholder="Confirm password" autocomplete="new-password" style="width:100%;padding:9px 10px;margin-bottom:12px;border-radius:6px;border:1px solid #2a4a68;background:#0e1c28;color:#fff;font-size:13px;box-sizing:border-box">
+      <button onclick="authSetNewPassword()" id="authRecoveryBtn" style="width:100%;padding:10px;border:none;border-radius:6px;background:#1a3a5a;color:#fff;font-weight:600;font-size:13px;cursor:pointer;margin-bottom:8px">Set new password</button>
       <div id="authErrorRecovery" style="color:#ff6b6b;font-size:11.5px;margin-bottom:8px;display:none"></div>
     </div>
 
     <!-- PENDING -->
     <div id="authPending" style="display:none;text-align:center">
       <div style="font-size:32px;margin-bottom:10px">⏳</div>
-      <div style="font-size:13px;font-weight:600;margin-bottom:8px" id="authPendingTitle">Compte en attente d'approbation</div>
-      <div style="font-size:12px;color:#9ab5cc;margin-bottom:16px" id="authPendingTxt">Votre compte a été créé avec succès. Un administrateur doit encore approuver votre accès avant que vous puissiez utiliser l'application.</div>
-      <button onclick="authSignOut()" style="width:100%;padding:9px;border:1px solid #2a4a68;border-radius:6px;background:transparent;color:#e8f0f5;font-size:12.5px;cursor:pointer" id="authPendingLogoutBtn" data-fr="Se déconnecter" data-en="Log out">Se déconnecter</button>
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px" id="authPendingTitle">Account pending approval</div>
+      <div style="font-size:12px;color:#9ab5cc;margin-bottom:16px" id="authPendingTxt">Your account was created successfully. An administrator still needs to approve your access before you can use the application.</div>
+      <button onclick="authSignOut()" style="width:100%;padding:9px;border:1px solid #2a4a68;border-radius:6px;background:transparent;color:#e8f0f5;font-size:12.5px;cursor:pointer" id="authPendingLogoutBtn">Log out</button>
     </div>
 
     <!-- DISABLED -->
     <div id="authDisabled" style="display:none;text-align:center">
       <div style="font-size:32px;margin-bottom:10px">🚫</div>
-      <div style="font-size:13px;font-weight:600;margin-bottom:8px" id="authDisabledTitle">Compte désactivé</div>
-      <div style="font-size:12px;color:#9ab5cc;margin-bottom:16px" id="authDisabledTxt">Votre accès a été désactivé. Contactez l'administrateur pour plus d'informations.</div>
-      <button onclick="authSignOut()" style="width:100%;padding:9px;border:1px solid #2a4a68;border-radius:6px;background:transparent;color:#e8f0f5;font-size:12.5px;cursor:pointer" id="authDisabledLogoutBtn" data-fr="Se déconnecter" data-en="Log out">Se déconnecter</button>
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px" id="authDisabledTitle">Account disabled</div>
+      <div style="font-size:12px;color:#9ab5cc;margin-bottom:16px" id="authDisabledTxt">Your access has been disabled. Contact the administrator for more information.</div>
+      <button onclick="authSignOut()" style="width:100%;padding:9px;border:1px solid #2a4a68;border-radius:6px;background:transparent;color:#e8f0f5;font-size:12.5px;cursor:pointer" id="authDisabledLogoutBtn">Log out</button>
     </div>
 
     <!-- LOADING -->
     <div id="authLoading" style="text-align:center;padding:20px 0">
-      <div style="font-size:13px;color:#7fa8c9">Connexion en cours...</div>
+      <div style="font-size:13px;color:#7fa8c9">Signing in...</div>
     </div>
   </div>
 </div>
