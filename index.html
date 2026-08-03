@@ -56,7 +56,7 @@
     <div id="authSignupForm" style="display:none">
       <div style="font-size:13px;font-weight:600;margin-bottom:12px" id="authSignupTitle">Créer un compte</div>
       <input id="authEmailSignup" type="email" placeholder="Email" autocomplete="username" style="width:100%;padding:9px 10px;margin-bottom:8px;border-radius:6px;border:1px solid #2a4a68;background:#0e1c28;color:#fff;font-size:13px;box-sizing:border-box">
-      <input id="authPasswordSignup" type="password" placeholder="Mot de passe (6 caractères min.)" autocomplete="new-password" style="width:100%;padding:9px 10px;margin-bottom:12px;border-radius:6px;border:1px solid #2a4a68;background:#0e1c28;color:#fff;font-size:13px;box-sizing:border-box">
+      <input id="authPasswordSignup" type="password" data-fr="Mot de passe (6 caractères min.)" data-en="Password (6 characters min.)" placeholder="Mot de passe (6 caractères min.)" autocomplete="new-password" style="width:100%;padding:9px 10px;margin-bottom:12px;border-radius:6px;border:1px solid #2a4a68;background:#0e1c28;color:#fff;font-size:13px;box-sizing:border-box">
       <button onclick="authSignUp()" id="authSignUpBtn" style="width:100%;padding:10px;border:none;border-radius:6px;background:#1a3a5a;color:#fff;font-weight:600;font-size:13px;cursor:pointer;margin-bottom:8px">Créer mon compte</button>
       <div id="authErrorSignup" style="color:#ff6b6b;font-size:11.5px;margin-bottom:8px;display:none"></div>
       <div style="text-align:center;font-size:12px;color:#7fa8c9;margin-top:10px">
@@ -68,8 +68,8 @@
     <div id="authRecovery" style="display:none">
       <div style="font-size:13px;font-weight:600;margin-bottom:12px" id="authRecoveryTitle">Nouveau mot de passe</div>
       <div style="font-size:11.5px;color:#9ab5cc;margin-bottom:12px" id="authRecoveryTxt">Choisissez un nouveau mot de passe pour votre compte.</div>
-      <input id="authRecoveryPassword" type="password" placeholder="Nouveau mot de passe (6 caractères min.)" autocomplete="new-password" style="width:100%;padding:9px 10px;margin-bottom:8px;border-radius:6px;border:1px solid #2a4a68;background:#0e1c28;color:#fff;font-size:13px;box-sizing:border-box">
-      <input id="authRecoveryPassword2" type="password" placeholder="Confirmer le mot de passe" autocomplete="new-password" style="width:100%;padding:9px 10px;margin-bottom:12px;border-radius:6px;border:1px solid #2a4a68;background:#0e1c28;color:#fff;font-size:13px;box-sizing:border-box">
+      <input id="authRecoveryPassword" type="password" data-fr="Nouveau mot de passe (6 caractères min.)" data-en="New password (6 characters min.)" placeholder="Nouveau mot de passe (6 caractères min.)" autocomplete="new-password" style="width:100%;padding:9px 10px;margin-bottom:8px;border-radius:6px;border:1px solid #2a4a68;background:#0e1c28;color:#fff;font-size:13px;box-sizing:border-box">
+      <input id="authRecoveryPassword2" type="password" data-fr="Confirmer le mot de passe" data-en="Confirm password" placeholder="Confirmer le mot de passe" autocomplete="new-password" style="width:100%;padding:9px 10px;margin-bottom:12px;border-radius:6px;border:1px solid #2a4a68;background:#0e1c28;color:#fff;font-size:13px;box-sizing:border-box">
       <button onclick="authSetNewPassword()" id="authRecoveryBtn" style="width:100%;padding:10px;border:none;border-radius:6px;background:#1a3a5a;color:#fff;font-weight:600;font-size:13px;cursor:pointer;margin-bottom:8px">Définir le mot de passe</button>
       <div id="authErrorRecovery" style="color:#ff6b6b;font-size:11.5px;margin-bottom:8px;display:none"></div>
     </div>
@@ -214,7 +214,7 @@
 <select class="fsel" id="prodBrand" onchange="renderProds()" style="min-width:160px"><option value="">Toutes marques</option></select>
 <select class="fsel" id="prodCat" onchange="renderProds()" style="min-width:140px"><option value="">Toutes categories</option><option value="vrf" id="t_cat_vrf">VRF / VRV</option><option value="split" id="t_cat_split">Split / Multi-split</option><option value="chiller" id="t_cat_chiller">Chillers</option><option value="rooftop" id="t_cat_rooftop">Rooftop</option><option value="ccu" id="t_cat_ccu">CCU / Precision</option><option value="pac" id="t_cat_pac">PAC Air/Eau</option><option value="ahu" id="t_cat_ahu">CTA / VMC</option><option value="compresseur" id="t_cat_comp">Compresseurs</option><option value="regulation" id="t_cat_reg">Regulation / GTB</option><option value="diffusion" id="t_cat_diff">Distribution air</option></select>
 <select class="fsel" id="prodSort" onchange="renderProds()"><option value="brand" id="t_sort_brand">Tri: Marque</option><option value="name" id="t_sort_name">Tri: Nom</option><option value="pow" id="t_sort_pow">Tri: kW</option></select>
-<input class="fi" id="prodSearch" placeholder="Rechercher..." oninput="renderProds()" style="max-width:160px">
+<input class="fi" id="prodSearch" data-fr="Rechercher..." data-en="Search..." placeholder="Rechercher..." oninput="renderProds()" style="max-width:160px">
 </div>
 <div id="prodGrid" class="ga"></div>
 <div id="detov"><div class="detbk" onclick="hideDetail()">&#8592; <span id="t_back">Retour catalogue</span></div><div id="detContent"></div></div>
@@ -273,8 +273,8 @@
 <button class="btn bp" onclick="insertDvFavorite()" data-fr="Insérer" data-en="Insert">Insérer</button>
 <button class="btn bd" onclick="deleteDvFavorite()" title="Supprimer ce favori" data-fr="🗑️" data-en="🗑️">🗑️</button></div>
 <input class="fi" id="dvCustomBrand" placeholder="Marque..." style="width:100%">
-<input class="fi" id="dvCustomRef" placeholder="Référence..." style="width:100%">
-<input class="fi" id="dvCustomDes" placeholder="Désignation..." style="width:100%">
+<input class="fi" id="dvCustomRef" data-fr="Référence..." data-en="Reference..." placeholder="Référence..." style="width:100%">
+<input class="fi" id="dvCustomDes" data-fr="Désignation..." data-en="Description..." placeholder="Désignation..." style="width:100%">
 <div class="frow"><span class="flb" data-fr="Qte :" data-en="Qty:">Qte :</span><input class="fi" id="dvCustomQty" type="number" value="1" min="1" style="max-width:70px"><span class="flb" data-fr="PU :" data-en="Unit price:">PU :</span><input class="fi" id="dvCustomPU" type="number" placeholder="0" style="max-width:100px"></div>
 <div class="frow" style="gap:6px">
 <button class="btn bp" style="flex:1" onclick="addDvLineCustom()" data-fr="+ Ajouter au devis" data-en="+ Add to quote">+ Ajouter au devis</button>
@@ -432,7 +432,7 @@
 </div>
 </div><div><button class="btn bp" onclick="calcCost()" style="width:100%;margin-bottom:8px" id="t_cost_calc">Calculer cout</button><div class="res" id="costResult">Resultat cout</div></div></div>
 </div>
-<div class="panel" style="margin-top:10px"><div class="ph" id="t_roi_title2" data-fr="RENTABILITE PAC vs CHAUDIERE GAZ" data-en="HP vs GAS BOILER PAYBACK">RENTABILITE PAC vs CHAUDIERE GAZ</div><div class="g2"><div><div class="frow"><span class="flb" id="t_roi_pac">Installation PAC :</span><input class="fi" id="roiInstPAC" type="number" value="350000" style="max-width:120px"></div><div class="frow"><span class="flb" id="t_roi_chaud">Installation chaudiere :</span><input class="fi" id="roiInstChaud" type="number" value="180000" style="max-width:120px"></div><div class="frow"><span class="flb" id="t_roi_kwh">Besoins thermiques (kWh/an) :</span><input class="fi" id="roiKwh" type="number" value="15000" style="max-width:100px"></div><div class="frow"><span class="flb" id="t_roi_scop">SCOP PAC :</span><input class="fi" id="roiScop" type="number" value="3.5" step="0.1" style="max-width:70px"></div><div class="frow"><span class="flb" id="t_roi_rend">Rendement chaudiere :</span><input class="fi" id="roiCopChaud" type="number" value="0.90" step="0.01" style="max-width:70px"></div><div class="frow"><span class="flb" id="t_roi_elec">Prix kWh élec. (DA) :</span><input class="fi" id="roiPrixElec" type="number" value="6.5" step="0.1" style="max-width:80px"></div><div class="frow"><span class="flb" id="t_roi_gaz">Prix kWh gaz (DA) :</span><input class="fi" id="roiPrixGaz" type="number" value="2.2" step="0.1" style="max-width:80px"></div><button class="btn bp" onclick="calcROI()" style="width:100%;margin-top:8px" id="t_roi_calc">Calculer la rentabilite</button></div><div><div class="res" id="roiResult" style="white-space:pre-wrap;font-family:var(--fmo);font-size:11px;min-height:120px" id="t_roi_result_default">Renseignez les donnees et calculez</div></div></div></div></div>
+<div class="panel" style="margin-top:10px"><div class="ph" id="t_roi_title2" data-fr="RENTABILITE PAC vs CHAUDIERE GAZ" data-en="HP vs GAS BOILER PAYBACK">RENTABILITE PAC vs CHAUDIERE GAZ</div><div class="g2"><div><div class="frow"><span class="flb" id="t_roi_pac">Installation PAC :</span><input class="fi" id="roiInstPAC" type="number" value="350000" style="max-width:120px"></div><div class="frow"><span class="flb" id="t_roi_chaud">Installation chaudiere :</span><input class="fi" id="roiInstChaud" type="number" value="180000" style="max-width:120px"></div><div class="frow"><span class="flb" id="t_roi_kwh">Besoins thermiques (kWh/an) :</span><input class="fi" id="roiKwh" type="number" value="15000" style="max-width:100px"></div><div class="frow"><span class="flb" id="t_roi_scop">SCOP PAC :</span><input class="fi" id="roiScop" type="number" value="3.5" step="0.1" style="max-width:70px"></div><div class="frow"><span class="flb" id="t_roi_rend">Rendement chaudiere :</span><input class="fi" id="roiCopChaud" type="number" value="0.90" step="0.01" style="max-width:70px"></div><div class="frow"><span class="flb" id="t_roi_elec" data-fr="Prix kWh élec. (DA) :" data-en="Elec. price kWh (DA):">Prix kWh élec. (DA) :</span><input class="fi" id="roiPrixElec" type="number" value="6.5" step="0.1" style="max-width:80px"></div><div class="frow"><span class="flb" id="t_roi_gaz">Prix kWh gaz (DA) :</span><input class="fi" id="roiPrixGaz" type="number" value="2.2" step="0.1" style="max-width:80px"></div><button class="btn bp" onclick="calcROI()" style="width:100%;margin-top:8px" id="t_roi_calc">Calculer la rentabilite</button></div><div><div class="res" id="roiResult" style="white-space:pre-wrap;font-family:var(--fmo);font-size:11px;min-height:120px" id="t_roi_result_default">Renseignez les donnees et calculez</div></div></div></div></div>
 
 <!-- OCR -->
 <div class="page" id="pg-ocr">
@@ -616,7 +616,7 @@
 <div class="frow"><span class="flb" id="t_re_cep">Cep,nr :</span><input class="fi" id="reCep2" type="number" value="65" style="max-width:100px"></div>
 <div class="frow"><span class="flb" id="t_re_scop">SCOP PAC :</span><input class="fi" id="reScop2" type="number" value="4.1" step="0.1" style="max-width:90px"></div>
 <button class="btn bp" onclick="calcRE2020Verify()" style="width:100%;margin-top:4px" id="re2020-verify-btn" data-fr="Vérifier RE2020" data-en="Vérifier RE2020">Vérifier RE2020</button>
-<div class="res" id="depResult2" style="margin-top:8px">Vérification RE2020</div>
+<div class="res" id="depResult2" data-fr="Vérification RE2020" data-en="RE2020 Verification" style="margin-top:8px">Vérification RE2020</div>
 </div>
 <div class="panel"><div class="ph" id="t_re_calc_h" data-fr="INFORMATIONS RE2020 SEUIL 2025" data-en="SEUILS RE2020 2025 — INFORMATIONS">SEUILS RE2020 2025 — INFORMATIONS</div>
 <div id="re-calc-info-text" style="font-size:10.5px;color:var(--ts);line-height:1.9">
@@ -672,11 +672,11 @@
 </div>
   <div class="g2">
     <div>
-      <div class="frow"><span class="flb">Référence dossier :</span><input class="fi" id="rpt-ref" placeholder="AUDIT-2025-001"></div>
+      <div class="frow"><span class="flb" data-fr="Référence dossier :" data-en="File reference:">Référence dossier :</span><input class="fi" id="rpt-ref" placeholder="AUDIT-2025-001"></div>
       <div class="frow"><span class="flb">Site / Installation :</span><input class="fi" id="rpt-site" placeholder="Site name..."></div>
       <div class="frow"><span class="flb">Auditeur :</span><input class="fi" id="rpt-aud" placeholder="Nom + Habilitation"></div>
       <div class="frow"><span class="flb">Date d'audit :</span><input class="fi" id="rpt-date" type="date"></div>
-      <div class="frow"><span class="flb">Type de bâtiment :</span>
+      <div class="frow"><span class="flb" data-fr="Type de bâtiment :" data-en="Building type:">Type de bâtiment :</span>
         <select class="fsel" id="rpt-type">
           <option value="indiv">Résidentiel individuel</option>
           <option value="collec">Résidentiel collectif</option>
@@ -689,10 +689,10 @@
     </div>
     <div>
       <div class="ph" style="font-size:10px;margin-bottom:6px">RÉSULTATS MESURÉS</div>
-      <div class="frow"><span class="flb">Ic construction mesuré :</span><input class="fi" id="rpt-ic" type="number" placeholder="kgCO2eq/m²" style="max-width:110px"></div>
-      <div class="frow"><span class="flb">Cep,nr mesuré :</span><input class="fi" id="rpt-cep" type="number" placeholder="kWhEP/m²/an" style="max-width:110px"></div>
-      <div class="frow"><span class="flb">SCOP PAC mesuré :</span><input class="fi" id="rpt-scop" type="number" placeholder="ex: 4.2" step="0.1" style="max-width:90px"></div>
-      <div class="frow"><span class="flb">GWP frigorigène :</span><input class="fi" id="rpt-gwp" type="number" placeholder="ex: 675" style="max-width:90px"></div>
+      <div class="frow"><span class="flb" data-fr="Ic construction mesuré :" data-en="Measured Ic construction:">Ic construction mesuré :</span><input class="fi" id="rpt-ic" type="number" placeholder="kgCO2eq/m²" style="max-width:110px"></div>
+      <div class="frow"><span class="flb" data-fr="Cep,nr mesuré :" data-en="Measured Cep,nr:">Cep,nr mesuré :</span><input class="fi" id="rpt-cep" type="number" placeholder="kWhEP/m²/an" style="max-width:110px"></div>
+      <div class="frow"><span class="flb" data-fr="SCOP PAC mesuré :" data-en="Measured HP SCOP:">SCOP PAC mesuré :</span><input class="fi" id="rpt-scop" type="number" placeholder="ex: 4.2" step="0.1" style="max-width:90px"></div>
+      <div class="frow"><span class="flb" data-fr="GWP frigorigène :" data-en="Refrigerant GWP:">GWP frigorigène :</span><input class="fi" id="rpt-gwp" type="number" placeholder="ex: 675" style="max-width:90px"></div>
       <div class="frow"><span class="flb">Classe GTB (EN 15232) :</span>
         <select class="fsel" id="rpt-gtb">
           <option value="A">Classe A (SCADA)</option>
@@ -705,7 +705,7 @@
     </div>
   </div>
   <button class="btn bp" onclick="genRapportAudit()" style="width:100%;margin-top:8px">📄 Générer le Rapport PDF</button>
-  <div class="res" id="rpt-result" style="margin-top:8px;white-space:pre-wrap;font-size:10.5px">Saisissez les données et générez le rapport.</div>
+  <div class="res" id="rpt-result" data-fr="Saisissez les données et générez le rapport." data-en="Enter data and generate the report." style="margin-top:8px;white-space:pre-wrap;font-size:10.5px">Saisissez les données et générez le rapport.</div>
 
 <!-- AUDIO STUDIO PLAYER -->
 <div id="rpt-audio-panel" style="margin-top:12px;background:linear-gradient(135deg,#0a1520,#060f18);border:1px solid rgba(0,229,255,.25);border-radius:12px;padding:14px;display:none;box-shadow:0 4px 20px rgba(0,229,255,.08)">
@@ -880,7 +880,7 @@
       </div>
       <div class="ph" style="font-size:10px;margin-top:8px">CALCULATEUR ΔT ÉVAPORATEUR / DÉBIT</div>
       <div class="frow">
-        <span class="flb">Puissance nominale (kW) :</span>
+        <span class="flb" data-fr="Puissance nominale (kW) :" data-en="Rated power (kW):">Puissance nominale (kW) :</span>
         <input class="fi" id="carr-kw" type="number" value="100" style="max-width:80px">
       </div>
       <div class="frow">
@@ -888,7 +888,7 @@
         <input class="fi" id="carr-dt" type="number" value="5" step="0.5" style="max-width:80px">
       </div>
       <button class="btn bp" onclick="calcCarrierFlow()" style="width:100%;margin-top:6px">⚙ Calculer débit min</button>
-      <div class="res" id="carrier-result" style="margin-top:8px;font-size:11px">Saisissez les données et calculez.</div>
+      <div class="res" id="carrier-result" data-fr="Saisissez les données et calculez." data-en="Enter data and calculate." style="margin-top:8px;font-size:11px">Saisissez les données et calculez.</div>
     </div>
   </div>
 </div>
@@ -905,7 +905,7 @@
     <button class="btn" onclick="resetProto()" style="flex:1">↺ Reset</button>
     <button class="btn" onclick="exportProto()" style="flex:1">📄 Exporter</button>
   </div>
-  <div class="res" id="proto-result" style="margin-top:8px;font-size:11px">0 / 8 étapes validées.</div>
+  <div class="res" id="proto-result" data-fr="0 / 8 étapes validées." data-en="0 / 8 steps validated." style="margin-top:8px;font-size:11px">0 / 8 étapes validées.</div>
 </div>
 </div>
 
@@ -1003,7 +1003,7 @@
     </div>
   </div>
   <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-    <div class="res" id="mes-score" style="flex:1;font-size:12px;font-weight:700">0 / 0 points validés</div>
+    <div class="res" id="mes-score" data-fr="0 / 0 points validés" data-en="0 / 0 points validated" style="flex:1;font-size:12px;font-weight:700">0 / 0 points validés</div>
     <button class="btn bp" onclick="calcMesScore()" style="min-width:130px">📊 Score MES</button>
     <button class="btn" onclick="resetMes()" style="min-width:100px">↺ Reset</button>
   </div>
@@ -1086,7 +1086,7 @@
         </select>
       </div>
       <button class="btn bp" onclick="calcR290Max()" style="width:100%;margin-top:6px">⚗ Calculer charge max</button>
-      <div class="res" id="r290-result" style="margin-top:8px;font-size:11px">Saisissez les données et calculez.</div>
+      <div class="res" id="r290-result" data-fr="Saisissez les données et calculez." data-en="Enter data and calculate." style="margin-top:8px;font-size:11px">Saisissez les données et calculez.</div>
     </div>
   </div>
 </div>
@@ -1118,7 +1118,7 @@
 </div>
 <div id="vmc-db" class="tp2 active">
 <div class="frow">
-  <input class="fi" id="vanSearch" placeholder="Rechercher vanne..." oninput="renderValves()" style="max-width:200px">
+  <input class="fi" id="vanSearch" data-fr="Rechercher vanne..." data-en="Search valve..." placeholder="Rechercher vanne..." oninput="renderValves()" style="max-width:200px">
   <select class="fsel" id="vanBrand" onchange="renderValves()"><option value="">Toutes marques</option><option>Danfoss</option><option>Belimo</option><option>Honeywell</option><option>IMI Hydronic</option><option>Siemens</option><option>Watts</option><option>Tour&amp;Andersson</option></select>
   <select class="fsel" id="vanType" onchange="renderValves()"><option value="">Tous types</option><option value="2V">2 voies</option><option value="3V">3 voies</option><option value="PICV">PICV</option><option value="Papillon">Papillon</option></select>
 </div>
@@ -1126,7 +1126,7 @@
 </div>
 <div id="vmc-act" class="tp2" style="display:none">
 <div class="frow">
-  <input class="fi" id="actSearch" placeholder="Rechercher actionneur..." oninput="renderActuators()" style="max-width:200px">
+  <input class="fi" id="actSearch" data-fr="Rechercher actionneur..." data-en="Search actuator..." placeholder="Rechercher actionneur..." oninput="renderActuators()" style="max-width:200px">
   <select class="fsel" id="actBrand" onchange="renderActuators()"><option value="">Toutes marques</option><option>Belimo</option><option>Siemens</option><option>Honeywell</option><option>Danfoss</option><option>Sauter</option></select>
 </div>
 <div id="actGrid"></div>
@@ -1172,12 +1172,12 @@
 <div class="page" id="pg-hydraulique">
 <div class="ptitle"><span id="t_hyd_title">HYDRAULIQUE HVAC — CALCULS</span></div>
 <div class="tabs" style="flex-wrap:wrap;gap:3px"><button class="tab active" onclick="showTab('hyd',0,this)" data-fr="Débit / Diam." data-en="Flow / Diam.">Flow / Diam.</button><button class="tab" onclick="showTab('hyd',1,this)" data-fr="Pertes de charge" data-en="Pressure Drop">Pressure Drop</button><button class="tab" onclick="showTab('hyd',2,this)" data-fr="Pompe / HMT" data-en="Pump / Head">Pump / Head</button><button class="tab" onclick="showTab('hyd',3,this)" data-fr="Vase expansion" data-en="Exp. Vessel">Exp. Vessel</button><button class="tab" onclick="showTab('hyd',4,this)" data-fr="Séparateur" data-en="Separator">Separator</button><button class="tab" onclick="showTab('hyd',5,this)" data-fr="Collecteur" data-en="Manifold">Manifold</button><button class="tab" onclick="showTab('hyd',6,this)" data-fr="Guide Préréglage" data-en="Pre-Setting Guide">🎯 Guide Préréglage</button><button class="tab" onclick="showTab('hyd',7,this)" data-fr="Gaines d'air" data-en="Air Ducts">Air Ducts</button><button class="tab" onclick="showTab('hyd',8,this)" data-fr="Tuyauterie frigo" data-en="Refrigerant Piping">Refrigerant Piping</button><button class="tab" onclick="showTab('hyd',9,this)" data-fr="Refnet" data-en="Refnet">Refnet</button><button class="tab" onclick="showTab('hyd',10,this)" data-fr="Calcul réseau" data-en="Network Calc">Network Calc</button></div>
-<div id="hyd0" class="tp2 active"><div class="panel"><div class="ph" id="t_hyd_flow_h">DEBIT &amp; DIAMETRE</div><div class="g2"><div><div class="frow"><span class="flb" id="t_hyd_cap">Capacite (kW) :</span><input class="fi" id="hCap" type="number" value="100" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_dt">deltaT (deg C) :</span><input class="fi" id="hDt" type="number" value="5" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_v">Vitesse (m/s) :</span><input class="fi" id="hV" type="number" value="1.5" step="0.1" style="max-width:90px"></div><button class="btn bp" onclick="calcDebit()" style="width:100%;margin-top:4px" id="t_hyd_calc_flow">Calculer</button></div><div><div class="res" id="hydFlowResult">Flow result</div></div></div></div></div>
+<div id="hyd0" class="tp2 active"><div class="panel"><div class="ph" id="t_hyd_flow_h">DEBIT &amp; DIAMETRE</div><div class="g2"><div><div class="frow"><span class="flb" id="t_hyd_cap">Capacite (kW) :</span><input class="fi" id="hCap" type="number" value="100" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_dt">deltaT (deg C) :</span><input class="fi" id="hDt" type="number" value="5" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_v" data-fr="Vitesse (m/s) :" data-en="Velocity (m/s):">Vitesse (m/s) :</span><input class="fi" id="hV" type="number" value="1.5" step="0.1" style="max-width:90px"></div><button class="btn bp" onclick="calcDebit()" style="width:100%;margin-top:4px" id="t_hyd_calc_flow">Calculer</button></div><div><div class="res" id="hydFlowResult">Flow result</div></div></div></div></div>
 <div id="hyd1" class="tp2"><div class="panel"><div class="ph" id="t_hyd_pdc_h">PERTES DE CHARGE</div><div class="g2"><div><div class="frow"><span class="flb" id="t_hyd_q2">Debit (m3/h) :</span><input class="fi" id="pdcQ" type="number" value="10" style="max-width:90px"></div><div class="frow"><span class="flb">DN (mm) :</span><input class="fi" id="pdcDN" type="number" value="40" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_l" data-fr="Longueur (m) :" data-en="Length (m):">Longueur (m) :</span><input class="fi" id="pdcL" type="number" value="50" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_flu">Fluide :</span><select class="fsel" id="pdcFluid"><option value="1000">Eau (1000)</option><option value="1040">Glycol 30%</option><option value="1060" data-fr="Glycol 40%" data-en="Glycol 40%">Glycol 40%</option></select></div><button class="btn bp" onclick="calcPDC()" style="width:100%;margin-top:4px">Calculer PDC</button></div><div><div class="res" id="pdcResult">PDC result</div></div></div></div></div>
 <div id="hyd2" class="tp2"><div class="panel"><div class="ph" id="t_hyd_pump_h">POMPE / HMT</div><div class="g2"><div><div class="frow"><span class="flb" id="t_hyd_qp">Debit (m3/h) :</span><input class="fi" id="pompeQ" type="number" value="10" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_hmt" data-fr="HMT (m.c.e.) :" data-en="Head (m.w.c.):">HMT (m.c.e.) :</span><input class="fi" id="pompeHMT" type="number" value="15" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_eta">Rendement (%) :</span><input class="fi" id="pompeEta" type="number" value="65" style="max-width:90px"></div><button class="btn bp" onclick="calcPompe()" style="width:100%;margin-top:4px">Calculer</button></div><div><div class="res" id="pompeResult">Pump result</div></div></div></div></div>
 <div id="hyd3" class="tp2"><div class="panel"><div class="ph" id="t_hyd_vas_h">VASE D'EXPANSION</div><div class="g2"><div><div class="frow"><span class="flb" id="t_hyd_vol">Volume installation (L) :</span><input class="fi" id="vaseVol" type="number" value="500" style="max-width:100px"></div><div class="frow"><span class="flb" id="t_hyd_t1">T min (deg C) :</span><input class="fi" id="vaseT1" type="number" value="10" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_t2">T max (deg C) :</span><input class="fi" id="vaseT2" type="number" value="80" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_ps" data-fr="Pression statique (bar) :" data-en="Static pressure (bar):">Pression statique (bar) :</span><input class="fi" id="vasePs" type="number" value="1.5" step="0.1" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_pmax">Pression max (bar) :</span><input class="fi" id="vasePmax" type="number" value="3" style="max-width:90px"></div><button class="btn bp" onclick="calcVase()" style="width:100%;margin-top:4px">Calculer vase</button></div><div><div class="res" id="vaseResult">Vessel result</div></div></div></div></div>
-<div id="hyd4" class="tp2"><div class="panel"><div class="ph" id="t_hyd_sep_h">SEPARATEUR HYDRAULIQUE</div><div class="g2"><div><div class="frow"><span class="flb" id="t_hyd_qsep">Debit total (m3/h) :</span><input class="fi" id="sepQ" type="number" value="20" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_vsep">Vitesse max (m/s) :</span><input class="fi" id="sepV" type="number" value="0.1" step="0.01" style="max-width:90px"></div><button class="btn bp" onclick="calcSep()" style="width:100%;margin-top:4px">Calculer</button></div><div><div class="res" id="sepResult">Separator result</div></div></div></div></div>
-<div id="hyd5" class="tp2"><div class="panel"><div class="ph" id="t_hyd_col_h">COLLECTEUR DISTRIBUTEUR</div><div class="g2"><div><div class="frow"><span class="flb" id="t_hyd_qcol">Debit total (m3/h) :</span><input class="fi" id="colQ" type="number" value="30" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_nc" data-fr="Nb circuits :" data-en="Nb circuits:">Nb circuits :</span><input class="fi" id="colN" type="number" value="4" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_vcol">Vitesse (m/s) :</span><input class="fi" id="colV" type="number" value="1.2" step="0.1" style="max-width:90px"></div><button class="btn bp" onclick="calcCol()" style="width:100%;margin-top:4px">Calculer</button></div><div><div class="res" id="colResult">Manifold result</div></div></div></div></div>
+<div id="hyd4" class="tp2"><div class="panel"><div class="ph" id="t_hyd_sep_h">SEPARATEUR HYDRAULIQUE</div><div class="g2"><div><div class="frow"><span class="flb" id="t_hyd_qsep">Debit total (m3/h) :</span><input class="fi" id="sepQ" type="number" value="20" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_vsep" data-fr="Vitesse max (m/s) :" data-en="Max velocity (m/s):">Vitesse max (m/s) :</span><input class="fi" id="sepV" type="number" value="0.1" step="0.01" style="max-width:90px"></div><button class="btn bp" onclick="calcSep()" style="width:100%;margin-top:4px">Calculer</button></div><div><div class="res" id="sepResult">Separator result</div></div></div></div></div>
+<div id="hyd5" class="tp2"><div class="panel"><div class="ph" id="t_hyd_col_h">COLLECTEUR DISTRIBUTEUR</div><div class="g2"><div><div class="frow"><span class="flb" id="t_hyd_qcol">Debit total (m3/h) :</span><input class="fi" id="colQ" type="number" value="30" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_nc" data-fr="Nb circuits :" data-en="Nb circuits:">Nb circuits :</span><input class="fi" id="colN" type="number" value="4" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_vcol" data-fr="Vitesse (m/s) :" data-en="Velocity (m/s):">Vitesse (m/s) :</span><input class="fi" id="colV" type="number" value="1.2" step="0.1" style="max-width:90px"></div><button class="btn bp" onclick="calcCol()" style="width:100%;margin-top:4px">Calculer</button></div><div><div class="res" id="colResult">Manifold result</div></div></div></div></div>
 
 <div id="hyd6" class="tp2">
 <div class="panel">
@@ -5683,7 +5683,7 @@ setTimeout(function() {
   div.style.cssText = 'margin-top:10px;padding:10px;background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.15);border-radius:6px';
   div.innerHTML =
     '<div style="color:var(--ac);font-weight:700;font-size:11px;margin-bottom:8px" id="chgPlusTitle">PARAMÈTRES COMPLÉMENTAIRES</div>' +
-    '<div class="frow"><span class="flb" id="chgVitLbl">Surface vitrée (m²) :</span><input class="fi" id="chgVit" type="number" value="15" style="max-width:80px"></div>' +
+    '<div class="frow"><span class="flb" id="chgVitLbl" data-fr="Surface vitrée (m²) :" data-en="Glazed area (m²):">Surface vitrée (m²) :</span><input class="fi" id="chgVit" type="number" value="15" style="max-width:80px"></div>' +
     '<div class="frow"><span class="flb" id="chgOrLbl">Orientation :</span>' +
     '<select class="fsel" id="chgOrient">' +
     '<option value="60">'+(lang==="en"?'North':'Nord')+'</option>' +
