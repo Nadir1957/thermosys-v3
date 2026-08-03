@@ -9301,7 +9301,7 @@ async function authCheckState(){
   authShowPanel('authLoading');
   var sessionRes = await _sb.auth.getSession();
   var session = sessionRes.data ? sessionRes.data.session : null;
-
+  if (window._authRecoveryMode) return;
   if (!session) {
     document.getElementById('app').style.display = 'none';
     authShowPanel('authLoginForm');
@@ -9309,6 +9309,7 @@ async function authCheckState(){
   }
 
   var profileRes = await _sb.from('profiles').select('status,is_admin').eq('id', session.user.id).single();
+  if (window._authRecoveryMode) return;
   if (profileRes.error || !profileRes.data) {
     // Profil pas encore créé (rare cas de latence du trigger) : réessayer, mais pas indéfiniment
     window._authRetryCount = (window._authRetryCount || 0) + 1;
@@ -9323,7 +9324,7 @@ async function authCheckState(){
     return;
   }
   window._authRetryCount = 0;
-
+  if (window._authRecoveryMode) return;
   var status = profileRes.data.status;
   window._thermosysIsAdmin = !!profileRes.data.is_admin;
 
