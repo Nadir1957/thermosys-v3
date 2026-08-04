@@ -9248,13 +9248,13 @@ async function authSignIn(){
   authHideError('authError');
   var email = (document.getElementById('authEmail')||{}).value || '';
   var password = (document.getElementById('authPassword')||{}).value || '';
-  if (!email || !password) { authShowError('authError', 'Veuillez remplir tous les champs.'); return; }
+  if (!email || !password) { authShowError('authError', 'Please fill in all fields.'); return; }
   var btn = document.getElementById('authSignInBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'Connexion...'; }
   var res = await _sb.auth.signInWithPassword({ email: email, password: password });
   if (btn) { btn.disabled = false; btn.textContent = 'Se connecter'; }
   if (res.error) {
-    authShowError('authError', 'Email ou mot de passe incorrect.');
+    authShowError('authError', 'Incorrect email or password.');
     return;
   }
   await authCheckState();
@@ -9264,14 +9264,14 @@ async function authSignUp(){
   authHideError('authErrorSignup');
   var email = (document.getElementById('authEmailSignup')||{}).value || '';
   var password = (document.getElementById('authPasswordSignup')||{}).value || '';
-  if (!email || !password) { authShowError('authErrorSignup', 'Veuillez remplir tous les champs.'); return; }
-  if (password.length < 6) { authShowError('authErrorSignup', 'Le mot de passe doit contenir au moins 6 caractères.'); return; }
+  if (!email || !password) { authShowError('authErrorSignup', 'Please fill in all fields.'); return; }
+  if (password.length < 6) { authShowError('authErrorSignup', 'Password must be at least 6 characters.'); return; }
   var btn = document.getElementById('authSignUpBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'Création...'; }
   var res = await _sb.auth.signUp({ email: email, password: password });
   if (btn) { btn.disabled = false; btn.textContent = 'Créer mon compte'; }
   if (res.error) {
-    authShowError('authErrorSignup', res.error.message.indexOf('already') > -1 ? 'Un compte existe déjà avec cet email.' : 'Erreur : ' + res.error.message);
+    authShowError('authErrorSignup', res.error.message.indexOf('already') > -1 ? 'An account already exists with this email.' : 'Error: ' + res.error.message);
     return;
   }
   await authCheckState();
@@ -9329,7 +9329,7 @@ async function authCheckState(){
     if (window._authRetryCount > 5) {
       document.getElementById('app').style.display = 'none';
       authShowPanel('authLoginForm');
-      authShowError('authError', 'Impossible de vérifier votre compte (erreur ' + (profileRes.error ? profileRes.error.code || profileRes.error.message : 'inconnue') + '). Réessayez ou contactez l\'administrateur.');
+      authShowError('authError', 'Unable to verify your account (error ' + (profileRes.error ? profileRes.error.code || profileRes.error.message : 'unknown') + '). Please try again or contact the administrator.');
       window._authRetryCount = 0;
       return;
     }
