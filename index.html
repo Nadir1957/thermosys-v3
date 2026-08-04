@@ -4491,6 +4491,11 @@ function calcRefnet(){
   var cap = parseFloat((document.getElementById('rfnCap')||{}).value) || 0;
   var el = document.getElementById('rfnResult');
   if (!el) return;
+  if (cap <= 0) {
+    el.innerHTML = '<div style="color:#ff6b6b;font-size:12px">' + (fr ? 'Veuillez saisir une puissance valide (supérieure à 0).' : 'Please enter a valid capacity (greater than 0).') + '</div>';
+    renderRefnetTable(brand, pos, null);
+    return;
+  }
 
   var ref = null, seuilTxt = '';
 
