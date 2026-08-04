@@ -1379,7 +1379,7 @@
   <div class="g2">
     <div>
       <div class="frow"><span class="flb" data-fr="Marque :" data-en="Brand:">Marque :</span>
-        <select class="fsel" id="rfnBrand" onchange="updateRefnetUI()">
+        <select class="fsel" id="rfnBrand" onchange="updateRefnetUI();calcRefnet();">
           <option value="daikin">Daikin (VRV IV)</option>
           <option value="toshiba">Toshiba (SMMS)</option>
           <option value="gree">Gree (GMV5)</option>
@@ -1392,14 +1392,15 @@
           <option value="fujitsu">Fujitsu (Airstage)</option>
         </select>
       </div>
+      <div class="frow"><span class="flb" data-fr="Référence équipement (optionnel) :" data-en="Equipment reference (optional):">Référence équipement (optionnel) :</span><input class="fi" id="rfnCustomRef" data-fr="Ex: Split GMV6 mural 8HP" data-en="Ex: GMV6 wall split 8HP" placeholder="Ex: Split GMV6 mural 8HP" style="width:100%" oninput="refnetDebouncedCalc()"></div>
       <div class="frow" id="rfnPosRow"><span class="flb" data-fr="Position :" data-en="Position:">Position :</span>
-        <select class="fsel" id="rfnPos">
+        <select class="fsel" id="rfnPos" onchange="calcRefnet()">
           <option value="first" data-fr="1er branchement (depuis UE)" data-en="1st branch (from outdoor unit)">1er branchement (depuis UE)</option>
           <option value="other" data-fr="Branchement suivant (aval)" data-en="Next branch (downstream)">Branchement suivant (aval)</option>
         </select>
       </div>
-      <div class="frow" id="rfnLgUnitsRow" style="display:none"><span class="flb" data-fr="Nb. unités intérieures :" data-en="No. of indoor units:">Nb. unités intérieures :</span><input class="fi" id="rfnLgUnits" type="number" value="3" min="1" max="8" style="max-width:90px"></div>
-      <div class="frow" id="rfnCapRow"><span class="flb" id="rfnCapLbl" data-fr="Puissance UE (HP) :" data-en="Outdoor unit capacity (HP):">Puissance UE (HP) :</span><input class="fi" id="rfnCap" type="number" value="16" style="max-width:90px"></div>
+      <div class="frow" id="rfnLgUnitsRow" style="display:none"><span class="flb" data-fr="Nb. unités intérieures :" data-en="No. of indoor units:">Nb. unités intérieures :</span><input class="fi" id="rfnLgUnits" type="number" value="3" min="1" max="8" style="max-width:90px" oninput="refnetDebouncedCalc()"></div>
+      <div class="frow" id="rfnCapRow"><span class="flb" id="rfnCapLbl" data-fr="Puissance UE (HP) :" data-en="Outdoor unit capacity (HP):">Puissance UE (HP) :</span><input class="fi" id="rfnCap" type="number" value="16" style="max-width:90px" oninput="refnetDebouncedCalc()"></div>
       <button class="btn bp" onclick="calcRefnet()" style="width:100%;margin-top:4px" data-fr="Calculer" data-en="Calculate">Calculer</button>
     </div>
     <div>
@@ -4458,6 +4459,11 @@ function renderRefnetTable(brand, pos, highlightRef){
   }).join('');
 }
 
+var _refnetDebounceTimer = null;
+function refnetDebouncedCalc(){
+  clearTimeout(_refnetDebounceTimer);
+  _refnetDebounceTimer = setTimeout(calcRefnet, 400);
+}
 function updateRefnetUI(){
   var fr = (typeof lang!=='undefined' && lang==='fr');
   var brand = (document.getElementById('rfnBrand')||{}).value || 'daikin';
@@ -4480,6 +4486,7 @@ function updateRefnetUI(){
 function calcRefnet(){
   var fr = (typeof lang!=='undefined' && lang==='fr');
   var brand = (document.getElementById('rfnBrand')||{}).value || 'daikin';
+  var customRef = ((document.getElementById('rfnCustomRef')||{}).value || '').trim();
   var pos = (document.getElementById('rfnPos')||{}).value || 'first';
   var cap = parseFloat((document.getElementById('rfnCap')||{}).value) || 0;
   var el = document.getElementById('rfnResult');
@@ -4530,10 +4537,11 @@ function calcRefnet(){
   renderRefnetTable(brand, pos, ref);
 
   var lines = [
-    [fr?'Marque':'Brand', REFNET_BRAND_LABELS[brand]||brand],
-    [fr?'Référence Refnet':'Refnet reference', ref || (fr?'Hors plage — vérifier logiciel constructeur':'Out of range — check manufacturer software')],
-    [fr?'Plage correspondante':'Matching range', seuilTxt || '—']
+    [fr?'Marque':'Brand', REFNET_BRAND_LABELS[brand]||brand]
   ];
+  if (customRef) lines.push([fr?'Référence équipement (saisie)':'Equipment reference (entered)', customRef]);
+  lines.push([fr?'Référence Refnet':'Refnet reference', ref || (fr?'Hors plage — vérifier logiciel constructeur':'Out of range — check manufacturer software')]);
+  lines.push([fr?'Plage correspondante':'Matching range', seuilTxt || '—']);
   var html = lines.map(function(p){
     return '<div class="frow"><span class="flb">'+p[0]+' :</span><b>'+p[1]+'</b></div>';
   }).join('');
