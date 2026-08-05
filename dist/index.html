@@ -94,6 +94,23 @@
     <div id="authLoading" style="text-align:center;padding:20px 0">
       <div style="font-size:13px;color:#7fa8c9">Signing in...</div>
     </div>
+
+    <div style="text-align:center;margin-top:16px;padding-top:14px;border-top:1px solid #1e3a52">
+      <a href="#" onclick="showPrivacyPolicy();return false;" style="color:#7fa8c9;font-size:10.5px;text-decoration:underline">Privacy policy</a>
+    </div>
+  </div>
+
+  <div id="privacyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100000;align-items:center;justify-content:center;padding:20px">
+    <div style="width:100%;max-width:380px;max-height:80vh;overflow-y:auto;background:#12202e;border:1px solid #1e3a52;border-radius:10px;padding:24px;color:#e8f0f5">
+      <div style="font-size:14px;font-weight:700;margin-bottom:12px">Privacy policy</div>
+      <div style="font-size:12px;line-height:1.6;color:#c5d6e3">
+        Thermosys collects only your email address and password to create and manage your account, and to control access to the application.<br><br>
+        Your password is securely encrypted and never stored or accessible in plain text.<br><br>
+        Your data is not shared with any third party.<br><br>
+        For any question regarding your data, please contact the application administrator.
+      </div>
+      <button onclick="closePrivacyPolicy()" style="width:100%;margin-top:16px;padding:9px;border:none;border-radius:6px;background:#1a3a5a;color:#fff;font-weight:600;font-size:12.5px;cursor:pointer">Close</button>
+    </div>
   </div>
 </div>
 <div id="app" style="display:none">
@@ -9225,6 +9242,8 @@ _sb.auth.onAuthStateChange(function(event, session){
   }
 });
 
+function showPrivacyPolicy(){ var m=document.getElementById('privacyModal'); if(m) m.style.display='flex'; }
+function closePrivacyPolicy(){ var m=document.getElementById('privacyModal'); if(m) m.style.display='none'; }
 function authShowPanel(id){
   ['authLoginForm','authSignupForm','authPending','authDisabled','authLoading','authRecovery'].forEach(function(p){
     var el = document.getElementById(p);
