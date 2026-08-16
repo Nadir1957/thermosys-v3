@@ -333,10 +333,10 @@
 
 <!-- OBD -->
 <div class="page" id="pg-obd">
-<div class="ptitle"><span id="t_obd_title">DIAGNOSTIC OBD HVAC</span></div>
+<div class="ptitle"><span id="t_obd_title" data-fr="DIAGNOSTIC OBD HVAC" data-en="OBD HVAC DIAGNOSTIC">DIAGNOSTIC OBD HVAC</span></div>
 <div class="g2">
 <div class="panel" style="border-color:var(--wn)">
-  <div class="ph" style="color:var(--wn)" id="t_obd_conn">⚠ MATÉRIEL REQUIS — CONNEXION OBD</div>
+  <div class="ph" style="color:var(--wn)" id="t_obd_conn" data-fr="⚠ MATÉRIEL REQUIS — CONNEXION OBD" data-en="⚠ HARDWARE REQUIRED — OBD CONNECTION">⚠ MATÉRIEL REQUIS — CONNEXION OBD</div>
   <div id="obd-hw-block" style="background:rgba(255,140,0,.07);border:1px solid rgba(255,140,0,.25);border-radius:var(--r);padding:10px 14px;margin-bottom:10px;font-size:11px;line-height:1.7;color:var(--ts)">
     <div style="font-weight:700;color:var(--wn);margin-bottom:6px">🔌 OBD-II interface required:</div>
     <div>• <b>ELM327 Bluetooth/WiFi</b> — Compatible Android/iOS (recommandé)</div>
@@ -344,11 +344,11 @@
     <div>• <b>Connexion préalable</b> : Associer l'adaptateur dans les paramètres Bluetooth ou WiFi de votre appareil, puis revenir ici</div>
     <div style="margin-top:6px;padding:5px 8px;background:rgba(0,229,255,.06);border-radius:4px;color:var(--ac);font-size:10.5px">ℹ️ Ce module est opérationnel avec le matériel adapté. Il lit les paramètres HP/BP, températures et codes défauts en temps réel.</div>
   </div>
-  <div class="frow"><select class="fsel" id="obdPort"><option id="t_obd_sel" data-fr="Sélectionner port..." data-en="Select port...">Sélectionner port...</option></select><button class="btn bp" onclick="obdConnect()" id="t_obd_connect_btn">Connecter</button></div>
-  <div class="blog" id="obdLog" style="margin-top:6px"><div class="ll"><span class="lt">--</span><span class="ls i" id="t_obd_wait">En attente interface OBD...</span></div></div>
+  <div class="frow"><select class="fsel" id="obdPort"><option id="t_obd_sel" data-fr="Sélectionner port..." data-en="Select port...">Sélectionner port...</option></select><button class="btn bp" onclick="obdConnect()" id="t_obd_connect_btn" data-fr="Connecter" data-en="Connect">Connecter</button></div>
+  <div class="blog" id="obdLog" style="margin-top:6px"><div class="ll"><span class="lt">--</span><span class="ls i" id="t_obd_wait" data-fr="En attente interface OBD..." data-en="Waiting for OBD interface...">En attente interface OBD...</span></div></div>
 </div>
-<div class="panel"><div class="ph" id="t_obd_scan_h">DIAGNOSTIC RAPIDE</div>
-<div class="brow"><button class="btn bp" onclick="obdScan('HP')" id="t_obd_hp" data-fr="HP Système" data-en="HP System">HP Système</button><button class="btn bp" onclick="obdScan('BP')" id="t_obd_bp" data-fr="BP Système" data-en="BP System">BP Système</button><button class="btn bp" onclick="obdScan('temp')" id="t_obd_temp" data-fr="Températures" data-en="Temperatures">Températures</button><button class="btn bk" onclick="runDiag()" id="t_obd_diag">Diagnostic complet</button></div>
+<div class="panel"><div class="ph" id="t_obd_scan_h" data-fr="DIAGNOSTIC RAPIDE" data-en="QUICK DIAGNOSTIC">DIAGNOSTIC RAPIDE</div>
+<div class="brow"><button class="btn bp" onclick="obdScan('HP')" id="t_obd_hp" data-fr="HP Système" data-en="HP System">HP Système</button><button class="btn bp" onclick="obdScan('BP')" id="t_obd_bp" data-fr="BP Système" data-en="BP System">BP Système</button><button class="btn bp" onclick="obdScan('temp')" id="t_obd_temp" data-fr="Températures" data-en="Temperatures">Températures</button><button class="btn bk" onclick="runDiag()" id="t_obd_diag" data-fr="Diagnostic complet" data-en="Full diagnostic">Diagnostic complet</button></div>
 </div></div></div>
 
 <!-- FLUIDES -->
@@ -472,24 +472,24 @@
 
 <!-- OCR -->
 <div class="page" id="pg-ocr">
-<div class="ptitle"><span id="t_ocr_title">OCR INTELLIGENT — GEMINI 2.5 FLASH</span></div>
+<div class="ptitle"><span id="t_ocr_title" data-fr="OCR INTELLIGENT — GEMINI 2.5 FLASH" data-en="SMART OCR — GEMINI 2.5 FLASH">OCR INTELLIGENT — GEMINI 2.5 FLASH</span></div>
 <div class="g2">
-<div class="panel"><div class="ph" id="t_ocr_import">IMPORTER DOCUMENT</div>
+<div class="panel"><div class="ph" id="t_ocr_import" data-fr="IMPORTER DOCUMENT" data-en="IMPORT DOCUMENT">IMPORTER DOCUMENT</div>
 <div class="ozone" id="ocrZone" onclick="document.getElementById('ocrFile').click()" ondrop="dropOCR(event)" ondragover="event.preventDefault();this.classList.add('dov')" ondragleave="this.classList.remove('dov')">
 <div style="font-size:32px">&#128247;</div>
-<div style="font-size:12px;color:var(--tp)" id="t_ocr_drop">Glisser / Cliquer pour importer</div>
+<div style="font-size:12px;color:var(--tp)" id="t_ocr_drop" data-fr="Glisser / Cliquer pour importer" data-en="Drag / Click to import">Glisser / Cliquer pour importer</div>
 <div style="font-size:10px;color:var(--tm)" id="t_ocr_fmt">PDF · PNG · JPG · WEBP</div>
 <input type="file" id="ocrFile" accept="image/*,application/pdf" style="display:none" onchange="loadOCR(event)">
 </div>
 <div style="margin-top:7px;font-size:10.5px;color:var(--tm);text-align:center" id="ocrStatus"></div>
 <div class="frow" style="margin-top:8px">
-<select class="fsel" id="ocrMode"><option value="extract" id="t_ocr_extract">Extraction donnees</option><option value="diagnose" id="t_ocr_diagnose">Diagnostic anomalies</option><option value="conform" id="t_ocr_conform">Controle conformite</option><option value="translate" id="t_ocr_translate">Traduction technique</option><option value="barcode" id="t_ocr_bar">Code-barres / QR Code</option></select>
-<button class="btn bp" onclick="runOCR()" id="t_ocr_run">Analyser</button>
+<select class="fsel" id="ocrMode"><option value="extract" id="t_ocr_extract" data-fr="Extraction donnees" data-en="Data extraction">Extraction donnees</option><option value="diagnose" id="t_ocr_diagnose" data-fr="Diagnostic anomalies" data-en="Anomaly diagnosis">Diagnostic anomalies</option><option value="conform" id="t_ocr_conform" data-fr="Controle conformite" data-en="Compliance check">Controle conformite</option><option value="translate" id="t_ocr_translate" data-fr="Traduction technique" data-en="Technical translation">Traduction technique</option><option value="barcode" id="t_ocr_bar" data-fr="Code-barres / QR Code" data-en="Barcode / QR Code">Code-barres / QR Code</option></select>
+<button class="btn bp" onclick="runOCR()" id="t_ocr_run" data-fr="Analyser" data-en="Analyze">Analyser</button>
 </div>
 <div class="pbar" id="ocrBar"><div class="pbar-i"></div></div>
 </div>
-<div class="panel"><div class="ph" id="t_ocr_result">RESULTAT ANALYSE</div>
-<div class="ai-panel" id="aiOutput2"><span style="color:var(--tm)" id="t_ocr_wait">Charger un document pour commencer l'analyse Gemini 2.5 Flash...</span></div>
+<div class="panel"><div class="ph" id="t_ocr_result" data-fr="RESULTAT ANALYSE" data-en="ANALYSIS RESULT">RESULTAT ANALYSE</div>
+<div class="ai-panel" id="aiOutput2"><span style="color:var(--tm)" id="t_ocr_wait" data-fr="Charger un document pour commencer l'analyse Gemini 2.5 Flash..." data-en="Load a document to start the Gemini 2.5 Flash analysis...">Charger un document pour commencer l'analyse Gemini 2.5 Flash...</span></div>
 </div></div></div>
 
 <!-- BLUETOOTH -->
@@ -497,7 +497,7 @@
 <div class="ptitle"><span id="t_bt_title">BLUETOOTH HVAC</span></div>
 <div class="g2">
 <div class="panel" style="border-color:var(--wn)">
-  <div class="ph" style="color:var(--wn)" id="t_bt_scan_h">⚠ MATÉRIEL REQUIS — BLUETOOTH HVAC</div>
+  <div class="ph" style="color:var(--wn)" id="t_bt_scan_h" data-fr="⚠ MATÉRIEL REQUIS — BLUETOOTH HVAC" data-en="⚠ HARDWARE REQUIRED — BLUETOOTH HVAC">⚠ MATÉRIEL REQUIS — BLUETOOTH HVAC</div>
   <div id="bt-hw-block" style="background:rgba(255,140,0,.07);border:1px solid rgba(255,140,0,.25);border-radius:var(--r);padding:10px 14px;margin-bottom:10px;font-size:11px;line-height:1.7;color:var(--ts)">
     <div style="font-weight:700;color:var(--wn);margin-bottom:6px">📡 Bluetooth sensors required:</div>
     <div>• <b>Testo 550s / 557s</b> — Manifold digital Bluetooth (Testo Smart App)</div>
@@ -505,11 +505,11 @@
     <div>• <b>Tout capteur BLE GATT</b> — Service UUID température ou pression standard</div>
     <div style="margin-top:6px;padding:5px 8px;background:rgba(0,229,255,.06);border-radius:4px;color:var(--ac);font-size:10.5px">ℹ️ Nécessite un navigateur compatible Web Bluetooth (Chrome/Edge v56+). Non disponible sur Firefox et Safari.</div>
   </div>
-  <div class="brow"><button class="btn bp" onclick="btScan()" id="t_bt_scan">🔍 Scanner</button><button class="btn bs" onclick="btDisconnect()" id="t_bt_disc" data-fr="Déconnecter" data-en="Disconnect">Déconnecter</button></div>
-  <div class="blog" id="btLog" style="margin-top:6px"><div class="ll"><span class="lt">--</span><span class="ls i" id="t_bt_wait">En attente scan Bluetooth...</span></div></div>
+  <div class="brow"><button class="btn bp" onclick="btScan()" id="t_bt_scan" data-fr="🔍 Scanner" data-en="🔍 Scan">🔍 Scanner</button><button class="btn bs" onclick="btDisconnect()" id="t_bt_disc" data-fr="Déconnecter" data-en="Disconnect">Déconnecter</button></div>
+  <div class="blog" id="btLog" style="margin-top:6px"><div class="ll"><span class="lt">--</span><span class="ls i" id="t_bt_wait" data-fr="En attente scan Bluetooth..." data-en="Waiting for Bluetooth scan...">En attente scan Bluetooth...</span></div></div>
 </div>
-<div class="panel"><div class="ph" id="t_bt_data">DONNEES TEMPS REEL</div>
-<div class="g2"><div class="sc"><div class="sc-l" id="t_bt_temp">TEMPERATURE</div><div class="sc-v" id="btTemp">--</div><div class="sc-s">deg C</div></div><div class="sc"><div class="sc-l" id="t_bt_press">PRESSION</div><div class="sc-v" id="btPress">--</div><div class="sc-s">bar</div></div></div>
+<div class="panel"><div class="ph" id="t_bt_data" data-fr="DONNEES TEMPS REEL" data-en="REAL-TIME DATA">DONNEES TEMPS REEL</div>
+<div class="g2"><div class="sc"><div class="sc-l" id="t_bt_temp">TEMPERATURE</div><div class="sc-v" id="btTemp">--</div><div class="sc-s">deg C</div></div><div class="sc"><div class="sc-l" id="t_bt_press" data-fr="PRESSION" data-en="PRESSURE">PRESSION</div><div class="sc-v" id="btPress">--</div><div class="sc-s">bar</div></div></div>
 </div></div></div>
 
 <!-- CONVERT -->
