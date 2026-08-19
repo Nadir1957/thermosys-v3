@@ -3967,32 +3967,32 @@ function addObdLog(msg, type) {
 }
 
 function obdConnect() {
-  addObdLog('Connexion interface OBD-II...','i');
+  addObdLog((lang==='fr'?'Connexion interface OBD-II...':'Connecting to OBD-II interface...'),'i');
   setTimeout(function(){
-    addObdLog('Interface ELM327 / HS-OBD — Connecter via Bluetooth ou WiFi depuis les paramètres du téléphone','w');
-    addObdLog('Port série disponible: COM3 (Windows) / /dev/rfcomm0 (Linux)','i');
+    addObdLog((lang==='fr'?'Interface ELM327 / HS-OBD — Connecter via Bluetooth ou WiFi depuis les paramètres du téléphone':'ELM327 / HS-OBD interface — Connect via Bluetooth or WiFi from your phone settings'),'w');
+    addObdLog((lang==='fr'?'Port série disponible: COM3 (Windows) / /dev/rfcomm0 (Linux)':'Available serial port: COM3 (Windows) / /dev/rfcomm0 (Linux)'),'i');
   }, 600);
 }
 
 function obdScan(type) {
-  var labels = {HP:'Haute Pression (HP)', BP:'Basse Pression (BP)', temp:lang==='fr'?'Températures':'Temperatures'};
+  var labels = {HP:(lang==='fr'?'Haute Pression (HP)':'High Pressure (HP)'), BP:(lang==='fr'?'Basse Pression (BP)':'Low Pressure (BP)'), temp:(lang==='fr'?'Températures':'Temperatures')};
   addObdLog('Scan '+(labels[type]||type)+'...','i');
   setTimeout(function(){
-    if (type==='HP')   { addObdLog('HP = 28.5 bar (ref. R410A: 24-32 bar ✓)','s'); addObdLog('Pressostat HP: seuil = 42 bar — OK','s'); }
-    else if (type==='BP') { addObdLog('BP = 8.2 bar (ref. R410A: 7-11 bar ✓)','s'); addObdLog('Pressostat BP: seuil = 2.5 bar — OK','s'); }
-    else if (type==='temp'){ addObdLog('T° aspiration: 8°C ✓','s'); addObdLog('T° condensation: 42°C ✓','s'); addObdLog('T° ambiante: 32°C','i'); }
-    addObdLog('Scan '+type+' terminé','s');
+    if (type==='HP')   { addObdLog('HP = 28.5 bar (ref. R410A: 24-32 bar ✓)','s'); addObdLog((lang==='fr'?'Pressostat HP: seuil = 42 bar — OK':'HP pressure switch: threshold = 42 bar — OK'),'s'); }
+    else if (type==='BP') { addObdLog('BP = 8.2 bar (ref. R410A: 7-11 bar ✓)','s'); addObdLog((lang==='fr'?'Pressostat BP: seuil = 2.5 bar — OK':'BP pressure switch: threshold = 2.5 bar — OK'),'s'); }
+    else if (type==='temp'){ addObdLog((lang==='fr'?'T° aspiration: 8°C ✓':'Suction T°: 8°C ✓'),'s'); addObdLog((lang==='fr'?'T° condensation: 42°C ✓':'Condensing T°: 42°C ✓'),'s'); addObdLog((lang==='fr'?'T° ambiante: 32°C':'Ambient T°: 32°C'),'i'); }
+    addObdLog('Scan '+type+(lang==='fr'?' terminé':' complete'),'s');
   }, 900);
 }
 
 function runDiag() {
-  addObdLog('Diagnostic complet en cours...','i');
+  addObdLog((lang==='fr'?'Diagnostic complet en cours...':'Full diagnostic in progress...'),'i');
   ['HP','BP','temp'].forEach(function(t){ obdScan(t); });
   setTimeout(function(){
-    addObdLog('Aucun code défaut DTC détecté','s');
-    addObdLog('Système HVAC opérationnel ✓','s');
+    addObdLog((lang==='fr'?'Aucun code défaut DTC détecté':'No DTC fault code detected'),'s');
+    addObdLog((lang==='fr'?'Système HVAC opérationnel ✓':'HVAC system operational ✓'),'s');
   }, 2500);
-  logHist('OBD: diagnostic complet');
+  logHist(lang==='fr'?'OBD: diagnostic complet':'OBD: full diagnostic');
 }
 
 // ── BLUETOOTH ─────────────────────────────────────────────────
@@ -4006,31 +4006,31 @@ function addBTLog(msg, type) {
 
 async function btScan() {
   if (!navigator.bluetooth) {
-    addBTLog('ERREUR: Web Bluetooth non disponible — Utilisez Chrome/Edge sur HTTPS','e');
-    showToast('Web Bluetooth non supporté sur ce navigateur','e'); return;
+    addBTLog((lang==='fr'?'ERREUR: Web Bluetooth non disponible — Utilisez Chrome/Edge sur HTTPS':'ERROR: Web Bluetooth unavailable — Use Chrome/Edge over HTTPS'),'e');
+    showToast((lang==='fr'?'Web Bluetooth non supporté sur ce navigateur':'Web Bluetooth not supported in this browser'),'e'); return;
   }
-  addBTLog('Démarrage scan BLE...','i');
+  addBTLog((lang==='fr'?'Démarrage scan BLE...':'Starting BLE scan...'),'i');
   try {
     var dev = await navigator.bluetooth.requestDevice({
       acceptAllDevices: true,
       optionalServices:['0000ffe0-0000-1000-8000-00805f9b34fb','6e400001-b5a3-f393-e0a9-e50e24dcca9e','generic_access']
     });
     btDev = dev;
-    addBTLog('Périphérique: '+(dev.name||'Inconnu'),'s');
-    dev.addEventListener('gattserverdisconnected', function(){ addBTLog('Déconnecté','w'); btDev=null; });
+    addBTLog((lang==='fr'?'Périphérique: ':'Device: ')+(dev.name||(lang==='fr'?'Inconnu':'Unknown')),'s');
+    dev.addEventListener('gattserverdisconnected', function(){ addBTLog((lang==='fr'?'Déconnecté':'Disconnected'),'w'); btDev=null; });
     await dev.gatt.connect();
-    addBTLog('GATT connecté ✓','s');
-    showToast('BT connecté: '+(dev.name||'BLE'),'s');
-    logHist('BT connecté: '+(dev.name||'BLE'));
+    addBTLog((lang==='fr'?'GATT connecté ✓':'GATT connected ✓'),'s');
+    showToast((lang==='fr'?'BT connecté: ':'BT connected: ')+(dev.name||'BLE'),'s');
+    logHist((lang==='fr'?'BT connecté: ':'BT connected: ')+(dev.name||'BLE'));
   } catch(err) {
-    if (err.name!=='NotFoundError') { addBTLog('Erreur: '+err.message,'e'); showToast('BT: '+err.message.substring(0,40),'e'); }
-    else addBTLog('Scan annulé','w');
+    if (err.name!=='NotFoundError') { addBTLog((lang==='fr'?'Erreur: ':'Error: ')+err.message,'e'); showToast('BT: '+err.message.substring(0,40),'e'); }
+    else addBTLog((lang==='fr'?'Scan annulé':'Scan cancelled'),'w');
   }
 }
 
 function btDisconnect() {
-  if (btDev && btDev.gatt && btDev.gatt.connected) { btDev.gatt.disconnect(); addBTLog('Déconnexion...','w'); }
-  else addBTLog('Aucun périphérique connecté','w');
+  if (btDev && btDev.gatt && btDev.gatt.connected) { btDev.gatt.disconnect(); addBTLog((lang==='fr'?'Déconnexion...':'Disconnecting...'),'w'); }
+  else addBTLog((lang==='fr'?'Aucun périphérique connecté':'No device connected'),'w');
 }
 
 // ── VOCAL ─────────────────────────────────────────────────────
