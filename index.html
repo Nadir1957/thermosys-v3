@@ -1207,7 +1207,7 @@
 <!-- HYDRAULIQUE -->
 <div class="page" id="pg-hydraulique">
 <div class="ptitle"><span id="t_hyd_title">HYDRAULIQUE HVAC — CALCULS</span></div>
-<div class="tabs" style="flex-wrap:wrap;gap:3px"><button class="tab active" onclick="showTab('hyd',0,this)" data-fr="Débit / Diam." data-en="Flow / Diam.">Flow / Diam.</button><button class="tab" onclick="showTab('hyd',1,this)" data-fr="Pertes de charge" data-en="Pressure Drop">Pressure Drop</button><button class="tab" onclick="showTab('hyd',2,this)" data-fr="Pompe / HMT" data-en="Pump / Head">Pump / Head</button><button class="tab" onclick="showTab('hyd',3,this)" data-fr="Vase expansion" data-en="Exp. Vessel">Exp. Vessel</button><button class="tab" onclick="showTab('hyd',4,this)" data-fr="Séparateur" data-en="Separator">Separator</button><button class="tab" onclick="showTab('hyd',5,this)" data-fr="Collecteur" data-en="Manifold">Manifold</button><button class="tab" onclick="showTab('hyd',6,this)" data-fr="Guide Préréglage" data-en="Pre-Setting Guide">🎯 Guide Préréglage</button><button class="tab" onclick="showTab('hyd',7,this)" data-fr="Gaines d'air" data-en="Air Ducts">Air Ducts</button><button class="tab" onclick="showTab('hyd',8,this)" data-fr="Tuyauterie frigo" data-en="Refrigerant Piping">Refrigerant Piping</button><button class="tab" onclick="showTab('hyd',9,this)" data-fr="Refnet" data-en="Refnet">Refnet</button><button class="tab" onclick="showTab('hyd',10,this)" data-fr="Calcul réseau" data-en="Network Calc">Network Calc</button><button class="tab" onclick="showTab('hyd',11,this)" data-fr="Acoustique" data-en="Acoustic">Acoustic</button></div>
+<div class="tabs" style="flex-wrap:wrap;gap:3px"><button class="tab active" onclick="showTab('hyd',0,this)" data-fr="Débit / Diam." data-en="Flow / Diam.">Flow / Diam.</button><button class="tab" onclick="showTab('hyd',1,this)" data-fr="Pertes de charge" data-en="Pressure Drop">Pressure Drop</button><button class="tab" onclick="showTab('hyd',2,this)" data-fr="Pompe / HMT" data-en="Pump / Head">Pump / Head</button><button class="tab" onclick="showTab('hyd',3,this)" data-fr="Vase expansion" data-en="Exp. Vessel">Exp. Vessel</button><button class="tab" onclick="showTab('hyd',4,this)" data-fr="Séparateur" data-en="Separator">Separator</button><button class="tab" onclick="showTab('hyd',5,this)" data-fr="Collecteur" data-en="Manifold">Manifold</button><button class="tab" onclick="showTab('hyd',6,this)" data-fr="Guide Préréglage" data-en="Pre-Setting Guide">🎯 Guide Préréglage</button><button class="tab" onclick="showTab('hyd',7,this)" data-fr="Gaines d'air" data-en="Air Ducts">Air Ducts</button><button class="tab" onclick="showTab('hyd',8,this)" data-fr="Tuyauterie frigo" data-en="Refrigerant Piping">Refrigerant Piping</button><button class="tab" onclick="showTab('hyd',9,this)" data-fr="Refnet" data-en="Refnet">Refnet</button><button class="tab" onclick="showTab('hyd',10,this)" data-fr="Calcul réseau" data-en="Network Calc">Network Calc</button><button class="tab" onclick="showTab('hyd',11,this)" data-fr="Acoustique" data-en="Acoustic">Acoustic</button><button class="tab" onclick="showTab('hyd',12,this)" data-fr="Point de rosée" data-en="Dew Point">Dew Point</button></div>
 <div id="hyd0" class="tp2 active"><div class="panel"><div class="ph" id="t_hyd_flow_h">DEBIT &amp; DIAMETRE</div><div class="g2"><div><div class="frow"><span class="flb" id="t_hyd_cap">Capacite (kW) :</span><input class="fi" id="hCap" type="number" value="100" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_dt">deltaT (deg C) :</span><input class="fi" id="hDt" type="number" value="5" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_v" data-fr="Vitesse (m/s) :" data-en="Velocity (m/s):">Vitesse (m/s) :</span><input class="fi" id="hV" type="number" value="1.5" step="0.1" style="max-width:90px"></div><button class="btn bp" onclick="calcDebit()" style="width:100%;margin-top:4px" id="t_hyd_calc_flow" data-fr="Calculer" data-en="Calculate">Calculer</button></div><div><div class="res" id="hydFlowResult">Flow result</div></div></div></div></div>
 <div id="hyd1" class="tp2"><div class="panel"><div class="ph" id="t_hyd_pdc_h">PERTES DE CHARGE</div><div class="g2"><div><div class="frow"><span class="flb" id="t_hyd_q2">Debit (m3/h) :</span><input class="fi" id="pdcQ" type="number" value="10" style="max-width:90px"></div><div class="frow"><span class="flb">DN (mm) :</span><input class="fi" id="pdcDN" type="number" value="40" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_l" data-fr="Longueur (m) :" data-en="Length (m):">Longueur (m) :</span><input class="fi" id="pdcL" type="number" value="50" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_flu">Fluide :</span><select class="fsel" id="pdcFluid"><option value="1000">Eau (1000)</option><option value="1040">Glycol 30%</option><option value="1060" data-fr="Glycol 40%" data-en="Glycol 40%">Glycol 40%</option></select></div><button class="btn bp" onclick="calcPDC()" style="width:100%;margin-top:4px" data-fr="Calculer PDC" data-en="Calculate PDC">Calculer PDC</button></div><div><div class="res" id="pdcResult">PDC result</div></div></div></div></div>
 <div id="hyd2" class="tp2"><div class="panel"><div class="ph" id="t_hyd_pump_h">POMPE / HMT</div><div class="g2"><div><div class="frow"><span class="flb" id="t_hyd_qp">Debit (m3/h) :</span><input class="fi" id="pompeQ" type="number" value="10" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_hmt" data-fr="HMT (m.c.e.) :" data-en="Head (m.w.c.):">HMT (m.c.e.) :</span><input class="fi" id="pompeHMT" type="number" value="15" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_eta">Rendement (%) :</span><input class="fi" id="pompeEta" type="number" value="65" style="max-width:90px"></div><button class="btn bp" onclick="calcPompe()" style="width:100%;margin-top:4px" data-fr="Calculer" data-en="Calculate">Calculer</button></div><div><div class="res" id="pompeResult">Pump result</div></div></div></div></div>
@@ -1521,6 +1521,27 @@
     </div>
     <div>
       <div class="res" id="acResult" data-fr="Résultat acoustique" data-en="Acoustic result">Résultat acoustique</div>
+    </div>
+  </div>
+</div>
+</div>
+<div id="hyd12" class="tp2">
+<div class="panel">
+  <div class="ph" data-fr="POINT DE ROSÉE — ÉPAISSEUR D'ISOLATION MINIMALE" data-en="DEW POINT — MINIMUM INSULATION THICKNESS">POINT DE ROSÉE — ÉPAISSEUR D'ISOLATION MINIMALE</div>
+  <div style="font-size:10px;color:var(--ts);margin-bottom:8px" data-fr="Calcule l'épaisseur d'isolant minimale pour que la surface externe reste au-dessus du point de rosée et évite la condensation, sur une tuyauterie ou gaine froide (eau glacée, réfrigérant, air soufflé froid)." data-en="Calculates the minimum insulation thickness so the outer surface stays above the dew point and avoids condensation, on a cold pipe or duct (chilled water, refrigerant, cold supply air).">Calcule l'épaisseur d'isolant minimale pour que la surface externe reste au-dessus du point de rosée et évite la condensation, sur une tuyauterie ou gaine froide (eau glacée, réfrigérant, air soufflé froid).</div>
+  <div class="g2">
+    <div>
+      <div class="frow"><span class="flb" data-fr="Diamètre extérieur tube/gaine (mm) :" data-en="Pipe/duct outer diameter (mm):">Diamètre extérieur tube/gaine (mm) :</span><input class="fi" id="diD1" type="number" value="60.3" style="max-width:110px" oninput="diDebouncedCalc()"></div>
+      <div class="frow"><span class="flb" data-fr="Température fluide/air froid (°C) :" data-en="Cold fluid/air temperature (°C):">Température fluide/air froid (°C) :</span><input class="fi" id="diTf" type="number" value="7" style="max-width:110px" oninput="diDebouncedCalc()"></div>
+      <div class="frow"><span class="flb" data-fr="Température ambiante (°C) :" data-en="Ambient temperature (°C):">Température ambiante (°C) :</span><input class="fi" id="diTa" type="number" value="30" style="max-width:110px" oninput="diDebouncedCalc()"></div>
+      <div class="frow"><span class="flb" data-fr="Humidité relative ambiante (%) :" data-en="Ambient relative humidity (%):">Humidité relative ambiante (%) :</span><input class="fi" id="diRH" type="number" value="70" min="1" max="100" style="max-width:110px" oninput="diDebouncedCalc()"></div>
+      <div class="frow"><span class="flb" data-fr="Conductivité isolant λ (W/m·K) :" data-en="Insulation conductivity λ (W/m·K):">Conductivité isolant λ (W/m·K) :</span><input class="fi" id="diLambda" type="number" value="0.036" step="0.001" style="max-width:110px" oninput="diDebouncedCalc()"></div>
+      <div class="frow"><span class="flb" data-fr="Coeff. convection externe h (W/m²K) :" data-en="External convection coeff. h (W/m²K):">Coeff. convection externe h (W/m²K) :</span><input class="fi" id="diHconv" type="number" value="9" style="max-width:110px" oninput="diDebouncedCalc()"></div>
+      <div class="frow"><span class="flb" data-fr="Émissivité de surface :" data-en="Surface emissivity:">Émissivité de surface :</span><input class="fi" id="diEmis" type="number" value="0.9" min="0.05" max="1" step="0.05" style="max-width:110px" oninput="diDebouncedCalc()"></div>
+      <button class="btn bp" onclick="calcDewPoint()" style="width:100%;margin-top:4px" data-fr="Calculer" data-en="Calculate">Calculer</button>
+    </div>
+    <div>
+      <div class="res" id="diResult" data-fr="Résultat point de rosée" data-en="Dew point result">Résultat point de rosée</div>
     </div>
   </div>
 </div>
@@ -4560,6 +4581,83 @@ var _acDebounceTimer = null;
 function acDebouncedCalc(){
   clearTimeout(_acDebounceTimer);
   _acDebounceTimer = setTimeout(calcAcoustic, 400);
+}
+var _diDebounceTimer = null;
+function diDebouncedCalc(){
+  clearTimeout(_diDebounceTimer);
+  _diDebounceTimer = setTimeout(calcDewPoint, 400);
+}
+function _diDewPoint(T, RH){
+  var a = 17.27, b = 237.7;
+  var alpha = Math.log(RH / 100) + (a * T) / (b + T);
+  return (b * alpha) / (a - alpha);
+}
+function _diRadiativeCoeff(Ts_C, Ta_C, emissivity){
+  var sigma = 5.67e-8;
+  var Ts_K = Ts_C + 273.15, Ta_K = Ta_C + 273.15;
+  return emissivity * sigma * (Ts_K + Ta_K) * (Ts_K*Ts_K + Ta_K*Ta_K);
+}
+function _diSurfaceTemp(D1_m, D2_m, lambda, h_total, Ta, Tf){
+  var Rins = Math.log(D2_m / D1_m) / (2 * Math.PI * lambda);
+  var Rair = 1 / (h_total * Math.PI * D2_m);
+  var q = (Ta - Tf) / (Rins + Rair);
+  return Ta - q * Rair;
+}
+function calcDewPoint(){
+  var fr = (typeof lang!=='undefined' && lang==='fr');
+  var el = document.getElementById('diResult');
+  if (!el) return;
+  var D1mm = parseFloat((document.getElementById('diD1')||{}).value);
+  var Tf = parseFloat((document.getElementById('diTf')||{}).value);
+  var Ta = parseFloat((document.getElementById('diTa')||{}).value);
+  var RH = parseFloat((document.getElementById('diRH')||{}).value);
+  var lambda = parseFloat((document.getElementById('diLambda')||{}).value);
+  var hConv = parseFloat((document.getElementById('diHconv')||{}).value);
+  var emis = parseFloat((document.getElementById('diEmis')||{}).value);
+  if (!D1mm || D1mm <= 0 || isNaN(Tf) || isNaN(Ta) || !RH || RH <= 0 || RH > 100 || !lambda || lambda <= 0 || !hConv || hConv <= 0 || !emis || emis <= 0) {
+    el.innerHTML = '<div style="color:#ff6b6b;font-size:12px">' + (fr ? 'Veuillez saisir des valeurs valides pour tous les champs.' : 'Please enter valid values for all fields.') + '</div>';
+    return;
+  }
+  if (Tf >= Ta) {
+    el.innerHTML = '<div style="color:#ff6b6b;font-size:12px">' + (fr ? 'La température du fluide doit être inférieure à la température ambiante.' : 'The fluid temperature must be lower than the ambient temperature.') + '</div>';
+    return;
+  }
+  var D1 = D1mm / 1000;
+  var Td = _diDewPoint(Ta, RH);
+  var hRad = _diRadiativeCoeff(Td, Ta, emis);
+  var hTotal = hConv + hRad;
+  var lo = D1 * 1.001, hi = D1 + 0.5;
+  var TsBare = _diSurfaceTemp(D1, lo, lambda, hTotal, Ta, Tf);
+  var lines, thicknessMm, TsFinal;
+  if (TsBare >= Td) {
+    thicknessMm = 0;
+    TsFinal = TsBare;
+  } else {
+    var TsMax = _diSurfaceTemp(D1, hi, lambda, hTotal, Ta, Tf);
+    if (TsMax < Td) {
+      el.innerHTML = '<div style="color:#ff6b6b;font-size:12px">' + (fr ? 'Épaisseur requise hors plage (> 500 mm) — vérifiez les paramètres saisis.' : 'Required thickness out of range (> 500 mm) — check the entered parameters.') + '</div>';
+      return;
+    }
+    for (var iter = 0; iter < 60; iter++) {
+      var mid = (lo + hi) / 2;
+      var TsMid = _diSurfaceTemp(D1, mid, lambda, hTotal, Ta, Tf);
+      if (TsMid < Td) lo = mid; else hi = mid;
+    }
+    var D2 = (lo + hi) / 2;
+    thicknessMm = (D2 - D1) / 2 * 1000;
+    TsFinal = _diSurfaceTemp(D1, D2, lambda, hTotal, Ta, Tf);
+  }
+  lines = [
+    [fr?'Point de rosée':'Dew point', Td.toFixed(1) + ' °C'],
+    [fr?'Épaisseur minimale requise':'Minimum required thickness', (thicknessMm === 0 ? (fr?'Aucune (surface nue déjà suffisante)':'None (bare surface already sufficient)') : thicknessMm.toFixed(1) + ' mm')],
+    [fr?'Température de surface obtenue':'Achieved surface temperature', TsFinal.toFixed(1) + ' °C']
+  ];
+  var html = lines.map(function(p){
+    return '<div class="frow"><span class="flb">'+p[0]+' :</span><b>'+p[1]+'</b></div>';
+  }).join('');
+  html += '<div style="font-size:9.5px;color:var(--ts);margin-top:8px">' + (fr ? 'Calcul par conduction radiale + convection/rayonnement en surface. À vérifier avec le fabricant d\'isolant pour toute application critique.' : 'Radial conduction + surface convection/radiation calculation. Verify with the insulation manufacturer for any critical application.') + '</div>';
+  el.innerHTML = html;
+  if (typeof logHist === 'function') logHist((fr?'Point de rosee: ':'Dew point: ') + Td.toFixed(1) + 'C, ' + (fr?'isolation ':'insulation ') + thicknessMm.toFixed(1) + 'mm');
 }
 function calcAcoustic(){
   var fr = (typeof lang!=='undefined' && lang==='fr');
