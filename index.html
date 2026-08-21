@@ -1207,7 +1207,7 @@
 <!-- HYDRAULIQUE -->
 <div class="page" id="pg-hydraulique">
 <div class="ptitle"><span id="t_hyd_title">HYDRAULIQUE HVAC — CALCULS</span></div>
-<div class="tabs" style="flex-wrap:wrap;gap:3px"><button class="tab active" onclick="showTab('hyd',0,this)" data-fr="Débit / Diam." data-en="Flow / Diam.">Flow / Diam.</button><button class="tab" onclick="showTab('hyd',1,this)" data-fr="Pertes de charge" data-en="Pressure Drop">Pressure Drop</button><button class="tab" onclick="showTab('hyd',2,this)" data-fr="Pompe / HMT" data-en="Pump / Head">Pump / Head</button><button class="tab" onclick="showTab('hyd',3,this)" data-fr="Vase expansion" data-en="Exp. Vessel">Exp. Vessel</button><button class="tab" onclick="showTab('hyd',4,this)" data-fr="Séparateur" data-en="Separator">Separator</button><button class="tab" onclick="showTab('hyd',5,this)" data-fr="Collecteur" data-en="Manifold">Manifold</button><button class="tab" onclick="showTab('hyd',6,this)" data-fr="Guide Préréglage" data-en="Pre-Setting Guide">🎯 Guide Préréglage</button><button class="tab" onclick="showTab('hyd',7,this)" data-fr="Gaines d'air" data-en="Air Ducts">Air Ducts</button><button class="tab" onclick="showTab('hyd',8,this)" data-fr="Tuyauterie frigo" data-en="Refrigerant Piping">Refrigerant Piping</button><button class="tab" onclick="showTab('hyd',9,this)" data-fr="Refnet" data-en="Refnet">Refnet</button><button class="tab" onclick="showTab('hyd',10,this)" data-fr="Calcul réseau" data-en="Network Calc">Network Calc</button></div>
+<div class="tabs" style="flex-wrap:wrap;gap:3px"><button class="tab active" onclick="showTab('hyd',0,this)" data-fr="Débit / Diam." data-en="Flow / Diam.">Flow / Diam.</button><button class="tab" onclick="showTab('hyd',1,this)" data-fr="Pertes de charge" data-en="Pressure Drop">Pressure Drop</button><button class="tab" onclick="showTab('hyd',2,this)" data-fr="Pompe / HMT" data-en="Pump / Head">Pump / Head</button><button class="tab" onclick="showTab('hyd',3,this)" data-fr="Vase expansion" data-en="Exp. Vessel">Exp. Vessel</button><button class="tab" onclick="showTab('hyd',4,this)" data-fr="Séparateur" data-en="Separator">Separator</button><button class="tab" onclick="showTab('hyd',5,this)" data-fr="Collecteur" data-en="Manifold">Manifold</button><button class="tab" onclick="showTab('hyd',6,this)" data-fr="Guide Préréglage" data-en="Pre-Setting Guide">🎯 Guide Préréglage</button><button class="tab" onclick="showTab('hyd',7,this)" data-fr="Gaines d'air" data-en="Air Ducts">Air Ducts</button><button class="tab" onclick="showTab('hyd',8,this)" data-fr="Tuyauterie frigo" data-en="Refrigerant Piping">Refrigerant Piping</button><button class="tab" onclick="showTab('hyd',9,this)" data-fr="Refnet" data-en="Refnet">Refnet</button><button class="tab" onclick="showTab('hyd',10,this)" data-fr="Calcul réseau" data-en="Network Calc">Network Calc</button><button class="tab" onclick="showTab('hyd',11,this)" data-fr="Acoustique" data-en="Acoustic">Acoustic</button></div>
 <div id="hyd0" class="tp2 active"><div class="panel"><div class="ph" id="t_hyd_flow_h">DEBIT &amp; DIAMETRE</div><div class="g2"><div><div class="frow"><span class="flb" id="t_hyd_cap">Capacite (kW) :</span><input class="fi" id="hCap" type="number" value="100" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_dt">deltaT (deg C) :</span><input class="fi" id="hDt" type="number" value="5" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_v" data-fr="Vitesse (m/s) :" data-en="Velocity (m/s):">Vitesse (m/s) :</span><input class="fi" id="hV" type="number" value="1.5" step="0.1" style="max-width:90px"></div><button class="btn bp" onclick="calcDebit()" style="width:100%;margin-top:4px" id="t_hyd_calc_flow" data-fr="Calculer" data-en="Calculate">Calculer</button></div><div><div class="res" id="hydFlowResult">Flow result</div></div></div></div></div>
 <div id="hyd1" class="tp2"><div class="panel"><div class="ph" id="t_hyd_pdc_h">PERTES DE CHARGE</div><div class="g2"><div><div class="frow"><span class="flb" id="t_hyd_q2">Debit (m3/h) :</span><input class="fi" id="pdcQ" type="number" value="10" style="max-width:90px"></div><div class="frow"><span class="flb">DN (mm) :</span><input class="fi" id="pdcDN" type="number" value="40" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_l" data-fr="Longueur (m) :" data-en="Length (m):">Longueur (m) :</span><input class="fi" id="pdcL" type="number" value="50" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_flu">Fluide :</span><select class="fsel" id="pdcFluid"><option value="1000">Eau (1000)</option><option value="1040">Glycol 30%</option><option value="1060" data-fr="Glycol 40%" data-en="Glycol 40%">Glycol 40%</option></select></div><button class="btn bp" onclick="calcPDC()" style="width:100%;margin-top:4px" data-fr="Calculer PDC" data-en="Calculate PDC">Calculer PDC</button></div><div><div class="res" id="pdcResult">PDC result</div></div></div></div></div>
 <div id="hyd2" class="tp2"><div class="panel"><div class="ph" id="t_hyd_pump_h">POMPE / HMT</div><div class="g2"><div><div class="frow"><span class="flb" id="t_hyd_qp">Debit (m3/h) :</span><input class="fi" id="pompeQ" type="number" value="10" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_hmt" data-fr="HMT (m.c.e.) :" data-en="Head (m.w.c.):">HMT (m.c.e.) :</span><input class="fi" id="pompeHMT" type="number" value="15" style="max-width:90px"></div><div class="frow"><span class="flb" id="t_hyd_eta">Rendement (%) :</span><input class="fi" id="pompeEta" type="number" value="65" style="max-width:90px"></div><button class="btn bp" onclick="calcPompe()" style="width:100%;margin-top:4px" data-fr="Calculer" data-en="Calculate">Calculer</button></div><div><div class="res" id="pompeResult">Pump result</div></div></div></div></div>
@@ -1498,6 +1498,29 @@
       <div class="res" id="rsResult" style="margin-top:8px" data-fr="Ajoutez au moins un tronçon." data-en="Add at least one segment.">Ajoutez au moins un tronçon.</div>
       <div style="font-size:10px;font-weight:700;color:var(--ac3);margin-top:10px;margin-bottom:4px" data-fr="SCHÉMA DU RÉSEAU (généré automatiquement)" data-en="NETWORK DIAGRAM (auto-generated)">SCHÉMA DU RÉSEAU (généré automatiquement)</div>
       <div id="rsSvgWrap" style="overflow-x:auto"></div>
+    </div>
+  </div>
+</div>
+</div>
+<div id="hyd11" class="tp2">
+<div class="panel">
+  <div class="ph" data-fr="CALCUL ACOUSTIQUE — NIVEAU SONORE À DISTANCE" data-en="ACOUSTIC CALCULATION — SOUND LEVEL AT DISTANCE">CALCUL ACOUSTIQUE — NIVEAU SONORE À DISTANCE</div>
+  <div style="font-size:10px;color:var(--ts);margin-bottom:8px" data-fr="Estimation du niveau de pression acoustique perçu à distance d'un équipement, à partir de sa puissance acoustique constructeur (Lw). Résultat indicatif — à vérifier avec un acousticien qualifié pour toute étude réglementaire." data-en="Estimated sound pressure level perceived at a distance from equipment, based on its manufacturer sound power level (Lw). Indicative result only — verify with a qualified acoustic engineer for any regulatory study.">Estimation du niveau de pression acoustique perçu à distance d'un équipement, à partir de sa puissance acoustique constructeur (Lw). Résultat indicatif — à vérifier avec un acousticien qualifié pour toute étude réglementaire.</div>
+  <div class="g2">
+    <div>
+      <div class="frow"><span class="flb" data-fr="Puissance acoustique Lw (dB(A)) :" data-en="Sound power Lw (dB(A)):">Puissance acoustique Lw (dB(A)) :</span><input class="fi" id="acLw" type="number" value="72" style="max-width:110px" oninput="acDebouncedCalc()"></div>
+      <div class="frow"><span class="flb" data-fr="Distance au point d'écoute (m) :" data-en="Distance to listening point (m):">Distance au point d'écoute (m) :</span><input class="fi" id="acDist" type="number" value="10" min="0.1" style="max-width:110px" oninput="acDebouncedCalc()"></div>
+      <div class="frow"><span class="flb" data-fr="Nombre d'unités identiques :" data-en="Number of identical units:">Nombre d'unités identiques :</span><input class="fi" id="acN" type="number" value="1" min="1" style="max-width:110px" oninput="acDebouncedCalc()"></div>
+      <div class="frow"><span class="flb" data-fr="Implantation :" data-en="Installation:">Implantation :</span>
+        <select class="fsel" id="acType" onchange="calcAcoustic()">
+          <option value="free" data-fr="Champ libre (dégagée)" data-en="Free field (open)">Champ libre (dégagée)</option>
+          <option value="wall" data-fr="Contre mur / sol réfléchissant" data-en="Against wall / reflecting ground">Contre mur / sol réfléchissant</option>
+        </select>
+      </div>
+      <button class="btn bp" onclick="calcAcoustic()" style="width:100%;margin-top:4px" data-fr="Calculer" data-en="Calculate">Calculer</button>
+    </div>
+    <div>
+      <div class="res" id="acResult" data-fr="Résultat acoustique" data-en="Acoustic result">Résultat acoustique</div>
     </div>
   </div>
 </div>
@@ -4533,6 +4556,38 @@ function updateRefnetUI(){
   renderRefnetTable(brand, pos, null);
 }
 
+var _acDebounceTimer = null;
+function acDebouncedCalc(){
+  clearTimeout(_acDebounceTimer);
+  _acDebounceTimer = setTimeout(calcAcoustic, 400);
+}
+function calcAcoustic(){
+  var fr = (typeof lang!=='undefined' && lang==='fr');
+  var el = document.getElementById('acResult');
+  if (!el) return;
+  var lw = parseFloat((document.getElementById('acLw')||{}).value);
+  var dist = parseFloat((document.getElementById('acDist')||{}).value);
+  var n = parseInt((document.getElementById('acN')||{}).value) || 1;
+  var type = (document.getElementById('acType')||{}).value || 'free';
+  if (!lw || lw <= 0 || !dist || dist <= 0) {
+    el.innerHTML = '<div style="color:#ff6b6b;font-size:12px">' + (fr ? 'Veuillez saisir une puissance acoustique et une distance valides (supérieures à 0).' : 'Please enter a valid sound power and distance (greater than 0).') + '</div>';
+    return;
+  }
+  var k = (type === 'wall') ? 8 : 11;
+  var lwTotal = lw + 10 * Math.log10(n);
+  var lp = lwTotal - 20 * Math.log10(dist) - k;
+  var lines = [
+    [fr?'Puissance acoustique totale':'Total sound power', lwTotal.toFixed(1) + ' dB(A)'],
+    [fr?'Niveau perçu à ' + dist + ' m':'Level perceived at ' + dist + ' m', lp.toFixed(1) + ' dB(A)'],
+    [fr?'Type d\'implantation':'Installation type', (type==='wall') ? (fr?'Contre mur / sol':'Against wall / ground') : (fr?'Champ libre':'Free field')]
+  ];
+  var html = lines.map(function(p){
+    return '<div class="frow"><span class="flb">'+p[0]+' :</span><b>'+p[1]+'</b></div>';
+  }).join('');
+  html += '<div style="font-size:9.5px;color:var(--ts);margin-top:8px">' + (fr ? 'Calcul en propagation libre. À vérifier avec un acousticien qualifié pour toute étude réglementaire officielle.' : 'Free-field propagation calculation. Verify with a qualified acoustic engineer for any official regulatory study.') + '</div>';
+  el.innerHTML = html;
+  if (typeof logHist === 'function') logHist((fr?'Acoustique: ':'Acoustic: ') + lp.toFixed(1) + ' dB(A) @ ' + dist + 'm');
+}
 function calcRefnet(){
   var fr = (typeof lang!=='undefined' && lang==='fr');
   var brand = (document.getElementById('rfnBrand')||{}).value || 'daikin';
