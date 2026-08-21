@@ -23,7 +23,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'GEMINI_API_KEY manquante dans les variables Vercel.' });
 
     // ── Récupération des données ───────────────────────────────────
-    const { imageBase64, mimeType, mode } = req.body;
+    const { imageBase64, mimeType, mode, lang } = req.body;
     const rawImage = imageBase64 || req.body.image;
     if (!rawImage)
       return res.status(400).json({ error: 'Aucune donnée image reçue.' });
@@ -69,7 +69,7 @@ export default async function handler(req, res) {
     }
 
     // ── Sélection du prompt selon le mode ─────────────────────────
-    const prompts = {
+    const prompts_fr = {
       extract:   'Effectue une extraction OCR stricte et exhaustive de tout le texte visible sur cette image de plaque signalétique industrielle. Liste chaque valeur avec son libellé exact.',
       diagnose:  'Analyse techniquement cette plaque signalétique HVAC. Identifie les données clés (puissance, réfrigérant, pression, courant) et signale toute anomalie ou incohérence technique.',
       conform:   'Contrôle la conformité réglementaire de cette plaque signalétique HVAC selon les normes EN 378, EN 60335, PED 2014/68/UE et F-Gas. Liste les points conformes et les non-conformités.',
@@ -77,6 +77,15 @@ export default async function handler(req, res) {
       barcode:   'Lis et décode intégralement ce code-barres ou QR Code. Retourne toutes les données encodées, le format détecté (EAN-13, QR, Data Matrix, Code 128, etc.) et leur signification.',
       qrcode:    'Analyse et décode ce QR Code. Retourne le contenu complet, le type de données (URL, texte, vCard, etc.) et toute information pertinente encodée.'
     };
+    const prompts_en = {
+      extract:   'Perform a strict and exhaustive OCR extraction of all text visible on this industrial nameplate image. List each value with its exact label.',
+      diagnose:  'Technically analyze this HVAC nameplate. Identify key data (power, refrigerant, pressure, current) and flag any technical anomaly or inconsistency.',
+      conform:   'Check the regulatory compliance of this HVAC nameplate against the EN 378, EN 60335, PED 2014/68/EU and F-Gas standards. List compliant points and non-conformities.',
+      translate: 'Technically translate into English all terms and abbreviations visible on this nameplate. Provide the original term, its translation, and its SI unit if applicable.',
+      barcode:   'Read and fully decode this barcode or QR Code. Return all encoded data, the detected format (EAN-13, QR, Data Matrix, Code 128, etc.) and their meaning.',
+      qrcode:    'Analyze and decode this QR Code. Return the full content, the data type (URL, text, vCard, etc.) and any relevant encoded information.'
+    };
+    const prompts = (lang === 'en') ? prompts_en : prompts_fr;
     const promptText = prompts[mode] || prompts.extract;
 
     // ── Construction de la requête Gemini 2.5 Flash ────────────────
