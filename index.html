@@ -9634,7 +9634,7 @@ async function authCheckState(){
 // Lancement au chargement de la page
 document.addEventListener('focus', function(e){ /* remote-nav-autoscroll */
   if (e.target && e.target.matches && (e.target.matches('.mn') || e.target.matches('.tab'))) {
-    e.target.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+    e.target.scrollIntoView({behavior:'smooth', inline:'nearest', block:'nearest'});
   }
 }, true);
 authCheckState();
