@@ -3936,7 +3936,7 @@ async function runOCR() {
     var resp = await fetch(API_PROXY, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageBase64: ocrBase64, mimeType: ocrMime, mode: mode })
+      body: JSON.stringify({ imageBase64: ocrBase64, mimeType: ocrMime, mode: mode, lang: lang })
     });
 
     // Sécurité indispensable : intercepter l'erreur brute avant le décodage JSON
