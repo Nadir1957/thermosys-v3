@@ -9304,7 +9304,25 @@ if(t!==nd.textContent)nd.textContent=t;
 document.addEventListener("DOMContentLoaded",function(){
 setInterval(fix,400);setInterval(function(){var lang=window.lang||"fr";if(lang===lastColLang)return;lastColLang=lang;if(lang==="fr"){document.querySelectorAll("#pg-codes thead th:nth-child(4),#errBody td:nth-child(4)").forEach(function(el){el.style.display="none";});document.querySelectorAll("#pg-codes thead th:nth-child(3),#errBody td:nth-child(3)").forEach(function(el){el.style.display="";});}else{document.querySelectorAll("#pg-codes thead th:nth-child(3),#errBody td:nth-child(3)").forEach(function(el){el.style.display="none";});document.querySelectorAll("#pg-codes thead th:nth-child(4),#errBody td:nth-child(4)").forEach(function(el){el.style.display="";});}},300);setInterval(function(){var lang=window.lang||"fr";if(lang===lastColLang)return;lastColLang=lang;var st=document.getElementById("codes-col-st");if(st){if(lang==="fr"){st.textContent="#pg-codes thead th:nth-child(4),#errBody td:nth-child(4){display:none!important}";}else{st.textContent="#pg-codes thead th:nth-child(3),#errBody td:nth-child(3){display:none!important}";};}},300);
 [500,1000,2000,4000].forEach(function(t){setTimeout(fix,t);});[300,600,1000,1500,2000,3000].forEach(function(t){setTimeout(function(){var lang=window.lang||"fr";var sel4="#pg-codes thead th:nth-child(4),#errBody td:nth-child(4)";var sel3="#pg-codes thead th:nth-child(3),#errBody td:nth-child(3)";if(lang==="fr"){document.querySelectorAll(sel4).forEach(function(el){el.style.display="none";});document.querySelectorAll(sel3).forEach(function(el){el.style.display="";});}else{document.querySelectorAll(sel3).forEach(function(el){el.style.display="none";});document.querySelectorAll(sel4).forEach(function(el){el.style.display="";}); }},t);});
-var eb=document.getElementById("errBody");if(eb){var obsCol=new MutationObserver(function(){var lang=window.lang||"fr";if(lang==="fr"){document.querySelectorAll("#errBody td:nth-child(4)").forEach(function(el){el.style.display="none";});}else{document.querySelectorAll("#errBody td:nth-child(3)").forEach(function(el){el.style.display="none";});}});obsCol.observe(eb,{childList:true});}var cbAll=document.getElementById("cbALL");if(cbAll&&!cbAll._codesHook){cbAll.addEventListener("click",function(){setTimeout(fix,300);setTimeout(fix,800);setTimeout(fix,1500);});cbAll._codesHook=true;}document.querySelectorAll("#pg-codes button").forEach(function(b){if(!b._codesHook){b.addEventListener("click",function(){setTimeout(fix,300);setTimeout(fix,800);});b._codesHook=true;}});var btn=document.getElementById("mn-codes");
+var eb=document.getElementById("errBody");if(eb){var obsCol=new MutationObserver(function(){var lang=window.lang||"fr";if(lang==="fr"){document.querySelectorAll("#errBody td:nth-child(4)").forEach(function(el){el.style.display="none";});}else{document.querySelectorAll("#errBody td:nth-child(3)").forEach(function(el){el.style.display="none";});}});obsCol.observe(eb,{childList:true});}
+(function(){ /* codes-cause-col-hide */
+  var lastCauseLang = null;
+  function toggleCauseCol(){
+    var lang = window.lang || 'fr';
+    if (lang === lastCauseLang) return;
+    lastCauseLang = lang;
+    document.querySelectorAll('#pg-codes thead th:nth-child(5), #errBody td:nth-child(5)').forEach(function(el){
+      el.style.display = (lang === 'en') ? 'none' : '';
+    });
+  }
+  setInterval(toggleCauseCol, 300);
+  var ebCause = document.getElementById('errBody');
+  if (ebCause) {
+    var obsCause = new MutationObserver(toggleCauseCol);
+    obsCause.observe(ebCause, {childList:true});
+  }
+})();
+var cbAll=document.getElementById("cbALL");if(cbAll&&!cbAll._codesHook){cbAll.addEventListener("click",function(){setTimeout(fix,300);setTimeout(fix,800);setTimeout(fix,1500);});cbAll._codesHook=true;}document.querySelectorAll("#pg-codes button").forEach(function(b){if(!b._codesHook){b.addEventListener("click",function(){setTimeout(fix,300);setTimeout(fix,800);});b._codesHook=true;}});var btn=document.getElementById("mn-codes");
 if(btn)btn.addEventListener("click",function(){setTimeout(fix,300);setTimeout(fix,800);});
 });
 })();
