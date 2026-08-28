@@ -9305,24 +9305,22 @@ document.addEventListener("DOMContentLoaded",function(){
 setInterval(fix,400);setInterval(function(){var lang=window.lang||"fr";if(lang===lastColLang)return;lastColLang=lang;if(lang==="fr"){document.querySelectorAll("#pg-codes thead th:nth-child(4),#errBody td:nth-child(4)").forEach(function(el){el.style.display="none";});document.querySelectorAll("#pg-codes thead th:nth-child(3),#errBody td:nth-child(3)").forEach(function(el){el.style.display="";});}else{document.querySelectorAll("#pg-codes thead th:nth-child(3),#errBody td:nth-child(3)").forEach(function(el){el.style.display="none";});document.querySelectorAll("#pg-codes thead th:nth-child(4),#errBody td:nth-child(4)").forEach(function(el){el.style.display="";});}},300);setInterval(function(){var lang=window.lang||"fr";if(lang===lastColLang)return;lastColLang=lang;var st=document.getElementById("codes-col-st");if(st){if(lang==="fr"){st.textContent="#pg-codes thead th:nth-child(4),#errBody td:nth-child(4){display:none!important}";}else{st.textContent="#pg-codes thead th:nth-child(3),#errBody td:nth-child(3){display:none!important}";};}},300);
 [500,1000,2000,4000].forEach(function(t){setTimeout(fix,t);});[300,600,1000,1500,2000,3000].forEach(function(t){setTimeout(function(){var lang=window.lang||"fr";var sel4="#pg-codes thead th:nth-child(4),#errBody td:nth-child(4)";var sel3="#pg-codes thead th:nth-child(3),#errBody td:nth-child(3)";if(lang==="fr"){document.querySelectorAll(sel4).forEach(function(el){el.style.display="none";});document.querySelectorAll(sel3).forEach(function(el){el.style.display="";});}else{document.querySelectorAll(sel3).forEach(function(el){el.style.display="none";});document.querySelectorAll(sel4).forEach(function(el){el.style.display="";}); }},t);});
 var eb=document.getElementById("errBody");if(eb){var obsCol=new MutationObserver(function(){var lang=window.lang||"fr";if(lang==="fr"){document.querySelectorAll("#errBody td:nth-child(4)").forEach(function(el){el.style.display="none";});}else{document.querySelectorAll("#errBody td:nth-child(3)").forEach(function(el){el.style.display="none";});}});obsCol.observe(eb,{childList:true});}
-(function(){ /* codes-cause-bilingual-text */
-  var lastCauseRenderLang = null;
+(function(){ /* codes-cause-bilingual-text always-reapply-fix */
   function updateCauseText(){
     var lang = window.lang || 'fr';
-    if (lang === lastCauseRenderLang) return;
-    lastCauseRenderLang = lang;
     var rows = document.querySelectorAll('#errBody tr');
     rows.forEach(function(tr){
       var cells = tr.children;
       if (cells.length < 5) return;
       var brand = cells[0].textContent.trim();
       var code = cells[1].textContent.trim();
-      var entry = null;
+      var wanted = null;
       for (var i = 0; i < ERROR_CODES.length; i++) {
-        if (ERROR_CODES[i].brand === brand && ERROR_CODES[i].code === code) { entry = ERROR_CODES[i]; break; }
+        if (ERROR_CODES[i].brand === brand && ERROR_CODES[i].code === code) { wanted = ERROR_CODES[i]; break; }
       }
-      if (!entry) return;
-      cells[4].textContent = (lang === 'en') ? entry.cause_en : entry.cause;
+      if (!wanted) return;
+      var target = (lang === 'en') ? wanted.cause_en : wanted.cause;
+      if (cells[4].textContent !== target) cells[4].textContent = target;
     });
   }
   setInterval(updateCauseText, 300);
