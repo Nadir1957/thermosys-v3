@@ -1588,7 +1588,7 @@
     <button class="btn" onclick="filterBrand('Samsung')" id="cbSamsung2" style="display:none">Samsung</button>
   </div>
   <div class="tw" style="max-height:600px;overflow-y:auto">
-    <table class="tbl"><thead><tr><th data-fr="Marque" data-en="Brand">Marque</th><th data-fr="Équipement" data-en="Equipment">Équipement</th><th>Code</th><th id="err-fr-th">Description</th><th id="err-en-th">EN</th><th data-fr="Cause / Action" data-en="Cause / Action">Cause / Action</th><th id="err-urg-th">Priority</th></tr></thead>
+    <table class="tbl"><thead><tr><th data-fr="Marque" data-en="Brand">Marque</th><th>Code</th><th id="err-fr-th">Description</th><th id="err-en-th">EN</th><th data-fr="Cause / Action" data-en="Cause / Action">Cause / Action</th><th id="err-urg-th">Priority</th><th data-fr="Équipement" data-en="Equipment">Équipement</th></tr></thead>
     <tbody id="errBody"></tbody></table>
   </div>
 </div></div>
@@ -9355,7 +9355,7 @@ var eb=document.getElementById("errBody");if(eb){var obsCol=new MutationObserver
       newTd.style.fontSize = '9.5px';
       newTd.style.color = 'var(--tm)';
       newTd.textContent = eqText;
-      tr.insertBefore(newTd, cells[1]);
+      tr.appendChild(newTd);
       tr.setAttribute('data-eq-inserted', '1');
     });
   }
