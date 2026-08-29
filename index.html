@@ -4361,7 +4361,7 @@ function calcGaine(){
     return '<div class="frow"><span class="flb">'+p[0]+' :</span><b>'+p[1]+'</b></div>';
   }).join('');
   if (!vOk) {
-    html += '<div style="margin-top:6px;color:var(--warn,#e0a800);font-size:11px">'+
+    html += '<div style="margin-top:6px;color:var(--wn);font-size:11px">'+
       (fr ? '⚠️ Vitesse hors plage recommandée pour ce type de conduit — vérifier le niveau sonore et les pertes de charge.'
           : '⚠️ Velocity outside recommended range for this duct type — check noise level and pressure drop.')+
       '</div>';
@@ -4439,7 +4439,7 @@ function calcRefrigPipe(){
     return '<div class="frow"><span class="flb">'+p[0]+' :</span><b>'+p[1]+'</b></div>';
   }).join('');
   if (!vOk) {
-    html += '<div style="margin-top:6px;color:var(--warn,#e0a800);font-size:11px">'+
+    html += '<div style="margin-top:6px;color:var(--wn);font-size:11px">'+
       (fr ? '⚠️ Vitesse hors plage recommandée — risque de mauvais retour d\'huile (trop lent) ou de bruit/perte de charge excessive (trop rapide). Essayer le diamètre voisin.'
           : '⚠️ Velocity outside recommended range — risk of poor oil return (too slow) or excessive noise/pressure drop (too fast). Try the adjacent diameter.')+
       '</div>';
