@@ -1570,22 +1570,22 @@
     <button class="btn" onclick="filterBrand('Mitsubishi')" id="cbMitsubishi">Mitsubishi</button>
     <button class="btn" onclick="filterBrand('Carrier')" id="cbCarrier">Carrier</button>
     <button class="btn" onclick="filterBrand('Trane')" id="cbTrane">Trane</button>
-    <button class="btn" onclick="filterBrand('Lennox')" id="cbLennox">Lennox</button>
     <button class="btn" onclick="filterBrand('LG')" id="cbLG">LG</button>
     <button class="btn" onclick="filterBrand('Samsung')" id="cbSamsung">Samsung</button>
     <button class="btn" onclick="filterBrand('Panasonic')" id="cbPanasonic">Panasonic</button>
     <button class="btn" onclick="filterBrand('Fujitsu')" id="cbFujitsu">Fujitsu</button>
-    <button class="btn" onclick="filterBrand('Hitachi')" id="cbHitachi">Hitachi</button>
-    <button class="btn" onclick="filterBrand('Toshiba')" id="cbToshiba">Toshiba</button>
-    <button class="btn" onclick="filterBrand('York')" id="cbYork">York</button>
-    <button class="btn" onclick="filterBrand('Lennox')" id="cbLennox2" style="display:none">Lennox</button>
     <button class="btn" onclick="filterBrand('Condor')" id="cbCondor">Condor</button>
-    <button class="btn" onclick="filterBrand('Gree')" id="cbGree">Gree</button>
-    <button class="btn" onclick="filterBrand('Midea')" id="cbMidea">Midea</button>
-    <button class="btn" onclick="filterBrand('Hisense')" id="cbHisense">Hisense</button>
-    <button class="btn" onclick="filterBrand('Haier')" id="cbHaier">Haier</button>
-    <button class="btn" onclick="filterBrand('Condor')" id="cbCondor">Condor</button>
-    <button class="btn" onclick="filterBrand('Samsung')" id="cbSamsung2" style="display:none">Samsung</button>
+    <select class="fsel" id="cbOther" onchange="if(this.value){filterBrand(this.value);}" style="max-width:160px">
+      <option value="" data-fr="Autres marques..." data-en="Other brands...">Autres marques...</option>
+      <option value="Lennox">Lennox</option>
+      <option value="Hitachi">Hitachi</option>
+      <option value="Toshiba">Toshiba</option>
+      <option value="York">York</option>
+      <option value="Gree">Gree</option>
+      <option value="Midea">Midea</option>
+      <option value="Hisense">Hisense</option>
+      <option value="Haier">Haier</option>
+    </select>
   </div>
   <div class="tw" style="max-height:600px;overflow-y:auto">
     <table class="tbl"><thead><tr><th data-fr="Marque" data-en="Brand">Marque</th><th>Code</th><th id="err-fr-th">Description</th><th id="err-en-th">EN</th><th data-fr="Cause / Action" data-en="Cause / Action">Cause / Action</th><th id="err-urg-th">Priority</th><th data-fr="Équipement" data-en="Equipment">Équipement</th></tr></thead>
