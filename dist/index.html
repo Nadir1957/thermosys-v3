@@ -1416,6 +1416,7 @@
     <div>
       <div class="frow"><span class="flb" data-fr="Marque :" data-en="Brand:">Marque :</span>
         <select class="fsel" id="rfnBrand" onchange="updateRefnetUI();calcRefnet();">
+          <option value="mitsubishi">Mitsubishi (City Multi Y)</option>
           <option value="daikin">Daikin (VRV IV)</option>
           <option value="toshiba">Toshiba (SMMS)</option>
           <option value="gree">Gree (GMV5)</option>
@@ -4492,6 +4493,12 @@ function calcRefrigPipe(){
 // Sources : documentation officielle de chaque fabricant
 // ═══════════════════════════════════════════════
 var REFNET_SIMPLE = {
+  mitsubishi: [
+    {max:200, ref:'CMY-Y102SS-G2'},
+    {max:400, ref:'CMY-Y102LS-G2'},
+    {max:650, ref:'CMY-Y202S-G2'},
+    {max:Infinity, ref:'CMY-Y302S-G2'}
+  ],
   toshiba: [
     {max:6.4, ref:'RBM-BY55E'},
     {max:14.2, ref:'RBM-BY105E'},
@@ -4538,11 +4545,12 @@ var REFNET_SIMPLE = {
   ]
 };
 var REFNET_BRAND_LABELS = {
-  daikin:'Daikin (VRV IV)', toshiba:'Toshiba (SMMS)', gree:'Gree (GMV5)',
+  mitsubishi:'Mitsubishi (City Multi Y)', daikin:'Daikin (VRV IV)', toshiba:'Toshiba (SMMS)', gree:'Gree (GMV5)',
   midea:'Midea (V6)', hisense:'Hisense (Hi-Flexi)', panasonic:'Panasonic (ECOi 6N)', trane:'Trane (Mini-VRF)',
   lg_multif:'LG (Multi F MAX)', lg_multiv:'LG (Multi V)', fujitsu:'Fujitsu (Airstage)'
 };
 var REFNET_UNITS = {
+  mitsubishi:{fr:'Capacité totale UI (indice P)',en:'Total IDU capacity (P-index)'},
   daikin:{fr:'Puissance UE (HP) / indice',en:'Outdoor unit (HP) / index'},
   toshiba:{fr:'Puissance totale aval (HP)',en:'Total downstream capacity (HP)'},
   gree:{fr:'Puissance totale aval (Btu/h)',en:'Total downstream capacity (Btu/h)'},
@@ -4555,6 +4563,7 @@ var REFNET_UNITS = {
   fujitsu:{fr:'Capacité totale UI (kW)',en:'Total IDU capacity (kW)'}
 };
 var REFNET_SOURCES = {
+  mitsubishi:'Mitsubishi Electric City Multi Y-Series — manuels techniques officiels (Y-Series general manual + WR2/PQHY design manual), seuils recoupés sur deux documents distincts',
   daikin:'Daikin VRV IV — doc. constructeur 4P388987-1 (2015.03)',
   toshiba:'Toshiba SMMS — documentation constructeur officielle',
   gree:'Gree GMV5 — greecommercial.com (system-pipe-accessories)',
