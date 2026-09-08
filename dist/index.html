@@ -1416,6 +1416,7 @@
     <div>
       <div class="frow"><span class="flb" data-fr="Marque :" data-en="Brand:">Marque :</span>
         <select class="fsel" id="rfnBrand" onchange="updateRefnetUI();calcRefnet();">
+          <option value="haier">Haier (MRV)</option>
           <option value="samsung">Samsung (DVM S)</option>
           <option value="mitsubishi">Mitsubishi (City Multi Y)</option>
           <option value="daikin">Daikin (VRV IV)</option>
@@ -4494,6 +4495,13 @@ function calcRefrigPipe(){
 // Sources : documentation officielle de chaque fabricant
 // ═══════════════════════════════════════════════
 var REFNET_SIMPLE = {
+  haier: [
+    {max:33.5, ref:'FQG-B335A'},
+    {max:50.6, ref:'FQG-B506A'},
+    {max:73.0, ref:'FQG-B730A'},
+    {max:135.0, ref:'FQG-B1350A'},
+    {max:Infinity, ref:'FQG-B2040A'}
+  ],
   samsung: [
     {max:15.0, ref:'MXJ-YA1509M'},
     {max:40.0, ref:'MXJ-YA2512M'},
@@ -4552,11 +4560,12 @@ var REFNET_SIMPLE = {
   ]
 };
 var REFNET_BRAND_LABELS = {
-  samsung:'Samsung (DVM S)', mitsubishi:'Mitsubishi (City Multi Y)', daikin:'Daikin (VRV IV)', toshiba:'Toshiba (SMMS)', gree:'Gree (GMV5)',
+  haier:'Haier (MRV)', samsung:'Samsung (DVM S)', mitsubishi:'Mitsubishi (City Multi Y)', daikin:'Daikin (VRV IV)', toshiba:'Toshiba (SMMS)', gree:'Gree (GMV5)',
   midea:'Midea (V6)', hisense:'Hisense (Hi-Flexi)', panasonic:'Panasonic (ECOi 6N)', trane:'Trane (Mini-VRF)',
   lg_multif:'LG (Multi F MAX)', lg_multiv:'LG (Multi V)', fujitsu:'Fujitsu (Airstage)'
 };
 var REFNET_UNITS = {
+  haier:{fr:'Puissance totale aval (kW)',en:'Total downstream capacity (kW)'},
   samsung:{fr:'Puissance totale aval (kW)',en:'Total downstream capacity (kW)'},
   mitsubishi:{fr:'Capacité totale UI (indice P)',en:'Total IDU capacity (P-index)'},
   daikin:{fr:'Puissance UE (HP) / indice',en:'Outdoor unit (HP) / index'},
@@ -4571,6 +4580,7 @@ var REFNET_UNITS = {
   fujitsu:{fr:'Capacité totale UI (kW)',en:'Total IDU capacity (kW)'}
 };
 var REFNET_SOURCES = {
+  haier:'Haier MRV — manuels officiels AV08NMSETA Service Manual et AV16NMVERA Design Manual (deux premiers paliers confirmes explicitement, seuils identiques sur les deux documents). ⚠️ Paliers superieurs (FQG-B730A/B1350A/B2040A) deduits de la convention de nommage constructeur (le numero de modele correspond a la capacite en centaines de watts), non confirmes explicitement par un tableau officiel.',
   samsung:'Samsung DVM S — manuels techniques officiels (Installation Manual + VRF Technical Data Book Europe). ⚠️ Simplifié : sélectionne systématiquement l\'option la plus large (jamais sous-dimensionné), sans tenir compte de la dépendance au nombre de pièces raccordées sur certains paliers — vérifier avec le logiciel constructeur pour une sélection optimale.',
   mitsubishi:'Mitsubishi Electric City Multi Y-Series — manuels techniques officiels (Y-Series general manual + WR2/PQHY design manual), seuils recoupés sur deux documents distincts',
   daikin:'Daikin VRV IV — doc. constructeur 4P388987-1 (2015.03)',
