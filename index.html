@@ -1416,6 +1416,7 @@
     <div>
       <div class="frow"><span class="flb" data-fr="Marque :" data-en="Brand:">Marque :</span>
         <select class="fsel" id="rfnBrand" onchange="updateRefnetUI();calcRefnet();">
+          <option value="samsung">Samsung (DVM S)</option>
           <option value="mitsubishi">Mitsubishi (City Multi Y)</option>
           <option value="daikin">Daikin (VRV IV)</option>
           <option value="toshiba">Toshiba (SMMS)</option>
@@ -4493,6 +4494,12 @@ function calcRefrigPipe(){
 // Sources : documentation officielle de chaque fabricant
 // ═══════════════════════════════════════════════
 var REFNET_SIMPLE = {
+  samsung: [
+    {max:15.0, ref:'MXJ-YA1509M'},
+    {max:40.0, ref:'MXJ-YA2512M'},
+    {max:70.3, ref:'MXJ-HA3115M'},
+    {max:135.2, ref:'MCU-S6NEE1N'}
+  ],
   mitsubishi: [
     {max:200, ref:'CMY-Y102SS-G2'},
     {max:400, ref:'CMY-Y102LS-G2'},
@@ -4545,11 +4552,12 @@ var REFNET_SIMPLE = {
   ]
 };
 var REFNET_BRAND_LABELS = {
-  mitsubishi:'Mitsubishi (City Multi Y)', daikin:'Daikin (VRV IV)', toshiba:'Toshiba (SMMS)', gree:'Gree (GMV5)',
+  samsung:'Samsung (DVM S)', mitsubishi:'Mitsubishi (City Multi Y)', daikin:'Daikin (VRV IV)', toshiba:'Toshiba (SMMS)', gree:'Gree (GMV5)',
   midea:'Midea (V6)', hisense:'Hisense (Hi-Flexi)', panasonic:'Panasonic (ECOi 6N)', trane:'Trane (Mini-VRF)',
   lg_multif:'LG (Multi F MAX)', lg_multiv:'LG (Multi V)', fujitsu:'Fujitsu (Airstage)'
 };
 var REFNET_UNITS = {
+  samsung:{fr:'Puissance totale aval (kW)',en:'Total downstream capacity (kW)'},
   mitsubishi:{fr:'Capacité totale UI (indice P)',en:'Total IDU capacity (P-index)'},
   daikin:{fr:'Puissance UE (HP) / indice',en:'Outdoor unit (HP) / index'},
   toshiba:{fr:'Puissance totale aval (HP)',en:'Total downstream capacity (HP)'},
@@ -4563,6 +4571,7 @@ var REFNET_UNITS = {
   fujitsu:{fr:'Capacité totale UI (kW)',en:'Total IDU capacity (kW)'}
 };
 var REFNET_SOURCES = {
+  samsung:'Samsung DVM S — manuels techniques officiels (Installation Manual + VRF Technical Data Book Europe). ⚠️ Simplifié : sélectionne systématiquement l\'option la plus large (jamais sous-dimensionné), sans tenir compte de la dépendance au nombre de pièces raccordées sur certains paliers — vérifier avec le logiciel constructeur pour une sélection optimale.',
   mitsubishi:'Mitsubishi Electric City Multi Y-Series — manuels techniques officiels (Y-Series general manual + WR2/PQHY design manual), seuils recoupés sur deux documents distincts',
   daikin:'Daikin VRV IV — doc. constructeur 4P388987-1 (2015.03)',
   toshiba:'Toshiba SMMS — documentation constructeur officielle',
