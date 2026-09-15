@@ -530,28 +530,32 @@
 <div class="frow"><span class="flb">HP :</span><input class="fi" id="pHp" type="number" oninput="convHp2Kw()" style="max-width:90px"></div>
 </div>
 <div class="panel"><div class="ph" id="t_conv_press">PRESSION</div>
+<div style="font-size:10px;opacity:.6;margin-bottom:6px">Saisir dans n'importe quel champ</div>
 <div class="frow"><span class="flb">bar :</span><input class="fi" id="prBar" type="number" oninput="convPress()" style="max-width:90px"></div>
-<div class="frow"><span class="flb">PSI :</span><input class="fi" id="prPsi" type="number" style="max-width:90px" readonly="readonly"></div>
-<div class="frow"><span class="flb">kPa :</span><input class="fi" id="prKpa" type="number" style="max-width:90px" readonly="readonly"></div>
-<div class="frow"><span class="flb">MPa :</span><input class="fi" id="prMpa" type="number" style="max-width:90px" readonly="readonly"></div>
+<div class="frow"><span class="flb">PSI :</span><input class="fi" id="prPsi" type="number" oninput="convPsi2Bar()" style="max-width:90px"></div>
+<div class="frow"><span class="flb">kPa :</span><input class="fi" id="prKpa" type="number" oninput="convKpa2Bar()" style="max-width:90px"></div>
+<div class="frow"><span class="flb">MPa :</span><input class="fi" id="prMpa" type="number" oninput="convMpa2Bar()" style="max-width:90px"></div>
 </div>
 <div class="panel"><div class="ph" id="t_conv_flow">DEBIT</div>
+<div style="font-size:10px;opacity:.6;margin-bottom:6px">Saisir dans n'importe quel champ</div>
 <div class="frow"><span class="flb">m3/h :</span><input class="fi" id="flM3h" type="number" oninput="convFlow()" style="max-width:90px"></div>
-<div class="frow"><span class="flb">L/s :</span><input class="fi" id="flLs" type="number" style="max-width:90px" readonly="readonly"></div>
-<div class="frow"><span class="flb">GPM :</span><input class="fi" id="flGpm" type="number" style="max-width:90px" readonly="readonly"></div>
-<div class="frow"><span class="flb">CFM :</span><input class="fi" id="flCfm" type="number" style="max-width:90px" readonly="readonly"></div>
+<div class="frow"><span class="flb">L/s :</span><input class="fi" id="flLs" type="number" oninput="convLs2M3h()" style="max-width:90px"></div>
+<div class="frow"><span class="flb">GPM :</span><input class="fi" id="flGpm" type="number" oninput="convGpm2M3h()" style="max-width:90px"></div>
+<div class="frow"><span class="flb">CFM :</span><input class="fi" id="flCfm" type="number" oninput="convCfm2M3h()" style="max-width:90px"></div>
 </div>
 <div class="panel"><div class="ph" id="t_conv_elec">ELECTRIQUE</div>
+<div style="font-size:10px;opacity:.6;margin-bottom:6px">Saisir dans n'importe quel champ</div>
 <div class="frow"><span class="flb">kW :</span><input class="fi" id="elKw" type="number" oninput="convElec()" style="max-width:90px"></div>
-<div class="frow"><span class="flb">kVA :</span><input class="fi" id="elKva" type="number" style="max-width:90px" readonly="readonly"></div>
-<div class="frow"><span class="flb">A (400V 3ph) :</span><input class="fi" id="elA400" type="number" style="max-width:90px" readonly="readonly"></div>
-<div class="frow"><span class="flb">A (230V 1ph) :</span><input class="fi" id="elA230" type="number" style="max-width:90px" readonly="readonly"></div>
+<div class="frow"><span class="flb">kVA :</span><input class="fi" id="elKva" type="number" oninput="convKva2Kw()" style="max-width:90px"></div>
+<div class="frow"><span class="flb">A (400V 3ph) :</span><input class="fi" id="elA400" type="number" oninput="convA4002Kw()" style="max-width:90px"></div>
+<div class="frow"><span class="flb">A (230V 1ph) :</span><input class="fi" id="elA230" type="number" oninput="convA2302Kw()" style="max-width:90px"></div>
 </div>
 <div class="panel"><div class="ph" id="t_conv_dim">DIMENSIONS</div>
+<div style="font-size:10px;opacity:.6;margin-bottom:6px">Saisir dans n'importe quel champ</div>
 <div class="frow"><span class="flb">mm :</span><input class="fi" id="dmMm" type="number" oninput="convMm()" style="max-width:90px"></div>
-<div class="frow"><span class="flb">cm :</span><input class="fi" id="dmCm" type="number" style="max-width:90px" readonly="readonly"></div>
-<div class="frow"><span class="flb">inch :</span><input class="fi" id="dmIn" type="number" style="max-width:90px" readonly="readonly"></div>
-<div class="frow"><span class="flb">ft :</span><input class="fi" id="dmFt" type="number" style="max-width:90px" readonly="readonly"></div>
+<div class="frow"><span class="flb">cm :</span><input class="fi" id="dmCm" type="number" oninput="convCm2Mm()" style="max-width:90px"></div>
+<div class="frow"><span class="flb">inch :</span><input class="fi" id="dmIn" type="number" oninput="convIn2Mm()" style="max-width:90px"></div>
+<div class="frow"><span class="flb">ft :</span><input class="fi" id="dmFt" type="number" oninput="convFt2Mm()" style="max-width:90px"></div>
 </div>
 </div></div>
 
@@ -4022,6 +4026,82 @@ function convMm() {
   var v = parseFloat((document.getElementById('dmMm')||{}).value); if (isNaN(v)) return;
   var c=document.getElementById('dmCm'), i=document.getElementById('dmIn'), f=document.getElementById('dmFt');
   if (c) c.value=(v/10).toFixed(2); if (i) i.value=(v/25.4).toFixed(4); if (f) f.value=(v/304.8).toFixed(4);
+}
+function convPsi2Bar() {
+  var v = parseFloat((document.getElementById('prPsi')||{}).value); if (isNaN(v)) return;
+  var bar = v/14.5038;
+  var b=document.getElementById('prBar'), k=document.getElementById('prKpa'), m=document.getElementById('prMpa');
+  if (b) b.value=bar.toFixed(4); if (k) k.value=(bar*100).toFixed(1); if (m) m.value=(bar/10).toFixed(4);
+}
+function convKpa2Bar() {
+  var v = parseFloat((document.getElementById('prKpa')||{}).value); if (isNaN(v)) return;
+  var bar = v/100;
+  var b=document.getElementById('prBar'), p=document.getElementById('prPsi'), m=document.getElementById('prMpa');
+  if (b) b.value=bar.toFixed(4); if (p) p.value=(bar*14.5038).toFixed(3); if (m) m.value=(bar/10).toFixed(4);
+}
+function convMpa2Bar() {
+  var v = parseFloat((document.getElementById('prMpa')||{}).value); if (isNaN(v)) return;
+  var bar = v*10;
+  var b=document.getElementById('prBar'), p=document.getElementById('prPsi'), k=document.getElementById('prKpa');
+  if (b) b.value=bar.toFixed(4); if (p) p.value=(bar*14.5038).toFixed(3); if (k) k.value=(bar*100).toFixed(1);
+}
+function convLs2M3h() {
+  var v = parseFloat((document.getElementById('flLs')||{}).value); if (isNaN(v)) return;
+  var m3h = v*3.6;
+  var m=document.getElementById('flM3h'), g=document.getElementById('flGpm'), c=document.getElementById('flCfm');
+  if (m) m.value=m3h.toFixed(4); if (g) g.value=(m3h*4.403).toFixed(2); if (c) c.value=(m3h*0.5886).toFixed(3);
+}
+function convGpm2M3h() {
+  var v = parseFloat((document.getElementById('flGpm')||{}).value); if (isNaN(v)) return;
+  var m3h = v/4.403;
+  var m=document.getElementById('flM3h'), l=document.getElementById('flLs'), c=document.getElementById('flCfm');
+  if (m) m.value=m3h.toFixed(4); if (l) l.value=(m3h/3.6).toFixed(4); if (c) c.value=(m3h*0.5886).toFixed(3);
+}
+function convCfm2M3h() {
+  var v = parseFloat((document.getElementById('flCfm')||{}).value); if (isNaN(v)) return;
+  var m3h = v/0.5886;
+  var m=document.getElementById('flM3h'), l=document.getElementById('flLs'), g=document.getElementById('flGpm');
+  if (m) m.value=m3h.toFixed(4); if (l) l.value=(m3h/3.6).toFixed(4); if (g) g.value=(m3h*4.403).toFixed(2);
+}
+function convKva2Kw() {
+  var v = parseFloat((document.getElementById('elKva')||{}).value); if (isNaN(v)) return;
+  var kw = v*0.85;
+  var k=document.getElementById('elKw'), a4=document.getElementById('elA400'), a2=document.getElementById('elA230');
+  if (k) k.value=kw.toFixed(3);
+  if (a4) a4.value=(kw*1000/(Math.sqrt(3)*400*0.85)).toFixed(2);
+  if (a2) a2.value=(kw*1000/(230*0.85)).toFixed(2);
+}
+function convA4002Kw() {
+  var v = parseFloat((document.getElementById('elA400')||{}).value); if (isNaN(v)) return;
+  var kw = v*Math.sqrt(3)*400*0.85/1000;
+  var k=document.getElementById('elKw'), kv=document.getElementById('elKva'), a2=document.getElementById('elA230');
+  if (k) k.value=kw.toFixed(3); if (kv) kv.value=(kw/0.85).toFixed(3);
+  if (a2) a2.value=(kw*1000/(230*0.85)).toFixed(2);
+}
+function convA2302Kw() {
+  var v = parseFloat((document.getElementById('elA230')||{}).value); if (isNaN(v)) return;
+  var kw = v*230*0.85/1000;
+  var k=document.getElementById('elKw'), kv=document.getElementById('elKva'), a4=document.getElementById('elA400');
+  if (k) k.value=kw.toFixed(3); if (kv) kv.value=(kw/0.85).toFixed(3);
+  if (a4) a4.value=(kw*1000/(Math.sqrt(3)*400*0.85)).toFixed(2);
+}
+function convCm2Mm() {
+  var v = parseFloat((document.getElementById('dmCm')||{}).value); if (isNaN(v)) return;
+  var mm = v*10;
+  var m=document.getElementById('dmMm'), i=document.getElementById('dmIn'), f=document.getElementById('dmFt');
+  if (m) m.value=mm.toFixed(2); if (i) i.value=(mm/25.4).toFixed(4); if (f) f.value=(mm/304.8).toFixed(4);
+}
+function convIn2Mm() {
+  var v = parseFloat((document.getElementById('dmIn')||{}).value); if (isNaN(v)) return;
+  var mm = v*25.4;
+  var m=document.getElementById('dmMm'), c=document.getElementById('dmCm'), f=document.getElementById('dmFt');
+  if (m) m.value=mm.toFixed(2); if (c) c.value=(mm/10).toFixed(2); if (f) f.value=(mm/304.8).toFixed(4);
+}
+function convFt2Mm() {
+  var v = parseFloat((document.getElementById('dmFt')||{}).value); if (isNaN(v)) return;
+  var mm = v*304.8;
+  var m=document.getElementById('dmMm'), c=document.getElementById('dmCm'), i=document.getElementById('dmIn');
+  if (m) m.value=mm.toFixed(2); if (c) c.value=(mm/10).toFixed(2); if (i) i.value=(mm/25.4).toFixed(4);
 }
 
 // ── OCR + IA GEMINI ───────────────────────────────────────────
