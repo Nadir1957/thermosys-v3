@@ -6,24 +6,82 @@
 import https  from 'https';
 import sharp  from 'sharp';
 
+// THERMOSYS_AUTH_V1 - verification du compte Supabase avant tout appel a Gemini
+const SUPABASE_HOST = 'qltwswtiyzhzwihzjkwb.supabase.co';
+const SUPABASE_ANON = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsdHdzd3RpeXpoendpaHpqa3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4OTk1MzYsImV4cCI6MjEwMDQ3NTUzNn0.NapZil3VokS9h2c4D1acyr_aSKpV4oPvHvuyzTAZjB0';
+const ALLOWED_ORIGIN = /^https:\/\/thermosys-v3(-[a-z0-9-]+)?\.vercel\.app$/;
+const RATE_MAX = 40;            // demandes max par utilisateur
+const RATE_WINDOW_MS = 600000;  // par fenetre de 10 minutes
+const MAX_IMAGE_CHARS = 8000000;
+const _rate = new Map();
+
+function supaGet(p, token) {
+  return new Promise((resolve, reject) => {
+    const r = https.request({
+      hostname: SUPABASE_HOST, port: 443, path: p, method: 'GET',
+      headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + token }
+    }, (rs) => {
+      let d = '';
+      rs.on('data', ch => d += ch);
+      rs.on('end', () => { try { resolve({ status: rs.statusCode, json: JSON.parse(d) }); } catch (e) { resolve({ status: rs.statusCode, json: null }); } });
+    });
+    r.setTimeout(8000, () => r.destroy(new Error('timeout')));
+    r.on('error', reject);
+    r.end();
+  });
+}
+
+function rateLimited(uid) {
+  const now = Date.now();
+  const arr = (_rate.get(uid) || []).filter(t => now - t < RATE_WINDOW_MS);
+  if (arr.length >= RATE_MAX) { _rate.set(uid, arr); return true; }
+  arr.push(now); _rate.set(uid, arr);
+  if (_rate.size > 5000) { for (const [k, v] of _rate) { if (!v.some(t => now - t < RATE_WINDOW_MS)) _rate.delete(k); } }
+  return false;
+}
+
+
 export default async function handler(req, res) {
 
   // ── Sécurité CORS ──────────────────────────────────────────────
-  res.setHeader('Access-Control-Allow-Origin',  '*');
+  const _origin = String(req.headers['origin'] || '');
+  if (ALLOWED_ORIGIN.test(_origin)) res.setHeader('Access-Control-Allow-Origin', _origin);
+  res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST')
     return res.status(405).json({ error: 'Méthode non autorisée.' });
 
   try {
     // ── Clé API (variable Vercel — jamais exposée côté client) ────
+    // THERMOSYS_AUTH_V1 : seuls les comptes connectes et approuves peuvent utiliser l'OCR
+    const authHeader = String(req.headers['authorization'] || '');
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (!token) return res.status(401).json({ error: 'Connexion requise / Login required.' });
+    let who;
+    try { who = await supaGet('/auth/v1/user', token); }
+    catch (e) { return res.status(503).json({ error: 'Verification du compte indisponible. Reessayez.' }); }
+    if (who.status !== 200 || !who.json || !who.json.id)
+      return res.status(401).json({ error: 'Session invalide ou expiree / Invalid or expired session.' });
+    const uid = who.json.id;
+    let prof;
+    try { prof = await supaGet('/rest/v1/profiles?select=status,is_admin&id=eq.' + encodeURIComponent(uid), token); }
+    catch (e) { return res.status(503).json({ error: 'Verification du compte indisponible. Reessayez.' }); }
+    const row = (prof.status === 200 && Array.isArray(prof.json)) ? prof.json[0] : null;
+    if (!row || !(row.status === 'approved' || row.is_admin === true))
+      return res.status(403).json({ error: 'Compte non autorise / Account not authorized.' });
+    if (rateLimited(uid))
+      return res.status(429).json({ error: 'Trop de demandes. Reessayez dans quelques minutes / Too many requests.' });
+
     const aiKey = process.env.GEMINI_API_KEY;
     if (!aiKey)
       return res.status(500).json({ error: 'GEMINI_API_KEY manquante dans les variables Vercel.' });
 
     // ── Récupération des données ───────────────────────────────────
     const { imageBase64, mimeType, mode, lang } = req.body;
+    if (req.body && typeof (req.body.imageBase64 || req.body.image) === 'string' && (req.body.imageBase64 || req.body.image).length > MAX_IMAGE_CHARS)
+      return res.status(413).json({ error: 'Image trop volumineuse / Image too large.' });
     const rawImage = imageBase64 || req.body.image;
     if (!rawImage)
       return res.status(400).json({ error: 'Aucune donnée image reçue.' });

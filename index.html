@@ -9703,6 +9703,28 @@ var SUPABASE_URL = 'https://qltwswtiyzhzwihzjkwb.supabase.co';
 var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsdHdzd3RpeXpoendpaHpqa3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4OTk1MzYsImV4cCI6MjEwMDQ3NTUzNn0.NapZil3VokS9h2c4D1acyr_aSKpV4oPvHvuyzTAZjB0';
 var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+/* THERMOSYS_OCR_AUTH_V1 : joint automatiquement la session de connexion aux appels /api/ocr */
+(function(){
+  var _origFetch = window.fetch;
+  if (typeof _origFetch !== 'function') return;
+  window.fetch = async function(input, init){
+    try {
+      var url = (typeof input === 'string') ? input : ((input && input.url) || '');
+      if (url.indexOf('/api/ocr') !== -1) {
+        var s = await _sb.auth.getSession();
+        var tk = s && s.data && s.data.session && s.data.session.access_token;
+        if (tk) {
+          init = Object.assign({}, init || {});
+          var h = new Headers(init.headers || ((typeof input !== 'string' && input && input.headers) ? input.headers : {}));
+          h.set('Authorization', 'Bearer ' + tk);
+          init.headers = h;
+        }
+      }
+    } catch (e) {}
+    return _origFetch.call(this, input, init);
+  };
+})();
+
 _sb.auth.onAuthStateChange(function(event, session){
   if (event === 'PASSWORD_RECOVERY') {
     window._authRecoveryMode = true;
