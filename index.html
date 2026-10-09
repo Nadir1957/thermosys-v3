@@ -2891,6 +2891,7 @@ function dsfUncheckAll(){
   <div style="font-size:9px;color:var(--tm);font-family:var(--fmo)">&copy; 2026 THERMOSYS &mdash; Propri&eacute;t&eacute; intellectuelle prot&eacute;g&eacute;e.</div>
 </div>
 <div class="footer-copy" id="footerCopy">&#127465;&#127487; &copy; 2026 Thermosys HVAC Platform | Tous droits r&eacute;serv&eacute;s &mdash; <b>Cr&eacute;&eacute; par </b> &mdash; 50 constructeurs &middot; 80 &eacute;quipements &middot; Gemini 2.5 Flash &middot; ISO 14118:2018 &middot; RE2020 Seuil 2025</div>
+<div id="legalLinks" class="no-print" style="margin-top:6px;font-size:9.5px;color:var(--tm);text-align:center"><a href="#" onclick="showPrivacyPolicy();return false;" style="color:inherit;text-decoration:underline;cursor:pointer">Privacy policy · Politique de confidentialité</a> &nbsp;|&nbsp; <a href="#" onclick="showTerms();return false;" style="color:inherit;text-decoration:underline;cursor:pointer">Terms of use · CGU</a></div>
 </footer>
 <div class="tc2" id="toastArea"></div>
 <div id="aiModal" class="modal-ov"><div class="modal-box"><div class="modal-hdr"><div style="font-size:13px;font-weight:700;color:var(--ac)" id="aiModalTitle">Analyse IA</div><div class="modal-close" onclick="document.getElementById('aiModal').classList.remove('open')">&#x2715;</div></div><div class="modal-body"><div class="pbar" id="aiBar"><div class="pbar-i"></div></div><div class="ai-panel" id="aiOutput">En attente...</div></div></div></div>
@@ -9720,10 +9721,10 @@ if (!localStorage.getItem('thermosys_landing_seen')) {
   var _landingEl = document.getElementById('landingPage');
   if (_landingEl) _landingEl.style.display = 'flex';
 }
-function showPrivacyPolicy(){ var m=document.getElementById('privacyModal'); if(m) m.style.display='flex'; setPrivacyLang('en'); }
+function showPrivacyPolicy(){ var m=document.getElementById('privacyModal'); if(m){ if(m.parentNode!==document.body) document.body.appendChild(m); m.style.zIndex='100000'; m.style.display='flex'; } setPrivacyLang('en'); }
 function setPrivacyLang(l){ var en=document.getElementById('privacyEN'), fr=document.getElementById('privacyFR'); if(!en||!fr) return; en.style.display=(l==='fr')?'none':'block'; fr.style.display=(l==='fr')?'block':'none'; var b=document.getElementById('privacyBox'); if(b) b.scrollTop=0; var be=document.getElementById('privacyBtnEN'), bf=document.getElementById('privacyBtnFR'); if(be) be.style.background=(l==='fr')?'#0e1c28':'#1a3a5a'; if(bf) bf.style.background=(l==='fr')?'#1a3a5a':'#0e1c28'; }
 function closePrivacyPolicy(){ var m=document.getElementById('privacyModal'); if(m) m.style.display='none'; }
-function showTerms(){ var m=document.getElementById('termsModal'); if(m) m.style.display='flex'; setTermsLang('en'); }
+function showTerms(){ var m=document.getElementById('termsModal'); if(m){ if(m.parentNode!==document.body) document.body.appendChild(m); m.style.zIndex='100000'; m.style.display='flex'; } setTermsLang('en'); }
 function closeTerms(){ var m=document.getElementById('termsModal'); if(m) m.style.display='none'; }
 function setTermsLang(l){ var en=document.getElementById('termsEN'), fr=document.getElementById('termsFR'); if(!en||!fr) return; en.style.display=(l==='fr')?'none':'block'; fr.style.display=(l==='fr')?'block':'none'; var b=document.getElementById('termsBox'); if(b) b.scrollTop=0; var be=document.getElementById('termsBtnEN'), bf=document.getElementById('termsBtnFR'); if(be) be.style.background=(l==='fr')?'#0e1c28':'#1a3a5a'; if(bf) bf.style.background=(l==='fr')?'#1a3a5a':'#0e1c28'; }
 function authShowPanel(id){
