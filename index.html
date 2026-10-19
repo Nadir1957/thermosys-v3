@@ -141,11 +141,11 @@
 <button class="mn" id="mn-catalogue" onclick="goPage('catalogue')">&#128230; <span id="mn_cat">CATALOGUE</span></button>
 <button class="mn" id="mn-devis" onclick="goPage('devis');if(typeof loadDvFavorites==='function')loadDvFavorites();">&#128203; <span id="mn_devis">DEVIS</span></button>
 <button class="mn" id="mn-historique" onclick="goPage('historique')">&#128196; <span id="mn_hist">JOURNAL</span></button>
-<button class="mn" id="mn-obd" onclick="goPage('obd')">&#128268; <span id="mn_obd">OBD</span></button>
+<button class="mn" id="mn-obd" style="display:none" hidden aria-hidden="true" tabindex="-1" onclick="goPage('obd')">&#128268; <span id="mn_obd">OBD</span></button>
 <button class="mn" id="mn-fluides" onclick="goPage('fluides')">&#127786; <span id="mn_fl">FLUIDES</span></button>
 <button class="mn" id="mn-scop" onclick="goPage('scop')">&#9889; <span id="mn_scop">SCOP/COP</span></button>
 <button class="mn" id="mn-ocr" onclick="goPage('ocr')">&#128247; <span id="mn_ocr">OCR-IA</span></button>
-<button class="mn" id="mn-bluetooth" onclick="goPage('bluetooth')">&#128138; <span id="mn_bt">BLUETOOTH</span></button>
+<button class="mn" id="mn-bluetooth" style="display:none" hidden aria-hidden="true" tabindex="-1" onclick="goPage('bluetooth')">&#128138; <span id="mn_bt">BLUETOOTH</span></button>
 <button class="mn" id="mn-convert" onclick="goPage('convert')">&#8652; <span id="mn_conv">CONV.</span></button>
 <button class="mn" id="mn-consignation" onclick="goPage('consignation')">&#128274; <span id="mn_loto">LOTO</span></button>
 <button class="mn" id="mn-rt2025" onclick="goPage('rt2025')">&#127807; <span id="mn_rt">RE2020</span></button>
@@ -323,7 +323,7 @@
 </div>
 
 <!-- OBD -->
-<div class="page" id="pg-obd">
+<div class="page" id="pg-obd" data-hidden-v1="obd" style="display:none!important">
 <div class="ptitle"><span id="t_obd_title" data-fr="DIAGNOSTIC OBD HVAC" data-en="OBD HVAC DIAGNOSTIC">DIAGNOSTIC OBD HVAC</span></div>
 <div class="g2">
 <div class="panel" style="border-color:var(--wn)">
@@ -487,7 +487,7 @@
 </div></div></div>
 
 <!-- BLUETOOTH -->
-<div class="page" id="pg-bluetooth">
+<div class="page" id="pg-bluetooth" data-hidden-v1="bluetooth" style="display:none!important">
 <div class="ptitle"><span id="t_bt_title">BLUETOOTH HVAC</span></div>
 <div class="g2">
 <div class="panel" style="border-color:var(--wn)">
@@ -1696,11 +1696,9 @@
 <div style="background:var(--tm);color:#000;padding:8px 12px;font-weight:700;font-size:12px">&#127968; 1. ACCUEIL — Tableau de bord / Dashboard</div>
 <div style="padding:10px;font-size:11px;line-height:1.8">
 &#9679; Affiche les statistiques clés : 80 équipements, 50 constructeurs, 38 normes actives.<br>
-&#9679; Accès rapide à tous les modules via les cartes de navigation.<br>
-&#9679; Indicateur de statut Bluetooth en temps réel.<br><br>
+&#9679; Accès rapide à tous les modules via les cartes de navigation.<br><br>
 <i>&#9679; Displays key statistics: 80 equipment items, 50 manufacturers, 38 active standards.<br>
-&#9679; Quick access to all modules via navigation cards.<br>
-&#9679; Real-time Bluetooth status indicator.</i>
+&#9679; Quick access to all modules via navigation cards.</i>
 </div>
 </div>
 <div class="panel" style="margin-bottom:10px">
@@ -1734,7 +1732,7 @@
 </div>
 </div>
 
-<div style="margin-top:10px;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+<div style="display:none;margin-top:10px;border:1px solid var(--border);border-radius:6px;overflow:hidden">
 <div style="background:var(--tm);color:#000;padding:8px 12px;font-weight:700;font-size:12px">&#128138; 4. BLUETOOTH — Connexion BLE / BLE Connection</div>
 <div style="padding:10px;font-size:11px;line-height:1.8">
 &#9679; Connexion aux équipements HVAC via Web Bluetooth API (BLE).<br>
@@ -1946,7 +1944,7 @@ Vérifiez que l'image est nette et bien éclairée. Formats acceptés : JPG, PNG
 </div>
 </div>
 
-<div style="margin-top:6px;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+<div style="display:none;margin-top:6px;border:1px solid var(--border);border-radius:6px;overflow:hidden">
 <div style="background:var(--bg2);padding:8px 12px;font-weight:700;font-size:11px;border-bottom:1px solid var(--border)">&#10067; Le Bluetooth ne détecte aucun appareil / Bluetooth detects no device</div>
 <div style="padding:10px;font-size:11px;line-height:1.8">
 Le module Bluetooth nécessite Chrome ou Edge, une connexion HTTPS et un adaptateur BLE physique compatible. Vérifiez que le Bluetooth est activé sur votre appareil.<br>
