@@ -9887,6 +9887,454 @@ document.addEventListener('focus', function(e){ /* remote-nav-autoscroll */
 }, true);
 authCheckState();
 </script>
+<script id="coldroom-module">
+/* THERMOSYS - Module CHAMBRE FROIDE (etapes 1 et 2 : construction + bilan frigorifique)
+   Moteur de calcul (CR_ENGINE) separe de l'interface. Bilingue FR/EN. */
+(function () {
+  'use strict';
+  if (typeof window === 'undefined') { return; }
+  if (window.__crColdRoom) { return; }
+  window.__crColdRoom = true;
+
+  /* ============ PSYCHROMETRIE ============ */
+  function psat(T) { return T >= 0 ? 610.94 * Math.exp(17.625 * T / (T + 243.04)) : 611.21 * Math.exp(22.587 * T / (T + 273.86)); }
+  function wRatio(T, rh) { var pv = psat(T) * rh / 100; return 0.62198 * pv / (101325 - pv); }
+  function enth(T, rh) { var W = wRatio(T, rh); return 1.006 * T + W * (2501 + 1.86 * T); }
+  function rho(T, rh) { var pv = psat(T) * rh / 100, Tk = T + 273.15; return (101325 - pv) / (287.055 * Tk) + pv / (461.5 * Tk); }
+  function dewPt(T, rh) { var pv = psat(T) * rh / 100, g = Math.log(pv / 610.94); return 243.04 * g / (17.625 - g); }
+
+  /* ============ BASE DE DONNEES PRODUITS ============
+     [id, groupe, fr, en, Tst, HR, Tf, eau(w), resp(mg CO2/kg.h a respT), vie_fr, vie_en, Tentree, %/jour, tmise(h), densite kg/m3, {a,f,L}] */
+  var GROUPS = {
+    fruit: ['Fruits', 'Fruits'], date: ['Dattes', 'Dates'], veg: ['Légumes & tubercules', 'Vegetables & tubers'],
+    meat: ['Viandes & poissons', 'Meat & fish'], dairy: ['Produits laitiers & œufs', 'Dairy & eggs'],
+    froz: ['Produits surgelés', 'Frozen products'], misc: ['Pharmacie & divers', 'Pharma & other']
+  };
+  var PROD = [
+    ['apple', 'fruit', 'Pomme', 'Apple', 1, 92, -1.5, .85, 3, '3 à 8 mois', '3–8 months', 20, 10, 24, 250],
+    ['pear', 'fruit', 'Poire', 'Pear', 0, 92, -1.6, .83, 3, '2 à 7 mois', '2–7 months', 20, 10, 24, 250],
+    ['orange', 'fruit', 'Orange', 'Orange', 5, 88, -0.8, .87, 4, '8 à 12 semaines', '8–12 weeks', 22, 10, 24, 250],
+    ['clem', 'fruit', 'Clémentine / mandarine', 'Clementine / mandarin', 5, 90, -1.0, .87, 4, '2 à 4 semaines', '2–4 weeks', 22, 10, 24, 220],
+    ['lemon', 'fruit', 'Citron', 'Lemon', 12, 88, -1.4, .89, 5, '1 à 4 mois', '1–4 months', 22, 10, 24, 250],
+    ['grape', 'fruit', 'Raisin de table', 'Table grapes', 0, 92, -2.1, .81, 2, '1 à 2 mois (jusqu\'à 6 avec SO₂)', '1–2 months (up to 6 with SO₂)', 20, 10, 20, 200],
+    ['pomeg', 'fruit', 'Grenade', 'Pomegranate', 5, 92, -3.0, .81, 3, '2 à 3 mois', '2–3 months', 22, 10, 24, 250],
+    ['fig', 'fruit', 'Figue fraîche', 'Fresh fig', 0, 87, -2.4, .79, 6, '7 à 10 jours', '7–10 days', 22, 15, 12, 150],
+    ['apricot', 'fruit', 'Abricot', 'Apricot', 0, 92, -1.1, .86, 5, '1 à 3 semaines', '1–3 weeks', 25, 15, 12, 150],
+    ['peach', 'fruit', 'Pêche', 'Peach', 0, 92, -0.9, .89, 5, '2 à 4 semaines', '2–4 weeks', 25, 15, 12, 150],
+    ['straw', 'fruit', 'Fraise', 'Strawberry', 0, 92, -0.8, .91, 8, '5 à 7 jours', '5–7 days', 20, 20, 8, 120],
+    ['melon', 'fruit', 'Melon cantaloup', 'Cantaloupe', 4, 95, -1.2, .90, 6, '10 à 15 jours', '10–15 days', 25, 15, 16, 200],
+    ['wmelon', 'fruit', 'Pastèque', 'Watermelon', 12, 90, -0.4, .92, 3, '2 à 3 semaines', '2–3 weeks', 25, 15, 24, 250],
+    ['date', 'date', 'Dattes', 'Dates', 0, 70, -15.7, .21, 0, '6 à 12 mois à 0 °C ; plus d\'un an à -18 °C', '6–12 months at 0 °C; over 1 year at -18 °C', 25, 5, 24, 330],
+    ['potc', 'veg', 'Pomme de terre de consommation', 'Table potatoes', 5, 92, -1.7, .79, 4, '5 à 8 mois (anti-germinatif)', '5–8 months (sprout inhibitor)', 15, 6, 24, 450],
+    ['pots', 'veg', 'Pomme de terre de semence', 'Seed potatoes', 3, 92, -1.7, .79, 3, '6 à 9 mois', '6–9 months', 12, 6, 24, 420],
+    ['onion', 'veg', 'Oignon sec', 'Dry onion', 0, 68, -0.9, .89, 2, '1 à 8 mois', '1–8 months', 25, 8, 24, 350],
+    ['garlic', 'veg', 'Ail', 'Garlic', 0, 68, -2.7, .61, 2, '6 à 7 mois', '6–7 months', 25, 8, 24, 250],
+    ['carrot', 'veg', 'Carotte', 'Carrot', 0, 98, -1.4, .88, 5, '7 à 9 mois', '7–9 months', 15, 10, 24, 400],
+    ['cabbage', 'veg', 'Chou blanc', 'White cabbage', 0, 98, -0.9, .92, 3, '3 à 6 mois', '3–6 months', 15, 10, 24, 300],
+    ['tomato', 'veg', 'Tomate mûre', 'Ripe tomato', 9, 92, -0.5, .94, 8, '1 à 3 semaines', '1–3 weeks', 22, 15, 16, 200],
+    ['pepper', 'veg', 'Poivron', 'Bell pepper', 8, 92, -0.7, .92, 6, '2 à 3 semaines', '2–3 weeks', 22, 15, 16, 150],
+    ['cucumber', 'veg', 'Concombre', 'Cucumber', 11, 95, -0.5, .96, 8, '10 à 14 jours', '10–14 days', 22, 15, 16, 200],
+    ['zucchini', 'veg', 'Courgette', 'Zucchini', 7, 95, -0.5, .95, 10, '1 à 2 semaines', '1–2 weeks', 22, 15, 16, 200],
+    ['eggplant', 'veg', 'Aubergine', 'Eggplant', 11, 92, -0.8, .93, 10, 'environ 1 semaine', 'about 1 week', 22, 15, 16, 150],
+    ['lettuce', 'veg', 'Laitue', 'Lettuce', 0, 98, -0.2, .95, 10, '2 à 3 semaines', '2–3 weeks', 15, 20, 8, 200],
+    ['beans', 'veg', 'Haricot vert', 'Green bean', 6, 95, -0.7, .90, 25, '7 à 10 jours', '7–10 days', 20, 20, 8, 200],
+    ['broccoli', 'veg', 'Brocoli', 'Broccoli', 0, 97, -0.6, .91, 20, '10 à 14 jours', '10–14 days', 15, 20, 8, 250],
+    ['beef', 'meat', 'Carcasses de bœuf', 'Beef carcasses', 0, 87, -1.7, .65, 0, '1 à 3 semaines', '1–3 weeks', 10, 15, 24, 150, { a: 3.22, f: 2.30, L: 191 }],
+    ['chicken', 'meat', 'Volaille fraîche', 'Fresh poultry', 0, 85, -2.8, .74, 0, '5 à 7 jours', '5–7 days', 4, 20, 24, 250, { L: 221 }],
+    ['fishf', 'meat', 'Poisson frais', 'Fresh fish', 0, 95, -2.2, .80, 0, '5 à 10 jours', '5–10 days', 4, 25, 24, 300, { a: 3.77, f: 2.14, L: 272 }],
+    ['milk', 'dairy', 'Lait & produits laitiers frais', 'Milk & fresh dairy', 3, 85, -0.5, .87, 0, '5 à 15 jours', '5–15 days', 6, 30, 16, 300],
+    ['cheese', 'dairy', 'Fromage affiné', 'Ripened cheese', 4, 80, -8.0, .40, 0, 'variable selon fromage', 'depends on cheese', 15, 5, 24, 350],
+    ['eggs', 'dairy', 'Œufs en coquille', 'Shell eggs', 1, 82, -2.2, .75, 0, '5 à 6 mois', '5–6 months', 15, 10, 24, 250],
+    ['fzmeat', 'froz', 'Viande congelée', 'Frozen meat', -20, 90, -1.7, .65, 0, '9 à 12 mois', '9–12 months', -12, 5, 24, 400, { a: 3.22, f: 2.30, L: 191 }],
+    ['fzchick', 'froz', 'Volaille congelée', 'Frozen poultry', -20, 90, -2.8, .74, 0, '9 à 12 mois', '9–12 months', -12, 5, 24, 400, { L: 221 }],
+    ['fzfish', 'froz', 'Poisson congelé', 'Frozen fish', -25, 90, -2.2, .80, 0, '6 à 12 mois', '6–12 months', -15, 5, 24, 400, { a: 3.77, f: 2.14, L: 272 }],
+    ['fzveg', 'froz', 'Légumes surgelés', 'Frozen vegetables', -20, 90, -1.1, .88, 0, '12 à 24 mois', '12–24 months', -12, 5, 24, 300],
+    ['fzfruit', 'froz', 'Fruits surgelés', 'Frozen fruit', -20, 90, -1.5, .85, 0, '12 à 24 mois', '12–24 months', -12, 5, 24, 300],
+    ['icecr', 'froz', 'Crème glacée', 'Ice cream', -25, 90, -5.6, .62, 0, '6 à 12 mois', '6–12 months', -15, 5, 24, 250, { a: 3.18, f: 2.72, L: 200 }],
+    ['pharma', 'misc', 'Produits pharmaceutiques (2–8 °C)', 'Pharmaceutical products (2–8 °C)', 5, 60, -1.0, .70, 0, 'selon notice', 'per leaflet', 20, 5, 24, 150],
+    ['custom', 'misc', 'Produit personnalisé', 'Custom product', 2, 85, -1.0, .80, 0, '—', '—', 20, 10, 24, 250]
+  ];
+  var PBY = {}; PROD.forEach(function (r) {
+    var w = r[7], ov = r[15] || {};
+    PBY[r[0]] = {
+      id: r[0], grp: r[1], fr: r[2], en: r[3], Tst: r[4], RH: r[5], Tf: r[6], w: w, resp: r[8], lifeFr: r[9], lifeEn: r[10], Tin: r[11], pct: r[12], tpull: r[13], dens: r[14],
+      cpA: ov.a || (4.19 * w + 0.837 * (1 - w)), cpF: ov.f || (2.09 * w + 0.837 * (1 - w)), L: ov.L || (335 * w)
+    };
+  });
+
+  var PANELS = [
+    { id: 'pur', fr: 'Panneau sandwich PUR (polyuréthane)', en: 'PUR sandwich panel (polyurethane)', lam: 0.023 },
+    { id: 'pir', fr: 'Panneau sandwich PIR', en: 'PIR sandwich panel', lam: 0.022 },
+    { id: 'eps', fr: 'Panneau EPS (polystyrène expansé)', en: 'EPS panel (expanded polystyrene)', lam: 0.038 },
+    { id: 'rw', fr: 'Laine de roche', en: 'Rock wool', lam: 0.040 },
+    { id: 'site', fr: 'Isolation PUR injectée / projetée sur site', en: 'On-site injected / sprayed PUR', lam: 0.026 }
+  ];
+  var THICK = [60, 80, 100, 120, 150, 175, 200, 250, 300];
+  var PROT = [
+    { id: 'none', fr: 'Aucune protection', en: 'No protection', E: 0 },
+    { id: 'strip', fr: 'Rideau à lamelles PVC', en: 'PVC strip curtain', E: 0.85 },
+    { id: 'air', fr: 'Rideau d\'air', en: 'Air curtain', E: 0.80 },
+    { id: 'lock', fr: 'Sas / quai isolé', en: 'Airlock / insulated dock', E: 0.90 }
+  ];
+  var DEFR = [
+    { id: 'none', fr: 'Aucun (dégivrage par l\'air, T° ≥ +2 °C)', en: 'None (air defrost, T ≥ +2 °C)', f: 0 },
+    { id: 'elec', fr: 'Résistances électriques', en: 'Electric heaters', f: 0.10 },
+    { id: 'gas', fr: 'Gaz chaud', en: 'Hot gas', f: 0.06 },
+    { id: 'water', fr: 'Eau', en: 'Water', f: 0.08 }
+  ];
+  // Renouvellement d'air par 24 h (porte + infiltration) : [volume m3, T>0, T<0] - valeurs indicatives type ASHRAE
+  var ACH = [[2.8, 38, 29.5], [4.2, 32, 26], [5.7, 29, 23], [8.5, 25, 20], [11.3, 22, 17.5], [14.2, 20, 16], [17, 18, 14], [22.6, 16, 12.5], [28.3, 14, 11],
+    [42.5, 11.5, 9], [56.6, 10, 8], [85, 8, 6.5], [113, 7, 5.5], [142, 6, 4.8], [170, 5.5, 4.3], [226, 4.6, 3.7], [283, 4.1, 3.3], [425, 3.2, 2.6],
+    [566, 2.8, 2.3], [850, 2.2, 1.8], [1130, 1.9, 1.5], [1416, 1.7, 1.4]];
+  function achInterp(V, neg) {
+    var k = neg ? 2 : 1, n = ACH.length;
+    if (V <= ACH[0][0]) { return ACH[0][k]; }
+    if (V >= ACH[n - 1][0]) { return ACH[n - 1][k]; }
+    for (var i = 1; i < n; i++) {
+      if (V <= ACH[i][0]) {
+        var a = ACH[i - 1], b = ACH[i], t = (Math.log(V) - Math.log(a[0])) / (Math.log(b[0]) - Math.log(a[0]));
+        return a[k] + t * (b[k] - a[k]);
+      }
+    }
+    return ACH[n - 1][k];
+  }
+
+  /* ============ MOTEUR DE CALCUL ============ */
+  function prodHeat(m, Tin, Tout, cpA, cpF, L, Tf) {
+    if (!(Tin > Tout) || !(m > 0)) { return 0; }
+    if (Tin > Tf) {
+      var T1 = Math.max(Tout, Tf), q = m * cpA * (Tin - T1);
+      if (Tout < Tf) { q += m * L + m * cpF * (Tf - Tout); }
+      return q;
+    }
+    return m * cpF * (Tin - Tout);
+  }
+  function respW(p, T) { return p.resp * 2.96 * Math.pow(2.5, (T - p.respT) / 10); } // W par tonne
+
+  function compute(p) {
+    var r = { warn: [], err: null }, g = 9.81;
+    var Tr = p.Tr, V = p.Lg * p.Wd * p.Hh, Af = p.Lg * p.Wd, Aw = 2 * p.Hh * (p.Lg + p.Wd);
+    r.V = V; r.Af = Af; r.Aw = Aw;
+    var lam = p.lam, hi = 8, he = 23;
+    var Uw = 1 / (1 / hi + 1 / he + p.dWall / 1000 / lam);
+    var Ur = 1 / (1 / hi + 1 / he + p.dRoof / 1000 / lam);
+    var Uf = (p.floorAdj === 'air') ? 1 / (1 / hi + 1 / he + p.dFloor / 1000 / lam) : 1 / (1 / hi + p.dFloor / 1000 / lam + 0.5);
+    r.U = { w: Uw, r: Ur, f: Uf };
+    var Tfl = (p.floorAdj === 'air') ? p.Text : p.Tgnd;
+    var dTw = p.Twall + p.solW - Tr, dTr = p.Text + p.solR - Tr, dTf = Tfl - Tr;
+    r.dT = { w: dTw, r: dTr, f: dTf };
+    var trW = Uw * Aw * dTw / 1000, trR = Ur * Af * dTr / 1000, trF = Uf * Af * dTf / 1000;
+    r.trans = { w: trW, r: trR, f: trF, tot: trW + trR + trF };
+    var E = {}; // kWh / jour
+    E.trans = r.trans.tot * 24;
+
+    // Produit
+    var mDay = p.stockT * 1000 * p.pct / 100; r.mDay = mDay;
+    var qP = prodHeat(mDay, p.Tin, Tr, p.cpA, p.cpF, p.Lat, p.Tf);
+    var qPk = prodHeat(mDay * p.packPct / 100, p.Tin, Tr, 1.6, 1.6, 0, -99);
+    E.prod = qP / 3600; E.pack = qPk / 3600;
+    r.prodSplit = {
+      sens: mDay * p.cpA * Math.max(0, p.Tin - Math.max(Tr, p.Tf)) / 3600,
+      lat: (p.Tin > p.Tf && Tr < p.Tf) ? mDay * p.Lat / 3600 : 0
+    };
+    // Respiration
+    var pr = { resp: p.resp, respT: p.respT };
+    var rs = respW(pr, Tr) * p.stockT / 1000 * 24;
+    var ri = (p.Tin > Tr) ? (respW(pr, (p.Tin + Tr) / 2) - respW(pr, Tr)) * (mDay / 1000) / 1000 * p.tpull : 0;
+    E.resp = Math.max(0, rs + Math.max(0, ri));
+
+    // Air (infiltration / portes)
+    var hExt = enth(p.Text, p.RHext), hR = enth(Tr, p.RHr), rR = rho(Tr, p.RHr), rX = rho(p.Text, p.RHext);
+    r.hExt = hExt; r.hR = hR;
+    if (p.infMode === 'door') {
+      var Fm = Math.pow(2 / (1 + Math.pow(rR / rX, 1 / 3)), 1.5);
+      var qd = 0.221 * p.dA * (hExt - hR) * rR * Math.sqrt(Math.max(0, 1 - rX / rR)) * Math.sqrt(g * p.dH) * Fm; // kW porte ouverte
+      var Dt = (p.dP * p.dTp + 60 * p.dTo) / (3600 * p.dHrs);
+      var Df = (Math.abs(p.Text - Tr) < 11) ? 1.1 : 0.8;
+      r.door = { q: qd, Dt: Dt, Df: Df, E: p.dE };
+      E.air = Math.max(0, qd * Math.min(Dt, 1) * Df * (1 - p.dE) * p.dHrs);
+    } else {
+      var N = achInterp(V, Tr < 0);
+      r.ach = N;
+      E.air = Math.max(0, V * N * p.use * rR * (hExt - hR) / 86400 * 24);
+    }
+    // Ventilation (air neuf)
+    E.vent = Math.max(0, p.vent / 3600 * rX * (hExt - hR) * p.ventH);
+    // Charges internes
+    E.light = p.lightW * Af / 1000 * p.lightH;
+    E.people = p.nP * Math.max(0, 270 - 6 * Tr) / 1000 * p.hP;
+    E.fork = p.nF * p.kWF * p.hF;
+    E.other = p.otherKW * p.otherH;
+
+    var S0 = 0; ['trans', 'prod', 'pack', 'resp', 'air', 'vent', 'light', 'people', 'fork', 'other'].forEach(function (k) { S0 += E[k]; });
+    var k = (1 + p.defF) * (1 + p.sf / 100);
+    var den = p.tRun - k * p.fanF / 100 * p.fanH;
+    if (!(den > 0.5)) { r.err = 'den'; return r; }
+    var Q0 = k * S0 / den;                       // kW sur le temps de marche
+    var Efan = p.fanF / 100 * Q0 * p.fanH;       // kWh/j
+    var Sb = S0 + Efan, Edef = Sb * p.defF, Esaf = Sb * (1 + p.defF) * p.sf / 100;
+    r.E = E; r.Efan = Efan; r.Edef = Edef; r.Esaf = Esaf; r.S0 = S0;
+    r.Q0 = Q0; r.Etot = Sb + Edef + Esaf;
+    r.fanKW = p.fanF / 100 * Q0;
+    // Decomposition en kW (somme = Q0)
+    var lines = [['trans', E.trans], ['prod', E.prod], ['pack', E.pack], ['resp', E.resp], ['air', E.air], ['vent', E.vent], ['light', E.light], ['people', E.people], ['fork', E.fork], ['other', E.other], ['fan', Efan], ['defr', Edef], ['safe', Esaf]];
+    r.lines = lines.map(function (x) { return { id: x[0], E: x[1], kW: x[1] / p.tRun, pct: r.Etot > 0 ? 100 * x[1] / r.Etot : 0 }; });
+    // Pointe de mise en temperature
+    var Eprod = E.prod + E.pack + Math.max(0, ri);
+    r.peak = (Eprod * k) / p.tpull + (r.Etot - Eprod * k) / p.tRun;
+    r.Qsel = Math.max(Q0, r.peak);
+    r.perM3 = r.Qsel * 1000 / V; r.perT = p.stockT > 0 ? r.Qsel * 1000 / p.stockT : 0;
+    r.capT = p.stockT;
+
+    // Isolation
+    var qTarget = Tr < 0 ? 8 : 10;
+    var dRec = lam * ((p.Twall - Tr) / qTarget - 1 / hi - 1 / he) * 1000;
+    var dRecC = THICK.filter(function (t) { return t >= dRec; })[0] || THICK[THICK.length - 1];
+    r.ins = { qWall: Uw * (p.Twall - Tr), qRoof: Ur * (p.Text - Tr), qTarget: qTarget, dRec: dRec, dRecC: dRecC };
+    var Uc = 1 / (1 / hi + 1 / 8 + p.dWall / 1000 / lam);
+    r.cond = { Ts: p.Twall - Uc * (p.Twall - Tr) / 8, Td: dewPt(p.Twall, p.RHext) };
+    // Avertissements
+    if (Tr <= p.Tf && p.Tst > p.Tf) { r.warn.push('freeze'); }
+    if (p.Tin < Tr) { r.warn.push('tin'); }
+    if (V > 1500 && p.infMode !== 'door') { r.warn.push('bigtable'); }
+    if (r.cond.Ts < r.cond.Td + 1) { r.warn.push('cond'); }
+    if (r.peak > Q0 * 1.05) { r.warn.push('peak'); }
+    if (p.dWall < r.ins.dRec * 0.9) { r.warn.push('thin'); }
+    return r;
+  }
+  window.CR_ENGINE = { compute: compute, psat: psat, enth: enth, rho: rho, dewPt: dewPt, prodHeat: prodHeat, respW: respW, achInterp: achInterp, PBY: PBY, PROD: PROD, THICK: THICK };
+
+  if (typeof document === 'undefined') { return; }
+
+  /* ============ INTERFACE ============ */
+  function EN() { return window.lang === 'en'; }
+  function T(fr, en) { return EN() ? en : fr; }
+  function $(id) { return document.getElementById(id); }
+  function num(id, d) { var e = $(id); if (!e) { return d; } var v = parseFloat(String(e.value).replace(',', '.')); return isFinite(v) ? v : d; }
+  function f1(x) { return (Math.round(x * 10) / 10).toFixed(1); }
+  function f2(x) { return (Math.round(x * 100) / 100).toFixed(2); }
+  function f0(x) { return String(Math.round(x)); }
+  function inp(id, v, st, step) { return '<input class="fi" id="cr_' + id + '" type="number" value="' + v + '"' + (step ? ' step="' + step + '"' : '') + ' style="max-width:96px" oninput="crDeb()">'; }
+  function sel(id, opts, cur) {
+    return '<select class="fsel" id="cr_' + id + '" onchange="crDeb()" style="max-width:100%">' + opts.map(function (o) {
+      return '<option value="' + o.id + '"' + (o.id === cur ? ' selected' : '') + ' data-cfr="' + o.fr.replace(/"/g, '&quot;') + '" data-cen="' + o.en.replace(/"/g, '&quot;') + '">' + o.fr + '</option>';
+    }).join('') + '</select>';
+  }
+  function row(fr, en, html) { return '<div class="frow"><span class="flb" data-cfr="' + fr.replace(/"/g, '&quot;') + '" data-cen="' + en.replace(/"/g, '&quot;') + '">' + fr + '</span>' + html + '</div>'; }
+  function sec(fr, en, body, open) {
+    return '<details class="crsec"' + (open ? ' open' : '') + '><summary data-cfr="' + fr + '" data-cen="' + en + '">' + fr + '</summary>' + body + '</details>';
+  }
+
+  function buildPage() {
+    var prodOpts = '';
+    Object.keys(GROUPS).forEach(function (g) {
+      prodOpts += '<optgroup label="' + GROUPS[g][0] + '" data-cfr="' + GROUPS[g][0] + '" data-cen="' + GROUPS[g][1] + '">';
+      PROD.filter(function (r) { return r[1] === g; }).forEach(function (r) {
+        prodOpts += '<option value="' + r[0] + '" data-cfr="' + r[2].replace(/"/g, '&quot;') + '" data-cen="' + r[3].replace(/"/g, '&quot;') + '">' + r[2] + '</option>';
+      });
+      prodOpts += '</optgroup>';
+    });
+    var a = sec('1. PRODUIT ET CONDITIONS DE CONSERVATION', '1. PRODUCT AND STORAGE CONDITIONS',
+      row('Produit :', 'Product:', '<select class="fsel" id="cr_prod" onchange="crProdChange()" style="max-width:100%">' + prodOpts + '</select>') +
+      '<div id="cr_info" style="font-size:10px;color:var(--ts);margin:2px 0 6px"></div>' +
+      row('T° de la chambre (°C) :', 'Room temperature (°C):', inp('Tr', 1, '', '0.5')) +
+      row('Humidité relative chambre (%) :', 'Room relative humidity (%):', inp('RHr', 92)) +
+      row('Point de congélation produit (°C) :', 'Product freezing point (°C):', inp('Tf', -1.5, '', '0.1')) +
+      row('Chaleur massique au-dessus (kJ/kg·K) :', 'Specific heat above freezing (kJ/kg·K):', inp('cpA', 3.7, '', '0.01')) +
+      row('Chaleur massique en dessous (kJ/kg·K) :', 'Specific heat below freezing (kJ/kg·K):', inp('cpF', 1.9, '', '0.01')) +
+      row('Chaleur latente de congélation (kJ/kg) :', 'Latent heat of freezing (kJ/kg):', inp('Lat', 280)) +
+      row('Respiration (mg CO₂/kg·h à la T° de référence) :', 'Respiration (mg CO₂/kg·h at reference T°):', inp('resp', 3, '', '0.1')) +
+      row('Stock maximal (tonnes) :', 'Maximum stock (tonnes):', inp('stockT', 50, '', '0.5')) +
+      row('Densité de chargement (kg/m³ de volume brut) :', 'Loading density (kg/m³ of gross volume):', inp('dens', 250)) +
+      row('Entrée journalière (% du stock) :', 'Daily intake (% of stock):', inp('pct', 10, '', '0.5')) +
+      row('T° du produit à l\'entrée (°C) :', 'Product entry temperature (°C):', inp('Tin', 20, '', '0.5')) +
+      row('Durée de mise en température (h) :', 'Pull-down time (h):', inp('tpull', 24)) +
+      row('Emballage / palettes (% masse produit) :', 'Packaging / pallets (% of product mass):', inp('pack', 5, '', '0.5')), true);
+    var b = sec('2. CHAMBRE ET CONSTRUCTION', '2. ROOM AND CONSTRUCTION',
+      row('Longueur intérieure (m) :', 'Internal length (m):', inp('Lg', 10, '', '0.1')) +
+      row('Largeur intérieure (m) :', 'Internal width (m):', inp('Wd', 8, '', '0.1')) +
+      row('Hauteur intérieure (m) :', 'Internal height (m):', inp('Hh', 5, '', '0.1')) +
+      row('Isolant :', 'Insulation:', sel('panel', PANELS, 'pur')) +
+      row('Épaisseur murs (mm) :', 'Wall thickness (mm):', sel('dWall', THICK.map(function (t) { return { id: String(t), fr: t + ' mm', en: t + ' mm' }; }), '100')) +
+      row('Épaisseur toit (mm) :', 'Roof thickness (mm):', sel('dRoof', THICK.map(function (t) { return { id: String(t), fr: t + ' mm', en: t + ' mm' }; }), '120')) +
+      row('Épaisseur plancher (mm) :', 'Floor thickness (mm):', sel('dFloor', THICK.map(function (t) { return { id: String(t), fr: t + ' mm', en: t + ' mm' }; }), '100')) +
+      row('Plancher posé sur :', 'Floor resting on:', sel('floorAdj', [{ id: 'gnd', fr: 'Terre-plein', en: 'Ground' }, { id: 'air', fr: 'Vide sanitaire ventilé / air extérieur', en: 'Ventilated void / outside air' }], 'gnd')), true);
+    var c = sec('3. AMBIANCE EXTÉRIEURE', '3. OUTSIDE CONDITIONS',
+      row('T° extérieure de calcul (°C) :', 'Outside design temperature (°C):', inp('Text', 38)) +
+      row('Humidité relative extérieure (%) :', 'Outside relative humidity (%):', inp('RHext', 50)) +
+      row('T° côté murs (°C) :', 'Temperature on wall side (°C):', inp('Twall', 38)) +
+      row('Majoration solaire murs (K) :', 'Solar allowance, walls (K):', inp('solW', 3, '', '0.5')) +
+      row('Majoration solaire toit (K) :', 'Solar allowance, roof (K):', inp('solR', 8, '', '0.5')) +
+      row('T° du sol (°C) :', 'Ground temperature (°C):', inp('Tgnd', 18)), false);
+    var d = sec('4. PORTES, INFILTRATION ET AIR NEUF', '4. DOORS, INFILTRATION AND FRESH AIR',
+      row('Méthode :', 'Method:', sel('infMode', [{ id: 'table', fr: 'Tableau (renouvellement d\'air / 24 h)', en: 'Table (air changes / 24 h)' }, { id: 'door', fr: 'Modèle de porte (grandes chambres, quais)', en: 'Door model (large rooms, docks)' }], 'table')) +
+      row('Utilisation (méthode tableau) :', 'Usage (table method):', sel('use', [{ id: '0.6', fr: 'Stockage long, peu d\'accès (×0,6)', en: 'Long storage, little access (×0.6)' }, { id: '1', fr: 'Normale (×1)', en: 'Normal (×1)' }, { id: '2', fr: 'Intensive (×2)', en: 'Heavy (×2)' }], '1')) +
+      row('Surface de porte (m²) :', 'Door area (m²):', inp('dA', 6, '', '0.5')) +
+      row('Hauteur de porte (m) :', 'Door height (m):', inp('dH', 3, '', '0.1')) +
+      row('Passages par jour :', 'Passages per day:', inp('dP', 20)) +
+      row('Durée d\'ouverture par passage (s) :', 'Open time per passage (s):', inp('dTp', 60)) +
+      row('Porte maintenue ouverte (min/jour) :', 'Door held open (min/day):', inp('dTo', 0)) +
+      row('Heures d\'activité des portes (h/jour) :', 'Door activity hours (h/day):', inp('dHrs', 10)) +
+      row('Protection de porte :', 'Door protection:', sel('dProt', PROT, 'strip')) +
+      row('Air neuf (m³/h) :', 'Fresh air (m³/h):', inp('vent', 0)) +
+      row('Fonctionnement air neuf (h/jour) :', 'Fresh-air operation (h/day):', inp('ventH', 0)), false);
+    var e = sec('5. CHARGES INTERNES', '5. INTERNAL LOADS',
+      row('Éclairage (W/m²) :', 'Lighting (W/m²):', inp('lightW', 3, '', '0.5')) +
+      row('Éclairage (h/jour) :', 'Lighting (h/day):', inp('lightH', 8)) +
+      row('Personnes présentes :', 'People present:', inp('nP', 2)) +
+      row('Présence (h/jour) :', 'Presence (h/day):', inp('hP', 6)) +
+      row('Chariots élévateurs électriques :', 'Electric forklifts:', inp('nF', 1)) +
+      row('Puissance par chariot (kW) :', 'Power per forklift (kW):', inp('kWF', 3, '', '0.5')) +
+      row('Chariot : heures/jour :', 'Forklift: hours/day:', inp('hF', 4)) +
+      row('Autres équipements (kW) :', 'Other equipment (kW):', inp('otherKW', 0, '', '0.1')) +
+      row('Autres équipements (h/jour) :', 'Other equipment (h/day):', inp('otherH', 0)), false);
+    var f = sec('6. SYSTÈME FRIGORIFIQUE', '6. REFRIGERATION SYSTEM',
+      row('Temps de fonctionnement (h/jour) :', 'Running time (h/day):', inp('tRun', 18, '', '0.5')) +
+      row('Puissance ventilateurs (% de la puissance frigo) :', 'Fan power (% of cooling capacity):', inp('fanF', 5, '', '0.5')) +
+      row('Ventilateurs : heures/jour :', 'Fans: hours/day:', inp('fanH', 20)) +
+      row('Dégivrage :', 'Defrost:', sel('defr', DEFR, 'none')) +
+      row('Coefficient de sécurité (%) :', 'Safety factor (%):', inp('sf', 10)), false);
+
+    return '<div class="ptitle"><span data-cfr="CHAMBRE FROIDE — CONSTRUCTION ET BILAN FRIGORIFIQUE" data-cen="COLD ROOM — CONSTRUCTION AND REFRIGERATION LOAD">CHAMBRE FROIDE — CONSTRUCTION ET BILAN FRIGORIFIQUE</span></div>' +
+      '<div class="g2"><div class="panel" id="cr_in">' + a + b + c + d + e + f +
+      '<button class="btn bp" style="width:100%;margin-top:8px" onclick="crCalcBtn()" data-cfr="Calculer le bilan" data-cen="Calculate load">Calculer le bilan</button></div>' +
+      '<div class="panel" id="cr_out"></div></div>';
+  }
+
+  function readInputs() {
+    var pr = PBY[$('cr_prod').value] || PBY.custom;
+    var pan = PANELS.filter(function (x) { return x.id === $('cr_panel').value; })[0] || PANELS[0];
+    var prot = PROT.filter(function (x) { return x.id === $('cr_dProt').value; })[0] || PROT[0];
+    var df = DEFR.filter(function (x) { return x.id === $('cr_defr').value; })[0] || DEFR[0];
+    return {
+      Tr: num('cr_Tr', 0), RHr: num('cr_RHr', 90), Tf: num('cr_Tf', -1), cpA: num('cr_cpA', 3.5), cpF: num('cr_cpF', 1.8), Lat: num('cr_Lat', 250),
+      resp: num('cr_resp', 0), respT: pr.Tst, Tst: pr.Tst, stockT: num('cr_stockT', 0), pct: num('cr_pct', 0), Tin: num('cr_Tin', 20), tpull: Math.max(1, num('cr_tpull', 24)), packPct: num('cr_pack', 0),
+      Lg: Math.max(0.5, num('cr_Lg', 5)), Wd: Math.max(0.5, num('cr_Wd', 5)), Hh: Math.max(0.5, num('cr_Hh', 3)),
+      lam: pan.lam, dWall: num('cr_dWall', 100), dRoof: num('cr_dRoof', 100), dFloor: num('cr_dFloor', 100), floorAdj: $('cr_floorAdj').value,
+      Text: num('cr_Text', 35), RHext: Math.min(100, Math.max(5, num('cr_RHext', 50))), Twall: num('cr_Twall', 35), solW: num('cr_solW', 0), solR: num('cr_solR', 0), Tgnd: num('cr_Tgnd', 15),
+      infMode: $('cr_infMode').value, use: parseFloat($('cr_use').value) || 1, dA: num('cr_dA', 4), dH: Math.max(0.5, num('cr_dH', 2.5)), dP: num('cr_dP', 0), dTp: num('cr_dTp', 0), dTo: num('cr_dTo', 0), dHrs: Math.max(1, num('cr_dHrs', 10)), dE: prot.E,
+      vent: num('cr_vent', 0), ventH: num('cr_ventH', 0),
+      lightW: num('cr_lightW', 0), lightH: num('cr_lightH', 0), nP: num('cr_nP', 0), hP: num('cr_hP', 0), nF: num('cr_nF', 0), kWF: num('cr_kWF', 0), hF: num('cr_hF', 0), otherKW: num('cr_otherKW', 0), otherH: num('cr_otherH', 0),
+      tRun: Math.min(24, Math.max(6, num('cr_tRun', 18))), fanF: num('cr_fanF', 5), fanH: num('cr_fanH', 20), defF: df.f, sf: num('cr_sf', 10)
+    };
+  }
+
+  var LN = {
+    trans: ['Transmission (parois)', 'Transmission (envelope)'], prod: ['Produit (refroidissement / congélation)', 'Product (cooling / freezing)'], pack: ['Emballages et palettes', 'Packaging and pallets'],
+    resp: ['Respiration du produit', 'Product respiration'], air: ['Infiltration et ouverture des portes', 'Infiltration and door openings'], vent: ['Air neuf', 'Fresh air'],
+    light: ['Éclairage', 'Lighting'], people: ['Personnel', 'People'], fork: ['Chariots élévateurs', 'Forklifts'], other: ['Autres équipements', 'Other equipment'],
+    fan: ['Ventilateurs évaporateur', 'Evaporator fans'], defr: ['Dégivrage', 'Defrost'], safe: ['Marge de sécurité', 'Safety margin']
+  };
+  var WARN = {
+    freeze: ['La température de la chambre est inférieure ou égale au point de congélation du produit : risque de gel du produit frais.', 'Room temperature is at or below the product freezing point: risk of freezing fresh product.'],
+    tin: ['La température d\'entrée du produit est inférieure à celle de la chambre : aucune charge de refroidissement du produit.', 'Product entry temperature is below room temperature: no product cooling load.'],
+    bigtable: ['Chambre de plus de 1 500 m³ : la méthode « tableau » est peu fiable, utilisez le modèle de porte (section 4).', 'Room over 1,500 m³: the table method is unreliable, use the door model (section 4).'],
+    cond: ['Risque de condensation sur la face extérieure des murs (température de surface proche du point de rosée) : augmentez l\'épaisseur d\'isolant.', 'Condensation risk on the outer wall surface (surface temperature near dew point): increase insulation thickness.'],
+    peak: ['La puissance en phase de mise en température dépasse la puissance sur temps de marche : la puissance retenue est la valeur de pointe.', 'Pull-down power exceeds running-time power: the selected capacity is the peak value.'],
+    thin: ['Épaisseur des murs inférieure à l\'épaisseur recommandée pour cet écart de température.', 'Wall thickness below the recommended value for this temperature difference.']
+  };
+
+  function render(r, p) {
+    var o = $('cr_out'); if (!o) { return; }
+    if (r.err) {
+      o.innerHTML = '<div class="ph">' + T('RÉSULTAT', 'RESULT') + '</div><div style="color:var(--er);font-size:12px">' + T('Paramètres incohérents : la puissance des ventilateurs et le temps de marche ne permettent pas de résoudre le bilan. Réduisez la part des ventilateurs ou augmentez le temps de marche.', 'Inconsistent parameters: fan power and running time cannot be solved. Reduce fan share or increase running time.') + '</div>';
+      return;
+    }
+    var h = '<div class="ph">' + T('RÉSULTAT — BILAN FRIGORIFIQUE', 'RESULT — REFRIGERATION LOAD') + '</div>';
+    h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">' +
+      '<div class="res" style="flex:1;min-width:140px;text-align:center"><div style="font-size:10px;color:var(--ts)">' + T('Puissance frigorifique à retenir', 'Cooling capacity to select') + '</div><div style="font-size:26px;font-weight:700;color:var(--ac)">' + f1(r.Qsel) + ' kW</div><div style="font-size:10px;color:var(--ts)">' + T('à la T° d\'évaporation de l\'installation', 'at plant evaporating temperature') + '</div></div>' +
+      '<div class="res" style="flex:1;min-width:140px;text-align:center"><div style="font-size:10px;color:var(--ts)">' + T('Sur temps de marche', 'Over running time') + ' (' + f1(p.tRun) + ' h/j)</div><div style="font-size:20px;font-weight:700">' + f1(r.Q0) + ' kW</div><div style="font-size:10px;color:var(--ts)">' + T('Pointe de mise en température', 'Pull-down peak') + ' : ' + f1(r.peak) + ' kW</div></div></div>';
+    r.warn.forEach(function (w) { h += '<div style="font-size:11px;color:var(--wn);margin:3px 0">&#9888; ' + T(WARN[w][0], WARN[w][1]) + '</div>'; });
+    h += '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:6px"><tr style="color:var(--ts);text-align:right"><th style="text-align:left">' + T('Poste', 'Item') + '</th><th>kWh/' + T('j', 'day') + '</th><th>kW</th><th>%</th></tr>';
+    r.lines.forEach(function (l) {
+      if (l.E < 0.0005) { return; }
+      h += '<tr style="border-top:1px solid var(--border)"><td>' + T(LN[l.id][0], LN[l.id][1]) + '</td><td style="text-align:right">' + f1(l.E) + '</td><td style="text-align:right">' + f2(l.kW) + '</td><td style="text-align:right">' + f1(l.pct) + '</td></tr>';
+    });
+    h += '<tr style="border-top:2px solid var(--border);font-weight:700"><td>TOTAL</td><td style="text-align:right">' + f1(r.Etot) + '</td><td style="text-align:right">' + f2(r.Q0) + '</td><td style="text-align:right">100</td></tr></table>';
+    h += '<div style="font-size:11px;margin-top:8px;line-height:1.6"><b>' + T('Chambre', 'Room') + '</b> : ' + f1(r.V) + ' m³ — ' + T('stock', 'stock') + ' ' + f1(p.stockT) + ' t — ' + f0(r.perM3) + ' W/m³ — ' + f0(r.perT) + ' W/t<br>' +
+      '<b>' + T('Produit entrant', 'Incoming product') + '</b> : ' + f0(r.mDay) + ' kg/' + T('jour', 'day') + (r.prodSplit.lat > 0 ? ' (' + T('dont chaleur latente', 'incl. latent heat') + ' ' + f1(r.prodSplit.lat) + ' kWh)' : '') + '<br>' +
+      (r.ach ? '<b>' + T('Renouvellement d\'air', 'Air changes') + '</b> : ' + f1(r.ach) + ' / 24 h<br>' : '') +
+      (r.door ? '<b>' + T('Porte ouverte', 'Open door') + '</b> : ' + f1(r.door.q) + ' kW — ' + T('fraction d\'ouverture', 'open fraction') + ' ' + f1(r.door.Dt * 100) + ' %<br>' : '') +
+      '</div>';
+    h += '<div class="ph" style="margin-top:10px">' + T('ISOLATION ET CONDENSATION', 'INSULATION AND CONDENSATION') + '</div>';
+    h += '<div style="font-size:11px;line-height:1.6">U ' + T('murs', 'walls') + ' ' + f2(r.U.w) + ' · ' + T('toit', 'roof') + ' ' + f2(r.U.r) + ' · ' + T('plancher', 'floor') + ' ' + f2(r.U.f) + ' W/m²K<br>' +
+      T('Flux thermique murs', 'Wall heat flux') + ' : ' + f1(r.ins.qWall) + ' W/m² (' + T('cible indicative', 'indicative target') + ' ≤ ' + r.ins.qTarget + ')<br>' +
+      T('Épaisseur recommandée', 'Recommended thickness') + ' : <b>' + r.ins.dRecC + ' mm</b> (' + f0(r.ins.dRec) + ' mm ' + T('calculés', 'calculated') + ')<br>' +
+      T('T° de surface extérieure', 'Outer surface temperature') + ' : ' + f1(r.cond.Ts) + ' °C — ' + T('point de rosée', 'dew point') + ' ' + f1(r.cond.Td) + ' °C</div>';
+    h += '<div style="font-size:10px;color:var(--ts);margin-top:10px;line-height:1.5">' + T(
+      'Méthode : bilan sur 24 h ramené au temps de marche (sécurité et dégivrage inclus). Chaleurs massiques calculées par les formules de Siebel à partir de la teneur en eau. Les propriétés du produit, les coefficients de renouvellement d\'air et les taux de respiration sont des valeurs indicatives, modifiables, à confirmer par le concepteur selon la variété, le conditionnement et les normes locales. Résultat d\'aide à la décision : il ne remplace pas la note de calcul d\'un bureau d\'études.',
+      'Method: 24 h load brought back to running time (safety and defrost included). Specific heats from Siebel formulas based on water content. Product properties, air-change rates and respiration rates are indicative, editable values to be confirmed by the designer according to variety, packaging and local standards. Decision-support result: it does not replace an engineering office calculation note.') + '</div>';
+    o.innerHTML = h;
+  }
+
+  var _t = null, _last = null;
+  window.crDeb = function () { clearTimeout(_t); _t = setTimeout(window.crCalc, 200); };
+  window.crCalc = function () {
+    if (!$('cr_prod')) { return; }
+    var p = readInputs(), r = compute(p); _last = { p: p, r: r }; render(r, p); return r;
+  };
+  window.crCalcBtn = function () {
+    var r = window.crCalc();
+    if (r && !r.err && typeof logHist === 'function') { logHist((EN() ? 'Cold room: ' : 'Chambre froide: ') + f1(r.Qsel) + ' kW'); }
+  };
+  var _stockManual = false;
+  function setV(id, v) { var e = $('cr_' + id); if (e) { e.value = v; } }
+  window.crProdChange = function () {
+    var pr = PBY[$('cr_prod').value]; if (!pr) { return; }
+    setV('Tr', pr.Tst); setV('RHr', pr.RH); setV('Tf', pr.Tf); setV('cpA', f2(pr.cpA)); setV('cpF', f2(pr.cpF)); setV('Lat', f0(pr.L)); setV('resp', pr.resp);
+    setV('dens', pr.dens); setV('pct', pr.pct); setV('Tin', pr.Tin); setV('tpull', pr.tpull);
+    setV('fanF', pr.Tst < 0 ? 7 : 5); setV('tRun', pr.Tst < 0 ? 20 : 18);
+    $('cr_defr').value = pr.Tst < 2 ? 'elec' : 'none';
+    if (pr.Tst < 0) { setV('dFloor', 150); }
+    _stockManual = false; crStockAuto(); crInfo(); crDeb();
+  };
+  function crStockAuto() {
+    if (_stockManual) { return; }
+    var V = num('cr_Lg', 1) * num('cr_Wd', 1) * num('cr_Hh', 1);
+    setV('stockT', Math.round(V * num('cr_dens', 0) / 100) / 10);
+  }
+  function crInfo() {
+    var pr = PBY[$('cr_prod').value]; var e = $('cr_info'); if (!pr || !e) { return; }
+    e.innerHTML = T('Conservation type', 'Typical storage') + ' : ' + pr.Tst + ' °C, ' + pr.RH + ' % HR — ' + T('durée', 'life') + ' : ' + T(pr.lifeFr, pr.lifeEn) + ' — ' + T('eau', 'water') + ' ' + Math.round(pr.w * 100) + ' %';
+  }
+  function applyLang() {
+    var root = $('pg-coldroom'); if (!root) { return; }
+    root.querySelectorAll('[data-cfr]').forEach(function (el) {
+      var t = EN() ? el.getAttribute('data-cen') : el.getAttribute('data-cfr');
+      if (el.tagName === 'OPTGROUP') { el.label = t; } else { el.textContent = t; }
+    });
+    var btn = $('mn_coldroom'); if (btn) { btn.textContent = EN() ? 'COLD ROOM' : 'CHAMBRE FROIDE'; }
+    crInfo();
+  }
+
+  function install() {
+    if ($('pg-coldroom')) { return; }
+    var st = document.createElement('style');
+    st.textContent = '#pg-coldroom details.crsec{border:1px solid var(--border);border-radius:6px;margin:0 0 8px;padding:0 8px 6px}#pg-coldroom details.crsec>summary{cursor:pointer;font-weight:700;font-size:11px;padding:7px 0;color:var(--ac);list-style:none}#pg-coldroom details.crsec>summary::-webkit-details-marker{display:none}#pg-coldroom .frow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:3px 0}#pg-coldroom .frow .flb{flex:1;min-width:0;font-size:11px}#pg-coldroom .frow .fi{height:30px;padding:2px 8px;font-size:13px;flex:0 0 auto}#pg-coldroom .frow .fsel{flex:0 1 58%;min-width:0;height:30px;font-size:12px}#pg-coldroom .res{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px}';
+    document.head.appendChild(st);
+    var pg = document.createElement('div'); pg.className = 'page'; pg.id = 'pg-coldroom'; pg.innerHTML = buildPage();
+    var ref = $('pg-normes'); if (ref && ref.parentNode) { ref.parentNode.insertBefore(pg, ref); } else { document.body.appendChild(pg); }
+    var mn = document.createElement('button'); mn.className = 'mn'; mn.id = 'mn-coldroom'; mn.setAttribute('onclick', "goPage('coldroom')");
+    mn.innerHTML = '&#10052;&#65039; <span id="mn_coldroom">CHAMBRE FROIDE</span>';
+    var refb = $('mn-obd'); if (refb && refb.parentNode) { refb.parentNode.insertBefore(mn, refb); } else { var any = document.querySelector('button.mn'); if (any) { any.parentNode.appendChild(mn); } }
+    ['cr_Lg', 'cr_Wd', 'cr_Hh', 'cr_dens'].forEach(function (id) { var e = $(id); if (e) { e.addEventListener('input', function () { if (!_stockManual) { crStockAuto(); } }); } });
+    $('cr_stockT').addEventListener('input', function () { _stockManual = true; });
+    $('cr_prod').value = 'potc'; window.crProdChange(); applyLang(); window.crCalc();
+  }
+  var _og = window.goPage;
+  window.goPage = function (page) {
+    if (_og) { _og.apply(this, arguments); }
+    if (page === 'coldroom') { setTimeout(function () { applyLang(); window.crCalc(); }, 30); }
+  };
+  var _ot = window.toggleLang;
+  window.toggleLang = function () {
+    if (_ot) { _ot.apply(this, arguments); }
+    setTimeout(function () { applyLang(); if (_last) { window.crCalc(); } }, 120);
+  };
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', install); } else { install(); }
+})();
+
+</script>
 <script id="protect-v1">
 (function(){
   document.addEventListener("contextmenu",function(e){e.preventDefault();return false;});
