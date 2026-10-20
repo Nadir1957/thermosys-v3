@@ -10457,9 +10457,15 @@ authCheckState();
       row('Part de chaleur sensible de l\'évaporateur :', 'Evaporator sensible heat ratio:', inp('shr', 0.85, '', '0.01')), false);
     var g8 = sec('8. SECOND PRODUIT (STOCKAGE COMMUN)', '8. SECOND PRODUCT (SHARED STORAGE)',
       row('Produit à ajouter dans la même chambre :', 'Product to add in the same room:', '<select class="fsel" id="cr_prod2" onchange="crDeb()" style="max-width:100%"><option value="" data-cfr="Aucun" data-cen="None">Aucun</option>' + prodOpts.replace(/ id="cr_prod"/g, '') + '</select>'), false);
+    var g9 = sec('9. IDENTIFICATION DU PROJET (NOTE IMPRIMÉE)', '9. PROJECT IDENTIFICATION (PRINTED NOTE)',
+      row('Projet :', 'Project:', '<input class="fi" id="cr_proj" type="text" maxlength="80" style="max-width:100%;flex:1 1 55%">') +
+      row('Client :', 'Client:', '<input class="fi" id="cr_cli" type="text" maxlength="80" style="max-width:100%;flex:1 1 55%">') +
+      row('Site :', 'Site:', '<input class="fi" id="cr_site" type="text" maxlength="80" style="max-width:100%;flex:1 1 55%">') +
+      row('Établi par :', 'Prepared by:', '<input class="fi" id="cr_by" type="text" maxlength="80" style="max-width:100%;flex:1 1 55%">'), false);
     return '<div class="ptitle"><span data-cfr="CHAMBRE FROIDE — CONSTRUCTION ET BILAN FRIGORIFIQUE" data-cen="COLD ROOM — CONSTRUCTION AND REFRIGERATION LOAD">CHAMBRE FROIDE — CONSTRUCTION ET BILAN FRIGORIFIQUE</span></div>' +
-      '<div class="g2"><div class="panel" id="cr_in">' + a + b + c + d + e + f + g + g8 +
-      '<button class="btn bp" style="width:100%;margin-top:8px" onclick="crCalcBtn()" data-cfr="Calculer le bilan" data-cen="Calculate load">Calculer le bilan</button></div>' +
+      '<div class="g2"><div class="panel" id="cr_in">' + a + b + c + d + e + f + g + g8 + g9 +
+      '<button class="btn bp" style="width:100%;margin-top:8px" onclick="crCalcBtn()" data-cfr="Calculer le bilan" data-cen="Calculate load">Calculer le bilan</button>' +
+      '<button class="btn" style="width:100%;margin-top:6px" onclick="crPrint()" data-cfr="Imprimer la note de dimensionnement (PDF)" data-cen="Print sizing note (PDF)">Imprimer la note de dimensionnement (PDF)</button></div>' +
       '<div class="panel" id="cr_out"></div></div>';
   }
 
@@ -10555,6 +10561,136 @@ authCheckState();
       'Fluid properties: CoolProp library (R449A, R448A and R452A at nominal composition). Efficiencies, displacement and power input are estimates: compressor, evaporator and expansion valve must be finally selected with the manufacturers\' data and software. Refrigerant regulations: check according to the country of installation.') + '</div>';
     return h;
   }
+
+
+  /* ============ ETAPE 5 : NOTE DE DIMENSIONNEMENT (IMPRESSION / PDF) ============ */
+  function esc(x) { return String(x === undefined || x === null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function txt(id) { var e = $(id); return e ? String(e.value || '').trim() : ''; }
+  window.crPrint = function () {
+    if (!$('cr_prod')) { return; }
+    var p = readInputs(), r = compute(p);
+    if (r.err) { if (typeof showToast === 'function') { showToast(T('Bilan impossible : corrigez les paramètres', 'Load not solvable: fix parameters'), 'w'); } return; }
+    var c = readInputs3(p, r), o = cycle3(c), pr = PBY[$('cr_prod').value], inf = FLINFO[c.fluid];
+    var now = new Date(), pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    var ref = 'CF-' + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + '-' + pad(now.getHours()) + pad(now.getMinutes());
+    var dateStr = pad(now.getDate()) + '/' + pad(now.getMonth() + 1) + '/' + now.getFullYear();
+    var kv = function (rows) { return '<table class="kv">' + rows.filter(function (x) { return x; }).map(function (x) { return '<tr><td>' + x[0] + '</td><td>' + x[1] + '</td></tr>'; }).join('') + '</table>'; };
+    var panel = PANELS.filter(function (x) { return x.id === $('cr_panel').value; })[0] || PANELS[0];
+    var h2 = function (a, b) { return '<h2>' + T(a, b) + '</h2>'; };
+    var body = '';
+    // Resume
+    body += '<div class="sum"><div class="sb"><div class="st">' + T('Puissance frigorifique à retenir', 'Cooling capacity to select') + '</div><div class="sv">' + f1(r.Qsel) + ' kW</div>' +
+      '<div class="ss">' + (o.err ? '' : f1(c.T0) + ' / ' + f1(c.Tk) + ' °C — ' + c.fluid) + '</div></div>' +
+      '<div class="sb"><div class="st">' + T('Chambre', 'Room') + '</div><div class="sv2">' + f1(r.V) + ' m³</div><div class="ss">' + T(pr.fr, pr.en) + ' — ' + f1(p.Tr) + ' °C — ' + f0(p.RHr) + ' % HR</div></div>' +
+      '<div class="sb"><div class="st">' + T('Stock maximal', 'Maximum stock') + '</div><div class="sv2">' + f1(p.stockT) + ' t</div><div class="ss">' + f0(r.mDay) + ' kg/' + T('jour', 'day') + '</div></div></div>';
+    // Hypotheses
+    body += h2('1. Hypothèses de calcul', '1. Design assumptions');
+    body += '<div class="two">' + kv([
+      [T('Produit', 'Product'), esc(T(pr.fr, pr.en))],
+      [T('T° / humidité de la chambre', 'Room temperature / humidity'), f1(p.Tr) + ' °C / ' + f0(p.RHr) + ' %'],
+      [T('Température d\'entrée du produit', 'Product entry temperature'), f1(p.Tin) + ' °C'],
+      [T('Entrée journalière', 'Daily intake'), f1(p.pct) + ' % — ' + f0(r.mDay) + ' kg'],
+      [T('Durée de mise en température', 'Pull-down time'), f0(p.tpull) + ' h'],
+      [T('Chaleur massique (au-dessus / en dessous)', 'Specific heat (above / below)'), f2(p.cpA) + ' / ' + f2(p.cpF) + ' kJ/kg·K'],
+      [T('Point de congélation / chaleur latente', 'Freezing point / latent heat'), f1(p.Tf) + ' °C / ' + f0(p.Lat) + ' kJ/kg'],
+      [T('Respiration', 'Respiration'), f1(p.resp) + ' mg CO₂/kg·h']
+    ]) + kv([
+      [T('Dimensions intérieures', 'Internal dimensions'), f1(p.Lg) + ' × ' + f1(p.Wd) + ' × ' + f1(p.Hh) + ' m'],
+      [T('Isolant', 'Insulation'), esc(T(panel.fr, panel.en)) + ' (λ ' + panel.lam + ')'],
+      [T('Épaisseurs murs / toit / plancher', 'Thickness walls / roof / floor'), f0(p.dWall) + ' / ' + f0(p.dRoof) + ' / ' + f0(p.dFloor) + ' mm'],
+      [T('Coefficient U murs / toit / plancher', 'U-value walls / roof / floor'), f2(r.U.w) + ' / ' + f2(r.U.r) + ' / ' + f2(r.U.f) + ' W/m²K'],
+      [T('T° / humidité extérieures', 'Outside temperature / humidity'), f1(p.Text) + ' °C / ' + f0(p.RHext) + ' %'],
+      [T('Majoration solaire murs / toit', 'Solar allowance walls / roof'), f1(p.solW) + ' / ' + f1(p.solR) + ' K'],
+      [T('Temps de marche / sécurité', 'Running time / safety'), f1(p.tRun) + ' h/' + T('j', 'day') + ' / ' + f0(p.sf) + ' %'],
+      [T('Méthode d\'infiltration', 'Infiltration method'), p.infMode === 'door' ? T('Modèle de porte', 'Door model') : T('Tableau de renouvellement d\'air', 'Air-change table')]
+    ]) + '</div>';
+    // Bilan
+    body += h2('2. Bilan frigorifique', '2. Refrigeration load');
+    body += '<table class="tb"><tr><th>' + T('Poste', 'Item') + '</th><th>kWh/' + T('j', 'day') + '</th><th>kW</th><th>%</th></tr>' + r.lines.filter(function (l) { return l.E >= 0.0005; }).map(function (l) {
+      return '<tr><td>' + T(LN[l.id][0], LN[l.id][1]) + '</td><td>' + f1(l.E) + '</td><td>' + f2(l.kW) + '</td><td>' + f1(l.pct) + '</td></tr>';
+    }).join('') + '<tr class="tot"><td>TOTAL</td><td>' + f1(r.Etot) + '</td><td>' + f2(r.Q0) + '</td><td>100</td></tr></table>';
+    body += '<p class="n">' + T('Puissance sur temps de marche : ', 'Power over running time: ') + f1(r.Q0) + ' kW — ' + T('pointe de mise en température : ', 'pull-down peak: ') + f1(r.peak) + ' kW — ' + T('retenue : ', 'selected: ') + '<b>' + f1(r.Qsel) + ' kW</b> — ' + f0(r.perM3) + ' W/m³ — ' + f0(r.perT) + ' W/t.</p>';
+    // Isolation
+    body += '<p class="n">' + T('Flux thermique des murs : ', 'Wall heat flux: ') + f1(r.ins.qWall) + ' W/m² — ' + T('épaisseur recommandée : ', 'recommended thickness: ') + r.ins.dRecC + ' mm — ' + T('T° de surface extérieure ', 'outer surface temperature ') + f1(r.cond.Ts) + ' °C / ' + T('point de rosée ', 'dew point ') + f1(r.cond.Td) + ' °C.</p>';
+    // Systeme
+    body += h2('3. Système frigorifique et matériel', '3. Refrigeration system and equipment');
+    if (o.err) {
+      body += '<p class="n">' + T(ERR3[o.err] ? ERR3[o.err][0] : 'Calcul du système impossible.', ERR3[o.err] ? ERR3[o.err][1] : 'System calculation not possible.') + '</p>';
+    } else {
+      var rhoR = rho(p.Tr, p.RHr), shr = Math.min(1, Math.max(0.5, num('cr_shr', 0.85))), dTa = Math.max(0.5, num('cr_dTair', 2.5)), Vair = c.Q0 * shr / (rhoR * 1.02 * dTa) * 3600;
+      body += '<div class="two">' + kv([
+        [T('Fluide frigorigène', 'Refrigerant'), c.fluid + ' — GWP ' + inf.gwp + ' — ' + inf.cls],
+        [T('T° d\'évaporation (rosée)', 'Evaporating temp. (dew)'), f1(c.T0) + ' °C — ' + f2(o.P0) + ' bar abs'],
+        [T('T° de condensation (rosée)', 'Condensing temp. (dew)'), f1(c.Tk) + ' °C — ' + f2(o.Pk) + ' bar abs'],
+        [T('Rapport de pression', 'Pressure ratio'), f1(o.PR)],
+        [T('Surchauffe utile / totale', 'Useful / total superheat'), f1(c.SHu) + ' / ' + f1(c.SHt) + ' K'],
+        [T('Sous-refroidissement', 'Subcooling'), f1(c.SC) + ' K'],
+        [T('Effet frigorifique / débit', 'Refrigerating effect / flow'), f1(o.q0) + ' kJ/kg — ' + f1(o.m * 3600) + ' kg/h']
+      ]) + kv([
+        [T('Compresseur : puissance à chercher', 'Compressor: capacity to look for'), f1(c.Q0) + ' kW @ ' + f1(c.T0) + '/' + f1(c.Tk) + ' °C'],
+        [T('Puissance absorbée / COP (estimés)', 'Power input / COP (estimated)'), f1(o.Pel) + ' kW / ' + f2(o.COP)],
+        [T('Cylindrée minimale', 'Minimum swept volume'), f1(o.Vsw) + ' m³/h'],
+        [T('T° de refoulement estimée', 'Estimated discharge temperature'), (o.T2 > 200 ? '> 200' : f0(o.T2)) + ' °C'],
+        [T('Condenseur : puissance à évacuer', 'Condenser: heat rejection'), f1(o.Qk) + ' kW (TD ' + f1(num('cr_TD', 12)) + ' K)'],
+        [T('Évaporateur (EN 328, DT1 = 8 K)', 'Evaporator (EN 328, DT1 = 8 K)'), f1(o.Qref) + ' kW'],
+        [T('Débit d\'air nécessaire', 'Required air flow'), f0(Vair) + ' m³/h (' + f1(Vair / r.V) + ' ' + T('vol/h', 'ACH') + ')']
+      ]) + '</div>';
+      body += '<table class="tb"><tr><th>' + T('Ligne', 'Line') + (inf.nh3 ? T(' (acier)', ' (steel)') : T(' (cuivre)', ' (copper)')) + '</th><th>' + T('Diamètre', 'Size') + '</th><th>m/s</th><th>ΔP (bar)</th><th>ΔT (K)</th></tr>' +
+        [['suc', T('Aspiration', 'Suction')], ['dis', T('Refoulement', 'Discharge')], ['liq', T('Liquide', 'Liquid')]].map(function (x) { var L = o[x[0]]; return '<tr><td>' + x[1] + '</td><td>' + esc(L.lab) + '</td><td>' + f1(L.v) + '</td><td>' + f2(L.dP) + '</td><td>' + f2(L.dT) + '</td></tr>'; }).join('') + '</table>';
+      body += '<p class="n">' + T('Détendeur : pression différentielle disponible ', 'Expansion valve: available pressure difference ') + f1(Math.max(0, o.dPvalve)) + ' bar — ' + T('capacité nominale à demander ', 'nominal capacity to request ') + f1(o.QvalveCat) + ' kW' + (o.orifice ? ' — ' + T('section d\'orifice théorique ', 'theoretical orifice area ') + f1(o.orifice.A) + ' mm²' : '') + '.</p>';
+      if (o.risS) { body += '<p class="n">' + T('Colonne montante d\'aspiration : ', 'Suction riser: ') + esc(o.risS.lab) + ' (' + f1(o.risS.v50) + ' m/s ' + T('à 50 % de charge', 'at 50 % load') + ').</p>'; }
+      if (o.risD) { body += '<p class="n">' + T('Colonne montante de refoulement : ', 'Discharge riser: ') + esc(o.risD.lab) + ' (' + f1(o.risD.v50) + ' m/s ' + T('à 50 % de charge', 'at 50 % load') + ').</p>'; }
+    }
+    // Conservation
+    var m = mt($('cr_prod').value);
+    body += h2('4. Conservation du produit', '4. Product storage');
+    body += '<p class="n"><b>' + esc(T(pr.fr, pr.en)) + '</b> : ' + pr.Tst + ' °C, ' + pr.RH + ' % HR — ' + T('durée', 'life') + ' : ' + esc(T(pr.lifeFr, pr.lifeEn)) + '.</p>';
+    if (m.nf) { body += '<p class="n">' + esc(T(m.nf, m.ne)) + '</p>'; }
+    var sid = $('cr_prod2') ? $('cr_prod2').value : '';
+    if (sid && PBY[sid] && sid !== $('cr_prod').value) {
+      var iss = compat($('cr_prod').value, sid), ps = PBY[sid];
+      body += '<p class="n"><b>' + T('Stockage commun avec ', 'Shared storage with ') + esc(T(ps.fr, ps.en)) + '</b> : ' + (!iss.length ? T('compatible.', 'compatible.') : iss.some(function (x) { return x[0] === 'bad'; }) ? T('déconseillé dans la même chambre.', 'not recommended in the same room.') : T('possible avec réserves (stockage court).', 'possible with reservations (short storage).')) + '</p>';
+      iss.forEach(function (x) { body += '<p class="n w">&bull; ' + esc(CMSG[x[1]].apply(null, x.slice(2))[0]) + '</p>'; });
+    }
+    // Alertes
+    var al = [];
+    r.warn.forEach(function (w) { al.push(T(WARN[w][0], WARN[w][1])); });
+    if (!o.err) { o.warn.forEach(function (w) { al.push(T(WARN3[w][0], WARN3[w][1])); }); }
+    if (m.tmin !== null && p.Tr < m.tmin) { al.push(T('La température de la chambre est inférieure à la limite de dommages du froid du produit (' + m.tmin + ' °C).', 'Room temperature is below the product chilling-injury limit (' + m.tmin + ' °C).')); }
+    body += h2('5. Points d\'attention', '5. Points of attention');
+    body += al.length ? al.map(function (a) { return '<p class="n w">&#9888; ' + esc(a) + '</p>'; }).join('') : '<p class="n">' + T('Aucune alerte.', 'No alerts.') + '</p>';
+    body += '<p class="disc">' + T(
+      'Note de dimensionnement indicative établie avec Thermosys. Méthode : bilan sur 24 h ramené au temps de marche ; chaleurs massiques par les formules de Siebel ; propriétés des fluides par la bibliothèque CoolProp. Les rendements, les taux de respiration, les renouvellements d\'air et les caractéristiques des produits sont des valeurs indicatives à confirmer par le concepteur ; le choix définitif du compresseur, de l\'évaporateur et du détendeur se fait avec les données des fabricants. Elle ne remplace pas la note de calcul d\'un bureau d\'études ni la réglementation locale.',
+      'Indicative sizing note prepared with Thermosys. Method: 24 h load brought back to running time; specific heats by Siebel formulas; fluid properties by the CoolProp library. Efficiencies, respiration rates, air changes and product properties are indicative values to be confirmed by the designer; final selection of compressor, evaporator and expansion valve must use manufacturers\' data. It does not replace an engineering office calculation note or local regulations.') + '</p>';
+    var proj = txt('cr_proj'), cli = txt('cr_cli'), site = txt('cr_site'), by = txt('cr_by');
+    var win = window.open('', '_blank', 'width=900,height=750');
+    if (!win) { if (typeof showToast === 'function') { showToast(T('Popup bloqué', 'Popup blocked'), 'w'); } return; }
+    win.document.write('<!DOCTYPE html><html lang="' + (EN() ? 'en' : 'fr') + '"><head><meta charset="UTF-8"><title>' + ref + ' — THERMOSYS</title><style>' +
+      '*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;background:#e8ecf0;padding:20px 0;color:#1a3a5a;font-size:9.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+      '@page{size:A4;margin:12mm}@media print{.no-print{display:none!important}body{background:#fff!important;padding:0!important}.page{box-shadow:none!important;width:auto!important;margin:0!important;padding:0!important}}' +
+      '.page{width:210mm;margin:0 auto;background:#fff;padding:14mm 16mm;box-shadow:0 6px 30px rgba(0,0,0,.18)}' +
+      '.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6mm;border-bottom:2pt solid #1a3a5a;padding-bottom:4mm}' +
+      '.logo{font-size:22pt;font-weight:900;letter-spacing:5px}.sub{font-size:7pt;color:#4a6a8a;letter-spacing:3px;margin-top:1.5mm}' +
+      '.doc{font-size:11pt;font-weight:700;color:#fff;background:#1a3a5a;padding:2.5mm 5mm;border-radius:2pt;text-align:right}.ref{font-size:7.5pt;color:#555;margin-top:1.5mm;text-align:right}' +
+      '.ig{display:grid;grid-template-columns:1fr 1fr;gap:3mm;margin-bottom:5mm}.ib{background:#f4f7fc;border-left:3pt solid #1a3a5a;padding:2.5mm 4mm}.it{font-size:6.5pt;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:1mm}.iv{font-size:9pt;color:#2a4a6a;min-height:4mm}' +
+      '.sum{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:3mm;margin-bottom:4mm}.sb{border:1pt solid #1a3a5a;border-radius:3pt;padding:3mm 4mm}.st{font-size:6.5pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}.sv{font-size:20pt;font-weight:800;margin:1mm 0}.sv2{font-size:14pt;font-weight:800;margin:1mm 0}.ss{font-size:7.5pt;color:#4a6a8a}' +
+      'h2{font-size:10.5pt;margin:5mm 0 2mm;padding:1.5mm 3mm;background:#1a3a5a;color:#fff;letter-spacing:.5px;page-break-after:avoid}' +
+      '.two{display:grid;grid-template-columns:1fr 1fr;gap:4mm}table{width:100%;border-collapse:collapse;margin-bottom:2mm;page-break-inside:avoid}' +
+      '.kv td{padding:1.4mm 2mm;border-bottom:.5pt solid #d5deea;font-size:8.5pt;vertical-align:top}.kv td:first-child{color:#4a6a8a;width:52%}.kv td:last-child{font-weight:700;text-align:right}' +
+      '.tb th{background:#e3eaf3;padding:1.6mm 2mm;font-size:8pt;text-align:right}.tb th:first-child,.tb td:first-child{text-align:left}.tb td{padding:1.4mm 2mm;border-bottom:.5pt solid #d5deea;font-size:8.5pt;text-align:right}' +
+      '.tb tr.tot td{background:#1a3a5a;color:#fff;font-weight:700}.n{font-size:8.5pt;line-height:1.5;margin:1.5mm 0}.w{color:#9a5b00}.disc{font-size:7pt;color:#667;line-height:1.5;margin-top:5mm;border-top:.5pt solid #ccc;padding-top:2mm}' +
+      '.sg{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-top:6mm;page-break-inside:avoid}.sg .ib{height:22mm}' +
+      '.foot{text-align:center;font-size:6.5pt;color:#999;margin-top:4mm}.pbtn{display:block;margin:10px auto;padding:10px 26px;background:#1a3a5a;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;width:210mm;max-width:95%}' +
+      '</style></head><body><button class="pbtn no-print" onclick="window.print()">&#8853; ' + T('IMPRIMER / ENREGISTRER EN PDF', 'PRINT / SAVE AS PDF') + '</button><div class="page">' +
+      '<div class="hdr"><div><div class="logo">THERMOSYS</div><div class="sub">HVAC WORKSTATION v3</div></div><div><div class="doc">' + T('NOTE DE DIMENSIONNEMENT — CHAMBRE FROIDE', 'SIZING NOTE — COLD ROOM') + '</div><div class="ref">' + ref + '</div></div></div>' +
+      '<div class="ig"><div class="ib"><div class="it">' + T('Projet', 'Project') + '</div><div class="iv">' + esc(proj) + '</div></div><div class="ib"><div class="it">Client</div><div class="iv">' + esc(cli) + '</div></div>' +
+      '<div class="ib"><div class="it">Site</div><div class="iv">' + esc(site) + '</div></div><div class="ib"><div class="it">Date</div><div class="iv">' + dateStr + '</div></div></div>' +
+      body +
+      '<div class="sg"><div class="ib"><div class="it">' + T('Établi par', 'Prepared by') + '</div><div class="iv">' + esc(by) + '</div></div><div class="ib"><div class="it">' + T('Vérifié / approuvé par', 'Checked / approved by') + '</div></div></div>' +
+      '<div class="foot">Thermosys HVAC Workstation v3 — ' + ref + ' — ' + T('Données indicatives, à vérifier avant exécution.', 'Indicative data, verify before execution.') + '</div></div></body></html>');
+    win.document.close();
+    if (typeof logHist === 'function') { logHist((EN() ? 'Cold room sizing note: ' : 'Note chambre froide: ') + ref); }
+  };
 
   var LN = {
     trans: ['Transmission (parois)', 'Transmission (envelope)'], prod: ['Produit (refroidissement / congélation)', 'Product (cooling / freezing)'], pack: ['Emballages et palettes', 'Packaging and pallets'],
