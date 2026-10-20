@@ -10231,7 +10231,120 @@ authCheckState();
     if (RH >= 95) { return 5; } if (RH >= 90) { return 6.5; } if (RH >= 85) { return 8; } if (RH >= 80) { return 9; } if (RH >= 70) { return 10; } return 11;
   }
 
-  window.CR_ENGINE = { compute: compute, psat: psat, enth: enth, rho: rho, dewPt: dewPt, prodHeat: prodHeat, respW: respW, achInterp: achInterp, PBY: PBY, PROD: PROD, THICK: THICK, cycle3: cycle3, defDT1: defDT1, CRF: CRF, FLINFO: FLINFO, Psat: Psat, hSH: hSH, grid2: grid2 };
+
+  /* ============ ETAPE 4 : CONSERVATION ET COMPATIBILITE ============
+     Groupes de temperature et sensibilite a l'ethylene : d'apres les tableaux de compatibilite en stockage mixte
+     (UC Davis / FAO, Small-scale postharvest handling practices). Valeurs indicatives. */
+  // eP : production d'ethylene (0 nulle/tres faible, 1 faible, 2 moderee, 3 elevee) ; eS : sensibilite (0 non, 1 moderee, 2 forte)
+  // oE : emet des odeurs fortes ; oA : absorbe les odeurs ; tmin : T° minimale sans dommage du froid (°C)
+  var META = {
+    apple: { eP: 3, oA: 1, nf: 'Producteur d\'éthylène élevé : à séparer des produits sensibles. Refroidir rapidement après récolte ; l\'atmosphère contrôlée prolonge la conservation. Absorbe facilement les odeurs.', ne: 'High ethylene producer: keep apart from sensitive products. Cool quickly after harvest; controlled atmosphere extends storage life. Readily absorbs odours.' },
+    pear: { eP: 3, oA: 1, nf: 'Producteur d\'éthylène élevé. Cueillie avant maturité pour un stockage long. Absorbe facilement les odeurs.', ne: 'High ethylene producer. Harvested before ripeness for long storage. Readily absorbs odours.' },
+    orange: { tmin: 3, nf: 'Dommages du froid en dessous d\'environ 3 °C selon la variété. Très faible production d\'éthylène.', ne: 'Chilling injury below about 3 °C depending on variety. Very low ethylene production.' },
+    clem: { tmin: 3, nf: 'Dommages du froid possibles en dessous de 3 à 4 °C. Évitez le stockage prolongé avec des produits producteurs d\'éthylène (dégrade la couleur et l\'état des calices).', ne: 'Chilling injury possible below 3–4 °C. Avoid prolonged storage with ethylene producers.' },
+    lemon: { eS: 2, tmin: 10, nf: 'Dommages du froid en dessous de 10 °C (fruit jaune à maturité). Sensible à l\'éthylène.', ne: 'Chilling injury below 10 °C. Ethylene sensitive.' },
+    grape: { oA: 1, nf: 'Les tampons SO₂ utilisés pour le raisin endommagent les autres produits : stocker le raisin seul. Absorbe les odeurs.', ne: 'SO₂ pads used on grapes damage other produce: store grapes alone. Absorbs odours.' },
+    pomeg: { tmin: 5, nf: 'Dommages du froid en dessous de 5 °C.', ne: 'Chilling injury below 5 °C.' },
+    fig: { eP: 2, nf: 'Fruit très périssable : refroidir par air pulsé dès la récolte.', ne: 'Highly perishable: forced-air cool right after harvest.' },
+    apricot: { eP: 3, nf: 'Producteur d\'éthylène. Refroidissement rapide par air pulsé dès la récolte.', ne: 'Ethylene producer. Rapid forced-air cooling right after harvest.' },
+    peach: { eP: 3, nf: 'Producteur d\'éthylène. Refroidissement rapide par air pulsé dès la récolte.', ne: 'Ethylene producer. Rapid forced-air cooling right after harvest.' },
+    straw: { nf: 'Durée de vie très courte : refroidissement par air pulsé dans l\'heure qui suit la récolte.', ne: 'Very short shelf life: forced-air cool within an hour of harvest.' },
+    melon: { eP: 3, tmin: 2, nf: 'Producteur d\'éthylène. À stocker à part des produits sensibles.', ne: 'Ethylene producer. Store apart from sensitive products.' },
+    wmelon: { eS: 2, tmin: 10, nf: 'Dommages du froid en dessous d\'environ 10 °C. Sensible à l\'éthylène.', ne: 'Chilling injury below about 10 °C. Ethylene sensitive.' },
+    date: { oA: 1, nf: 'Maintenir 65 à 75 % d\'humidité relative : au-dessus de 75 %, risque de fermentation et de moisissures. Prévoir une désinsectisation (méthode agréée) avant un stockage long. À la sortie, réchauffer progressivement pour éviter la condensation sur le fruit froid.', ne: 'Keep relative humidity at 65–75 %: above 75 % there is a risk of fermentation and mould. Plan disinfestation (approved method) before long storage. On removal, warm gradually to avoid condensation on the cold fruit.' },
+    potc: { oA: 1, tmin: 4, nf: 'Cicatrisation préalable à 10–15 °C et 90–95 % HR pendant 10 à 14 jours, puis refroidissement progressif (environ 0,5 °C par jour). Stockage de consommation à 4–5 °C : en dessous de 4 °C le sucre augmente (brunissement à la friture) ; pour la transformation, 7 à 10 °C. Ventilation et obscurité (verdissement).', ne: 'Curing first at 10–15 °C and 90–95 % RH for 10–14 days, then gradual cooling (about 0.5 °C per day). Table storage at 4–5 °C: below 4 °C sugars increase (dark fry colour); for processing, 7–10 °C. Ventilation and darkness (greening).' },
+    pots: { oA: 1, nf: 'Cicatrisation préalable à 10–15 °C et 90–95 % HR, puis refroidissement progressif. Ventilation et obscurité.', ne: 'Curing first at 10–15 °C and 90–95 % RH, then gradual cooling. Ventilation and darkness.' },
+    onion: { oE: 1, nf: 'Séchage et cure préalables (25–30 °C avec ventilation) jusqu\'à ce que le col soit sec, puis 0 °C et 65–70 % HR. Odeur forte : stocker à part. À la sortie, réchauffer progressivement (condensation).', ne: 'Prior drying and curing (25–30 °C with ventilation) until the neck is dry, then 0 °C and 65–70 % RH. Strong odour: store separately. On removal, warm gradually (condensation).' },
+    garlic: { oE: 1, nf: 'Séchage préalable, puis 0 °C et 65–70 % HR. Odeur forte : stocker à part.', ne: 'Prior drying, then 0 °C and 65–70 % RH. Strong odour: store separately.' },
+    carrot: { eS: 2, nf: 'Humidité relative 98–100 % pour éviter le dessèchement. Sensible à l\'éthylène (amertume).', ne: 'Relative humidity 98–100 % to prevent drying out. Ethylene sensitive (bitterness).' },
+    cabbage: { eS: 2, nf: 'Humidité relative 98–100 %. Sensible à l\'éthylène (jaunissement et chute des feuilles).', ne: 'Relative humidity 98–100 %. Ethylene sensitive (yellowing and leaf drop).' },
+    tomato: { eP: 2, tmin: 7, nf: 'Tomate mûre : 7 à 10 °C. Tomate verte mature : 12 à 13 °C pour la maturation ; en dessous de 10 °C, risque de dommages du froid.', ne: 'Ripe tomato: 7–10 °C. Mature green tomato: 12–13 °C for ripening; below 10 °C, risk of chilling injury.' },
+    pepper: { tmin: 7, nf: 'Dommages du froid en dessous de 7 °C.', ne: 'Chilling injury below 7 °C.' },
+    cucumber: { eS: 2, tmin: 10, nf: 'Dommages du froid en dessous de 10 °C. Sensible à l\'éthylène (jaunissement).', ne: 'Chilling injury below 10 °C. Ethylene sensitive (yellowing).' },
+    zucchini: { eS: 2, tmin: 5, nf: 'Dommages du froid en dessous de 5 °C. Sensible à l\'éthylène.', ne: 'Chilling injury below 5 °C. Ethylene sensitive.' },
+    eggplant: { eS: 2, tmin: 10, nf: 'Dommages du froid en dessous de 10 °C. Sensible à l\'éthylène.', ne: 'Chilling injury below 10 °C. Ethylene sensitive.' },
+    lettuce: { eS: 2, nf: 'Refroidissement par le vide ou par air pulsé recommandé. Sensible à l\'éthylène (taches brunes).', ne: 'Vacuum or forced-air cooling recommended. Ethylene sensitive (russet spotting).' },
+    beans: { eS: 1, tmin: 7, nf: 'Dommages du froid en dessous de 7 °C. Très forte respiration : refroidir rapidement.', ne: 'Chilling injury below 7 °C. Very high respiration: cool quickly.' },
+    broccoli: { eS: 2, nf: 'Refroidissement rapide (glace ou air pulsé humide). Sensible à l\'éthylène (jaunissement).', ne: 'Rapid cooling (ice or humid forced air). Ethylene sensitive (yellowing).' },
+    beef: { cat: 'meat', nf: 'Ressuage et refroidissement rapide à cœur selon la réglementation d\'hygiène du pays. À stocker séparément des produits végétaux.', ne: 'Chill rapidly to the core in line with local hygiene regulations. Store separately from plant products.' },
+    chicken: { cat: 'meat', nf: 'Refroidissement rapide à cœur selon la réglementation d\'hygiène du pays. À stocker séparément des produits végétaux.', ne: 'Chill rapidly to the core in line with local hygiene regulations. Store separately from plant products.' },
+    fishf: { cat: 'meat', oE: 1, nf: 'Conservation sur glace fondante (0 à 2 °C). Odeur forte : stocker à part.', ne: 'Keep on melting ice (0–2 °C). Strong odour: store separately.' },
+    milk: { cat: 'dairy', oA: 1, nf: 'Absorbe les odeurs : stocker à part des produits odorants. Chaîne du froid continue.', ne: 'Absorbs odours: store apart from odorous products. Continuous cold chain.' },
+    cheese: { cat: 'dairy', oE: 1, nf: 'Odeur marquée selon le fromage : stocker à part.', ne: 'Marked odour depending on cheese: store separately.' },
+    eggs: { cat: 'dairy', oA: 1, nf: 'Éviter les variations de température (condensation sur la coquille) et les odeurs.', ne: 'Avoid temperature swings (condensation on the shell) and odours.' },
+    fzmeat: { cat: 'frozen', nf: 'Maintenir -18 °C ou moins ; limiter les fluctuations de température. Ne pas recongeler un produit décongelé.', ne: 'Keep at -18 °C or below; limit temperature fluctuations. Do not refreeze thawed product.' },
+    fzchick: { cat: 'frozen', nf: 'Maintenir -18 °C ou moins ; limiter les fluctuations de température.', ne: 'Keep at -18 °C or below; limit temperature fluctuations.' },
+    fzfish: { cat: 'frozen', nf: 'Maintenir -18 °C ou moins (idéalement -25 °C pour la conservation longue du poisson).', ne: 'Keep at -18 °C or below (ideally -25 °C for long fish storage).' },
+    fzveg: { cat: 'frozen', nf: 'Maintenir -18 °C ou moins ; limiter les fluctuations de température.', ne: 'Keep at -18 °C or below; limit temperature fluctuations.' },
+    fzfruit: { cat: 'frozen', nf: 'Maintenir -18 °C ou moins ; limiter les fluctuations de température.', ne: 'Keep at -18 °C or below; limit temperature fluctuations.' },
+    icecr: { cat: 'frozen', nf: 'Conserver à -25 °C ou moins ; les variations de température dégradent la texture.', ne: 'Keep at -25 °C or below; temperature swings degrade texture.' },
+    pharma: { cat: 'pharma', nf: 'Zone 2–8 °C : prévoir cartographie thermique, enregistreurs de température et alarmes avec qualification de la chambre.', ne: '2–8 °C zone: plan thermal mapping, temperature loggers and alarms with room qualification.' }
+  };
+  function mt(id) { var m = META[id] || {}; return { eP: m.eP || 0, eS: m.eS || 0, oE: m.oE || 0, oA: m.oA || 0, tmin: (m.tmin === undefined ? null : m.tmin), cat: m.cat || 'plant', nf: m.nf || '', ne: m.ne || '' }; }
+  function compat(a, b) {
+    var pa = PBY[a], pb = PBY[b], ma = mt(a), mb = mt(b), out = [];
+    var dT = Math.abs(pa.Tst - pb.Tst), dR = Math.abs(pa.RH - pb.RH);
+    var bothFz = ma.cat === 'frozen' && mb.cat === 'frozen';
+    if (!bothFz) { if (dT > 5) { out.push(['bad', 'dT', dT]); } else if (dT > 2) { out.push(['warn', 'dT', dT]); } }
+    if (dR > 15) { out.push(['bad', 'dR', dR]); } else if (dR > 10) { out.push(['warn', 'dR', dR]); }
+    if ((ma.eP >= 2 && mb.eS >= 1) || (mb.eP >= 2 && ma.eS >= 1)) { out.push(['bad', 'eth']); }
+    if ((ma.oE && mb.oA) || (mb.oE && ma.oA)) { out.push(['bad', 'odor']); }
+    if ((ma.cat === 'meat' || mb.cat === 'meat') && !(ma.cat === 'meat' && mb.cat === 'meat')) { out.push(['bad', 'hyg']); }
+    if ((ma.cat === 'frozen') !== (mb.cat === 'frozen')) { out.push(['bad', 'froz']); }
+    if (ma.cat === 'pharma' || mb.cat === 'pharma') { if (a !== b) { out.push(['bad', 'pharma']); } }
+    if (ma.tmin !== null && pb.Tst < ma.tmin) { out.push(['bad', 'chill', pa, pb.Tst, ma.tmin]); }
+    if (mb.tmin !== null && pa.Tst < mb.tmin) { out.push(['bad', 'chill', pb, pa.Tst, mb.tmin]); }
+    return out;
+  }
+  var CMSG = {
+    dT: function (x) { return [T('Températures de conservation différentes (écart de ' + f1(x) + ' K).', 'Different storage temperatures (' + f1(x) + ' K apart).')]; },
+    dR: function (x) { return [T('Humidités relatives différentes (écart de ' + f0(x) + ' points).', 'Different relative humidities (' + f0(x) + ' points apart).')]; },
+    eth: function () { return [T('Un produit émet de l\'éthylène et l\'autre y est sensible (maturation accélérée, jaunissement, flétrissement).', 'One product emits ethylene and the other is sensitive to it (accelerated ripening, yellowing, wilting).')]; },
+    odor: function () { return [T('Transfert d\'odeurs : un produit émet des odeurs fortes et l\'autre les absorbe.', 'Odour transfer: one product emits strong odours and the other absorbs them.')]; },
+    hyg: function () { return [T('Viande ou poisson avec d\'autres produits : séparation à prévoir (hygiène, odeurs, contamination croisée).', 'Meat or fish with other products: separation required (hygiene, odours, cross-contamination).')]; },
+    froz: function () { return [T('Produit surgelé avec produit non surgelé : températures incompatibles.', 'Frozen with non-frozen product: incompatible temperatures.')]; },
+    pharma: function () { return [T('Produits pharmaceutiques : chambre dédiée et qualifiée.', 'Pharmaceutical products: dedicated, qualified room.')]; },
+    chill: function (pp, t, tm) { return [T(pp.fr + ' : dommages du froid en dessous de ' + tm + ' °C, or l\'autre produit se conserve à ' + t + ' °C.', pp.en + ': chilling injury below ' + tm + ' °C, but the other product is stored at ' + t + ' °C.')]; }
+  };
+  function render4(r, p) {
+    if (r.err) { return ''; }
+    var id = $('cr_prod').value, pr = PBY[id], m = mt(id), h = '<div class="ph" style="margin-top:14px">' + T('CONSERVATION ET COMPATIBILITÉ', 'STORAGE AND COMPATIBILITY') + '</div>';
+    h += '<div style="font-size:11px;line-height:1.6"><b>' + T(pr.fr, pr.en) + '</b> : ' + pr.Tst + ' °C, ' + pr.RH + ' % HR — ' + T('durée', 'life') + ' : ' + T(pr.lifeFr, pr.lifeEn) + '<br>';
+    var eth = [];
+    if (m.eP >= 2) { eth.push(T('producteur d\'éthylène', 'ethylene producer')); }
+    if (m.eS >= 1) { eth.push(T('sensible à l\'éthylène', 'ethylene sensitive')); }
+    if (m.oE) { eth.push(T('émet des odeurs fortes', 'emits strong odours')); }
+    if (m.oA) { eth.push(T('absorbe les odeurs', 'absorbs odours')); }
+    if (m.tmin !== null) { eth.push(T('T° minimale sans dommage du froid ' + m.tmin + ' °C', 'minimum chilling-safe temperature ' + m.tmin + ' °C')); }
+    if (eth.length) { h += eth.join(' · ') + '<br>'; }
+    if (m.nf) { h += T(m.nf, m.ne); }
+    h += '</div>';
+    if (m.tmin !== null && p.Tr < m.tmin) { h += '<div style="font-size:11px;color:var(--er);margin:4px 0">&#9888; ' + T('La température de la chambre (' + f1(p.Tr) + ' °C) est inférieure à la limite de dommages du froid de ce produit (' + m.tmin + ' °C).', 'Room temperature (' + f1(p.Tr) + ' °C) is below this product\'s chilling-injury limit (' + m.tmin + ' °C).') + '</div>'; }
+    // condensation a la sortie
+    var Td = dewPt(p.Text, p.RHext);
+    if (p.Tr < Td && pr.Tst > -5) {
+      h += '<div style="font-size:11px;color:var(--wn);margin:4px 0">&#9888; ' + T('À la sortie, le produit à ' + f1(p.Tr) + ' °C est sous le point de rosée de l\'air extérieur (' + f1(Td) + ' °C) : il se couvrira de condensation. Prévoyez un sas ou un réchauffement progressif avant exposition à l\'air.', 'On removal, the product at ' + f1(p.Tr) + ' °C is below the outside air dew point (' + f1(Td) + ' °C): it will be covered in condensation. Provide an airlock or gradual warming before exposure to open air.') + '</div>';
+    }
+    // second produit
+    var sid = $('cr_prod2') ? $('cr_prod2').value : '';
+    if (sid && PBY[sid] && sid !== id) {
+      var iss = compat(id, sid), ps = PBY[sid];
+      h += '<div style="font-size:11px;margin-top:8px"><b>' + T('Stockage commun avec', 'Shared storage with') + ' ' + T(ps.fr, ps.en) + '</b> (' + ps.Tst + ' °C, ' + ps.RH + ' % HR)</div>';
+      if (!iss.length) {
+        h += '<div style="font-size:11px;color:var(--ac)">&#10003; ' + T('Compatibles : températures, humidités, éthylène et odeurs.', 'Compatible: temperatures, humidity, ethylene and odours.') + '</div>';
+      } else {
+        var worst = iss.some(function (x) { return x[0] === 'bad'; });
+        h += '<div style="font-size:11px;font-weight:700;color:' + (worst ? 'var(--er)' : 'var(--wn)') + ';margin:3px 0">' + (worst ? T('Déconseillé dans la même chambre', 'Not recommended in the same room') : T('Possible avec réserves (stockage court)', 'Possible with reservations (short storage)')) + '</div>';
+        iss.forEach(function (x) { h += '<div style="font-size:11px;color:' + (x[0] === 'bad' ? 'var(--er)' : 'var(--wn)') + '">&#9679; ' + CMSG[x[1]].apply(null, x.slice(2))[0] + '</div>'; });
+      }
+    }
+    h += '<div style="font-size:10px;color:var(--ts);margin-top:8px;line-height:1.5">' + T(
+      'Compatibilité : règles de stockage mixte (écart de température, humidité, éthylène, odeurs, hygiène). Les durées et conditions sont indicatives et varient avec la variété, la maturité à la récolte et l\'itinéraire de refroidissement.',
+      'Compatibility: mixed-storage rules (temperature, humidity, ethylene, odours, hygiene). Storage life and conditions are indicative and vary with variety, harvest maturity and cooling route.') + '</div>';
+    return h;
+  }
+
+  window.CR_ENGINE = { compute: compute, psat: psat, enth: enth, rho: rho, dewPt: dewPt, prodHeat: prodHeat, respW: respW, achInterp: achInterp, PBY: PBY, PROD: PROD, THICK: THICK, cycle3: cycle3, defDT1: defDT1, CRF: CRF, FLINFO: FLINFO, Psat: Psat, hSH: hSH, grid2: grid2, compat: compat, META: META, mt: mt };
 
   if (typeof document === 'undefined') { return; }
 
@@ -10342,8 +10455,10 @@ authCheckState();
       row('Majoration pour coudes et accessoires (%) :', 'Allowance for fittings (%):', inp('fit', 50)) +
       row('Écart de température d\'air à l\'évaporateur (K) :', 'Air temperature drop across evaporator (K):', inp('dTair', 2.5, '', '0.5')) +
       row('Part de chaleur sensible de l\'évaporateur :', 'Evaporator sensible heat ratio:', inp('shr', 0.85, '', '0.01')), false);
+    var g8 = sec('8. SECOND PRODUIT (STOCKAGE COMMUN)', '8. SECOND PRODUCT (SHARED STORAGE)',
+      row('Produit à ajouter dans la même chambre :', 'Product to add in the same room:', '<select class="fsel" id="cr_prod2" onchange="crDeb()" style="max-width:100%"><option value="" data-cfr="Aucun" data-cen="None">Aucun</option>' + prodOpts.replace(/ id="cr_prod"/g, '') + '</select>'), false);
     return '<div class="ptitle"><span data-cfr="CHAMBRE FROIDE — CONSTRUCTION ET BILAN FRIGORIFIQUE" data-cen="COLD ROOM — CONSTRUCTION AND REFRIGERATION LOAD">CHAMBRE FROIDE — CONSTRUCTION ET BILAN FRIGORIFIQUE</span></div>' +
-      '<div class="g2"><div class="panel" id="cr_in">' + a + b + c + d + e + f + g +
+      '<div class="g2"><div class="panel" id="cr_in">' + a + b + c + d + e + f + g + g8 +
       '<button class="btn bp" style="width:100%;margin-top:8px" onclick="crCalcBtn()" data-cfr="Calculer le bilan" data-cen="Calculate load">Calculer le bilan</button></div>' +
       '<div class="panel" id="cr_out"></div></div>';
   }
@@ -10486,7 +10601,7 @@ authCheckState();
     h += '<div style="font-size:10px;color:var(--ts);margin-top:10px;line-height:1.5">' + T(
       'Méthode : bilan sur 24 h ramené au temps de marche (sécurité et dégivrage inclus). Chaleurs massiques calculées par les formules de Siebel à partir de la teneur en eau. Les propriétés du produit, les coefficients de renouvellement d\'air et les taux de respiration sont des valeurs indicatives, modifiables, à confirmer par le concepteur selon la variété, le conditionnement et les normes locales. Résultat d\'aide à la décision : il ne remplace pas la note de calcul d\'un bureau d\'études.',
       'Method: 24 h load brought back to running time (safety and defrost included). Specific heats from Siebel formulas based on water content. Product properties, air-change rates and respiration rates are indicative, editable values to be confirmed by the designer according to variety, packaging and local standards. Decision-support result: it does not replace an engineering office calculation note.') + '</div>';
-    o.innerHTML = h + render3(r, p);
+    o.innerHTML = h + render3(r, p) + render4(r, p);
   }
 
   var _t = null, _last = null;
