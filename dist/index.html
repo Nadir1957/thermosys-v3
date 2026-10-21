@@ -10441,6 +10441,72 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     return out;
   }
 
+  /* ============ ETAPE 8 : ENERGIE ET COUT D'EXPLOITATION ============
+     Methode : 12 bilans mensuels (compute) a la T° exterieure moyenne mensuelle ; energie frigorifique du mois
+     = (charges + chaleur des ventilateurs) x (1 + degivrage), sans marge de securite ; energie compresseur = energie frigorifique / COP
+     du cycle a la T° de condensation du mois (T° exterieure moyenne + ecart du condenseur, plancher modifiable) ;
+     + ventilateurs d'evaporateur (puissance de calcul), degivrage electrique, eclairage / chariots / equipements, ventilateurs de condenseur.
+     Approximations : T° moyennes mensuelles (pas de profil horaire), COP a pleine charge sans pertes de cyclage, majoration solaire reduite de moitie.
+     Normales climatiques : tableaux 'Climate data' de Wikipedia (NOAA 1991-2020 sauf Batna : periode non precisee). */
+  var CITY = {
+    alger: { n: 'Alger', t: [11.3, 11.5, 13.6, 15.6, 18.8, 22.6, 25.7, 26.6, 23.9, 20.4, 15.7, 12.6] },
+    oran: { n: 'Oran', t: [11.2, 12.2, 14.4, 16.5, 19.5, 23.0, 25.9, 26.7, 23.8, 20.2, 15.4, 12.4] },
+    constantine: { n: 'Constantine', t: [7.4, 7.9, 10.7, 13.4, 17.9, 23.0, 26.6, 26.6, 22.3, 17.9, 12.0, 8.5] },
+    annaba: { n: 'Annaba', t: [11.8, 11.7, 13.6, 15.6, 18.7, 22.4, 25.1, 26.1, 23.9, 20.8, 16.2, 13.0] },
+    batna: { n: 'Batna', t: [5.3, 6.3, 8.2, 11.6, 16.0, 21.7, 24.9, 24.3, 20.1, 14.5, 9.1, 6.2] },
+    tlemcen: { n: 'Tlemcen', t: [11.1, 11.9, 14.0, 16.0, 19.3, 23.0, 26.4, 27.1, 23.7, 20.1, 15.3, 12.3] },
+    tizi: { n: 'Tizi Ouzou', t: [10.9, 11.5, 14.0, 16.3, 20.1, 24.8, 28.6, 29.0, 25.1, 21.0, 15.5, 12.1] },
+    biskra: { n: 'Biskra', t: [12.1, 13.6, 17.3, 21.1, 26.2, 31.2, 34.5, 34.0, 29.1, 23.7, 17.1, 13.0] },
+    ghardaia: { n: 'Ghardaïa', t: [10.9, 13.2, 16.3, 20.1, 25.0, 30.4, 33.5, 33.1, 28.3, 22.4, 15.9, 12.0] },
+    ouargla: { n: 'Ouargla', t: [11.7, 13.7, 18.0, 22.4, 27.6, 32.6, 35.6, 35.0, 30.5, 24.4, 17.1, 12.7] },
+    bechar: { n: 'Béchar', t: [9.9, 12.2, 16.4, 20.7, 25.4, 30.3, 34.3, 33.3, 28.3, 22.1, 15.2, 10.9] }
+  };
+  var MDAYS = [31, 28.25, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  function copyObj(o) { var c = {}; for (var k in o) { if (Object.prototype.hasOwnProperty.call(o, k)) { c[k] = o[k]; } } return c; }
+  // energie annuelle pour une configuration (stage : 'mono' | 'open' | 'closed')
+  function energyYear(p, r, c, EX, stage) {
+    var out = { months: [], err: null }, defElec = !!EX.defElec;
+    var cat = { comp: 0, fanEv: 0, defr: 0, equip: 0, fanCd: 0 }, scale = EX.days / 365.25, Ecool = 0, QkSum = 0;
+    for (var i = 0; i < 12; i++) {
+      var T = EX.temps[i], pm = copyObj(p);
+      pm.Text = T; pm.Twall = T + (p.Twall - p.Text); pm.solW = p.solW * EX.solF; pm.solR = p.solR * EX.solF;
+      var rm = compute(pm); if (rm.err) { out.err = 'month'; return out; }
+      var Ec = Math.max(0, rm.S0 + r.Efan) * (1 + p.defF);
+      var ci = copyObj(c); ci.Tk = Math.max(EX.Tkmin, T + EX.TD); ci.stage = stage; ci.Q0 = r.Qsel;
+      var o = stage === 'mono' ? cycle3(ci) : cycle6(ci);
+      if (o.err) { out.err = 'cycle'; out.errMonth = i; out.errCode = o.err; return out; }
+      var cop = o.COP, Ecomp = Ec / cop;
+      var fanEv = r.Efan, heater = defElec ? Math.max(0, rm.S0 + r.Efan) * p.defF : 0, equip = Math.max(0, rm.E.light) + Math.max(0, rm.E.fork) + Math.max(0, rm.E.other);
+      var fanCd = EX.condPct / 100 * (Ec + Ecomp);
+      var d = MDAYS[i] * scale, tot = Ecomp + fanEv + heater + equip + fanCd;
+      cat.comp += Ecomp * d; cat.fanEv += fanEv * d; cat.defr += heater * d; cat.equip += equip * d; cat.fanCd += fanCd * d; Ecool += Ec * d;
+      out.months.push({ T: T, Tk: ci.Tk, cop: cop, kWh: tot * d, day: tot });
+    }
+    out.cat = cat; out.total = cat.comp + cat.fanEv + cat.defr + cat.equip + cat.fanCd; out.Ecool = Ecool;
+    out.copAnn = Ecool / Math.max(1e-9, cat.comp);
+    return out;
+  }
+  function energyCalc(p, r, c, EX) {
+    var res = { err: null };
+    var cur = energyYear(p, r, c, EX, c.stage);
+    if (cur.err) { res.err = cur.err; res.errMonth = cur.errMonth; res.errCode = cur.errCode; return res; }
+    res.cur = cur; res.total = cur.total;
+    res.perM3 = cur.total / r.V; res.perT = p.stockT > 0 ? cur.total / p.stockT : 0;
+    var prodT = r.mDay / 1000 * EX.days; res.perProd = prodT > 0 ? cur.total / prodT : 0; res.prodT = prodT;
+    // puissance electrique installee estimee (conditions de calcul)
+    var cd = copyObj(c); cd.Q0 = r.Qsel; var od = c.stage === 'mono' ? cycle3(cd) : cycle6(cd);
+    if (!od.err) {
+      var Afl = p.Lg * p.Wd;
+      res.peakKW = od.Pel + r.fanKW + EX.condPct / 100 * od.Qk + p.lightW * Afl / 1000 + p.otherKW; res.PelDesign = od.Pel;
+    }
+    if (EX.tariff > 0) { res.cost = cur.total * EX.tariff; }
+    if (res.peakKW && EX.powerFee > 0) { res.fixed = res.peakKW * EX.powerFee * 12; }
+    // variante : l'autre mode de compression
+    var alt = c.stage === 'mono' ? 'open' : 'mono', ya = energyYear(p, r, c, EX, alt);
+    if (!ya.err) { res.alt = ya; res.altStage = alt; res.altDelta = cur.total - ya.total; }
+    return res;
+  }
+
   function defDT1(RH, Tr) {
     if (Tr < -10) { return 7; }
     if (Tr < 0) { return 6.5; }
@@ -10560,7 +10626,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     return h;
   }
 
-  window.CR_ENGINE = { compute: compute, psat: psat, enth: enth, rho: rho, dewPt: dewPt, prodHeat: prodHeat, respW: respW, achInterp: achInterp, PBY: PBY, PROD: PROD, THICK: THICK, cycle3: cycle3, cycle6: cycle6, chargeCalc: chargeCalc, SAFE: SAFE, biCore: biCore, biOptimum: biOptimum, BID: BID, defDT1: defDT1, CRF: CRF, FLINFO: FLINFO, Psat: Psat, hSH: hSH, grid2: grid2, compat: compat, META: META, mt: mt };
+  window.CR_ENGINE = { compute: compute, psat: psat, enth: enth, rho: rho, dewPt: dewPt, prodHeat: prodHeat, respW: respW, achInterp: achInterp, PBY: PBY, PROD: PROD, THICK: THICK, cycle3: cycle3, cycle6: cycle6, energyCalc: energyCalc, energyYear: energyYear, CITY: CITY, chargeCalc: chargeCalc, SAFE: SAFE, biCore: biCore, biOptimum: biOptimum, BID: BID, defDT1: defDT1, CRF: CRF, FLINFO: FLINFO, Psat: Psat, hSH: hSH, grid2: grid2, compat: compat, META: META, mt: mt };
 
   if (typeof document === 'undefined') { return; }
 
@@ -10687,6 +10753,14 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       row('Remplissage liquide du réservoir (%) :', 'Receiver liquid fill (%):', inp('rcF', 50)) +
       row('Condenseur et compresseurs :', 'Condenser and compressors:', sel('mrLoc', MRLOC, 'out')) +
       row('Volume de la salle des machines (m³, 0 = non saisi) :', 'Machinery room volume (m³, 0 = not entered):', inp('mrV', 0, '', '10')), false);
+    var g7t = sec('7 ter. ÉNERGIE ET COÛT D\'EXPLOITATION', '7 ter. ENERGY AND OPERATING COST',
+      row('Site (T° moyennes mensuelles) :', 'Site (monthly mean temperatures):', '<select class="fsel" id="cr_city" onchange="crCityChange()" style="max-width:100%">' + Object.keys(CITY).map(function (k) { return '<option value="' + k + '"' + (k === 'alger' ? ' selected' : '') + '>' + CITY[k].n + '</option>'; }).join('') + '<option value="manual" data-cfr="Saisie manuelle" data-cen="Manual entry">Saisie manuelle</option></select>') +
+      '<div style="font-size:10px;color:var(--ts)" data-cfr="T° extérieure moyenne de chaque mois (°C), modifiable :" data-cen="Mean outside temperature of each month (°C), editable:">T° extérieure moyenne de chaque mois (°C), modifiable :</div>' + tempGrid() +
+      row('Jours d\'exploitation par an :', 'Operating days per year:', inp('days', 365)) +
+      row('T° de condensation minimale (°C) :', 'Minimum condensing temperature (°C):', inp('Tkmin', 25, '', '1')) +
+      row('Ventilateurs du condenseur (% de la chaleur rejetée) :', 'Condenser fans (% of heat rejected):', inp('cdFan', 2, '', '0.1')) +
+      row('Tarif de l\'électricité (DA/kWh, 0 = non saisi) :', 'Electricity tariff (DA/kWh, 0 = not entered):', inp('tariff', 0, '', '0.1')) +
+      row('Redevance de puissance (DA/kW/mois, 0 = non saisi) :', 'Power charge (DA/kW/month, 0 = not entered):', inp('pwFee', 0, '', '0.5')), false);
     var g8 = sec('8. SECOND PRODUIT (STOCKAGE COMMUN)', '8. SECOND PRODUCT (SHARED STORAGE)',
       row('Produit à ajouter dans la même chambre :', 'Product to add in the same room:', '<select class="fsel" id="cr_prod2" onchange="crDeb()" style="max-width:100%"><option value="" data-cfr="Aucun" data-cen="None">Aucun</option>' + prodOpts.replace(/ id="cr_prod"/g, '') + '</select>'), false);
     var g9 = sec('9. IDENTIFICATION DU PROJET (NOTE IMPRIMÉE)', '9. PROJECT IDENTIFICATION (PRINTED NOTE)',
@@ -10695,7 +10769,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       row('Site :', 'Site:', '<input class="fi" id="cr_site" type="text" maxlength="80" style="max-width:100%;flex:1 1 55%">') +
       row('Établi par :', 'Prepared by:', '<input class="fi" id="cr_by" type="text" maxlength="80" style="max-width:100%;flex:1 1 55%">'), false);
     return '<div class="ptitle"><span data-cfr="CHAMBRE FROIDE — CONSTRUCTION ET BILAN FRIGORIFIQUE" data-cen="COLD ROOM — CONSTRUCTION AND REFRIGERATION LOAD">CHAMBRE FROIDE — CONSTRUCTION ET BILAN FRIGORIFIQUE</span></div>' +
-      '<div class="g2"><div class="panel" id="cr_in">' + a + b + c + d + e + f + g + g7b + g8 + g9 +
+      '<div class="g2"><div class="panel" id="cr_in">' + a + b + c + d + e + f + g + g7b + g7t + g8 + g9 +
       '<button class="btn bp" style="width:100%;margin-top:8px" onclick="crCalcBtn()" data-cfr="Calculer le bilan" data-cen="Calculate load">Calculer le bilan</button>' +
       '<button class="btn" style="width:100%;margin-top:6px" onclick="crPrint()" data-cfr="Imprimer la note de dimensionnement (PDF)" data-cen="Print sizing note (PDF)">Imprimer la note de dimensionnement (PDF)</button></div>' +
       '<div class="panel" id="cr_out"></div></div>';
@@ -10836,7 +10910,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     h += '<div style="font-size:10px;color:var(--ts);margin-top:8px;line-height:1.5">' + T(
       'Schéma à une seule charge basse température (et, en option, une charge à la T° intermédiaire), refroidissement intermédiaire total, tables CoolProp. Rendements, cylindrées et puissances sont des estimations ; les compresseurs, la bouteille intermédiaire (volume, séparation) et les détendeurs se choisissent avec les données des fabricants. Sécurité et réglementation (EN 378, ammoniac, fluides inflammables) à étudier séparément.',
       'Single low-temperature load layout (and, optionally, one load at the intermediate temperature), full intercooling, CoolProp tables. Efficiencies, displacements and powers are estimates; compressors, the intermediate vessel (volume, separation) and expansion valves must be selected with manufacturers\' data. Safety and regulations (EN 378, ammonia, flammable refrigerants) to be studied separately.') + '</div>';
-    return h + renderCharge(r, p, c, o);
+    return h + renderCharge(r, p, c, o) + renderEnergy(r, p, c, o);
   }
   function biPrint(o, c, r, p, inf, kv) {
     var rhoR = rho(p.Tr, p.RHr), shr = Math.min(1, Math.max(0.5, num('cr_shr', 0.85))), dTa = Math.max(0.5, num('cr_dTair', 2.5)), Vair = c.Q0 * shr / (rhoR * 1.02 * dTa) * 3600;
@@ -10927,6 +11001,75 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     return '<div class="two">' + kv(chargeRows(ch, c)) + kv(limitRows(ch, c)) + '</div><p class="n">' + T('Détail des lignes : ', 'Line detail: ') + ch.lines.map(function (l) { return esc(T(l.fr, l.en)) + ' ' + f1(l.m) + ' kg'; }).join(' ; ') + '.</p><p class="n">' + esc(T(CHNOTE[0], CHNOTE[1])) + '</p>';
   }
 
+
+  /* ============ ETAPE 8 : ENERGIE ET COUT D'EXPLOITATION (interface) ============ */
+  var MN = [['Janv.', 'Jan'], ['Févr.', 'Feb'], ['Mars', 'Mar'], ['Avr.', 'Apr'], ['Mai', 'May'], ['Juin', 'Jun'], ['Juil.', 'Jul'], ['Août', 'Aug'], ['Sept.', 'Sep'], ['Oct.', 'Oct'], ['Nov.', 'Nov'], ['Déc.', 'Dec']];
+  function tempGrid() {
+    return '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:4px 0 8px">' + MN.map(function (m, i) {
+      return '<label style="font-size:10px;display:flex;flex-direction:column"><span data-cfr="' + m[0] + '" data-cen="' + m[1] + '">' + m[0] + '</span><input class="fi" id="cr_tm' + i + '" type="number" step="0.1" value="' + CITY.alger.t[i] + '" style="width:100%;height:28px" oninput="crTmEdit()"></label>';
+    }).join('') + '</div>';
+  }
+  window.crCityChange = function () {
+    var k = $('cr_city').value; if (CITY[k]) { for (var i = 0; i < 12; i++) { var e = $('cr_tm' + i); if (e) { e.value = CITY[k].t[i]; } } }
+    crDeb();
+  };
+  window.crTmEdit = function () { var e = $('cr_city'); if (e) { e.value = 'manual'; } crDeb(); };
+  function readEnergyInputs() {
+    var t = []; for (var i = 0; i < 12; i++) { t.push(num('cr_tm' + i, 15)); }
+    return { temps: t, days: Math.min(366, Math.max(1, num('cr_days', 365))), Tkmin: Math.max(25, num('cr_Tkmin', 25)), TD: num('cr_TD', 12), condPct: Math.max(0, num('cr_cdFan', 2)), tariff: Math.max(0, num('cr_tariff', 0)), powerFee: Math.max(0, num('cr_pwFee', 0)), solF: 0.5, defElec: $('cr_defr') && $('cr_defr').value === 'elec' };
+  }
+  function fN(x) { return String(Math.round(x)).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+  var ENOTE = ['Méthode : 12 bilans mensuels à la température extérieure moyenne du mois ; énergie du compresseur = énergie frigorifique ÷ COP du cycle à la température de condensation du mois (température moyenne + écart du condenseur, avec plancher) ; s\'y ajoutent ventilateurs d\'évaporateur et de condenseur, dégivrage électrique, éclairage, chariots et équipements. Approximations : températures moyennes mensuelles (pas de profil horaire), COP à pleine charge sans pertes de cyclage, majoration solaire réduite de moitié, marge de sécurité exclue. Température : normales climatiques (tableaux « Climate data » de Wikipedia, NOAA 1991-2020 ; Batna : période non précisée). Le tarif et la redevance sont à saisir d\'après votre contrat ou facture. Estimation à ± 20 %, non garantie.', 'Method: 12 monthly loads at the mean outside temperature of the month; compressor energy = cooling energy ÷ cycle COP at the month\'s condensing temperature (mean temperature + condenser TD, with a floor); fans (evaporator and condenser), electric defrost, lighting, forklifts and equipment are added. Approximations: monthly mean temperatures (no hourly profile), full-load COP without cycling losses, solar allowance halved, safety margin excluded. Temperatures: climate normals (Wikipedia "Climate data" tables, NOAA 1991-2020; Batna: period not stated). Enter tariff and power charge from your contract or invoice. Estimate to ± 20 %, not guaranteed.'];
+  function energyRows(en, EX, c) {
+    var cat = en.cur.cat, tot = en.total, pc = function (x) { return ' (' + f0(100 * x / tot) + ' %)'; }, rows = [];
+    rows.push([T('Consommation électrique annuelle', 'Annual electricity consumption'), '<b>' + fN(tot) + ' kWh</b>']);
+    rows.push([T('Compresseurs', 'Compressors'), fN(cat.comp) + ' kWh' + pc(cat.comp)]);
+    rows.push([T('Ventilateurs d\'évaporateur', 'Evaporator fans'), fN(cat.fanEv) + ' kWh' + pc(cat.fanEv)]);
+    if (cat.defr > 0) { rows.push([T('Dégivrage électrique', 'Electric defrost'), fN(cat.defr) + ' kWh' + pc(cat.defr)]); }
+    rows.push([T('Éclairage, chariots, équipements', 'Lighting, forklifts, equipment'), fN(cat.equip) + ' kWh' + pc(cat.equip)]);
+    rows.push([T('Ventilateurs de condenseur', 'Condenser fans'), fN(cat.fanCd) + ' kWh' + pc(cat.fanCd)]);
+    rows.push([T('COP saisonnier du système (énergie frigorifique ÷ compresseurs)', 'Seasonal COP (cooling energy ÷ compressors)'), f2(en.cur.copAnn)]);
+    rows.push([T('Par m³ de chambre', 'Per m³ of room'), f0(en.perM3) + ' kWh/m³·' + T('an', 'yr')]);
+    if (en.perT > 0) { rows.push([T('Par tonne de stock', 'Per tonne of stock'), f0(en.perT) + ' kWh/t·' + T('an', 'yr')]); }
+    if (en.perProd > 0) { rows.push([T('Par tonne de produit entrant', 'Per tonne of incoming product'), f1(en.perProd) + ' kWh/t (' + fN(en.prodT) + ' t/' + T('an', 'yr') + ')']); }
+    if (en.peakKW) { rows.push([T('Puissance électrique installée estimée (hors dégivrage)', 'Estimated installed electrical power (excl. defrost)'), f1(en.peakKW) + ' kW']); }
+    if (en.cost !== undefined) { rows.push([T('Coût de l\'énergie', 'Energy cost'), '<b>' + fN(en.cost) + ' DA/' + T('an', 'yr') + '</b>']); }
+    if (en.fixed !== undefined) { rows.push([T('Redevance de puissance', 'Power charge'), fN(en.fixed) + ' DA/' + T('an', 'yr')]); rows.push([T('Total', 'Total'), '<b>' + fN((en.cost || 0) + en.fixed) + ' DA/' + T('an', 'yr') + '</b>']); }
+    return rows;
+  }
+  function energyAltText(en, EX, c) {
+    if (!en.alt) { return ''; }
+    var altName = en.altStage === 'mono' ? T('mono-étagé', 'single-stage') : T('bi-étagé à bouteille à détente', 'two-stage with flash intercooler'), d = en.altDelta;
+    var s = T('Variante « ', 'Alternative "') + altName + T(' » : ', '": ') + fN(en.alt.total) + ' kWh/' + T('an', 'yr') + ' → ' + (d > 0 ? T('économie de ', 'saving of ') : T('surconsommation de ', 'extra consumption of ')) + '<b>' + fN(Math.abs(d)) + ' kWh/' + T('an', 'yr') + '</b> (' + f0(Math.abs(100 * d / en.total)) + ' %)';
+    if (EX.tariff > 0) { s += ' = ' + fN(Math.abs(d) * EX.tariff) + ' DA/' + T('an', 'yr'); }
+    return s + '.';
+  }
+  function energyErr(en) {
+    return T('Calcul d\'énergie impossible' + (en.err === 'cycle' ? ' (cycle non calculable pour le mois ' + (en.errMonth + 1) + ' : ' + (ERR3[en.errCode] ? ERR3[en.errCode][0] : en.errCode) + ')' : ' : bilan mensuel non résolu') + '.', 'Energy calculation impossible' + (en.err === 'cycle' ? ' (cycle not solvable for month ' + (en.errMonth + 1) + ': ' + (ERR3[en.errCode] ? ERR3[en.errCode][1] : en.errCode) + ')' : ': monthly load not solvable') + '.');
+  }
+  function renderEnergy(r, p, c, o) {
+    c = readInputs6(p, r);
+    var EX = readEnergyInputs(), en = energyCalc(p, r, c, EX);
+    var h = '<div class="ph" style="margin-top:14px">' + T('ÉNERGIE ET COÛT D\'EXPLOITATION', 'ENERGY AND OPERATING COST') + '</div>';
+    if (en.err) { return h + '<div style="font-size:11px;color:var(--er)">' + energyErr(en) + '</div>'; }
+    var TR = function (a) { return '<tr style="border-top:1px solid var(--border)"><td>' + a[0] + '</td><td style="text-align:right">' + a[1] + '</td></tr>'; };
+    h += '<table style="width:100%;border-collapse:collapse;font-size:11px">' + energyRows(en, EX, c).map(TR).join('') + '</table>';
+    if (!(EX.tariff > 0)) { h += '<div style="font-size:10px;color:var(--ts);margin-top:3px">' + T('Saisissez le tarif (DA/kWh) dans la section 7 ter pour obtenir le coût annuel.', 'Enter the tariff (DA/kWh) in section 7 ter to get the annual cost.') + '</div>'; }
+    h += '<table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:8px"><tr style="color:var(--ts);text-align:right"><th style="text-align:left">' + T('Mois', 'Month') + '</th><th>T° ext.</th><th>T° cond.</th><th>COP</th><th>kWh</th></tr>' +
+      en.cur.months.map(function (m, i) { return '<tr style="border-top:1px solid var(--border);text-align:right"><td style="text-align:left">' + T(MN[i][0], MN[i][1]) + '</td><td>' + f1(m.T) + '</td><td>' + f1(m.Tk) + '</td><td>' + f2(m.cop) + '</td><td>' + fN(m.kWh) + '</td></tr>'; }).join('') + '</table>';
+    var at = energyAltText(en, EX, c); if (at) { h += '<div style="font-size:11px;margin-top:8px;line-height:1.6">' + at + '</div>'; }
+    h += '<div style="font-size:10px;color:var(--ts);margin-top:8px;line-height:1.5">' + T(ENOTE[0], ENOTE[1]) + '</div>';
+    return h;
+  }
+  function energyPrint(c, o, r, p, kv) {
+    var EX = readEnergyInputs(), en = energyCalc(p, r, c, EX);
+    if (en.err) { return '<p class="n">' + energyErr(en) + '</p>'; }
+    var s = '<div class="two">' + kv(energyRows(en, EX, c)) + kv([[T('Site / T° moyenne annuelle', 'Site / mean annual temperature'), esc($('cr_city').selectedOptions[0].textContent) + ' / ' + f1(EX.temps.reduce(function (a, b) { return a + b; }, 0) / 12) + ' °C'], [T('Jours d\'exploitation', 'Operating days'), f0(EX.days)], [T('T° de condensation minimale', 'Minimum condensing temperature'), f1(EX.Tkmin) + ' °C'], [T('Ventilateurs de condenseur', 'Condenser fans'), f1(EX.condPct) + ' %']]) + '</div>';
+    s += '<table class="tb"><tr><th>' + T('Mois', 'Month') + '</th><th>T° ext. (°C)</th><th>T° cond. (°C)</th><th>COP</th><th>kWh</th></tr>' + en.cur.months.map(function (m, i) { return '<tr><td>' + T(MN[i][0], MN[i][1]) + '</td><td>' + f1(m.T) + '</td><td>' + f1(m.Tk) + '</td><td>' + f2(m.cop) + '</td><td>' + fN(m.kWh) + '</td></tr>'; }).join('') + '</table>';
+    var at = energyAltText(en, EX, c); if (at) { s += '<p class="n">' + at + '</p>'; }
+    return s + '<p class="n">' + esc(T(ENOTE[0], ENOTE[1])) + '</p>';
+  }
+
   function readInputs3(p, r) {
     var T0 = p.Tr - num('cr_DT1', 6.5), Tk = p.Text + num('cr_TD', 12);
     return {
@@ -10980,7 +11123,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     h += '<div style="font-size:10px;color:var(--ts);margin-top:8px;line-height:1.5">' + T(
       'Propriétés des fluides : bibliothèque CoolProp (mélanges R449A, R448A et R452A à composition nominale). Rendements, cylindrée et puissance absorbée sont des estimations : le compresseur, l\'évaporateur et le détendeur se choisissent définitivement avec les données et logiciels des fabricants. Réglementation des fluides : à vérifier selon le pays d\'installation.',
       'Fluid properties: CoolProp library (R449A, R448A and R452A at nominal composition). Efficiencies, displacement and power input are estimates: compressor, evaporator and expansion valve must be finally selected with the manufacturers\' data and software. Refrigerant regulations: check according to the country of installation.') + '</div>';
-    return h + renderCharge(r, p, c, o);
+    return h + renderCharge(r, p, c, o) + renderEnergy(r, p, c, o);
   }
 
 
@@ -11065,10 +11208,10 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       if (o.risD) { body += '<p class="n">' + T('Colonne montante de refoulement : ', 'Discharge riser: ') + esc(o.risD.lab) + ' (' + f1(o.risD.v50) + ' m/s ' + T('à 50 % de charge', 'at 50 % load') + ').</p>'; }
     }
     // Charge et securite
-    if (!o.err) { body += h2('4. Charge en fluide et sécurité (EN 378)', '4. Refrigerant charge and safety (EN 378)'); body += chargePrint(c, o, r, kv); }
+    if (!o.err) { body += h2('4. Charge en fluide et sécurité (EN 378)', '4. Refrigerant charge and safety (EN 378)'); body += chargePrint(c, o, r, kv); body += h2('5. Énergie et coût d\'exploitation', '5. Energy and operating cost'); body += energyPrint(c, o, r, p, kv); }
     // Conservation
     var m = mt($('cr_prod').value);
-    body += h2('5. Conservation du produit', '5. Product storage');
+    body += h2('6. Conservation du produit', '6. Product storage');
     body += '<p class="n"><b>' + esc(T(pr.fr, pr.en)) + '</b> : ' + pr.Tst + ' °C, ' + pr.RH + ' % HR — ' + T('durée', 'life') + ' : ' + esc(T(pr.lifeFr, pr.lifeEn)) + '.</p>';
     if (m.nf) { body += '<p class="n">' + esc(T(m.nf, m.ne)) + '</p>'; }
     var sid = $('cr_prod2') ? $('cr_prod2').value : '';
@@ -11082,7 +11225,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     r.warn.forEach(function (w) { al.push(T(WARN[w][0], WARN[w][1])); });
     if (!o.err) { o.warn.forEach(function (w) { al.push(T(WARN3[w][0], WARN3[w][1])); }); chargeCalc(c, o, r.V, readChargeInputs()).warn.forEach(function (w) { al.push(T(WARN3[w][0], WARN3[w][1])); }); }
     if (m.tmin !== null && p.Tr < m.tmin) { al.push(T('La température de la chambre est inférieure à la limite de dommages du froid du produit (' + m.tmin + ' °C).', 'Room temperature is below the product chilling-injury limit (' + m.tmin + ' °C).')); }
-    body += h2('6. Points d\'attention', '6. Points of attention');
+    body += h2('7. Points d\'attention', '7. Points of attention');
     body += al.length ? al.map(function (a) { return '<p class="n w">&#9888; ' + esc(a) + '</p>'; }).join('') : '<p class="n">' + T('Aucune alerte.', 'No alerts.') + '</p>';
     body += '<p class="disc">' + T(
       'Note de dimensionnement indicative établie avec Thermosys. Méthode : bilan sur 24 h ramené au temps de marche ; chaleurs massiques par les formules de Siebel ; propriétés des fluides par la bibliothèque CoolProp. Les rendements, les taux de respiration, les renouvellements d\'air et les caractéristiques des produits sont des valeurs indicatives à confirmer par le concepteur ; le choix définitif du compresseur, de l\'évaporateur et du détendeur se fait avec les données des fabricants. Elle ne remplace pas la note de calcul d\'un bureau d\'études ni la réglementation locale.',
