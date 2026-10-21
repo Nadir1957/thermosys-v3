@@ -10399,6 +10399,48 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     return o;
   }
 
+  /* ============ ETAPE 7 : CHARGE EN FLUIDE ET CONTROLES DE SECURITE (EN 378) ============
+     Limite pratique (AEL, EN 378:2017) : valeurs relevees dans les documents publics BITZER (R404A, R507A, R134a, R22, R448A, R449A,
+     R452A, R290, R717) ; LFL R717 / R290 : REAL Alternatives (EN 378-1). A confirmer dans la norme en vigueur.
+     Charge : lignes calculees a partir des diametres retenus et des masses volumiques du cycle ; echangeurs et reservoir
+     estimes par volumes internes et taux de liquide modifiables (valeurs indicatives, a remplacer par les fiches constructeur).
+     Ventilation de secours de salle des machines : V = 0,014 x m^(2/3) (m3/s, m en kg) ou 15 vol/h (EN 378-3, selon la source consultee). */
+  var SAFE = { R717: { pl: 0.00035, lfl: 0.116 }, R290: { pl: 0.008, lfl: 0.038 }, R404A: { pl: 0.52 }, R507A: { pl: 0.53 }, R134a: { pl: 0.25 }, R22: { pl: 0.30 }, R449A: { pl: 0.357 }, R448A: { pl: 0.388 }, R452A: { pl: 0.423 } };
+  function chargeCalc(c, o, V, X) {
+    var f = c.fluid, d = CRF[f], info = FLINFO[f], sf = SAFE[f] || {}, bi = c.stage && c.stage !== 'mono';
+    var rLk = ip(d.rL, c.Tk), rVk = 1 / ip(d.vV, c.Tk), rL0 = ip(d.rL, c.T0), rV0 = 1 / ip(d.vV, c.T0);
+    var out = { lines: [], warn: [], pl: sf.pl, lfl: sf.lfl, V: V };
+    var fe = Math.min(100, Math.max(0, X.evF)) / 100, fc = Math.min(100, Math.max(0, X.cdF)) / 100, fr = Math.min(100, Math.max(0, X.rcF)) / 100;
+    var Vev = Math.max(0, X.evV) * o.Qref / 1000, Vcd = Math.max(0, X.cdV) * o.Qk / 1000, Vrc = Math.max(0, X.rcV) / 1000;
+    out.ev = Vev * (fe * rL0 + (1 - fe) * rV0);
+    out.cd = Vcd * (fc * rLk + (1 - fc) * rVk);
+    out.rc = Vrc * (fr * rLk + (1 - fr) * rVk);
+    var defs = bi
+      ? [['suc', 'Aspiration BP', 'LP suction', c.Ls], ['ilp', 'Refoulement BP → bouteille', 'LP discharge → vessel', c.Li], ['hps', 'Bouteille → aspiration HP', 'Vessel → HP suction', c.Li], ['dis', 'Refoulement HP', 'HP discharge', c.Ld], ['liqK', 'Liquide condenseur → bouteille', 'Liquid condenser → vessel', c.Ll], ['liqE', 'Liquide → évaporateur', 'Liquid → evaporator', c.Lv]]
+      : [['suc', 'Aspiration', 'Suction', c.Ls], ['dis', 'Refoulement', 'Discharge', c.Ld], ['liq', 'Liquide', 'Liquid', c.Ll]];
+    out.pipe = 0;
+    defs.forEach(function (x) {
+      var L = o[x[0]], m = Math.PI * Math.pow(L.id / 1000, 2) / 4 * Math.max(0, x[3]) * L.rho;
+      out.lines.push({ fr: x[1], en: x[2], lab: L.lab, m: m }); out.pipe += m;
+    });
+    out.total = out.ev + out.cd + out.rc + out.pipe;
+    out.co2e = out.total * info.gwp / 1000;
+    // local occupe (chambre) : tout l'evaporateur est dans la chambre
+    out.mRoom = out.ev;
+    if (sf.pl) { out.maxRoom = sf.pl * V; out.ratio = out.mRoom / out.maxRoom; }
+    if (sf.lfl) { out.lim20 = 0.2 * sf.lfl * V; }
+    // salle des machines
+    out.qEm = 0.014 * Math.pow(Math.max(out.total, 0), 2 / 3) * 3600;       // m3/h
+    out.mrV = X.mrV > 0 ? X.mrV : 0; out.mrLoc = X.mrLoc;
+    if (out.mrV > 0) { out.qEm15 = 15 * out.mrV; out.qNorm4 = 4 * out.mrV; }
+    // avertissements
+    if (sf.pl && out.mRoom > out.maxRoom) { out.warn.push(info.nh3 ? 'chNhRoom' : (info.cls === 'A3' ? 'chA3Room' : 'chRoom')); }
+    if (info.nh3) { out.warn.push('chNh'); }
+    if (info.cls === 'A3') { out.warn.push('chA3'); }
+    if (out.mrLoc === 'mr') { out.warn.push('chMr'); }
+    return out;
+  }
+
   function defDT1(RH, Tr) {
     if (Tr < -10) { return 7; }
     if (Tr < 0) { return 6.5; }
@@ -10518,7 +10560,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     return h;
   }
 
-  window.CR_ENGINE = { compute: compute, psat: psat, enth: enth, rho: rho, dewPt: dewPt, prodHeat: prodHeat, respW: respW, achInterp: achInterp, PBY: PBY, PROD: PROD, THICK: THICK, cycle3: cycle3, cycle6: cycle6, biCore: biCore, biOptimum: biOptimum, BID: BID, defDT1: defDT1, CRF: CRF, FLINFO: FLINFO, Psat: Psat, hSH: hSH, grid2: grid2, compat: compat, META: META, mt: mt };
+  window.CR_ENGINE = { compute: compute, psat: psat, enth: enth, rho: rho, dewPt: dewPt, prodHeat: prodHeat, respW: respW, achInterp: achInterp, PBY: PBY, PROD: PROD, THICK: THICK, cycle3: cycle3, cycle6: cycle6, chargeCalc: chargeCalc, SAFE: SAFE, biCore: biCore, biOptimum: biOptimum, BID: BID, defDT1: defDT1, CRF: CRF, FLINFO: FLINFO, Psat: Psat, hSH: hSH, grid2: grid2, compat: compat, META: META, mt: mt };
 
   if (typeof document === 'undefined') { return; }
 
@@ -10636,6 +10678,15 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       bi(row('Longueur ligne liquide bouteille → évaporateur (m) :', 'Liquid line length vessel → evaporator (m):', inp('Lv', 15))) +
       row('Écart de température d\'air à l\'évaporateur (K) :', 'Air temperature drop across evaporator (K):', inp('dTair', 2.5, '', '0.5')) +
       row('Part de chaleur sensible de l\'évaporateur :', 'Evaporator sensible heat ratio:', inp('shr', 0.85, '', '0.01')), false);
+    var g7b = sec('7 bis. CHARGE EN FLUIDE ET SÉCURITÉ (EN 378)', '7 bis. REFRIGERANT CHARGE AND SAFETY (EN 378)',
+      row('Volume interne de l\'évaporateur (L par kW) :', 'Evaporator internal volume (L per kW):', inp('evV', 1.5, '', '0.1')) +
+      row('Part de liquide dans l\'évaporateur (% du volume) :', 'Liquid share in evaporator (% of volume):', inp('evF', 25)) +
+      row('Volume interne du condenseur (L par kW rejeté) :', 'Condenser internal volume (L per kW rejected):', inp('cdV', 1.5, '', '0.1')) +
+      row('Part de liquide dans le condenseur (% du volume) :', 'Liquid share in condenser (% of volume):', inp('cdF', 30)) +
+      row('Volume du réservoir ou de la bouteille (L) :', 'Receiver or vessel volume (L):', inp('rcV', 0, '', '10')) +
+      row('Remplissage liquide du réservoir (%) :', 'Receiver liquid fill (%):', inp('rcF', 50)) +
+      row('Condenseur et compresseurs :', 'Condenser and compressors:', sel('mrLoc', MRLOC, 'out')) +
+      row('Volume de la salle des machines (m³, 0 = non saisi) :', 'Machinery room volume (m³, 0 = not entered):', inp('mrV', 0, '', '10')), false);
     var g8 = sec('8. SECOND PRODUIT (STOCKAGE COMMUN)', '8. SECOND PRODUCT (SHARED STORAGE)',
       row('Produit à ajouter dans la même chambre :', 'Product to add in the same room:', '<select class="fsel" id="cr_prod2" onchange="crDeb()" style="max-width:100%"><option value="" data-cfr="Aucun" data-cen="None">Aucun</option>' + prodOpts.replace(/ id="cr_prod"/g, '') + '</select>'), false);
     var g9 = sec('9. IDENTIFICATION DU PROJET (NOTE IMPRIMÉE)', '9. PROJECT IDENTIFICATION (PRINTED NOTE)',
@@ -10644,7 +10695,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       row('Site :', 'Site:', '<input class="fi" id="cr_site" type="text" maxlength="80" style="max-width:100%;flex:1 1 55%">') +
       row('Établi par :', 'Prepared by:', '<input class="fi" id="cr_by" type="text" maxlength="80" style="max-width:100%;flex:1 1 55%">'), false);
     return '<div class="ptitle"><span data-cfr="CHAMBRE FROIDE — CONSTRUCTION ET BILAN FRIGORIFIQUE" data-cen="COLD ROOM — CONSTRUCTION AND REFRIGERATION LOAD">CHAMBRE FROIDE — CONSTRUCTION ET BILAN FRIGORIFIQUE</span></div>' +
-      '<div class="g2"><div class="panel" id="cr_in">' + a + b + c + d + e + f + g + g8 + g9 +
+      '<div class="g2"><div class="panel" id="cr_in">' + a + b + c + d + e + f + g + g7b + g8 + g9 +
       '<button class="btn bp" style="width:100%;margin-top:8px" onclick="crCalcBtn()" data-cfr="Calculer le bilan" data-cen="Calculate load">Calculer le bilan</button>' +
       '<button class="btn" style="width:100%;margin-top:6px" onclick="crPrint()" data-cfr="Imprimer la note de dimensionnement (PDF)" data-cen="Print sizing note (PDF)">Imprimer la note de dimensionnement (PDF)</button></div>' +
       '<div class="panel" id="cr_out"></div></div>';
@@ -10785,7 +10836,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     h += '<div style="font-size:10px;color:var(--ts);margin-top:8px;line-height:1.5">' + T(
       'Schéma à une seule charge basse température (et, en option, une charge à la T° intermédiaire), refroidissement intermédiaire total, tables CoolProp. Rendements, cylindrées et puissances sont des estimations ; les compresseurs, la bouteille intermédiaire (volume, séparation) et les détendeurs se choisissent avec les données des fabricants. Sécurité et réglementation (EN 378, ammoniac, fluides inflammables) à étudier séparément.',
       'Single low-temperature load layout (and, optionally, one load at the intermediate temperature), full intercooling, CoolProp tables. Efficiencies, displacements and powers are estimates; compressors, the intermediate vessel (volume, separation) and expansion valves must be selected with manufacturers\' data. Safety and regulations (EN 378, ammonia, flammable refrigerants) to be studied separately.') + '</div>';
-    return h;
+    return h + renderCharge(r, p, c, o);
   }
   function biPrint(o, c, r, p, inf, kv) {
     var rhoR = rho(p.Tr, p.RHr), shr = Math.min(1, Math.max(0.5, num('cr_shr', 0.85))), dTa = Math.max(0.5, num('cr_dTair', 2.5)), Vair = c.Q0 * shr / (rhoR * 1.02 * dTa) * 3600;
@@ -10822,6 +10873,58 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
         o.sens.map(function (x) { return '<tr' + (Math.abs(x.Tm - o.Tm) < 0.01 ? ' class="tot"' : '') + '><td>' + f1(x.Tm) + (x.opt ? ' *' : '') + '</td><td>' + f2(x.Pm) + '</td><td>' + f1(x.PR1) + '</td><td>' + f1(x.PR2) + '</td><td>' + f1(x.Pel) + '</td><td>' + f2(x.COP) + '</td></tr>'; }).join('') + '</table><p class="n">* ' + T('optimum de puissance minimale', 'minimum-power optimum') + '</p>';
     }
     return s;
+  }
+
+
+  /* ============ ETAPE 7 : CHARGE EN FLUIDE ET SECURITE (interface) ============ */
+  var MRLOC = [
+    { id: 'out', fr: 'Groupe en plein air', en: 'Unit in the open air' },
+    { id: 'mr', fr: 'Salle des machines', en: 'Machinery room' }
+  ];
+  WARN3.chRoom = ['La charge de l\'évaporateur placée dans la chambre dépasse la limite pratique EN 378 (limite × volume de la chambre) : prévoyez détection de fuite, alarme, ventilation et dispositif de sortie depuis l\'intérieur de la chambre, ou réduisez la charge (circuit indirect, évaporateur plus compact). Vérifiez les exigences exactes de la norme (catégorie d\'accès, classe d\'emplacement).', 'The evaporator charge located in the room exceeds the EN 378 practical limit (limit × room volume): provide leak detection, alarm, ventilation and an exit device from inside the room, or reduce the charge (indirect circuit, more compact evaporator). Check the exact requirements of the standard (access category, location class).'];
+  WARN3.chNhRoom = ['Ammoniac : la charge de l\'évaporateur dans la chambre dépasse largement la limite pratique (0,00035 kg/m³). Un évaporateur à ammoniac direct dans une chambre accessible au personnel n\'est acceptable qu\'avec les mesures prévues par EN 378 (accès réservé, détection, ventilation, sécurité), ou avec un circuit indirect (fluide secondaire).', 'Ammonia: the evaporator charge in the room far exceeds the practical limit (0.00035 kg/m³). A direct-ammonia evaporator in a room accessible to personnel is only acceptable with the measures provided by EN 378 (restricted access, detection, ventilation, safety), or with an indirect circuit (secondary fluid).'];
+  WARN3.chA3Room = ['Propane (A3) : la charge de l\'évaporateur dépasse 20 % de la limite inférieure d\'inflammabilité × volume de la chambre. Réduisez la charge ou utilisez un circuit indirect.', 'Propane (A3): the evaporator charge exceeds 20 % of the lower flammability limit × room volume. Reduce the charge or use an indirect circuit.'];
+  WARN3.chNh = ['Ammoniac (B2L) : salle des machines conforme à EN 378-3 (ventilation de secours, détection, alarme, accès, arrêt d\'urgence), équipements de protection et plan d\'intervention.', 'Ammonia (B2L): machinery room compliant with EN 378-3 (emergency ventilation, detection, alarm, access, emergency stop), protective equipment and emergency plan.'];
+  WARN3.chA3 = ['Propane (A3) : charge maximale en kg limitée par EN 378-1 (catégorie d\'accès, classe d\'emplacement) ; zones ATEX, détection et ventilation à étudier.', 'Propane (A3): maximum charge in kg limited by EN 378-1 (access category, location class); ATEX zones, detection and ventilation to be studied.'];
+  WARN3.chMr = ['Salle des machines : la ventilation de secours indiquée est celle de la formule ; vérifiez l\'ensemble des exigences EN 378-3 (détection, alarmes, issues, portes, limitation d\'accès).', 'Machinery room: the emergency ventilation shown comes from the formula; check all EN 378-3 requirements (detection, alarms, exits, doors, access restriction).'];
+  function readChargeInputs() {
+    return { evV: num('cr_evV', 1.5), evF: num('cr_evF', 25), cdV: num('cr_cdV', 1.5), cdF: num('cr_cdF', 30), rcV: num('cr_rcV', 0), rcF: num('cr_rcF', 50), mrLoc: $('cr_mrLoc') ? $('cr_mrLoc').value : 'out', mrV: num('cr_mrV', 0) };
+  }
+  function fPL(x) { return x < 0.01 ? x.toFixed(5).replace('.', ',') : x.toFixed(3).replace('.', ','); }
+  function chargeRows(ch, c) {
+    var inf = FLINFO[c.fluid], rows = [];
+    rows.push([T('Évaporateur', 'Evaporator'), f1(ch.ev) + ' kg']);
+    rows.push([T('Condenseur', 'Condenser'), f1(ch.cd) + ' kg']);
+    rows.push([T('Réservoir / bouteille', 'Receiver / vessel'), f1(ch.rc) + ' kg']);
+    rows.push([T('Tuyauteries', 'Piping'), f1(ch.pipe) + ' kg']);
+    rows.push([T('Charge totale estimée', 'Estimated total charge'), '<b>' + f1(ch.total) + ' kg</b>']);
+    rows.push([T('Équivalent CO₂ (GWP ', 'CO₂ equivalent (GWP ') + inf.gwp + ')', f1(ch.co2e) + ' t']);
+    return rows;
+  }
+  function limitRows(ch, c) {
+    var inf = FLINFO[c.fluid], rows = [];
+    rows.push([T('Limite pratique du fluide (EN 378)', 'Fluid practical limit (EN 378)'), fPL(ch.pl) + ' kg/m³']);
+    rows.push([T('Charge admissible dans la chambre (limite × ', 'Allowed charge in the room (limit × ') + f0(ch.V) + ' m³)', f2(ch.maxRoom) + ' kg']);
+    rows.push([T('Charge de l\'évaporateur dans la chambre', 'Evaporator charge in the room'), '<b>' + f1(ch.mRoom) + ' kg</b> — ' + f0(ch.ratio * 100) + ' % ' + T('de la limite', 'of the limit') + (ch.ratio > 1 ? ' &#9888;' : ' &#10003;')]);
+    if (ch.lfl) { rows.push([T('20 % de la LFL (', '20 % of LFL (') + String(ch.lfl).replace('.', ',') + ' kg/m³) × ' + T('volume', 'volume'), f2(ch.lim20) + ' kg']); }
+    rows.push([T('Ventilation de secours de salle des machines : 0,014 × m^(2/3)', 'Machinery room emergency ventilation: 0.014 × m^(2/3)'), f0(ch.qEm) + ' m³/h (' + f2(ch.qEm / 3600) + ' m³/s, m = ' + f1(ch.total) + ' kg)']);
+    if (ch.mrLoc === 'mr' && ch.mrV > 0) { rows.push([T('Salle des machines ', 'Machinery room ') + f0(ch.mrV) + ' m³ : 15 ' + T('vol/h', 'ACH') + ' / 4 ' + T('vol/h (normale)', 'ACH (normal)'), f0(ch.qEm15) + ' / ' + f0(ch.qNorm4) + ' m³/h']); }
+    return rows;
+  }
+  var CHNOTE = ['Limites pratiques (EN 378) relevées dans les documents publics de BITZER (R404A, R507A, R134a, R22, R448A, R449A, R452A, R290, R717) et de REAL Alternatives (LFL du R717 et du R290) ; la norme étant payante, confirmez-les dans la version en vigueur. La charge est une estimation grossière (± 30 à 50 %) : volumes internes et taux de liquide sont modifiables (section 7 bis), à remplacer par les données du constructeur. Ce contrôle ne remplace pas l\'analyse de risque selon EN 378 et la réglementation locale.', 'Practical limits (EN 378) taken from public BITZER documents (R404A, R507A, R134a, R22, R448A, R449A, R452A, R290, R717) and REAL Alternatives (R717 and R290 LFL); the standard being paid, confirm them in the version in force. The charge is a rough estimate (± 30 to 50 %): internal volumes and liquid shares are editable (section 7 bis), to be replaced by manufacturer data. This check does not replace the EN 378 risk analysis and local regulations.'];
+  function renderCharge(r, p, c, o) {
+    var ch = chargeCalc(c, o, r.V, readChargeInputs()), TR = function (a) { return '<tr style="border-top:1px solid var(--border)"><td>' + a[0] + '</td><td style="text-align:right">' + a[1] + '</td></tr>'; };
+    var h = '<div class="ph" style="margin-top:14px">' + T('CHARGE EN FLUIDE ET SÉCURITÉ (EN 378)', 'REFRIGERANT CHARGE AND SAFETY (EN 378)') + '</div>';
+    h += '<table style="width:100%;border-collapse:collapse;font-size:11px">' + chargeRows(ch, c).map(TR).join('') + '</table>';
+    h += '<div style="font-size:10px;color:var(--ts);margin:3px 0 6px">' + T('Détail des lignes : ', 'Line detail: ') + ch.lines.map(function (l) { return T(l.fr, l.en) + ' ' + f1(l.m) + ' kg'; }).join(' ; ') + '</div>';
+    h += '<table style="width:100%;border-collapse:collapse;font-size:11px">' + limitRows(ch, c).map(TR).join('') + '</table>';
+    ch.warn.forEach(function (w) { h += '<div style="font-size:11px;color:var(--wn);margin:4px 0">&#9888; ' + T(WARN3[w][0], WARN3[w][1]) + '</div>'; });
+    h += '<div style="font-size:10px;color:var(--ts);margin-top:8px;line-height:1.5">' + T(CHNOTE[0], CHNOTE[1]) + '</div>';
+    return h;
+  }
+  function chargePrint(c, o, r, kv) {
+    var ch = chargeCalc(c, o, r.V, readChargeInputs());
+    return '<div class="two">' + kv(chargeRows(ch, c)) + kv(limitRows(ch, c)) + '</div><p class="n">' + T('Détail des lignes : ', 'Line detail: ') + ch.lines.map(function (l) { return esc(T(l.fr, l.en)) + ' ' + f1(l.m) + ' kg'; }).join(' ; ') + '.</p><p class="n">' + esc(T(CHNOTE[0], CHNOTE[1])) + '</p>';
   }
 
   function readInputs3(p, r) {
@@ -10877,7 +10980,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     h += '<div style="font-size:10px;color:var(--ts);margin-top:8px;line-height:1.5">' + T(
       'Propriétés des fluides : bibliothèque CoolProp (mélanges R449A, R448A et R452A à composition nominale). Rendements, cylindrée et puissance absorbée sont des estimations : le compresseur, l\'évaporateur et le détendeur se choisissent définitivement avec les données et logiciels des fabricants. Réglementation des fluides : à vérifier selon le pays d\'installation.',
       'Fluid properties: CoolProp library (R449A, R448A and R452A at nominal composition). Efficiencies, displacement and power input are estimates: compressor, evaporator and expansion valve must be finally selected with the manufacturers\' data and software. Refrigerant regulations: check according to the country of installation.') + '</div>';
-    return h;
+    return h + renderCharge(r, p, c, o);
   }
 
 
@@ -10961,9 +11064,11 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       if (o.risS) { body += '<p class="n">' + T('Colonne montante d\'aspiration : ', 'Suction riser: ') + esc(o.risS.lab) + ' (' + f1(o.risS.v50) + ' m/s ' + T('à 50 % de charge', 'at 50 % load') + ').</p>'; }
       if (o.risD) { body += '<p class="n">' + T('Colonne montante de refoulement : ', 'Discharge riser: ') + esc(o.risD.lab) + ' (' + f1(o.risD.v50) + ' m/s ' + T('à 50 % de charge', 'at 50 % load') + ').</p>'; }
     }
+    // Charge et securite
+    if (!o.err) { body += h2('4. Charge en fluide et sécurité (EN 378)', '4. Refrigerant charge and safety (EN 378)'); body += chargePrint(c, o, r, kv); }
     // Conservation
     var m = mt($('cr_prod').value);
-    body += h2('4. Conservation du produit', '4. Product storage');
+    body += h2('5. Conservation du produit', '5. Product storage');
     body += '<p class="n"><b>' + esc(T(pr.fr, pr.en)) + '</b> : ' + pr.Tst + ' °C, ' + pr.RH + ' % HR — ' + T('durée', 'life') + ' : ' + esc(T(pr.lifeFr, pr.lifeEn)) + '.</p>';
     if (m.nf) { body += '<p class="n">' + esc(T(m.nf, m.ne)) + '</p>'; }
     var sid = $('cr_prod2') ? $('cr_prod2').value : '';
@@ -10975,9 +11080,9 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     // Alertes
     var al = [];
     r.warn.forEach(function (w) { al.push(T(WARN[w][0], WARN[w][1])); });
-    if (!o.err) { o.warn.forEach(function (w) { al.push(T(WARN3[w][0], WARN3[w][1])); }); }
+    if (!o.err) { o.warn.forEach(function (w) { al.push(T(WARN3[w][0], WARN3[w][1])); }); chargeCalc(c, o, r.V, readChargeInputs()).warn.forEach(function (w) { al.push(T(WARN3[w][0], WARN3[w][1])); }); }
     if (m.tmin !== null && p.Tr < m.tmin) { al.push(T('La température de la chambre est inférieure à la limite de dommages du froid du produit (' + m.tmin + ' °C).', 'Room temperature is below the product chilling-injury limit (' + m.tmin + ' °C).')); }
-    body += h2('5. Points d\'attention', '5. Points of attention');
+    body += h2('6. Points d\'attention', '6. Points of attention');
     body += al.length ? al.map(function (a) { return '<p class="n w">&#9888; ' + esc(a) + '</p>'; }).join('') : '<p class="n">' + T('Aucune alerte.', 'No alerts.') + '</p>';
     body += '<p class="disc">' + T(
       'Note de dimensionnement indicative établie avec Thermosys. Méthode : bilan sur 24 h ramené au temps de marche ; chaleurs massiques par les formules de Siebel ; propriétés des fluides par la bibliothèque CoolProp. Les rendements, les taux de respiration, les renouvellements d\'air et les caractéristiques des produits sont des valeurs indicatives à confirmer par le concepteur ; le choix définitif du compresseur, de l\'évaporateur et du détendeur se fait avec les données des fabricants. Elle ne remplace pas la note de calcul d\'un bureau d\'études ni la réglementation locale.',
