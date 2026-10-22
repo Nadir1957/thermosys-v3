@@ -11572,7 +11572,37 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     out.faceA = F.q / 3600 / Math.max(0.5, c.vFace);
     return out;
   }
-  var ATE = { pAlt: pAlt, psat: psat, sRH: sRH, sW: sW, sH: sH, wSat: wSat, mix: mix, recovery: recovery, treat: treat, solve: solve, flowsOf: flowsOf, fansOf: fansOf, loadsOf: loadsOf,
+
+  /* ---------- cascade de pressions (chaine lineaire : local le plus propre -> ... -> exterieur / non classe) ----------
+     Fuites par orifice : Q = Cd x A x racine(2 |dP| / rho), Cd = 0,6 (hypothese). Pressions relatives a l'exterieur (0 Pa).
+     Bilan de chaque local : soufflage S + entree depuis le local precedent = sortie vers le local suivant + fuite des parois + extraction totale. */
+  var RANK = { gA: 0, iso5: 0, gB: 1, iso6: 1, iso7: 2, gC: 2, iso8: 3, gD: 3, iso9: 4, none: 5 };
+  function cascade(cfg) {
+    var rho = cfg.rho, Cd = 0.6, N = cfg.rooms.length, out = { rooms: [], links: [], warn: [], fresh: 0, supply: 0 }, i;
+    var orf = function (A, dP) { return (dP >= 0 ? 1 : -1) * Cd * Math.max(0, A) * Math.sqrt(2 * Math.abs(dP) / rho); };
+    for (i = 0; i < N; i++) {
+      var r = cfg.rooms[i], nextP = i < N - 1 ? cfg.rooms[i + 1].P : 0, dP = r.P - nextP;
+      out.links.push({ from: i, to: i < N - 1 ? i + 1 : -1, dP: dP, Q: orf(r.door, dP) });
+    }
+    for (i = 0; i < N; i++) {
+      var rm = cfg.rooms[i], V = rm.area * rm.h, S = rm.ach * V / 3600, inflow = i > 0 ? out.links[i - 1].Q : 0, wallQ = orf(rm.wall, rm.P);
+      var netOut = out.links[i].Q - inflow + wallQ, Rt = S - netOut, exh = Math.max(0, rm.exh) / 3600;
+      out.rooms.push({ V: V, S: S, netOut: netOut, wall: wallQ, R: Rt, exh: exh, ret: Rt - exh, P: rm.P });
+      out.fresh += wallQ + exh; out.supply += S;
+      if (Rt - exh < -1e-9) { out.warn.push('cEx'); }
+    }
+    out.fresh = Math.max(0, out.fresh + out.links[N - 1].Q);
+    for (i = 0; i < N - 1; i++) {
+      var ra = RANK[cfg.rooms[i].cls], rb = RANK[cfg.rooms[i + 1].cls], d = out.links[i].dP;
+      if (ra < rb) { if (d <= 0) { out.warn.push('cInv'); } else if (d < 10) { out.warn.push('cDp'); } }
+      else if (ra > rb) { out.warn.push('cOrd'); }
+    }
+    var last = cfg.rooms[N - 1];
+    if (RANK[last.cls] < RANK.none && last.P < 12.5) { out.warn.push('cFda'); }
+    var seen = {}; out.warn = out.warn.filter(function (k) { if (seen[k]) { return false; } seen[k] = 1; return true; });
+    return out;
+  }
+  var ATE = { cascade: cascade, RANK: RANK, pAlt: pAlt, psat: psat, sRH: sRH, sW: sW, sH: sH, wSat: wSat, mix: mix, recovery: recovery, treat: treat, solve: solve, flowsOf: flowsOf, fansOf: fansOf, loadsOf: loadsOf,
     ISO: ISO, GMP: GMP, HEPA: HEPA, HCL: HCL, EN16798: EN16798, CLS: CLS, sfpClass: sfpClass, freshEN16798: freshEN16798, cpa: cpa, dewOfPv: dewOfPv };
 
   window.AT_ENGINE = ATE;
@@ -11608,6 +11638,31 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
   var HEPAS = [{ id: 'none', fr: 'Aucun (confort)', en: 'None (comfort)' }, { id: 'E12', fr: 'EN 1822 E12', en: 'EN 1822 E12' }, { id: 'H13', fr: 'EN 1822 H13', en: 'EN 1822 H13' }, { id: 'H14', fr: 'EN 1822 H14', en: 'EN 1822 H14' }];
   var HSRC = [{ id: 'hw', fr: 'Eau chaude / chaudière', en: 'Hot water / boiler' }, { id: 'elec', fr: 'Résistances électriques', en: 'Electric heater' }, { id: 'gas', fr: 'Gaz (rooftop)', en: 'Gas (rooftop)' }];
   var CLSOPT = Object.keys(CLS).map(function (k) { return { id: k, fr: CLS[k].fr, en: CLS[k].en }; });
+
+
+  var CDEF = [['Salle de production', 'gB', 50, 40, 3, 50, 0.005, 0, 0.015], ['Sas personnel', 'gC', 37.5, 6, 3, 30, 0.005, 0, 0.015], ['Couloir propre', 'gC', 25, 15, 3, 30, 0.005, 0, 0.015], ['Entrée (grade D)', 'gD', 12.5, 20, 3, 20, 0.005, 0, 0.02], ['Local 5', 'gD', 12.5, 20, 3, 20, 0.005, 0, 0.02], ['Local 6', 'gD', 12.5, 20, 3, 20, 0.005, 0, 0.02]];
+  function roomBox(i) {
+    var d = CDEF[i - 1], id = function (k) { return 'at_r' + i + '_' + k; };
+    var ni = function (k, v, st) { return '<input class="fi" id="' + id(k) + '" type="number" value="' + v + '" step="' + st + '" style="max-width:96px" oninput="atDeb()">'; };
+    return '<details class="atsec" id="at_rbox' + i + '"' + (i <= 4 ? '' : ' style="display:none"') + '><summary data-cfr="Local ' + i + '" data-cen="Room ' + i + '">Local ' + i + '</summary>' +
+      row('Nom :', 'Name:', '<input class="fi" id="' + id('nm') + '" type="text" maxlength="40" value="' + q(d[0]) + '" style="max-width:100%;flex:1 1 55%" oninput="atDeb()">') +
+      row('Classe :', 'Class:', '<select class="fsel" id="' + id('cls') + '" onchange="atRoomCls(' + i + ')" style="max-width:100%">' + CLSOPT.map(function (o) { return '<option value="' + o.id + '"' + (o.id === d[1] ? ' selected' : '') + ' data-cfr="' + q(o.fr) + '" data-cen="' + q(o.en) + '">' + o.fr + '</option>'; }).join('') + '</select>') +
+      row('Pression par rapport à l\'extérieur (Pa) :', 'Pressure relative to outside (Pa):', ni('P', d[2], '0.5')) +
+      row('Surface (m²) :', 'Area (m²):', ni('area', d[3], '0.5')) + row('Hauteur (m) :', 'Height (m):', ni('h', d[4], '0.1')) +
+      row('Renouvellement d\'air (vol/h) :', 'Air changes (ACH):', ni('ach', d[5], '1')) +
+      row('Fuite des parois vers l\'extérieur (m²) :', 'Wall leakage to outside (m²):', ni('wall', d[6], '0.001')) +
+      row('Extraction dédiée (m³/h) :', 'Dedicated exhaust (m³/h):', ni('exh', d[7], '10')) +
+      row(i < 6 ? 'Surface de fuite de la porte vers le local suivant (m²) :' : 'Surface de fuite de la porte vers l\'extérieur (m²) :', i < 6 ? 'Door leakage area to next room (m²):' : 'Door leakage area to outside (m²):', ni('door', d[8], '0.001')) + '</details>';
+  }
+  function cascSection() {
+    var boxes = ''; for (var i = 1; i <= 6; i++) { boxes += roomBox(i); }
+    return sec('7. CASCADE DE PRESSIONS (LOCAUX ET SAS, PHARMACEUTIQUE)', '7. PRESSURE CASCADE (ROOMS AND AIRLOCKS, PHARMACEUTICAL)',
+      row('Calculer la cascade :', 'Calculate the cascade:', sel('casc', [{ id: 'no', fr: 'Non', en: 'No' }, { id: 'yes', fr: 'Oui', en: 'Yes' }], 'no')) +
+      row('Nombre de locaux dans la chaîne (2 à 6) :', 'Number of rooms in the chain (2 to 6):', '<input class="fi" id="at_cN" type="number" value="4" step="1" min="2" max="6" style="max-width:96px" oninput="atCascVis()">') +
+      row('Pas de pression entre locaux (Pa) :', 'Pressure step between rooms (Pa):', inp('cStep', 12.5, '0.5')) +
+      '<button class="btn" style="width:100%;margin:4px 0" onclick="atCascAuto()" data-cfr="Répartir les pressions selon le pas" data-cen="Distribute pressures using the step">Répartir les pressions selon le pas</button>' +
+      '<div style="font-size:10px;color:var(--ts);margin-bottom:4px" data-cfr="Classez les locaux du plus propre (local 1) au moins propre ; le dernier local donne sur l\'extérieur ou sur un local non classé. Surfaces de fuite : valeurs indicatives à adapter (porte fermée, passages de gaines)." data-cen="Order rooms from cleanest (room 1) to least clean; the last room opens to the outside or an unclassified room. Leakage areas: indicative values to adapt (closed door, duct penetrations).">Classez les locaux du plus propre (local 1) au moins propre ; le dernier local donne sur l\'extérieur ou sur un local non classé. Surfaces de fuite : valeurs indicatives à adapter (porte fermée, passages de gaines).</div>' + boxes, false);
+  }
 
   function buildPage() {
     var a = sec('1. LOCAL ET MODE DE CALCUL', '1. ROOM AND CALCULATION MODE',
@@ -11668,7 +11723,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       row('Rendement global ventilateur + moteur :', 'Overall fan + motor efficiency:', inp('etaFan', 0.65, '0.01')) +
       row('Moteur dans le flux d\'air :', 'Motor in the airstream:', sel('fanInAir', YN, 'yes')) +
       '<div style="font-size:10px;color:var(--ts)" data-cfr="Pertes de charge, facteur de contact et rendements : valeurs d\'ingénierie indicatives, non issues d\'une norme, à remplacer par les données du constructeur." data-cen="Pressure drops, contact factor and efficiencies: indicative engineering values, not from a standard, to be replaced by manufacturer data.">Pertes de charge, facteur de contact et rendements : valeurs d\'ingénierie indicatives, non issues d\'une norme, à remplacer par les données du constructeur.</div>', false);
-    var g = sec('7. IDENTIFICATION DU PROJET (NOTE IMPRIMÉE)', '7. PROJECT IDENTIFICATION (PRINTED NOTE)',
+    var g = cascSection() + sec('8. IDENTIFICATION DU PROJET (NOTE IMPRIMÉE)', '8. PROJECT IDENTIFICATION (PRINTED NOTE)',
       row('Projet :', 'Project:', '<input class="fi" id="at_proj" type="text" maxlength="80" style="max-width:100%;flex:1 1 55%">') +
       row('Client :', 'Client:', '<input class="fi" id="at_cli" type="text" maxlength="80" style="max-width:100%;flex:1 1 55%">') +
       row('Site :', 'Site:', '<input class="fi" id="at_site" type="text" maxlength="80" style="max-width:100%;flex:1 1 55%">') +
@@ -11761,6 +11816,11 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     udNone: ['Classe à flux unidirectionnel : saisissez la surface et la vitesse du flux unidirectionnel (section 4), le débit en dépend.', 'Unidirectional-flow class: enter the unidirectional area and velocity (section 4), the airflow depends on it.'],
     dev: ['Le local n\'atteint pas exactement la consigne avec ces choix (voir l\'écart d\'humidité ou de T° dans les points).', 'The room does not reach the setpoint exactly with these choices (see the humidity or temperature deviation in the state points).'],
     sfp: ['Puissance spécifique des ventilateurs élevée (classe 5 ou plus) : normale avec des filtres HEPA, sinon revoyez les pertes de charge.', 'High specific fan power (class 5 or above): normal with HEPA filters, otherwise review pressure drops.'],
+    cEx: ['Extraction insuffisante dans la cascade : le soufflage d\'un local ne couvre pas les fuites vers les locaux voisins et l\'extraction dédiée. Augmentez le renouvellement d\'air ou réduisez les surfaces de fuite.', 'Insufficient extraction in the cascade: a room\'s supply does not cover leakage to neighbouring rooms and dedicated exhaust. Increase air changes or reduce leakage areas.'],
+    cInv: ['Cascade inversée : un local plus propre est à une pression inférieure ou égale à celle d\'un local moins propre. L\'air doit aller du plus propre vers le moins propre.', 'Inverted cascade: a cleaner room is at a pressure lower than or equal to a less clean room. Air must flow from the cleaner to the less clean.'],
+    cDp: ['Écart de pression inférieur à 10 Pa entre locaux de classes différentes : l\'Annexe 1 (§4.14) donne 10 Pa comme valeur indicative minimale (FDA : 10 à 15 Pa).', 'Pressure difference below 10 Pa between rooms of different classes: Annex 1 (§4.14) gives 10 Pa as the minimum guidance value (FDA: 10 to 15 Pa).'],
+    cOrd: ['Ordre des locaux : un local plus propre suit un local moins propre dans la chaîne. Classez du plus propre au moins propre.', 'Room order: a cleaner room follows a less clean one in the chain. Order from cleanest to least clean.'],
+    cFda: ['Dernier local classé : le guide FDA recommande au moins 12,5 Pa de surpression par rapport à un local non classé.', 'Last room is classified: the FDA guide recommends at least 12.5 Pa overpressure relative to an unclassified room.'],
     recircOff: ['Recyclage non autorisé : 100 % air neuf, la puissance de traitement est très supérieure (voir la comparaison).', 'Recirculation not allowed: 100 % fresh air, treatment load is much higher (see the comparison).']
   };
   var NOTE = ['Pré-dimensionnement établi avec Thermosys. Méthode : bilan à débit d\'air sec constant, psychrométrie ASHRAE (pression selon l\'altitude), batterie froide par droite M-ADP avec facteur de contact, humidification vapeur isotherme. Les valeurs normatives (ISO 14644-1, Annexe 1 des BPF, EN 1822, EN 16798-1, EN 13053, guide FDA, OMS) sont reprises de sources publiques ; les renouvellements d\'air par classe, les pertes de charge, le facteur de contact, les chaleurs par personne et les rendements sont des valeurs d\'ingénierie indicatives et modifiables, non imposées par une norme. Ce document ne remplace ni la sélection du constructeur ni la qualification (IQ/OQ/PQ, comptage de particules, essais d\'étanchéité des filtres).',
@@ -11788,6 +11848,42 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     return '<div class="ph" style="margin-top:12px">' + T('SOURCES ET NIVEAU DE CONFIANCE', 'SOURCES AND CONFIDENCE LEVEL') + '</div><table style="width:100%;border-collapse:collapse;font-size:10px">' +
       srcRows().map(function (r, i) { return '<tr' + (i ? ' style="border-top:1px solid var(--border)"' : '') + '><td style="padding:3px 4px 3px 0;vertical-align:top"><b>' + r[0] + '</b></td><td style="padding:3px 4px;vertical-align:top">' + r[1] + '</td><td style="padding:3px 0 3px 4px;vertical-align:top;color:var(--ts)">' + r[2] + '</td></tr>'; }).join('') + '</table>';
   }
+
+  function readCasc() {
+    var N = Math.max(2, Math.min(6, Math.round(num('at_cN', 4)))), rooms = [], i;
+    for (i = 1; i <= N; i++) {
+      var g = function (k, d) { return num('at_r' + i + '_' + k, d); };
+      rooms.push({ nm: txt('at_r' + i + '_nm') || ('Local ' + i), cls: $('at_r' + i + '_cls').value, P: g('P', 0), area: Math.max(1, g('area', 10)), h: Math.max(2, g('h', 3)), ach: Math.max(0, g('ach', 0)), wall: Math.max(0, g('wall', 0)), exh: Math.max(0, g('exh', 0)), door: Math.max(0, g('door', 0)) });
+    }
+    return { on: $('at_casc').value === 'yes', N: N, rooms: rooms };
+  }
+  function cascTables(cc, r, c, o, pr) {
+    var cls = pr ? 'tb' : '', al = pr ? '' : ' style="text-align:right"', bd = pr ? '' : ' style="border-top:1px solid var(--border)"';
+    var t1 = '<table class="' + cls + '" style="width:100%;border-collapse:collapse;font-size:' + (pr ? '8.5pt' : '10px') + '"><tr><th style="text-align:left">' + T('Local', 'Room') + '</th><th' + al + '>' + T('Classe', 'Class') + '</th><th' + al + '>Pa</th><th' + al + '>m³</th><th' + al + '>' + T('Soufflage m³/h', 'Supply m³/h') + '</th><th' + al + '>' + T('Fuite nette m³/h', 'Net leak m³/h') + '</th><th' + al + '>' + T('Extraction m³/h', 'Extract m³/h') + '</th></tr>' +
+      cc.rooms.map(function (rm, i) { var x = r.rooms[i], cl = CLS[rm.cls]; return '<tr' + bd + '><td>' + (i + 1) + '. ' + esc(rm.nm) + '</td><td' + al + '>' + T(cl.fr, cl.en).replace(/ \(.*\)/, '') + '</td><td' + al + '>' + f1(rm.P) + '</td><td' + al + '>' + f0(x.V) + '</td><td' + al + '>' + f0(x.S * 3600) + '</td><td' + al + '>' + f0(x.netOut * 3600) + '</td><td' + al + '>' + f0(x.R * 3600) + '</td></tr>'; }).join('') + '</table>';
+    var t2 = '<table class="' + cls + '" style="width:100%;border-collapse:collapse;font-size:' + (pr ? '8.5pt' : '10px') + ';margin-top:6px"><tr><th style="text-align:left">' + T('Liaison (porte ou sas)', 'Link (door or airlock)') + '</th><th' + al + '>ΔP Pa</th><th' + al + '>' + T('Débit m³/h', 'Flow m³/h') + '</th></tr>' +
+      r.links.map(function (l, i) { var a = esc(cc.rooms[i].nm), b = l.to >= 0 ? esc(cc.rooms[l.to].nm) : T('Extérieur / local non classé', 'Outside / unclassified room'); return '<tr' + bd + '><td>' + a + ' → ' + b + '</td><td' + al + '>' + f1(l.dP) + '</td><td' + al + '>' + f0(l.Q * 3600) + '</td></tr>'; }).join('') + '</table>';
+    return t1 + t2;
+  }
+  function cascSummary(r, c, o) {
+    var F = o.F, P = F.P, Es = ATE.sRH(c.Tsum, c.RHsum, P), Ew = ATE.sRH(c.Twin, c.RHwin, P), m = r.fresh / F.L.v;
+    return { fresh: r.fresh * 3600, pct: r.supply > 0 ? r.fresh / r.supply * 100 : 0, cool: m * (Es.h - F.L.h), heat: m * (F.L.h - Ew.h) };
+  }
+  function cascBlock(c, o) {
+    var cc = readCasc(); if (!cc.on) { return ''; }
+    var r = ATE.cascade({ rho: 1 / o.F.L.v, rooms: cc.rooms }), sm = cascSummary(r, c, o);
+    var h = '<div class="ph" style="margin-top:12px">' + T('CASCADE DE PRESSIONS (LOCAUX ET SAS)', 'PRESSURE CASCADE (ROOMS AND AIRLOCKS)') + '</div>';
+    if (r.warn.length) { h += '<div style="font-size:11px;line-height:1.5;margin-bottom:6px">' + r.warn.map(function (k) { return '<div style="color:var(--wn);margin:2px 0">⚠ ' + T(WARN[k][0], WARN[k][1]) + '</div>'; }).join('') + '</div>'; }
+    h += cascTables(cc, r, c, o, false);
+    h += '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:6px">' +
+      '<tr><td><b>' + T('Air neuf de compensation de la cascade', 'Cascade make-up fresh air') + '</b></td><td style="text-align:right"><b>' + f0(sm.fresh) + ' m³/h</b> (' + f0(sm.pct) + ' % ' + T('du soufflage total', 'of total supply') + ')</td></tr>' +
+      '<tr style="border-top:1px solid var(--border)"><td>' + T('Puissance pour traiter cet air neuf (ordre de grandeur, sans récupération) : été / hiver', 'Power to treat this fresh air (order of magnitude, no recovery): summer / winter') + '</td><td style="text-align:right">' + f1(sm.cool) + ' / ' + f1(sm.heat) + ' kW</td></tr></table>';
+    h += '<div style="font-size:10px;color:var(--ts);margin-top:5px;line-height:1.5">' + T('Fuites calculées par la formule d\'orifice (coefficient 0,6 supposé) avec des surfaces de fuite indicatives. Cette cascade est indépendante du calcul du local principal : reportez l\'air neuf de compensation dans « Extraction locale à compenser » (section 4) pour l\'intégrer au traitement. Les portes ouvertes (passages) ne sont pas modélisées : le sens des flux doit être vérifié en qualification.', 'Leaks computed with the orifice equation (0.6 coefficient assumed) using indicative leakage areas. This cascade is independent of the main room calculation: enter the make-up fresh air in "Local exhaust to compensate" (section 4) to include it in the treatment. Open doors (traffic) are not modelled: airflow direction must be verified during qualification.') + '</div>';
+    return h;
+  }
+  window.atCascVis = function () { var n = Math.max(2, Math.min(6, Math.round(num('at_cN', 4)))); for (var i = 1; i <= 6; i++) { var b = $('at_rbox' + i); if (b) { b.style.display = i <= n ? '' : 'none'; } } window.atDeb(); };
+  window.atCascAuto = function () { var n = Math.max(2, Math.min(6, Math.round(num('at_cN', 4)))), st = num('at_cStep', 12.5); for (var i = 1; i <= n; i++) { setV('r' + i + '_P', st * (n - i + 1)); } window.atDeb(); };
+  window.atRoomCls = function (i) { var cl = CLS[$('at_r' + i + '_cls').value]; if (cl) { setV('r' + i + '_ach', cl.ach); } window.atDeb(); };
   var _last = null;
   function stRows(res, F) {
     var rows = [['E', T('Air extérieur', 'Outside air'), res.E], ['R', T('Après récupération', 'After recovery'), res.R], ['M', T('Mélange air neuf + recyclé', 'Mixed fresh + recirculated'), res.M]];
@@ -11884,7 +11980,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       '<tr style="border-top:1px solid var(--border)"><td>' + T('Puissance spécifique (SFP)', 'Specific fan power (SFP)') + '</td><td style="text-align:right">' + f0(FA.sfp) + ' W/(m³/s) — ' + T('classe', 'class') + ' SFP ' + FA.sfpCl + '</td></tr>' +
       '<tr style="border-top:1px solid var(--border)"><td>' + T('Échauffement dû au ventilateur', 'Fan heat gain') + '</td><td style="text-align:right">' + f2(FA.dT) + ' K</td></tr></table>';
     // pharma
-    if (c.pharma) { h += pharmaBlock(c, o); }
+    if (c.pharma) { h += pharmaBlock(c, o) + cascBlock(c, o); }
     else { h += comfortBlock(c, o); }
     // comparaison
     h += '<div class="ph" style="margin-top:12px">' + T('COMPARAISON DES CHOIX (PUISSANCES DE POINTE)', 'COMPARISON OF CHOICES (PEAK LOADS)') + '</div>' + compTable(c, o);
@@ -11962,6 +12058,8 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       Rw.push([T('Surpression / fuite', 'Overpressure / leakage'), f1(c.pDp) + ' Pa / ' + f0(F.leakVol * 3600) + ' m³/h']);
       body += h2(n + '. Contrôles salle propre', n + '. Clean room checks') + kv(Rw); n++;
     }
+    if (c.pharma) { var cc9 = readCasc(); if (cc9.on) { var r9 = ATE.cascade({ rho: 1 / F.L.v, rooms: cc9.rooms }), s9 = cascSummary(r9, c, o);
+      body += h2(n + '. Cascade de pressions (locaux et sas)', n + '. Pressure cascade (rooms and airlocks)') + cascTables(cc9, r9, c, o, true) + kv([[T('Air neuf de compensation', 'Make-up fresh air'), f0(s9.fresh) + ' m³/h (' + f0(s9.pct) + ' %)'], [T('Traitement de cet air neuf, été / hiver (sans récupération)', 'Treating this fresh air, summer / winter (no recovery)'), f1(s9.cool) + ' / ' + f1(s9.heat) + ' kW']]) + r9.warn.map(function (k) { return '<p class="n w">⚠ ' + T(WARN[k][0], WARN[k][1]) + '</p>'; }).join(''); n++; } }
     var w = checks(c, o);
     body += h2(n + '. Comparaison des choix', n + '. Comparison of choices') + compTable(c, o).replace(/<table style="[^"]*">/, '<table class="tb">').replace(/ style="[^"]*"/g, ''); n++;
     if (w.length) { body += h2(n + '. Points d\'attention', n + '. Points to check') + w.map(function (k) { return '<p class="n w">⚠ ' + T(WARN[k][0], WARN[k][1]) + '</p>'; }).join(''); n++; }
