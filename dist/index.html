@@ -14559,6 +14559,83 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
     tmp: ['Température hors de la plage des tables de correction : le facteur est limité à la valeur extrême.', 'Temperature outside the correction-table range: the factor is limited to the extreme value.'],
     ep: ['Chemin perforé ou échelle : le calcul utilise la colonne C (valeurs prudentes).', 'Perforated tray or ladder: the calculation uses column C (conservative values).']
   };
+  /* ---------- schema unifilaire (SVG) ---------- */
+  var PAL_SCR = { ink: 'var(--tp)', mut: 'var(--ts)', ok: '#3f9d55', bad: 'var(--er)', bg: 'var(--bg2)', acc: 'var(--ac)' };
+  var PAL_PRT = { ink: '#1a3a5a', mut: '#5a6b7c', ok: '#2e7d32', bad: '#c62828', bg: '#ffffff', acc: '#1a3a5a' };
+  function nm(s) { return esc(String(s == null ? '' : s).replace(/(\d)(?=\s*[A-Za-zμ°%²³])/g, '$1\u200B')); }
+  function clip(s, n) { s = String(s == null ? '' : s); return s.length > n ? s.slice(0, n - 1) + '…' : s; }
+  var STDI = [6, 10, 13, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600];
+  function stdIn(i) { for (var k = 0; k < STDI.length; k++) { if (STDI[k] >= i) { return STDI[k]; } } return Math.ceil(i); }
+  function breakerSym(x, y, P) {
+    /* disjoncteur : conducteur interrompu, lame oblique et croix cote amont */
+    return '<line x1="' + x + '" y1="' + y + '" x2="' + (x + 10) + '" y2="' + (y + 18) + '" stroke="' + P.ink + '" stroke-width="2" stroke-linecap="round"/>' +
+      '<line x1="' + (x - 4.5) + '" y1="' + (y - 4.5) + '" x2="' + (x + 4.5) + '" y2="' + (y + 4.5) + '" stroke="' + P.ink + '" stroke-width="1.6" stroke-linecap="round"/>' +
+      '<line x1="' + (x + 4.5) + '" y1="' + (y - 4.5) + '" x2="' + (x - 4.5) + '" y2="' + (y + 4.5) + '" stroke="' + P.ink + '" stroke-width="1.6" stroke-linecap="round"/>' +
+      '<circle cx="' + x + '" cy="' + (y + 18) + '" r="1.8" fill="' + P.ink + '"/>';
+  }
+  function ticks(x, y, n, P) {
+    var s = '', k, yy;
+    for (k = 0; k < n; k++) { yy = y + (k - (n - 1) / 2) * 5; s += '<line x1="' + (x - 6) + '" y1="' + (yy + 4) + '" x2="' + (x + 6) + '" y2="' + (yy - 4) + '" stroke="' + P.ink + '" stroke-width="1.3" stroke-linecap="round"/>'; }
+    return s;
+  }
+  function loadSym(x, y, c, P) {
+    if (c.load === 'motor') {
+      return '<circle cx="' + x + '" cy="' + (y + 22) + '" r="22" fill="' + P.bg + '" stroke="' + P.ink + '" stroke-width="2"/>' +
+        '<text x="' + x + '" y="' + (y + 22) + '" text-anchor="middle" font-size="17" font-weight="700" fill="' + P.ink + '">M</text>' +
+        '<text x="' + x + '" y="' + (y + 35) + '" text-anchor="middle" font-size="9" fill="' + P.mut + '">' + (+c.ph === 3 ? '3~' : '1~') + '</text>';
+    }
+    return '<rect x="' + (x - 26) + '" y="' + (y + 2) + '" width="52" height="40" rx="4" fill="' + P.bg + '" stroke="' + P.ink + '" stroke-width="2"/>' +
+      '<polyline points="' + (x - 17) + ',' + (y + 22) + ' ' + (x - 11) + ',' + (y + 22) + ' ' + (x - 8) + ',' + (y + 12) + ' ' + (x - 2) + ',' + (y + 32) + ' ' + (x + 4) + ',' + (y + 12) + ' ' + (x + 8) + ',' + (y + 22) + ' ' + (x + 17) + ',' + (y + 22) + '" fill="none" stroke="' + P.ink + '" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>';
+  }
+  function unifilar(R, opt) {
+    opt = opt || {}; var P = opt.print ? PAL_PRT : PAL_SCR, per = opt.per || 4, ks = Math.max(0.1, Math.min(1, opt.ks || 0.8)), cur = opt.cur, i, out = [];
+    var itot = R.reduce(function (s, x) { return s + x.o.Ib; }, 0), iks = itot * ks, r0 = R[0], ph0 = +r0.e.ph, U0 = r0.e.U, Iscmax = Math.max.apply(null, R.map(function (x) { return x.c.Isc; }));
+    var colW = opt.print ? 192 : 216, pad = opt.print ? 64 : 84, nCh = Math.ceil(R.length / per), ch;
+    for (ch = 0; ch < nCh; ch++) {
+      var part = R.slice(ch * per, (ch + 1) * per), n = part.length, first = ch === 0, last = ch === nCh - 1;
+      var W = Math.max(2 * pad + n * colW, 440), off = (W - n * colW) / 2, yb = first ? 124 : 46, H = yb + 270;
+      var cx0 = off + colW / 2, cxN = off + (n - 0.5) * colW, cx = (cx0 + cxN) / 2, x0 = cx0 - 44, xN = cxN + 44, s = '';
+      s += '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="max-width:' + W + 'px;min-width:' + Math.min(W, 560) + 'px;display:block;margin:0 auto' + (opt.print ? ';page-break-inside:avoid;break-inside:avoid' : '') + '" font-family="Arial,Helvetica,sans-serif" role="img" aria-label="' + q(T('Schéma unifilaire', 'Single-line diagram')) + '">';
+      if (first) {
+        s += '<line x1="' + cx + '" y1="50" x2="' + cx + '" y2="64" stroke="' + P.ink + '" stroke-width="2.4"/>';
+        s += '<circle cx="' + cx + '" cy="34" r="17" fill="' + P.bg + '" stroke="' + P.ink + '" stroke-width="2"/><path d="M' + (cx - 10) + ' 34 q 5 -11 10 0 t 10 0" fill="none" stroke="' + P.ink + '" stroke-width="1.8"/>';
+        s += '<text x="' + (cx + 26) + '" y="26" font-size="11" font-weight="700" fill="' + P.ink + '">' + T('Arrivée réseau', 'Mains supply') + '</text><text x="' + (cx + 26) + '" y="39" font-size="10" fill="' + P.mut + '">' + f0(U0) + ' V · ' + (ph0 === 3 ? '3~' : '1~') + ' · ' + T('Icc max ', 'Isc max ') + fx(Iscmax, 1) + ' kA</text>';
+        s += breakerSym(cx, 64, P);
+        s += '<line x1="' + cx + '" y1="82" x2="' + cx + '" y2="' + yb + '" stroke="' + P.ink + '" stroke-width="2.4"/>';
+        s += '<text x="' + (cx - 14) + '" y="76" text-anchor="end" font-size="11" font-weight="700" fill="' + P.ink + '">Q0</text><text x="' + (cx + 18) + '" y="72" font-size="10" font-weight="700" fill="' + P.ink + '">' + T('Disjoncteur général', 'Main breaker') + '</text><text x="' + (cx + 18) + '" y="85" font-size="9.5" fill="' + P.mut + '">Σ Ib × ' + fx(ks, 2).replace(/0$/, '') + ' ≈ ' + f0(iks) + ' A → In ≥ ' + stdIn(iks) + ' A</text>';
+      } else {
+        s += '<path d="M' + (x0 - 40) + ' ' + yb + ' h34 m-8 -6 l8 6 l-8 6" fill="none" stroke="' + P.mut + '" stroke-width="1.6"/><text x="' + (x0 - 40) + '" y="' + (yb - 12) + '" font-size="9.5" fill="' + P.mut + '">' + T('suite du tableau', 'switchboard continued') + '</text><line x1="' + (x0 - 6) + '" y1="' + yb + '" x2="' + x0 + '" y2="' + yb + '" stroke="' + P.ink + '" stroke-width="2.4"/>';
+      }
+      s += '<rect x="' + x0 + '" y="' + (yb - 3.5) + '" width="' + (xN - x0) + '" height="7" rx="3.5" fill="' + P.ink + '"/>';
+      s += '<text x="' + (x0 - 8) + '" y="' + (yb + 4) + '" text-anchor="end" font-size="10.5" font-weight="700" fill="' + P.ink + '" style="' + (first ? '' : 'display:none') + '">' + T('Tableau', 'Switchboard') + '</text>';
+      if (!last) { s += '<path d="M' + (xN + 6) + ' ' + yb + ' h34 m-8 -6 l8 6 l-8 6" fill="none" stroke="' + P.mut + '" stroke-width="1.6"/><text x="' + (xN + 6) + '" y="' + (yb - 12) + '" font-size="9.5" fill="' + P.mut + '">' + T('suite', 'continued') + '</text>'; }
+      part.forEach(function (x, j) {
+        var idx = ch * per + j, c = x.c, o = x.o, k = o.checks, okAll = k.amp && k.drop && k.sc && k.mag && k.icu && !o.missing, X = off + (j + 0.5) * colW, yq = yb + 26, ph = +c.ph;
+        var kwv = x.e.mode === 'P' ? x.e.P : (ph === 3 ? Math.sqrt(3) * x.e.U * o.Ib * x.e.cos / 1000 : x.e.U * o.Ib * x.e.cos / 1000);
+        var g = '';
+        if (!opt.print && idx === cur) { g += '<rect x="' + (X - colW / 2 + 8) + '" y="' + (yb + 12) + '" width="' + (colW - 16) + '" height="' + (H - yb - 18) + '" rx="10" fill="none" stroke="' + P.acc + '" stroke-width="1.6" stroke-dasharray="5 4"/>'; }
+        g += '<line x1="' + X + '" y1="' + yb + '" x2="' + X + '" y2="' + yq + '" stroke="' + P.ink + '" stroke-width="2.4"/><circle cx="' + X + '" cy="' + yb + '" r="4.5" fill="' + P.ink + '"/>';
+        g += breakerSym(X, yq, P);
+        g += '<line x1="' + X + '" y1="' + (yq + 18) + '" x2="' + X + '" y2="' + (yb + 150) + '" stroke="' + P.ink + '" stroke-width="2.4"/>';
+        g += ticks(X, yb + 60, ph === 3 ? 3 : 2, P);
+        g += '<text x="' + (X - 14) + '" y="' + (yq + 12) + '" text-anchor="end" font-size="11" font-weight="700" fill="' + P.ink + '">Q' + (idx + 1) + '</text>';
+        g += '<text x="' + (X + 18) + '" y="' + (yq + 8) + '" font-size="11" font-weight="700" fill="' + P.ink + '">In ' + f0(o.In) + ' A · ' + (c.curve === 'adj' ? T('régl.', 'adj.') : T('courbe ', 'curve ') + c.curve) + '</text><text x="' + (X + 18) + '" y="' + (yq + 21) + '" font-size="9.5" fill="' + P.mut + '">Icu ' + fx(c.Icu, 0) + ' kA</text>';
+        g += '<text x="' + (X + 14) + '" y="' + (yb + 80) + '" font-size="10.5" font-weight="700" fill="' + P.ink + '">' + (o.missing ? '—' : fx(o.S, o.S % 1 ? 1 : 0)) + ' mm²</text>' +
+          '<text x="' + (X + 14) + '" y="' + (yb + 92) + '" font-size="9.5" fill="' + P.ink + '">' + (c.mat === 'Cu' ? 'Cu' : 'Al') + '/' + esc(c.ins) + '</text>' +
+          '<text x="' + (X + 14) + '" y="' + (yb + 104) + '" font-size="9.5" fill="' + P.mut + '">L ' + f0(c.L) + ' m</text>' +
+          '<text x="' + (X + 14) + '" y="' + (yb + 116) + '" font-size="9.5" fill="' + P.mut + '">ΔU ' + fx(o.dPct, 2) + ' %</text>' +
+          '<text x="' + (X + 14) + '" y="' + (yb + 128) + '" font-size="9.5" fill="' + P.mut + '">PE ' + (o.missing ? '—' : fx(o.Spe, o.Spe % 1 ? 1 : 0)) + ' mm²</text>';
+        g += loadSym(X, yb + 150, c, P);
+        g += '<text x="' + X + '" y="' + (yb + 214) + '" text-anchor="middle" font-size="11.5" font-weight="700" fill="' + P.ink + '">' + nm(clip(c.name, 27)) + '</text>';
+        g += '<text x="' + X + '" y="' + (yb + 228) + '" text-anchor="middle" font-size="10" fill="' + P.mut + '">' + fx(kwv, 1) + ' kW · Ib ' + fx(o.Ib, 1) + ' A</text>';
+        g += '<rect x="' + (X - 44) + '" y="' + (yb + 236) + '" width="88" height="17" rx="8.5" fill="' + (okAll ? P.ok : P.bad) + '"/><text x="' + X + '" y="' + (yb + 248) + '" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">' + (okAll ? '✓ ' + T('conforme', 'compliant') : '✕ ' + T('non conforme', 'non-compliant')) + '</text>';
+        s += opt.print ? '<g>' + g + '</g>' : '<g style="cursor:pointer" onclick="elSel(' + idx + ')">' + g + '</g>';
+      });
+      s += '</svg>'; out.push(s);
+    }
+    return out.join('<div style="height:10px"></div>');
+  }
+
   function warnList(c, o, e) {
     var w = [];
     if (o.missing) { w.push('nofit'); }
@@ -14584,7 +14661,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
     var R = run(), r = R[CUR], c = r.c, o = r.o, e = r.e;
     _last = { R: R, cur: CUR }; var card = function (t, v, s) { return '<div class="cpcard"><div class="cpct">' + t + '</div><div class="cpcv">' + v + '</div><div class="cpcs">' + s + '</div></div>'; };
     var ok = function (b) { return b ? '<span style="color:#59a14f;font-weight:700">✓ ' + T('conforme', 'OK') + '</span>' : '<span style="color:var(--er);font-weight:700">✕ ' + T('non conforme', 'fails') + '</span>'; };
-    var html = '<div class="cph">' + esc(c.name) + '</div><div class="cpcards">' +
+    var html = '<div class="cph">' + nm(c.name) + '</div><div class="cpcards">' +
       card(T('Section du câble', 'Cable cross-section'), f0(o.S * 10) / 10 + ' mm²', (c.mat === 'Cu' ? T('Cuivre', 'Copper') : T('Aluminium', 'Aluminium')) + ' · ' + c.ins + (o.Sauto && o.bind ? ' · ' + T('imposée par : ', 'set by: ') + T(CRIT[o.bind][0], CRIT[o.bind][1]).toLowerCase() : '')) +
       card(T('Protection', 'Protection'), 'In = ' + f0(o.In) + ' A', T('courbe ', 'curve ') + (c.curve === 'adj' ? T('réglable ×', 'adjustable ×') + c.mu : c.curve) + ' · Ib = ' + fx(o.Ib, 1) + ' A') +
       card(T('Chute de tension', 'Voltage drop'), fx(o.dPct, 2) + ' %', fx(o.dV, 1) + ' V · ' + T('admise', 'allowed') + ' ' + fx(o.dUlim, 1) + ' %') +
@@ -14597,11 +14674,12 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
       '<tr><td>' + T('Pouvoir de coupure', 'Breaking capacity') + '</td><td>' + fx(c.Icu, 1) + ' kA</td><td>≥ ' + fx(c.Isc, 1) + ' kA</td><td>' + ok(o.checks.icu) + '</td></tr>' +
       (o.dStart != null ? '<tr><td>' + T('Chute de tension au démarrage', 'Voltage drop at starting') + '</td><td>' + fx(o.dStart, 1) + ' %</td><td>≤ 15 %</td><td>' + ok(o.dStart <= 15) + '</td></tr>' : '') + '</tbody></table>';
     html += '<div style="font-size:10px;color:var(--ts)">' + T('Sections minimales par critère : ', 'Minimum cross-section by criterion: ') + ['amp', 'drop', 'sc', 'mag'].map(function (k) { return T(CRIT[k][0], CRIT[k][1]) + ' ' + (o.cand[k] != null ? o.cand[k] + ' mm²' : '—'); }).join(' · ') + '</div>';
+    html += '<div class="cph">' + T('Schéma unifilaire', 'Single-line diagram') + '</div><div style="overflow-x:auto;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px">' + unifilar(R, { cur: CUR, ks: num('el_ks', 0.8) }) + '</div><div style="font-size:10px;color:var(--ts);margin:3px 0">' + T('Cliquez sur un départ pour le sélectionner. Schéma de principe, à compléter par le schéma d\'exécution.', 'Click a feeder to select it. Principle diagram, to be completed by the execution drawing.') + '</div>';
     var tot = 0, itot = 0;
     html += '<div class="cph">' + T('Tous les circuits', 'All circuits') + '</div><table class="cptb"><thead><tr><th>' + T('Circuit', 'Circuit') + '</th><th>kW</th><th>Ib A</th><th>In A</th><th>mm²</th><th>ΔU %</th><th></th></tr></thead><tbody>' + R.map(function (x, i) {
       var okAll = x.o.checks.amp && x.o.checks.drop && x.o.checks.sc && x.o.checks.mag && x.o.checks.icu && !x.o.missing, kwv = x.e.mode === 'P' ? x.e.P : (x.e.ph === 3 ? Math.sqrt(3) * x.e.U * x.o.Ib * x.e.cos / 1000 : x.e.U * x.o.Ib * x.e.cos / 1000);
       tot += kwv; itot += x.o.Ib;
-      return '<tr style="cursor:pointer;' + (i === CUR ? 'font-weight:700;background:rgba(78,121,167,.15)' : '') + '" onclick="elSel(' + i + ')"><td>' + esc(x.c.name) + '</td><td>' + fx(kwv, 1) + '</td><td>' + fx(x.o.Ib, 1) + '</td><td>' + f0(x.o.In) + '</td><td>' + (x.o.S) + '</td><td>' + fx(x.o.dPct, 2) + '</td><td>' + (okAll ? '✓' : '✕') + '</td></tr>';
+      return '<tr style="cursor:pointer;' + (i === CUR ? 'font-weight:700;background:rgba(78,121,167,.15)' : '') + '" onclick="elSel(' + i + ')"><td>' + nm(x.c.name) + '</td><td>' + fx(kwv, 1) + '</td><td>' + fx(x.o.Ib, 1) + '</td><td>' + f0(x.o.In) + '</td><td>' + (x.o.S) + '</td><td>' + fx(x.o.dPct, 2) + '</td><td>' + (okAll ? '✓' : '✕') + '</td></tr>';
     }).join('') + '</tbody></table>';
     var ks = Math.max(0.1, Math.min(1, num('el_ks', 0.8)));
     html += '<div style="font-size:11px;margin-top:4px">' + T('Puissance installée ', 'Installed power ') + '<b>' + fx(tot, 1) + ' kW</b> · ' + T('somme des courants ', 'sum of currents ') + '<b>' + fx(itot, 0) + ' A</b> · ' + T('courant du tableau avec simultanéité ', 'panel current with simultaneity ') + '<b>' + fx(itot * ks, 0) + ' A</b> (' + T('indicatif, courants additionnés arithmétiquement', 'indicative, currents added arithmetically') + ')</div>';
@@ -14639,10 +14717,11 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
     var h2 = function (a, b) { return '<h2>' + T(a, b) + '</h2>'; }, yes = function (b) { return b ? '✓' : '✕'; };
     var nOk = R.filter(function (x) { var k = x.o.checks; return k.amp && k.drop && k.sc && k.mag && k.icu && !x.o.missing; }).length;
     var body = '<div class="sum"><div class="sb"><div class="st">' + T('Circuits étudiés', 'Circuits studied') + '</div><div class="sv">' + R.length + '</div><div class="ss">' + nOk + ' ' + T('conformes', 'compliant') + '</div></div><div class="sb"><div class="st">' + T('Puissance installée', 'Installed power') + '</div><div class="sv2">' + fx(R.reduce(function (s, x) { return s + (x.e.mode === 'P' ? x.e.P : (x.e.ph === 3 ? Math.sqrt(3) * x.e.U * x.o.Ib * x.e.cos / 1000 : x.e.U * x.o.Ib * x.e.cos / 1000)); }, 0), 1) + ' kW</div><div class="ss">&Sigma; Ib = ' + fx(R.reduce(function (s, x) { return s + x.o.Ib; }, 0), 0) + ' A</div></div><div class="sb"><div class="st">' + T('Simultanéité', 'Simultaneity') + '</div><div class="sv2">' + fx(num('el_ks', 0.8), 2) + '</div><div class="ss">' + T('courant du tableau ≈ ', 'panel current ≈ ') + fx(R.reduce(function (s, x) { return s + x.o.Ib; }, 0) * num('el_ks', 0.8), 0) + ' A</div></div></div>';
-    body += h2('1. Récapitulatif', '1. Summary') + '<table class="tb"><tr><th style="text-align:left">' + T('Circuit', 'Circuit') + '</th><th>Ib A</th><th>In A</th><th>mm²</th><th>PE mm²</th><th>Iz A</th><th>ΔU %</th><th>Icc min A</th><th></th></tr>' + R.map(function (x) { var k = x.o.checks, okAll = k.amp && k.drop && k.sc && k.mag && k.icu && !x.o.missing; return '<tr><td>' + esc(x.c.name) + '</td><td>' + fx(x.o.Ib, 1) + '</td><td>' + f0(x.o.In) + '</td><td>' + x.o.S + '</td><td>' + x.o.Spe + '</td><td>' + (x.o.Iz != null ? fx(x.o.Iz, 0) : '—') + '</td><td>' + fx(x.o.dPct, 2) + '</td><td>' + f0(x.o.IscMin) + '</td><td>' + (okAll ? '✓' : '✕') + '</td></tr>'; }).join('') + '</table>';
+    body += h2('1. Récapitulatif', '1. Summary') + '<table class="tb"><tr><th style="text-align:left">' + T('Circuit', 'Circuit') + '</th><th>Ib A</th><th>In A</th><th>mm²</th><th>PE mm²</th><th>Iz A</th><th>ΔU %</th><th>Icc min A</th><th></th></tr>' + R.map(function (x) { var k = x.o.checks, okAll = k.amp && k.drop && k.sc && k.mag && k.icu && !x.o.missing; return '<tr><td>' + nm(x.c.name) + '</td><td>' + fx(x.o.Ib, 1) + '</td><td>' + f0(x.o.In) + '</td><td>' + x.o.S + '</td><td>' + x.o.Spe + '</td><td>' + (x.o.Iz != null ? fx(x.o.Iz, 0) : '—') + '</td><td>' + fx(x.o.dPct, 2) + '</td><td>' + f0(x.o.IscMin) + '</td><td>' + (okAll ? '✓' : '✕') + '</td></tr>'; }).join('') + '</table>';
+    body += h2('Schéma unifilaire', 'Single-line diagram') + unifilar(R, { print: true, per: 3, ks: num('el_ks', 0.8) });
     body += h2('2. Détail par circuit', '2. Detail by circuit') + R.map(function (x) {
       var c = x.c, o = x.o, e = x.e, k = o.checks, mt = METH.filter(function (m) { return m.id === c.meth; })[0] || METH[4];
-      return '<p class="n"><b>' + esc(c.name) + '</b> — ' + (e.ph === 3 ? T('triphasé ', 'three-phase ') : T('monophasé ', 'single-phase ')) + f0(e.U) + ' V, ' + (c.load === 'motor' ? T('moteur', 'motor') : T('charge courante', 'general load')) + ', ' + (e.mode === 'P' ? fx(e.P, 2) + ' kW, cos φ ' + fx(e.cos, 2) + (c.load === 'motor' ? ', η ' + fx(c.eta, 2) : '') : 'Ib ' + fx(e.I, 1) + ' A') + '</p>' +
+      return '<p class="n"><b>' + nm(c.name) + '</b> — ' + (e.ph === 3 ? T('triphasé ', 'three-phase ') : T('monophasé ', 'single-phase ')) + f0(e.U) + ' V, ' + (c.load === 'motor' ? T('moteur', 'motor') : T('charge courante', 'general load')) + ', ' + (e.mode === 'P' ? fx(e.P, 2) + ' kW, cos φ ' + fx(e.cos, 2) + (c.load === 'motor' ? ', η ' + fx(c.eta, 2) : '') : 'Ib ' + fx(e.I, 1) + ' A') + '</p>' +
         '<table class="tb" style="max-width:175mm"><tr><th style="text-align:left">' + T('Donnée ou vérification', 'Item or check') + '</th><th style="text-align:left">' + T('Valeur', 'Value') + '</th><th></th></tr>' +
         '<tr><td style="text-align:left">' + T('Pose', 'Installation') + '</td><td style="text-align:left">' + esc(T(mt.fr, mt.en)) + ' · ' + c.nc + ' ' + T('circuit(s)', 'circuit(s)') + ' · ' + f0(c.Ta) + ' °C · ' + f0(c.L) + ' m</td><td></td></tr>' +
         '<tr><td style="text-align:left">' + T('Âme et isolant', 'Conductor and insulation') + '</td><td style="text-align:left">' + (c.mat === 'Cu' ? T('Cuivre', 'Copper') : 'Aluminium') + ' ' + c.ins + ' · ' + o.S + ' mm² · PE ' + o.Spe + ' mm² · N ' + o.Sn + ' mm²</td><td></td></tr>' +
