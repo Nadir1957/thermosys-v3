@@ -13816,6 +13816,416 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
 })();
 
 </script>
+<script id="heat-module">
+/* THERMOSYS - Module CHAUFFAGE (deperditions de base EN 12831)
+   Moteur (HEAT) separe de l'interface. Bilingue FR/EN. */
+(function () {
+  'use strict';
+  if (typeof window === 'undefined') { return; }
+  if (window.__heatMod) { return; }
+  window.__heatMod = true;
+/* Thermosys - CHAUFFAGE : moteur de calcul des deperditions de base (EN 12831-1, methode simplifiee de local).
+ * Phi_HL = Phi_T (transmission) + Phi_V (ventilation et infiltration) + Phi_RH (relance).  Unites SI : W, K, m, m3/h.
+ * Sol : EN ISO 13370 (dalle sur terre-plein).                                                                     */
+(function (root) {
+  'use strict';
+  var RHOCP = 0.34;                                   // W par (m3/h . K)
+  var SHIELD = { none: [0.03, 0.05], moderate: [0.02, 0.03], high: [0.01, 0.02] };   // e : une facade exposee / plusieurs
+  function eps(zc) { return zc > 30 ? 1.5 : zc > 10 ? 1.2 : 1.0; }
+  /* U equivalent d'un plancher sur terre-plein selon EN ISO 13370 (dalle sans isolation peripherique)
+     A (m2), P (m, perimetre expose), Uf (W/m2K, plancher seul avec films), w (m, epaisseur des murs), lam (W/mK, sol) */
+  function uGround(A, P, Uf, w, lam) {
+    w = w > 0 ? w : 0.3; lam = lam > 0 ? lam : 2.0;
+    var Bp = P > 0 ? A / (0.5 * P) : Math.sqrt(A) / 2, Rf = Math.max(0, 1 / Uf - 0.21), dt = w + lam * (0.21 + Rf), U;
+    if (dt < Bp) { U = 2 * lam / (Math.PI * Bp + dt) * Math.log(Math.PI * Bp / dt + 1); } else { U = lam / (0.457 * Bp + dt); }
+    return { U: U, Bp: Bp, dt: dt };
+  }
+  /* local : {area, h, Ti, nmin, vent:{mode:'nat'|'bal', vsu, eta}, exposure:'one'|'more', per, elems:[{kind,area,U,adj,bu,Tadj,label}]}
+     g : {Te, Tme, n50, shield, zc, dUtb, fRH, Gw, wall, lam} */
+  function room(r, g) {
+    var Ti = r.Ti, dT = Ti - g.Te, V = r.area * r.h, out = { rows: [], PT: 0, Pint: 0, HT: 0 }, i;
+    var Ag = 0; r.elems.forEach(function (e) { if (e.adj === 'gnd') { Ag += e.area; } });
+    r.elems.forEach(function (e) {
+      var A = e.area, U = e.U, isG = e.kind === 'glaz' || e.kind === 'door', H = 0, phi = 0, note = '', Ue = U;
+      if (!(A > 0)) { return; }
+      if (e.adj === 'ext') { Ue = U + (isG ? 0 : g.dUtb); H = A * Ue; phi = H * dT; }
+      else if (e.adj === 'unc') { Ue = U + (isG ? 0 : g.dUtb); H = A * Ue * e.bu; phi = H * dT; note = 'b=' + e.bu; }
+      else if (e.adj === 'adj') { H = A * U; phi = A * U * (Ti - e.Tadj); out.Pint += phi; out.rows.push({ e: e, A: A, Ue: U, H: H, phi: phi, type: 'int', note: 'T=' + e.Tadj }); return; }
+      else if (e.adj === 'gnd') {
+        var ug = uGround(Ag, r.per, U, g.wall, g.lam); Ue = ug.U; note = "B'=" + (Math.round(ug.Bp * 10) / 10);
+        H = A * Ue; phi = 1.45 * g.Gw * A * Ue * (Ti - g.Tme);       // f_g1 . f_g2 . G_w avec f_g2 = (Ti-Tme)/(Ti-Te)
+        out.rows.push({ e: e, A: A, Ue: Ue, H: H * 1.45 * g.Gw * (Ti - g.Tme) / (dT || 1), phi: phi, type: 'gnd', note: note }); out.PT += phi; out.HT += H * 1.45 * g.Gw * (Ti - g.Tme) / (dT || 1); return;
+      }
+      out.rows.push({ e: e, A: A, Ue: Ue, H: H, phi: phi, type: e.adj, note: note }); out.PT += phi; out.HT += H;
+    });
+    var sh = SHIELD[g.shield] || SHIELD.moderate, ee = r.exposure === 'more' ? sh[1] : sh[0];
+    var Vinf = 2 * V * g.n50 * ee * eps(g.zc), Vmin = r.nmin * V, vv;
+    out.Vinf = Vinf; out.Vmin = Vmin; out.V = V;
+    if (r.vent.mode === 'bal') { var Vsu = r.vent.vsu > 0 ? r.vent.vsu : Vmin; vv = Vsu * (1 - Math.max(0, Math.min(0.95, r.vent.eta))) + Vinf; out.Vsu = Vsu; }
+    else { vv = Math.max(Vinf, Vmin); }
+    out.Veff = vv; out.HV = RHOCP * vv; out.PV = out.HV * dT;
+    out.PRH = r.area * g.fRH;
+    out.Ptot = out.PT + out.Pint + out.PV + out.PRH;
+    out.Pbld = out.PT + out.PV + out.PRH;      // contribution au batiment (echanges internes exclus)
+    out.dT = dT; out.wm2 = out.Ptot / r.area;
+    return out;
+  }
+  function building(rooms, g) {
+    var res = rooms.map(function (r) { return room(r, g); }), s = { PT: 0, PV: 0, PRH: 0, Pint: 0, Ptot: 0, Pbld: 0, A: 0, V: 0, H: 0 };
+    res.forEach(function (o, i) { s.PT += o.PT; s.PV += o.PV; s.PRH += o.PRH; s.Pint += o.Pint; s.Ptot += o.Ptot; s.Pbld += o.Pbld; s.A += rooms[i].area; s.V += o.V; s.H += o.HT + o.HV; });
+    s.G = s.V > 0 ? s.H / s.V : 0;
+    return { rooms: res, sum: s };
+  }
+  root.HEAT = { RHOCP: RHOCP, SHIELD: SHIELD, eps: eps, uGround: uGround, room: room, building: building };
+  if (typeof module !== 'undefined') { module.exports = root.HEAT; }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+  if (typeof document === 'undefined') { return; }
+  /* ============ INTERFACE CHAUFFAGE ============ */
+  var KEY = 'thermosys_heat_v1', _t = null, _last = null, RM = [], CUR = 0, _wx = null, _wxErr = '';
+  function EN() { return window.lang === 'en'; }
+  function T(fr, en) { return EN() ? en : fr; }
+  function $(id) { return document.getElementById(id); }
+  function num(id, d) { var e = $(id); if (!e) { return d; } var v = parseFloat(String(e.value).replace(',', '.')); return isFinite(v) ? v : d; }
+  function esc(x) { return String(x === undefined || x === null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function q(a) { return String(a).replace(/"/g, '&quot;'); }
+  function fx(x, n) { return isFinite(x) ? (Math.round(x * Math.pow(10, n)) / Math.pow(10, n)).toFixed(n) : '—'; }
+  function f0(x) { return fx(x, 0); }
+  function inp(id, v, step, w) { return '<input class="fi" id="ht_' + id + '" type="number" value="' + v + '" step="' + (step || 'any') + '" style="max-width:' + (w || 96) + 'px" oninput="htDeb()">'; }
+  function selg(id, opts, cur, fn) {
+    return '<select class="fsel" id="ht_' + id + '" onchange="' + (fn || 'htDeb') + '(this)" style="max-width:100%">' + opts.map(function (o) {
+      return '<option value="' + o.id + '"' + (String(o.id) === String(cur) ? ' selected' : '') + ' data-cfr="' + q(o.fr) + '" data-cen="' + q(o.en) + '">' + o.fr + '</option>';
+    }).join('') + '</select>';
+  }
+  function selI(opts, cur, onch) {
+    return '<select class="fsel" style="max-width:100%" onchange="' + onch + '">' + opts.map(function (o) { return '<option value="' + o.id + '"' + (String(o.id) === String(cur) ? ' selected' : '') + '>' + esc(T(o.fr, o.en)) + '</option>'; }).join('') + '</select>';
+  }
+  function numI(v, step, onin, w) { return '<input class="fi" type="number" step="' + (step || 'any') + '" value="' + v + '" style="max-width:' + (w || 80) + 'px" oninput="' + onin + '">'; }
+  function lab(fr, en) { return '<span style="font-size:10px;color:var(--ts)">' + T(fr, en) + '</span>'; }
+  function row(fr, en, html) { return '<div class="frow"><span class="flb" data-cfr="' + q(fr) + '" data-cen="' + q(en) + '">' + fr + '</span>' + html + '</div>'; }
+  function sec(fr, en, body, open) { return '<details class="cpsec"' + (open ? ' open' : '') + '><summary data-cfr="' + q(fr) + '" data-cen="' + q(en) + '">' + fr + '</summary>' + body + '</details>'; }
+  function note(fr, en) { return '<div style="font-size:10px;color:var(--ts);margin:3px 0" data-cfr="' + q(fr) + '" data-cen="' + q(en) + '">' + fr + '</div>'; }
+
+  /* ---------- bibliotheques ---------- */
+  var RT = [
+    { id: 'living', fr: 'Séjour, salon', en: 'Living room', Ti: 20, n: 0.5 }, { id: 'bed', fr: 'Chambre', en: 'Bedroom', Ti: 20, n: 0.5 }, { id: 'kit', fr: 'Cuisine', en: 'Kitchen', Ti: 20, n: 1.5 },
+    { id: 'bath', fr: 'Salle de bains', en: 'Bathroom', Ti: 24, n: 1.5 }, { id: 'wc', fr: 'Toilettes', en: 'Toilet', Ti: 20, n: 1.5 }, { id: 'hall', fr: 'Entrée, circulation', en: 'Hall, corridor', Ti: 15, n: 0.5 },
+    { id: 'office', fr: 'Bureau', en: 'Office', Ti: 20, n: 1.0 }, { id: 'class', fr: 'Salle de classe', en: 'Classroom', Ti: 20, n: 2.0 }, { id: 'shop', fr: 'Commerce', en: 'Shop', Ti: 20, n: 1.0 }, { id: 'other', fr: 'Autre local', en: 'Other room', Ti: 20, n: 0.5 }
+  ];
+  var KINDS = [{ id: 'wall', fr: 'Mur', en: 'Wall' }, { id: 'roof', fr: 'Toiture, plafond', en: 'Roof, ceiling' }, { id: 'floor', fr: 'Plancher bas', en: 'Floor' }, { id: 'glaz', fr: 'Fenêtre, vitrage', en: 'Window, glazing' }, { id: 'door', fr: 'Porte', en: 'Door' }];
+  var PRES = {
+    wall: [{ id: 'w1', fr: 'Mur béton 20 cm, non isolé', en: 'Concrete 20 cm, uninsulated', U: 3.0 }, { id: 'w2', fr: 'Parpaing 20 cm enduit, non isolé', en: 'Block 20 cm rendered, uninsulated', U: 2.3 }, { id: 'w3', fr: 'Double cloison brique avec lame d\'air', en: 'Double brick with air gap', U: 1.2 }, { id: 'w4', fr: 'Double cloison brique, isolant 4 cm', en: 'Double brick, 4 cm insulation', U: 0.55 }, { id: 'w5', fr: 'Mur isolé 10 cm (performant)', en: 'Wall with 10 cm insulation (high performance)', U: 0.33 }, { id: 'w6', fr: 'Mur isolé 15 cm (très performant)', en: 'Wall with 15 cm insulation (very high performance)', U: 0.22 }, { id: 'w7', fr: 'Cloison intérieure brique 10 cm', en: 'Internal partition, brick 10 cm', U: 2.0 }],
+    roof: [{ id: 'r1', fr: 'Terrasse non isolée', en: 'Flat roof, uninsulated', U: 2.5 }, { id: 'r2', fr: 'Terrasse isolée 6 cm', en: 'Flat roof, 6 cm insulation', U: 0.5 }, { id: 'r3', fr: 'Terrasse isolée 10 cm', en: 'Flat roof, 10 cm insulation', U: 0.33 }, { id: 'r4', fr: 'Combles perdus isolés 20 cm', en: 'Attic floor, 20 cm insulation', U: 0.2 }, { id: 'r5', fr: 'Plafond intermédiaire béton', en: 'Intermediate concrete ceiling', U: 2.4 }],
+    floor: [{ id: 'f1', fr: 'Dallage sur terre-plein non isolé', en: 'Slab on ground, uninsulated', U: 3.1 }, { id: 'f2', fr: 'Dallage sur terre-plein isolé 5 cm', en: 'Slab on ground, 5 cm insulation', U: 0.6 }, { id: 'f3', fr: 'Dallage sur terre-plein isolé 10 cm', en: 'Slab on ground, 10 cm insulation', U: 0.3 }, { id: 'f4', fr: 'Plancher intermédiaire béton', en: 'Intermediate concrete floor', U: 2.4 }, { id: 'f5', fr: 'Plancher sur vide sanitaire non isolé', en: 'Floor over crawl space, uninsulated', U: 1.8 }],
+    glaz: [{ id: 'g1', fr: 'Simple vitrage', en: 'Single glazing', U: 5.7 }, { id: 'g2', fr: 'Double vitrage, menuiserie métal sans rupture', en: 'Double glazing, metal frame without break', U: 3.3 }, { id: 'g3', fr: 'Double vitrage, menuiserie PVC ou bois', en: 'Double glazing, PVC or wood frame', U: 2.5 }, { id: 'g4', fr: 'Double vitrage faible émissivité', en: 'Double low-e glazing', U: 1.4 }, { id: 'g5', fr: 'Triple vitrage', en: 'Triple glazing', U: 0.9 }],
+    door: [{ id: 'd1', fr: 'Porte bois pleine', en: 'Solid wood door', U: 3.0 }, { id: 'd2', fr: 'Porte métallique isolée', en: 'Insulated metal door', U: 1.8 }, { id: 'd3', fr: 'Porte d\'entrée performante', en: 'High-performance entrance door', U: 1.2 }]
+  };
+  var ADJS = [{ id: 'ext', fr: 'Extérieur', en: 'Outdoor' }, { id: 'unc', fr: 'Local non chauffé', en: 'Unheated space' }, { id: 'adj', fr: 'Local chauffé voisin', en: 'Adjacent heated room' }, { id: 'gnd', fr: 'Terre-plein', en: 'Ground slab' }];
+  var BUS = [{ id: 0.5, fr: 'Local non chauffé courant (b = 0,5)', en: 'Typical unheated room (b = 0.5)' }, { id: 0.9, fr: 'Combles ventilés (b = 0,9)', en: 'Ventilated attic (b = 0.9)' }, { id: 0.6, fr: 'Cave, garage (b = 0,6)', en: 'Cellar, garage (b = 0.6)' }, { id: 0.4, fr: 'Circulation non chauffée (b = 0,4)', en: 'Unheated corridor (b = 0.4)' }, { id: 0.8, fr: 'Véranda, serre (b = 0,8)', en: 'Conservatory (b = 0.8)' }];
+  function presOf(kind, id) { return (PRES[kind] || []).filter(function (p) { return p.id === id; })[0]; }
+  function consOpts(kind) { return (PRES[kind] || []).concat([{ id: 'custom', fr: 'Valeur U saisie', en: 'Entered U value' }]); }
+  function newRoom(type) {
+    var t = RT.filter(function (x) { return x.id === (type || 'living'); })[0];
+    return { name: T(t.fr, t.en), type: t.id, area: 16, h: 2.7, Ti: t.Ti, nmin: t.n, vmode: 'nat', vsu: 0, eta: 80, exposure: 'one', per: 0, elems: [] };
+  }
+  function newElem(kind) {
+    var d = { wall: ['w3', 'ext'], roof: ['r2', 'ext'], floor: ['f1', 'gnd'], glaz: ['g3', 'ext'], door: ['d2', 'ext'] }[kind];
+    return { kind: kind, area: kind === 'glaz' ? 2 : kind === 'door' ? 2 : 10, cons: d[0], U: 1, adj: d[1], bu: 0.5, Tadj: 18 };
+  }
+  function elemU(e) { if (e.cons === 'custom') { return Math.max(0.01, +e.U || 0.01); } var p = presOf(e.kind, e.cons); return p ? p.U : 1; }
+
+  /* ---------- liste des locaux et formulaire ---------- */
+  function roomList() {
+    var s = RM.map(function (r, i) { return '<button class="btn" style="margin:2px;' + (i === CUR ? 'outline:2px solid var(--ac)' : '') + '" onclick="htSel(' + i + ')">' + esc(r.name || ('L' + (i + 1))) + '</button>'; }).join('');
+    return s + '<button class="btn" style="margin:2px" onclick="htAddRoom()">' + T('+ Local', '+ Room') + '</button>';
+  }
+  function elemRow(e, i) {
+    var u = elemU(e), Hc = e.area * u;
+    return '<div class="cprow"><div class="cpg">' +
+      '<div>' + lab('Élément', 'Element') + selI(KINDS, e.kind, 'htE(' + i + ',\'kind\',this.value)') + '</div>' +
+      '<div>' + lab('Surface (m²)', 'Area (m²)') + numI(e.area, '0.1', 'htE(' + i + ',\'area\',this.value)') + '</div>' +
+      '<div style="grid-column:span 2">' + lab('Construction', 'Construction') + selI(consOpts(e.kind), e.cons, 'htE(' + i + ',\'cons\',this.value)') + '</div>' +
+      (e.cons === 'custom' ? '<div>' + lab('U (W/m²K)', 'U (W/m²K)') + numI(e.U, '0.05', 'htE(' + i + ',\'U\',this.value)') + '</div>' : '') +
+      '<div style="grid-column:span 2">' + lab('Côté opposé', 'Other side') + selI(ADJS.filter(function (a) { return a.id !== 'gnd' || e.kind === 'floor'; }), e.adj, 'htE(' + i + ',\'adj\',this.value)') + '</div>' +
+      (e.adj === 'unc' ? '<div style="grid-column:span 2">' + lab('Local non chauffé', 'Unheated space') + selI(BUS, e.bu, 'htE(' + i + ',\'bu\',this.value)') + '</div>' : '') +
+      (e.adj === 'adj' ? '<div>' + lab('Température voisine (°C)', 'Adjacent temp. (°C)') + numI(e.Tadj, '0.5', 'htE(' + i + ',\'Tadj\',this.value)') + '</div>' : '') +
+      '</div><div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--ts)"><span>U = ' + fx(u, 2) + ' W/m²K · UA = ' + fx(Hc, 1) + ' W/K</span><button class="btn" onclick="htDelE(' + i + ')">✕</button></div></div>';
+  }
+  function roomForm() {
+    var r = RM[CUR]; if (!r) { return ''; }
+    var h = '<div class="cprow">' +
+      row('Nom du local :', 'Room name:', '<input class="fi" id="ht_rname" type="text" value="' + q(r.name) + '" style="max-width:100%" oninput="htR(\'name\',this.value)">') +
+      row('Type :', 'Type:', selI(RT, r.type, 'htType(this.value)')) +
+      row('Surface au sol (m²) :', 'Floor area (m²):', numI(r.area, '0.5', 'htR(\'area\',this.value)')) + row('Hauteur sous plafond (m) :', 'Ceiling height (m):', numI(r.h, '0.1', 'htR(\'h\',this.value)')) +
+      row('Température intérieure (°C) :', 'Indoor temperature (°C):', numI(r.Ti, '0.5', 'htR(\'Ti\',this.value)')) +
+      row('Renouvellement d\'air minimal (vol/h) :', 'Minimum air change rate (ACH):', numI(r.nmin, '0.1', 'htR(\'nmin\',this.value)')) +
+      row('Ventilation :', 'Ventilation:', selI([{ id: 'nat', fr: 'Naturelle ou extraction simple', en: 'Natural or extract only' }, { id: 'bal', fr: 'Double flux avec récupération', en: 'Balanced with heat recovery' }], r.vmode, 'htR(\'vmode\',this.value)')) +
+      (r.vmode === 'bal' ? row('Efficacité de la récupération (%) :', 'Heat recovery efficiency (%):', numI(r.eta, '1', 'htR(\'eta\',this.value)')) + row('Débit soufflé (m³/h, 0 = minimal) :', 'Supply flow (m³/h, 0 = minimum):', numI(r.vsu, '5', 'htR(\'vsu\',this.value)')) : '') +
+      row('Façades exposées au vent :', 'Facades exposed to wind:', selI([{ id: 'one', fr: 'Une seule', en: 'One only' }, { id: 'more', fr: 'Plusieurs', en: 'More than one' }], r.exposure, 'htR(\'exposure\',this.value)')) +
+      row('Périmètre du plancher en contact avec l\'extérieur (m) :', 'Exposed floor perimeter (m):', numI(r.per, '0.5', 'htR(\'per\',this.value)')) +
+      note('Le périmètre sert au calcul de la perte par le sol (terre-plein). Laissé à 0, le calcul suppose un local carré dont tous les côtés donnent sur l\'extérieur.', 'The perimeter is used for the ground loss. Left at 0, the calculation assumes a square room with all sides exposed.') +
+      '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px"><button class="btn" onclick="htDup()">' + T('Dupliquer', 'Duplicate') + '</button><button class="btn" onclick="htDelRoom()">' + T('Supprimer ce local', 'Delete this room') + '</button></div></div>';
+    h += '<div style="font-weight:700;font-size:11px;margin:8px 0 2px">' + T('Parois du local', 'Room surfaces') + '</div>';
+    h += r.elems.map(elemRow).join('');
+    h += '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">' + KINDS.map(function (k) { return '<button class="btn" onclick="htAddE(\'' + k.id + '\')">+ ' + T(k.fr, k.en) + '</button>'; }).join('') + '</div>';
+    return h;
+  }
+  function drawRooms() { var a = $('ht_rooms'), b = $('ht_roomform'); if (a) { a.innerHTML = roomList(); } if (b) { b.innerHTML = roomForm(); } }
+  window.htSel = function (i) { CUR = i; drawRooms(); window.htCalc(); };
+  window.htAddRoom = function () { RM.push(newRoom('living')); CUR = RM.length - 1; drawRooms(); window.htDeb(); };
+  window.htDup = function () { var r = JSON.parse(JSON.stringify(RM[CUR])); r.name += ' (2)'; RM.push(r); CUR = RM.length - 1; drawRooms(); window.htDeb(); };
+  window.htDelRoom = function () { if (RM.length <= 1) { RM[0] = newRoom('living'); } else { RM.splice(CUR, 1); CUR = Math.max(0, CUR - 1); } drawRooms(); window.htDeb(); };
+  window.htR = function (k, v) {
+    var r = RM[CUR]; if (!r) { return; }
+    if (k === 'name') { r.name = v; var a = $('ht_rooms'); if (a) { a.innerHTML = roomList(); } window.htDeb(); return; }
+    if (k === 'vmode' || k === 'exposure') { r[k] = v; drawRooms(); window.htDeb(); return; }
+    r[k] = parseFloat(String(v).replace(',', '.')); if (!isFinite(r[k])) { r[k] = 0; } window.htDeb();
+  };
+  window.htType = function (v) { var r = RM[CUR], t = RT.filter(function (x) { return x.id === v; })[0]; if (!r || !t) { return; } r.type = v; r.Ti = t.Ti; r.nmin = t.n; if (!r.name || RT.some(function (x) { return x.fr === r.name || x.en === r.name; })) { r.name = T(t.fr, t.en); } drawRooms(); window.htDeb(); };
+  window.htAddE = function (k) { RM[CUR].elems.push(newElem(k)); drawRooms(); window.htDeb(); };
+  window.htDelE = function (i) { RM[CUR].elems.splice(i, 1); drawRooms(); window.htDeb(); };
+  window.htE = function (i, k, v) {
+    var e = RM[CUR].elems[i]; if (!e) { return; }
+    if (k === 'kind') { var n = newElem(v); n.area = e.area; RM[CUR].elems[i] = n; drawRooms(); window.htDeb(); return; }
+    if (k === 'cons' || k === 'adj') { e[k] = v; if (k === 'adj' && v === 'gnd') { e.kind = 'floor'; } drawRooms(); window.htDeb(); return; }
+    e[k] = parseFloat(String(v).replace(',', '.')); if (!isFinite(e[k])) { e[k] = 0; }
+    if (k === 'bu') { drawRooms(); }
+    window.htDeb();
+  };
+
+  /* ---------- page ---------- */
+  var N50 = [{ id: 1, fr: 'Très étanche (1)', en: 'Very airtight (1)' }, { id: 3, fr: 'Bâtiment neuf courant (3)', en: 'Typical new building (3)' }, { id: 6, fr: 'Bâtiment existant moyen (6)', en: 'Average existing building (6)' }, { id: 10, fr: 'Ancien, peu étanche (10)', en: 'Old, leaky building (10)' }];
+  function buildPage() {
+    return '<div class="ph" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px"><span data-cfr="CHAUFFAGE — DÉPERDITIONS DE BASE (EN 12831)" data-cen="HEATING — DESIGN HEAT LOAD (EN 12831)">CHAUFFAGE — DÉPERDITIONS DE BASE (EN 12831)</span>' +
+      '<span style="display:flex;gap:4px;flex-wrap:wrap"><button class="btn" onclick="htExample()" data-cfr="Exemple" data-cen="Example">Exemple</button><button class="btn" onclick="htReset()" data-cfr="Nouveau" data-cen="New">Nouveau</button><button class="btn" onclick="htPrint()" data-cfr="Note imprimable" data-cen="Printable note">Note imprimable</button></span></div>' +
+      '<div style="font-size:10.5px;color:var(--ts);margin:2px 0 8px" data-cfr="Puissance de chauffage de chaque local et du bâtiment par la méthode simplifiée de l\'EN 12831-1 : transmission, sol (EN ISO 13370), ventilation, infiltration et relance." data-cen="Heating capacity of each room and of the building by the simplified method of EN 12831-1: transmission, ground (EN ISO 13370), ventilation, infiltration and reheat.">Puissance de chauffage de chaque local et du bâtiment par la méthode simplifiée de l\'EN 12831-1 : transmission, sol (EN ISO 13370), ventilation, infiltration et relance.</div>' +
+      '<div class="cpmain"><div class="cpin">' +
+      sec('1. PROJET ET CLIMAT', '1. PROJECT AND CLIMATE', row('Projet :', 'Project:', '<input class="fi" id="ht_proj" type="text" style="max-width:100%" oninput="htDeb()">') + row('Client :', 'Client:', '<input class="fi" id="ht_cli" type="text" style="max-width:100%" oninput="htDeb()">') + row('Site :', 'Site:', '<input class="fi" id="ht_site" type="text" style="max-width:100%" oninput="htDeb()">') +
+        row('Température extérieure de base (°C) :', 'Outdoor design temperature (°C):', inp('Te', 0, '0.5')) + row('Température extérieure moyenne annuelle (°C) :', 'Annual mean outdoor temperature (°C):', inp('Tme', 15, '0.5')) +
+        note('Ces deux températures ne sont pas préremplies : prenez-les dans la norme ou l\'annexe nationale du pays (ou le service météo), ou chargez un fichier météo EPW.', 'These two temperatures are not prefilled: take them from the national standard or annex (or the weather service), or load an EPW weather file.') +
+        '<div style="display:flex;flex-wrap:wrap;gap:4px;margin:4px 0"><a class="btn" target="_blank" rel="noopener noreferrer" href="https://climate.onebuilding.org/default.html" data-cfr="Ouvrir le site des fichiers météo" data-cen="Open the weather file site">Ouvrir le site des fichiers météo</a></div><input type="file" id="ht_wxfile" accept=".epw,.zip" onchange="htWxLoad(this)" style="width:100%;font-size:11px;margin:4px 0"><div id="ht_wxbox" style="font-size:11px;margin:4px 0"></div>', true) +
+      sec('2. LOCAUX ET PAROIS', '2. ROOMS AND SURFACES', '<div id="ht_rooms"></div><div id="ht_roomform"></div>', true) +
+      sec('3. BÂTIMENT : ÉTANCHÉITÉ ET HYPOTHÈSES', '3. BUILDING: AIRTIGHTNESS AND ASSUMPTIONS',
+        row('Étanchéité à l\'air n50 (vol/h) :', 'Airtightness n50 (ACH):', selg('n50p', N50, 3, 'htN50') + inp('n50', 3, '0.5', 70)) +
+        row('Protection contre le vent :', 'Wind shielding:', selg('shield', [{ id: 'none', fr: 'Aucune (site exposé)', en: 'None (exposed site)' }, { id: 'moderate', fr: 'Modérée (zone habitée)', en: 'Moderate (built-up area)' }, { id: 'high', fr: 'Forte (centre-ville dense)', en: 'High (dense city centre)' }], 'moderate')) +
+        row('Hauteur du local au-dessus du sol :', 'Room height above ground:', selg('zc', [{ id: 5, fr: 'Jusqu\'à 10 m', en: 'Up to 10 m' }, { id: 20, fr: 'De 10 à 30 m', en: '10 to 30 m' }, { id: 40, fr: 'Plus de 30 m', en: 'More than 30 m' }], 5)) +
+        row('Ponts thermiques :', 'Thermal bridges:', selg('dutb', [{ id: 0.0, fr: 'Non pris en compte (U déjà corrigé)', en: 'Not added (U already corrected)' }, { id: 0.05, fr: 'Bien traités (+0,05)', en: 'Well treated (+0.05)' }, { id: 0.10, fr: 'Courants (+0,10)', en: 'Typical (+0.10)' }, { id: 0.15, fr: 'Non traités, isolation intérieure (+0,15)', en: 'Untreated, internal insulation (+0.15)' }], 0.10)) +
+        row('Relance (chauffage intermittent) :', 'Reheat (intermittent heating):', selg('frh', [{ id: 0, fr: 'Aucune (chauffage continu)', en: 'None (continuous heating)' }, { id: 6, fr: 'Faible (6 W/m²)', en: 'Low (6 W/m²)' }, { id: 12, fr: 'Moyenne (12 W/m²)', en: 'Medium (12 W/m²)' }, { id: 20, fr: 'Forte (20 W/m²)', en: 'High (20 W/m²)' }], 0)) +
+        row('Nappe phréatique :', 'Groundwater:', selg('gw', [{ id: 1.0, fr: 'Profonde (plus de 1 m)', en: 'Deep (more than 1 m)' }, { id: 1.15, fr: 'Proche (moins de 1 m)', en: 'Shallow (less than 1 m)' }], 1.0)) +
+        row('Marge de sécurité (%) :', 'Safety margin (%):', inp('margin', 10, '1')) +
+        note('Valeurs de relance indicatives : elles dépendent de l\'inertie du bâtiment, de la baisse de consigne et du temps de remise en température (annexe nationale).', 'Reheat values are indicative: they depend on building mass, setback and reheat time (national annex).'), false) +
+      '</div><div class="cpout" id="ht_out"></div></div>';
+  }
+  window.htN50 = function (el) { var e = $('ht_n50'); if (e) { e.value = el.value; } window.htDeb(); };
+
+  /* ---------- meteo EPW ---------- */
+  function readZip(buf) {
+    var dv = new DataView(buf), u8 = new Uint8Array(buf), i, eocd = -1, bad = function () { return Promise.reject(new Error('zip')); };
+    for (i = buf.byteLength - 22; i >= Math.max(0, buf.byteLength - 65557); i--) { if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; } }
+    if (eocd < 0) { return bad(); }
+    var n = dv.getUint16(eocd + 10, true), p = dv.getUint32(eocd + 16, true), ent = null;
+    for (i = 0; i < n; i++) {
+      if (p + 46 > buf.byteLength || dv.getUint32(p, true) !== 0x02014b50) { break; }
+      var meth = dv.getUint16(p + 10, true), cs = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), lo = dv.getUint32(p + 42, true), nm = new TextDecoder().decode(u8.subarray(p + 46, p + 46 + nl));
+      if (/\.epw$/i.test(nm)) { ent = { meth: meth, cs: cs, lo: lo }; break; }
+      p += 46 + nl + el + cl;
+    }
+    if (!ent || dv.getUint32(ent.lo, true) !== 0x04034b50) { return bad(); }
+    var ds = ent.lo + 30 + dv.getUint16(ent.lo + 26, true) + dv.getUint16(ent.lo + 28, true), data = u8.subarray(ds, ds + ent.cs);
+    if (ent.meth === 0) { return Promise.resolve(new TextDecoder().decode(data)); }
+    if (ent.meth === 8 && typeof DecompressionStream === 'function') {
+      var d = new DecompressionStream('deflate-raw'), w = d.writable.getWriter(); w.write(data); w.close();
+      return new Response(d.readable).arrayBuffer().then(function (b) { return new TextDecoder().decode(b); });
+    }
+    return bad();
+  }
+  function showWx() {
+    var b = $('ht_wxbox'); if (!b) { return; }
+    if (_wxErr) { b.innerHTML = '<div style="color:var(--er)">' + esc(_wxErr) + '</div>'; return; }
+    if (!_wx) { b.innerHTML = ''; return; }
+    b.innerHTML = '<div><b>' + esc(_wx.name) + '</b>, ' + esc(_wx.country) + '</div><div style="font-size:10px;color:var(--ts)">' + T('Température de base prise au percentile 0,4 % le plus froid (année type : peut sous-estimer les extrêmes publiés) ; moyenne annuelle calculée sur 8 760 h.', 'Design temperature taken at the 0.4 % coldest percentile (typical year: may underestimate published extremes); annual mean computed over 8,760 h.') + '</div>';
+  }
+  window.htWxLoad = function (el) {
+    var f = el.files && el.files[0]; if (!f) { return; }
+    _wxErr = ''; _wx = null;
+    if (!window.AT_ENGINE) { _wxErr = T('Le module Traitement d\'air est nécessaire pour lire un fichier météo.', 'The Air Treatment module is required to read a weather file.'); showWx(); return; }
+    if (f.size > 15 * 1024 * 1024) { _wxErr = T('Fichier trop volumineux.', 'File too large.'); showWx(); return; }
+    var rd = new FileReader();
+    rd.onload = function () {
+      var buf = rd.result, u = new Uint8Array(buf), isZip = u[0] === 0x50 && u[1] === 0x4b, pr = isZip ? readZip(buf) : Promise.resolve(new TextDecoder('utf-8').decode(buf));
+      pr.then(function (t) {
+        var w = window.AT_ENGINE.parseEPW(t);
+        if (w.err) { _wxErr = T('Fichier météo non reconnu (format EPW attendu).', 'Weather file not recognised (EPW format expected).'); showWx(); return; }
+        var dc = window.AT_ENGINE.designCond(w), s = 0, i; for (i = 0; i < w.n; i++) { s += w.T[i]; }
+        _wx = w; $('ht_Te').value = fx(dc.wn996.T, 1); $('ht_Tme').value = fx(s / w.n, 1); showWx(); window.htCalc();
+      }, function () { _wxErr = T('Archive .zip illisible : décompressez-la et chargez le fichier .epw.', 'Unreadable .zip: unzip it and load the .epw file.'); showWx(); });
+    };
+    rd.readAsArrayBuffer(f);
+  };
+
+  /* ---------- calcul ---------- */
+  function globals() {
+    return { Te: num('ht_Te', 0), Tme: num('ht_Tme', 15), n50: Math.max(0, num('ht_n50', 3)), shield: $('ht_shield').value, zc: +$('ht_zc').value, dUtb: +$('ht_dutb').value, fRH: +$('ht_frh').value, Gw: +$('ht_gw').value, wall: 0.3, lam: 2.0 };
+  }
+  function engineRooms() {
+    return RM.map(function (r) {
+      return { name: r.name, area: Math.max(0.1, r.area), h: Math.max(1, r.h), Ti: r.Ti, nmin: Math.max(0, r.nmin), vent: { mode: r.vmode, vsu: r.vsu, eta: r.eta / 100 }, exposure: r.exposure, per: Math.max(0, r.per),
+        elems: r.elems.map(function (e) { return { kind: e.kind, area: e.area, U: elemU(e), adj: e.adj, bu: e.bu, Tadj: e.Tadj }; }) };
+    });
+  }
+  var WARN = {
+    dT: ['La température extérieure de base est supérieure ou égale à la température intérieure d\'un local : aucune déperdition de transmission.', 'The outdoor design temperature is not below the indoor temperature of a room: no transmission loss.'],
+    empty: ['Un local n\'a aucune paroi : seule la ventilation est comptée.', 'A room has no surfaces: only ventilation is counted.'],
+    adj: ['Un local chauffé voisin est plus chaud que le local étudié : l\'échange interne est un apport, il réduit la charge du local.', 'An adjacent heated room is warmer than this room: the internal exchange is a gain and reduces its load.'],
+    per: ['Un plancher sur terre-plein est présent sans périmètre extérieur : le calcul suppose un local carré dont tous les côtés donnent sur l\'extérieur (résultat prudent).', 'A ground floor is present without an exposed perimeter: the calculation assumes a square room exposed on all sides (conservative).'],
+    tme: ['La température moyenne annuelle est supérieure à la température intérieure : vérifiez la saisie.', 'The annual mean temperature is above the indoor temperature: check the entry.'],
+    n50: ['Étanchéité à l\'air supérieure à 6 vol/h : la ventilation par infiltration sera très pénalisante ; vérifiez la valeur.', 'Airtightness above 6 ACH: infiltration will be a major loss; check the value.'],
+    area: ['Les surfaces de fenêtres dépassent 40 % des surfaces de murs extérieurs d\'un local : vérifiez les surfaces.', 'Window area exceeds 40 % of the external wall area in a room: check the areas.']
+  };
+  function warnings(g, eng, rooms) {
+    var w = [];
+    rooms.forEach(function (r, i) {
+      if (r.Ti <= g.Te) { w.push('dT'); } if (!r.elems.length) { w.push('empty'); }
+      var hasG = false, wallA = 0, glA = 0;
+      r.elems.forEach(function (e) { if (e.adj === 'gnd') { hasG = true; } if (e.adj === 'adj' && e.Tadj > r.Ti) { w.push('adj'); } if (e.adj === 'ext' && e.kind === 'wall') { wallA += e.area; } if (e.kind === 'glaz' && e.adj === 'ext') { glA += e.area; } });
+      if (hasG && !(r.per > 0)) { w.push('per'); } if (wallA > 0 && glA > 0.4 * wallA) { w.push('area'); }
+    });
+    if (g.Tme > Math.min.apply(null, rooms.map(function (r) { return r.Ti; }))) { w.push('tme'); } if (g.n50 > 6) { w.push('n50'); }
+    return w.filter(function (x, i, a) { return a.indexOf(x) === i; });
+  }
+  function bars(res, rooms, pal) {
+    var Wd = 640, rowh = 26, Ht = 30 + rooms.length * rowh, ml = 110, mr = 50, pw = Wd - ml - mr, mx = 1, i;
+    res.forEach(function (o) { mx = Math.max(mx, o.Ptot); });
+    var s = '<svg viewBox="0 0 ' + Wd + ' ' + Ht + '" style="width:100%;max-width:720px;display:block;margin:6px auto" role="img" aria-label="' + q(T('Puissance par local', 'Load by room')) + '"><g font-size="10" fill="' + pal.tx + '" font-family="Arial,sans-serif">';
+    res.forEach(function (o, k) {
+      var y = 8 + k * rowh, x = ml, parts = [[o.PT + o.Pint, '#4e79a7'], [o.PV, '#e15759'], [o.PRH, '#f28e2b']];
+      s += '<text x="' + (ml - 6) + '" y="' + (y + 12) + '" text-anchor="end">' + esc(String(rooms[k].name).slice(0, 18)) + '</text>';
+      parts.forEach(function (p) { var w = Math.max(0, p[0]) / mx * pw; if (w > 0) { s += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="16" fill="' + p[1] + '"/>'; x += w; } });
+      s += '<text x="' + (x + 4) + '" y="' + (y + 12) + '">' + f0(o.Ptot) + ' W</text>';
+    });
+    s += '<g transform="translate(' + ml + ',' + (Ht - 12) + ')"><rect width="9" height="9" fill="#4e79a7"/><text x="13" y="8">' + T('Transmission', 'Transmission') + '</text><rect x="110" width="9" height="9" fill="#e15759"/><text x="123" y="8">' + T('Ventilation', 'Ventilation') + '</text><rect x="210" width="9" height="9" fill="#f28e2b"/><text x="223" y="8">' + T('Relance', 'Reheat') + '</text></g></g></svg>';
+    return s;
+  }
+  var PALUI = { tx: 'var(--ts)' }, PALPR = { tx: '#4a6a8a' };
+  function elemTable(o, r) {
+    var rows = o.rows.map(function (x) {
+      var kn = KINDS.filter(function (k) { return k.id === x.e.kind; })[0], an = ADJS.filter(function (k) { return k.id === x.e.adj; })[0];
+      return '<tr><td style="text-align:left">' + T(kn.fr, kn.en) + ' · ' + T(an.fr, an.en) + (x.note ? ' (' + esc(x.note) + ')' : '') + '</td><td>' + fx(x.A, 1) + '</td><td>' + fx(x.Ue, 2) + '</td><td>' + f0(x.phi) + '</td></tr>';
+    }).join('');
+    rows += '<tr><td style="text-align:left">' + T('Ventilation et infiltration', 'Ventilation and infiltration') + ' (' + f0(o.Veff) + ' m³/h)</td><td></td><td></td><td>' + f0(o.PV) + '</td></tr>';
+    if (o.PRH > 0) { rows += '<tr><td style="text-align:left">' + T('Relance', 'Reheat') + '</td><td></td><td></td><td>' + f0(o.PRH) + '</td></tr>'; }
+    return rows;
+  }
+  function render() {
+    var out = $('ht_out'); if (!out) { return; }
+    if (!RM.length) { RM.push(newRoom('living')); CUR = 0; drawRooms(); }
+    var g = globals(), rooms = engineRooms(), B = HEAT.building(rooms, g), s = B.sum, mg = 1 + num('ht_margin', 10) / 100;
+    _last = { g: g, rooms: rooms, B: B, names: RM.map(function (r) { return r.name; }) };
+    var card = function (t, v, sub) { return '<div class="cpcard"><div class="cpct">' + t + '</div><div class="cpcv">' + v + '</div><div class="cpcs">' + sub + '</div></div>'; };
+    var tot = Math.max(0, s.Pbld);
+    var html = '<div class="cpcards">' + card(T('Puissance à installer', 'Capacity to install'), fx(tot * mg / 1000, 2) + ' kW', T('marge', 'margin') + ' ' + f0(num('ht_margin', 10)) + ' % · ' + f0(tot * mg * 3.412) + ' BTU/h') +
+      card(T('Déperditions du bâtiment', 'Building design load'), fx(tot / 1000, 2) + ' kW', f0(tot / Math.max(1, s.A)) + ' W/m²') +
+      card(T('Transmission', 'Transmission'), fx(s.PT / 1000, 2) + ' kW', f0(s.PT / Math.max(1, tot) * 100) + ' %') + card(T('Ventilation', 'Ventilation'), fx(s.PV / 1000, 2) + ' kW', f0(s.PV / Math.max(1, tot) * 100) + ' %') +
+      (s.PRH > 0 ? card(T('Relance', 'Reheat'), fx(s.PRH / 1000, 2) + ' kW', f0(s.PRH / Math.max(1, tot) * 100) + ' %') : '') +
+      card(T('Coefficient G', 'G coefficient'), fx(s.G, 2) + ' W/(m³·K)', f0(s.A) + ' m² · ' + f0(s.V) + ' m³') + '</div>';
+    html += '<div class="cph">' + T('Locaux', 'Rooms') + '</div><table class="cptb"><thead><tr><th>' + T('Local', 'Room') + '</th><th>m²</th><th>°C</th><th>' + T('Transm.', 'Transm.') + '</th><th>' + T('Vent.', 'Vent.') + '</th><th>' + T('Relance', 'Reheat') + '</th><th>' + T('Total W', 'Total W') + '</th><th>W/m²</th></tr></thead><tbody>' +
+      B.rooms.map(function (o, i) { return '<tr style="cursor:pointer;' + (i === CUR ? 'font-weight:700;background:rgba(78,121,167,.15)' : '') + '" onclick="htSel(' + i + ')"><td>' + esc(rooms[i].name) + '</td><td>' + fx(rooms[i].area, 1) + '</td><td>' + fx(rooms[i].Ti, 1) + '</td><td>' + f0(o.PT + o.Pint) + '</td><td>' + f0(o.PV) + '</td><td>' + f0(o.PRH) + '</td><td>' + f0(o.Ptot) + '</td><td>' + f0(o.wm2) + '</td></tr>'; }).join('') +
+      '<tr style="font-weight:700;border-top:1px solid var(--border)"><td>' + T('Bâtiment', 'Building') + '</td><td>' + fx(s.A, 1) + '</td><td></td><td>' + f0(s.PT) + '</td><td>' + f0(s.PV) + '</td><td>' + f0(s.PRH) + '</td><td>' + f0(s.Pbld) + '</td><td>' + f0(s.Pbld / Math.max(1, s.A)) + '</td></tr></tbody></table>';
+    html += '<div style="font-size:10px;color:var(--ts)">' + T('Le total du bâtiment ne compte pas les échanges entre locaux chauffés (ils s\'annulent à l\'échelle du bâtiment).', 'The building total excludes exchanges between heated rooms (they cancel at building level).') + '</div>';
+    html += '<div class="cph">' + T('Puissance par local', 'Load by room') + '</div>' + bars(B.rooms, rooms, PALUI);
+    var o = B.rooms[CUR], rr = rooms[CUR];
+    if (o) { html += '<div class="cph">' + T('Détail du local : ', 'Room detail: ') + esc(rr.name) + '</div><table class="cptb"><thead><tr><th>' + T('Poste', 'Item') + '</th><th>m²</th><th>U</th><th>W</th></tr></thead><tbody>' + elemTable(o, rr) + '<tr style="font-weight:700;border-top:1px solid var(--border)"><td style="text-align:left">' + T('Total du local', 'Room total') + '</td><td></td><td></td><td>' + f0(o.Ptot) + '</td></tr></tbody></table><div style="font-size:10px;color:var(--ts)">' + T('ΔT = ', 'ΔT = ') + fx(o.dT, 1) + ' K · ' + T('débit d\'air de calcul ', 'design airflow ') + f0(o.Veff) + ' m³/h (' + T('infiltration ', 'infiltration ') + f0(o.Vinf) + ', ' + T('minimal ', 'minimum ') + f0(o.Vmin) + ')</div>'; }
+    var w = warnings(g, B, rooms); _last.warn = w;
+    if (w.length) { html += '<div class="cph">' + T('Points d\'attention', 'Points to check') + '</div>' + w.map(function (k) { return '<div style="font-size:11px;color:var(--wn);margin:3px 0">⚠ ' + T(WARN[k][0], WARN[k][1]) + '</div>'; }).join(''); }
+    html += '<div style="font-size:10px;color:var(--ts);margin-top:8px">' + T('Régime permanent à la température de base ; valeurs de construction indicatives (à remplacer par les valeurs U réelles). Voir sources et limites dans la note imprimable.', 'Steady state at the design temperature; construction values are indicative (replace with actual U-values). See sources and limits in the printable note.') + '</div>';
+    out.innerHTML = html; save();
+  }
+  window.htDeb = function () { clearTimeout(_t); _t = setTimeout(window.htCalc, 300); };
+  window.htCalc = function () { if (!$('ht_Te')) { return; } try { render(); } catch (e) { var o = $('ht_out'); if (o) { o.innerHTML = '<div style="color:var(--er);font-size:11px">' + esc(e && e.message) + '</div>'; } } };
+
+  /* ---------- sauvegarde, exemple, nouveau ---------- */
+  function save() { try { var d = { f: {}, RM: RM, CUR: CUR }; document.querySelectorAll('#pg-heat input[id^="ht_"], #pg-heat select[id^="ht_"]').forEach(function (e) { if (e.type !== 'file') { d.f[e.id] = e.value; } }); localStorage.setItem(KEY, JSON.stringify(d)); } catch (e) { /* sans effet */ } }
+  function restore() { try { var d = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!d) { return false; } RM = d.RM || []; CUR = Math.min(d.CUR || 0, Math.max(0, RM.length - 1)); Object.keys(d.f || {}).forEach(function (id) { var e = $(id); if (e) { e.value = d.f[id]; } }); return true; } catch (e) { return false; } }
+  function put(id, v) { var e = $('ht_' + id); if (e) { e.value = v; } }
+  window.htExample = function () {
+    put('Te', 0); put('Tme', 14); put('n50', 3); put('n50p', 3); put('shield', 'moderate'); put('zc', 5); put('dutb', 0.1); put('frh', 0); put('gw', 1.0); put('margin', 10);
+    var mk = function (name, type, area, h, ex, per, elems) { var r = newRoom(type); r.name = name; r.area = area; r.h = h; r.exposure = ex; r.per = per; r.elems = elems; return r; };
+    var E = function (k, a, cons, adj, extra) { var e = newElem(k); e.area = a; e.cons = cons; e.adj = adj; if (extra) { Object.keys(extra).forEach(function (x) { e[x] = extra[x]; }); } return e; };
+    RM = [mk('Séjour', 'living', 24, 2.7, 'more', 20, [E('wall', 18, 'w4', 'ext'), E('glaz', 4.5, 'g4', 'ext'), E('door', 2, 'd3', 'ext'), E('roof', 24, 'r3', 'ext'), E('floor', 24, 'f2', 'gnd'), E('wall', 12, 'w7', 'adj', { Tadj: 20 })]),
+      mk('Chambre', 'bed', 14, 2.7, 'one', 8, [E('wall', 9, 'w4', 'ext'), E('glaz', 2, 'g4', 'ext'), E('roof', 14, 'r3', 'ext'), E('floor', 14, 'f2', 'gnd')]),
+      mk('Salle de bains', 'bath', 6, 2.7, 'one', 5, [E('wall', 6, 'w4', 'ext'), E('glaz', 0.8, 'g4', 'ext'), E('roof', 6, 'r3', 'ext'), E('floor', 6, 'f2', 'gnd'), E('wall', 8, 'w7', 'unc', { bu: 0.5 })])];
+    CUR = 0; drawRooms(); window.htCalc();
+  };
+  window.htReset = function () {
+    if (!window.confirm(T('Effacer toutes les données de CHAUFFAGE ?', 'Clear all HEATING data?'))) { return; }
+    try { localStorage.removeItem(KEY); } catch (e) { /* sans effet */ }
+    RM = [newRoom('living')]; CUR = 0; _wx = null; _wxErr = ''; $('pg-heat').innerHTML = buildPage(); drawRooms(); applyLang(); window.htCalc();
+  };
+
+  /* ---------- note imprimable ---------- */
+  var SRC = [
+    [['EN 12831-1:2017', 'EN 12831-1:2017'], ['Méthode simplifiée de calcul de la charge de chauffage d\'un local : transmission, ventilation, relance ; coefficients de protection au vent et de hauteur', 'Simplified room heating-load method: transmission, ventilation, reheat; wind-shielding and height coefficients'], ['Élevée (méthode)', 'High (method)']],
+    [['EN ISO 13370', 'EN ISO 13370'], ['Transmission par le sol : coefficient équivalent d\'un plancher sur terre-plein à partir du paramètre B\' = A / (P/2)', 'Heat transfer via the ground: equivalent coefficient of a slab on ground from B\' = A / (P/2)'], ['Élevée', 'High']],
+    [['EN ISO 6946, EN ISO 10077', 'EN ISO 6946, EN ISO 10077'], ['Coefficients U des parois et des menuiseries', 'U-values of walls and frames'], ['Moyenne : valeurs indicatives à remplacer', 'Medium: indicative values to be replaced']],
+    [['Annexe nationale, DTR C 3-2 (Algérie)', 'National annex, DTR C 3-2 (Algeria)'], ['Températures de base, températures intérieures et exigences réglementaires du pays : à confirmer', 'Design temperatures, indoor temperatures and national requirements: to be confirmed'], ['À confirmer par l\'utilisateur', 'To be confirmed by the user']],
+    [['Tests internes du moteur', 'Internal engine tests'], ['Cas à résultat connu (paroi, vitrage, local non chauffé, local voisin, ventilation, double flux, sol, relance)', 'Cases with known results (wall, glazing, unheated space, adjacent room, ventilation, balanced, ground, reheat)'], ['Élevée', 'High']]
+  ];
+  var NOTE = ['Cette note est une aide au dimensionnement. Les résultats dépendent des données saisies et des hypothèses : régime permanent à la température extérieure de base, températures intérieures de consigne, valeurs U indicatives, ponts thermiques forfaitaires, débit d\'air de calcul simplifié (le plus grand de l\'infiltration et du renouvellement minimal), double flux : l\'infiltration s\'ajoute au débit soufflé sans récupération, murs enterrés non traités. Les températures de base et les valeurs réglementaires sont à confirmer par la norme ou l\'annexe nationale. Le dimensionnement final reste de la responsabilité du bureau d\'études.',
+    'This note is a sizing aid. Results depend on the entered data and on the assumptions: steady state at the outdoor design temperature, indoor setpoint temperatures, indicative U-values, flat-rate thermal bridges, simplified design airflow (the larger of infiltration and minimum air change), balanced ventilation: infiltration is added to the supply flow without recovery, below-ground walls not treated. Design temperatures and regulatory values must be confirmed by the national standard or annex. Final sizing remains the responsibility of the design office.'];
+  window.htPrint = function () {
+    if (!_last) { window.htCalc(); } if (!_last) { return; }
+    var L = _last, g = L.g, B = L.B, s = B.sum, rooms = L.rooms, mg = 1 + num('ht_margin', 10) / 100, tot = Math.max(0, s.Pbld);
+    var now = new Date(), pad = function (n) { return (n < 10 ? '0' : '') + n; }, ref = 'CH-' + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + '-' + pad(now.getHours()) + pad(now.getMinutes()), dateStr = pad(now.getDate()) + '/' + pad(now.getMonth() + 1) + '/' + now.getFullYear();
+    var kv = function (rows) { return '<table class="kv">' + rows.map(function (x) { return '<tr><td>' + x[0] + '</td><td>' + x[1] + '</td></tr>'; }).join('') + '</table>'; }, h2 = function (a, b) { return '<h2>' + T(a, b) + '</h2>'; };
+    var shn = { none: T('Aucune', 'None'), moderate: T('Modérée', 'Moderate'), high: T('Forte', 'High') }[g.shield];
+    var body = '<div class="sum"><div class="sb"><div class="st">' + T('Puissance à installer', 'Capacity to install') + '</div><div class="sv">' + fx(tot * mg / 1000, 2) + ' kW</div><div class="ss">' + T('marge', 'margin') + ' ' + f0(num('ht_margin', 10)) + ' % · ' + f0(tot * mg * 3.412) + ' BTU/h</div></div><div class="sb"><div class="st">' + T('Déperditions du bâtiment', 'Building design load') + '</div><div class="sv2">' + fx(tot / 1000, 2) + ' kW</div><div class="ss">' + f0(tot / Math.max(1, s.A)) + ' W/m² · G = ' + fx(s.G, 2) + '</div></div><div class="sb"><div class="st">' + T('Transmission / ventilation', 'Transmission / ventilation') + '</div><div class="sv2">' + fx(s.PT / 1000, 2) + ' / ' + fx(s.PV / 1000, 2) + '</div><div class="ss">kW' + (s.PRH > 0 ? ' · ' + T('relance', 'reheat') + ' ' + fx(s.PRH / 1000, 2) : '') + '</div></div></div>';
+    body += h2('1. Hypothèses de calcul', '1. Design assumptions') + '<div class="two">' + kv([[T('Température extérieure de base', 'Outdoor design temperature'), fx(g.Te, 1) + ' °C'], [T('Moyenne annuelle', 'Annual mean'), fx(g.Tme, 1) + ' °C'], [T('Météo', 'Weather'), _wx ? esc(_wx.name) + ' (EPW)' : T('Saisie manuelle', 'Manual entry')]]) + kv([['n50', fx(g.n50, 1) + ' h⁻¹'], [T('Protection au vent', 'Wind shielding'), shn], [T('Ponts thermiques', 'Thermal bridges'), '+' + fx(g.dUtb, 2) + ' W/m²K'], [T('Relance', 'Reheat'), f0(g.fRH) + ' W/m²']]) + '</div>';
+    body += h2('2. Résultats par local', '2. Results by room') + '<table class="tb"><tr><th style="text-align:left">' + T('Local', 'Room') + '</th><th>m²</th><th>°C</th><th>' + T('Transm.', 'Transm.') + '</th><th>' + T('Vent.', 'Vent.') + '</th><th>' + T('Relance', 'Reheat') + '</th><th>W</th><th>W/m²</th></tr>' +
+      B.rooms.map(function (o, i) { return '<tr><td>' + esc(rooms[i].name) + '</td><td>' + fx(rooms[i].area, 1) + '</td><td>' + fx(rooms[i].Ti, 1) + '</td><td>' + f0(o.PT + o.Pint) + '</td><td>' + f0(o.PV) + '</td><td>' + f0(o.PRH) + '</td><td>' + f0(o.Ptot) + '</td><td>' + f0(o.wm2) + '</td></tr>'; }).join('') + '<tr style="font-weight:700"><td>' + T('Bâtiment', 'Building') + '</td><td>' + fx(s.A, 1) + '</td><td></td><td>' + f0(s.PT) + '</td><td>' + f0(s.PV) + '</td><td>' + f0(s.PRH) + '</td><td>' + f0(s.Pbld) + '</td><td>' + f0(s.Pbld / Math.max(1, s.A)) + '</td></tr></table><div class="chart">' + bars(B.rooms, rooms, PALPR) + '</div>';
+    body += h2('3. Détail par local', '3. Detail by room') + B.rooms.map(function (o, i) { return '<p class="n"><b>' + esc(rooms[i].name) + '</b> — ΔT ' + fx(o.dT, 1) + ' K, ' + T('débit d\'air ', 'airflow ') + f0(o.Veff) + ' m³/h</p><table class="tb" style="max-width:150mm"><tr><th style="text-align:left">' + T('Poste', 'Item') + '</th><th>m²</th><th>U</th><th>W</th></tr>' + elemTable(o, rooms[i]) + '<tr style="font-weight:700"><td>' + T('Total du local', 'Room total') + '</td><td></td><td></td><td>' + f0(o.Ptot) + '</td></tr></table>'; }).join('');
+    var n = 4;
+    if (L.warn && L.warn.length) { body += h2(n + '. Points d\'attention', n + '. Points to check') + L.warn.map(function (k) { return '<p class="n w">⚠ ' + T(WARN[k][0], WARN[k][1]) + '</p>'; }).join(''); n++; }
+    body += h2(n + '. Sources et niveau de confiance', n + '. Sources and confidence level') + '<table class="tb">' + SRC.map(function (r) { return '<tr><td style="text-align:left"><b>' + T(r[0][0], r[0][1]) + '</b></td><td style="text-align:left">' + T(r[1][0], r[1][1]) + '</td><td style="text-align:left">' + T(r[2][0], r[2][1]) + '</td></tr>'; }).join('') + '</table><p class="disc">' + T(NOTE[0], NOTE[1]) + '</p>';
+    var win = window.open('', '_blank', 'width=900,height=750');
+    if (!win) { if (typeof showToast === 'function') { showToast(T('Popup bloqué', 'Popup blocked'), 'w'); } return; }
+    win.document.write('<!DOCTYPE html><html lang="' + (EN() ? 'en' : 'fr') + '"><head><meta charset="UTF-8"><title>' + ref + ' — THERMOSYS</title><style>' + PRINT_CSS + '</style></head><body><div class="bar no-print"><button onclick="window.print()">' + T('Imprimer / enregistrer en PDF', 'Print / save as PDF') + '</button></div><div class="page"><div class="hdr"><div><div class="logo">THERMOSYS</div><div class="sub">' + T('POSTE DE TRAVAIL GÉNIE CLIMATIQUE', 'HVAC ENGINEERING WORKSTATION') + '</div></div><div><div class="doc">' + T('NOTE — DÉPERDITIONS DE CHAUFFAGE', 'NOTE — HEATING LOAD') + '</div><div class="ref">' + ref + ' — ' + dateStr + '</div></div></div>' +
+      '<div class="ig"><div class="ib"><div class="it">' + T('Projet', 'Project') + '</div><div class="iv">' + esc($('ht_proj').value) + '</div></div><div class="ib"><div class="it">' + T('Client', 'Client') + '</div><div class="iv">' + esc($('ht_cli').value) + '</div></div><div class="ib"><div class="it">' + T('Site', 'Site') + '</div><div class="iv">' + esc($('ht_site').value) + '</div></div><div class="ib"><div class="it">' + T('Établi par', 'Prepared by') + '</div><div class="iv"></div></div></div>' + body + '<div class="sg"><div class="ib"><div class="it">' + T('Établi par', 'Prepared by') + '</div></div><div class="ib"><div class="it">' + T('Vérifié par', 'Checked by') + '</div></div></div></div></body></html>');
+    win.document.close();
+  };
+  var PRINT_CSS = '*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;background:#e8ecf0;padding:20px 0;color:#1a3a5a;font-size:9.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:A4;margin:12mm}@media print{.no-print{display:none!important}body{background:#fff!important;padding:0!important}.page{box-shadow:none!important;width:auto!important;margin:0!important;padding:0!important}}' +
+    '.page{width:210mm;margin:0 auto;background:#fff;padding:14mm 16mm;box-shadow:0 6px 30px rgba(0,0,0,.18)}.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6mm;border-bottom:2pt solid #1a3a5a;padding-bottom:4mm}.logo{font-size:22pt;font-weight:900;letter-spacing:5px}.sub{font-size:7pt;color:#4a6a8a;letter-spacing:3px;margin-top:1.5mm}.doc{font-size:11pt;font-weight:700;color:#fff;background:#1a3a5a;padding:2.5mm 5mm;border-radius:2pt;text-align:right}.ref{font-size:7.5pt;color:#555;margin-top:1.5mm;text-align:right}' +
+    '.ig{display:grid;grid-template-columns:1fr 1fr;gap:3mm;margin-bottom:5mm}.ib{background:#f4f7fc;border-left:3pt solid #1a3a5a;padding:2.5mm 4mm}.it{font-size:6.5pt;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:1mm}.iv{font-size:9pt;color:#2a4a6a;min-height:4mm}.sum{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:3mm;margin-bottom:4mm}.sb{border:1pt solid #1a3a5a;border-radius:3pt;padding:3mm 4mm}.st{font-size:6.5pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}.sv{font-size:20pt;font-weight:800;margin:1mm 0}.sv2{font-size:14pt;font-weight:800;margin:1mm 0}.ss{font-size:7.5pt;color:#4a6a8a}' +
+    'h2{font-size:10.5pt;margin:5mm 0 2mm;padding:1.5mm 3mm;background:#1a3a5a;color:#fff;letter-spacing:.5px;page-break-after:avoid}.two{display:grid;grid-template-columns:1fr 1fr;gap:4mm}table{width:100%;border-collapse:collapse;margin-bottom:2mm;page-break-inside:avoid}.kv td{padding:1.4mm 2mm;border-bottom:.5pt solid #d5deea;font-size:8.5pt}.kv td:first-child{color:#4a6a8a;width:48%}.kv td:last-child{font-weight:700;text-align:right}.tb th{background:#e3eaf3;padding:1.6mm 2mm;font-size:8pt;text-align:right}.tb td{padding:1.4mm 2mm;border-bottom:.5pt solid #d5deea;font-size:8.5pt;text-align:right}.tb td:first-child{text-align:left}.chart{max-width:165mm;margin:2mm auto;page-break-inside:avoid}.n{font-size:8.5pt;line-height:1.5;margin:2.5mm 0 1mm}.w{color:#9a5b00}.disc{font-size:7pt;color:#667;line-height:1.5;margin-top:5mm;border-top:.5pt solid #ccc;padding-top:2mm}.sg{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-top:6mm;page-break-inside:avoid}.sg .ib{height:22mm}.bar{position:sticky;top:0;text-align:center;padding:6px}.bar button{padding:8px 18px;font-size:11pt;cursor:pointer}';
+  /* ---------- installation ---------- */
+  function applyLang() {
+    var root = $('pg-heat'); if (!root) { return; }
+    root.querySelectorAll('[data-cfr]').forEach(function (el) { el.textContent = EN() ? el.getAttribute('data-cen') : el.getAttribute('data-cfr'); });
+    drawRooms();
+  }
+  function install() {
+    if ($('pg-heat')) { return; }
+    var st = document.createElement('style');
+    st.textContent = '#pg-heat .cpmain{display:grid;grid-template-columns:minmax(300px,5fr) 6fr;gap:12px;align-items:start}@media(max-width:900px){#pg-heat .cpmain{grid-template-columns:1fr}}#pg-heat details.cpsec{border:1px solid var(--border);border-radius:6px;margin:0 0 8px;padding:0 8px 6px}#pg-heat details.cpsec>summary{cursor:pointer;font-weight:700;font-size:11px;padding:7px 0;color:var(--ac);list-style:none}#pg-heat details.cpsec>summary::-webkit-details-marker{display:none}' +
+      '#pg-heat .cprow{border:1px solid var(--border);border-radius:6px;padding:6px;margin:5px 0}#pg-heat .cpg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px 6px;align-items:end}@media(max-width:600px){#pg-heat .cpg{grid-template-columns:repeat(2,1fr)}}' +
+      '#pg-heat .cpcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;margin-bottom:8px}#pg-heat .cpcard{border:1px solid var(--border);border-radius:6px;padding:7px 9px;background:var(--bgc)}#pg-heat .cpct{font-size:9.5px;color:var(--ts)}#pg-heat .cpcv{font-size:19px;font-weight:800;color:var(--ac);margin:2px 0}#pg-heat .cpcs{font-size:10px;color:var(--ts)}#pg-heat .cph{font-size:11px;font-weight:700;color:var(--ac);margin:10px 0 4px;border-bottom:1px solid var(--border);padding-bottom:2px}#pg-heat table.cptb{width:100%;border-collapse:collapse;font-size:11px}#pg-heat .cptb th{text-align:right;color:var(--ts);font-weight:600;padding:3px 4px;border-bottom:1px solid var(--border)}#pg-heat .cptb th:first-child,#pg-heat .cptb td:first-child{text-align:left}#pg-heat .cptb td{padding:3px 4px;text-align:right;border-bottom:1px solid var(--border)}';
+    document.head.appendChild(st);
+    var pg = document.createElement('div'); pg.className = 'page'; pg.id = 'pg-heat'; pg.innerHTML = buildPage();
+    var ref = $('pg-normes'); if (ref && ref.parentNode) { ref.parentNode.insertBefore(pg, ref); } else { document.body.appendChild(pg); }
+    var mn = document.createElement('button'); mn.className = 'mn'; mn.id = 'mn-heat'; mn.setAttribute('onclick', "goPage('heat')");
+    mn.innerHTML = '&#128293; <span id="mn_heat">CHAUFFAGE</span>';
+    var refb = $('mn-psy') || $('mn-chargepro') || $('mn-charge'); if (refb && refb.parentNode) { refb.parentNode.insertBefore(mn, refb.nextSibling); } else { var any = document.querySelector('button.mn'); if (any) { any.parentNode.appendChild(mn); } }
+    if (!restore() || !RM.length) { RM = [newRoom('living')]; CUR = 0; }
+    applyLang(); window.htCalc();
+  }
+  var _og = window.goPage;
+  window.goPage = function (page) { if (_og) { _og.apply(this, arguments); } if (page === 'heat') { setTimeout(function () { applyLang(); window.htCalc(); }, 30); } };
+  var _ot = window.toggleLang;
+  window.toggleLang = function () { if (_ot) { _ot.apply(this, arguments); } setTimeout(function () { applyLang(); if (_last) { window.htCalc(); } }, 140); };
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', install); } else { install(); }
+
+})();
+
+</script>
 <script id="protect-v1">
 (function(){
   document.addEventListener("contextmenu",function(e){e.preventDefault();return false;});
