@@ -14226,6 +14226,376 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
 })();
 
 </script>
+<script id="elec-module">
+/* THERMOSYS - Module ELECTRICITE (section des cables et protections IEC 60364)
+   Moteur (ELEC) separe de l'interface. Bilingue FR/EN. */
+(function () {
+  'use strict';
+  if (typeof window === 'undefined') { return; }
+  if (window.__elecMod) { return; }
+  window.__elecMod = true;
+/* Thermosys - ELECTRICITE : dimensionnement d'un circuit de distribution basse tension.
+ * Courants admissibles : IEC 60364-5-52 (tables PVC 70 C reproduites ; isolant PR/XLPE 90 C derive des tables PVC, voir note).
+ * Protection contre les surcharges et courts-circuits : IEC 60364-4-43. Conducteur de protection : IEC 60364-5-54.
+ * Unites : A, V, mm2, m, kA, s.                                                                                                  */
+(function (root) {
+  'use strict';
+  var SIZES = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185, 240, 300];
+  var INS = { PVC: { th: 70, kCu: 115, kAl: 76 }, XLPE: { th: 90, kCu: 143, kAl: 94 } };
+  var XLPE_RATIO = 1.22;          // derive des tables PVC : racine((90-30)/(70-30)) = 1,225, arrondi vers le bas (prudent)
+  var METHODS = ['A1', 'A2', 'B1', 'B2', 'C', 'D1', 'D2'];
+  /* IEC 60364-5-52 Table B.52.4 (PVC, 3 conducteurs charges) : A1 A2 B1 B2 C D1 D2 */
+  var CU3 = {
+    1.5: [13.5, 13, 15.5, 15, 17.5, 18, 19], 2.5: [18, 17.5, 21, 20, 24, 24, 24], 4: [24, 23, 28, 27, 32, 30, 33], 6: [31, 29, 36, 34, 41, 38, 41], 10: [42, 39, 50, 46, 57, 50, 54], 16: [56, 52, 68, 62, 76, 64, 70],
+    25: [73, 68, 89, 80, 96, 82, 92], 35: [89, 83, 110, 99, 119, 98, 110], 50: [108, 99, 134, 118, 144, 116, 130], 70: [136, 125, 171, 149, 184, 143, 162], 95: [164, 150, 207, 179, 223, 169, 193], 120: [188, 172, 239, 206, 259, 192, 220],
+    150: [216, 196, 262, 225, 299, 217, 246], 185: [245, 223, 296, 255, 341, 243, 278], 240: [286, 261, 346, 297, 403, 280, 320], 300: [328, 298, 394, 339, 464, 316, 359]
+  };
+  var AL3 = {
+    16: [43, 41, 53, 48, 59, 50, 53], 25: [57, 53, 70, 62, 73, 64, 69], 35: [70, 65, 86, 77, 90, 77, 83], 50: [84, 78, 104, 92, 110, 91, 99], 70: [107, 98, 133, 116, 140, 112, 122], 95: [129, 118, 161, 139, 170, 132, 148],
+    120: [149, 135, 186, 160, 197, 150, 169], 150: [170, 155, 204, 176, 227, 169, 189], 185: [194, 176, 230, 199, 259, 190, 214], 240: [227, 207, 269, 232, 305, 218, 250], 300: [261, 237, 306, 265, 351, 247, 282]
+  };
+  /* IEC 60364-5-52 Table B.52.2 (PVC, cuivre, 2 conducteurs charges) : A1 A2 B1 B2 C */
+  var CU2 = {
+    1.5: [14.5, 14, 17.5, 16.5, 19.5], 2.5: [19.5, 18.5, 24, 23, 27], 4: [26, 25, 32, 30, 36], 6: [34, 32, 41, 38, 46], 10: [46, 43, 57, 52, 63], 16: [61, 57, 76, 69, 85], 25: [80, 75, 101, 90, 112], 35: [99, 92, 125, 111, 138],
+    50: [119, 110, 151, 133, 168], 70: [151, 139, 192, 168, 213], 95: [182, 167, 232, 201, 258], 120: [210, 192, 269, 232, 299], 150: [240, 219, 300, 258, 344], 185: [273, 248, 341, 294, 392], 240: [320, 291, 400, 344, 461]
+  };
+  /* facteurs de correction en temperature (Tables B.52.14 air, base 30 C ; B.52.15 sol, base 20 C) */
+  var KAIR = { PVC: [[10, 1.22], [15, 1.17], [20, 1.12], [25, 1.06], [30, 1], [35, 0.94], [40, 0.87], [45, 0.79], [50, 0.71], [55, 0.61], [60, 0.50]], XLPE: [[10, 1.15], [15, 1.12], [20, 1.08], [25, 1.04], [30, 1], [35, 0.96], [40, 0.91], [45, 0.87], [50, 0.82], [55, 0.76], [60, 0.71], [65, 0.65], [70, 0.58], [75, 0.50], [80, 0.41]] };
+  var KGND = { PVC: [[10, 1.10], [15, 1.05], [20, 1], [25, 0.95], [30, 0.89], [35, 0.84], [40, 0.77], [45, 0.71], [50, 0.63], [55, 0.55], [60, 0.45]], XLPE: [[10, 1.07], [15, 1.04], [20, 1], [25, 0.96], [30, 0.93], [35, 0.89], [40, 0.85], [45, 0.80], [50, 0.76], [55, 0.71], [60, 0.65], [65, 0.60], [70, 0.53], [75, 0.46], [80, 0.38]] };
+  /* resistivite thermique du sol (methodes D), base 2,5 K.m/W : [rho, enterre en fourreau, enterre direct] (Fig G14) */
+  var KSOIL = [[0.5, 1.28, 1.88], [0.7, 1.20, 1.62], [1, 1.18, 1.5], [1.5, 1.1, 1.28], [2, 1.05, 1.12], [2.5, 1, 1], [3, 0.96, 0.90]];
+  /* regroupement (Table B.52.17) : nombre de circuits 1..9, puis 12, 16, 20 */
+  var GRP = {
+    bunch: [1, 0.80, 0.70, 0.65, 0.60, 0.57, 0.54, 0.52, 0.50, 0.45, 0.41, 0.38], wall: [1, 0.85, 0.79, 0.75, 0.73, 0.72, 0.72, 0.71, 0.70, 0.70, 0.70, 0.70], ceil: [0.95, 0.81, 0.72, 0.68, 0.66, 0.64, 0.63, 0.62, 0.61, 0.61, 0.61, 0.61],
+    perf: [1, 0.88, 0.82, 0.77, 0.75, 0.73, 0.73, 0.72, 0.72, 0.72, 0.72, 0.72], ladder: [1, 0.87, 0.82, 0.80, 0.80, 0.79, 0.79, 0.78, 0.78, 0.78, 0.78, 0.78]
+  };
+  /* enterre (Table B.52.18) : contigus, 1 diametre, 0,125 m, 0,25 m, 0,5 m ; lignes pour 2..9, 12, 16, 20 circuits */
+  var GGND = { 2: [0.75, 0.80, 0.85, 0.90, 0.90], 3: [0.65, 0.70, 0.75, 0.80, 0.85], 4: [0.60, 0.60, 0.70, 0.75, 0.80], 5: [0.55, 0.55, 0.65, 0.70, 0.80], 6: [0.50, 0.55, 0.60, 0.70, 0.80], 7: [0.45, 0.51, 0.59, 0.67, 0.76], 8: [0.43, 0.48, 0.57, 0.65, 0.75], 9: [0.41, 0.46, 0.55, 0.63, 0.74], 12: [0.36, 0.42, 0.51, 0.59, 0.71], 16: [0.32, 0.38, 0.47, 0.56, 0.66], 20: [0.29, 0.35, 0.44, 0.53, 0.66] };
+  var STD_IN = [6, 10, 13, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600];
+  var MU = { B: 5, C: 10, D: 20 };
+  var RHO20 = { Cu: 0.01851, Al: 0.0294 }, ALPHA = { Cu: 0.00393, Al: 0.00403 }, XL = 0.00008;   // ohm.mm2/m ; 1/K ; ohm/m
+  function interp(tab, x) {
+    var i; if (x <= tab[0][0]) { return tab[0][1]; } if (x >= tab[tab.length - 1][0]) { return tab[tab.length - 1][1]; }
+    for (i = 1; i < tab.length; i++) { if (x <= tab[i][0]) { var a = tab[i - 1], b = tab[i]; return a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0]); } }
+    return 1;
+  }
+  function interp2(tab, x, col) { return interp(tab.map(function (r) { return [r[0], r[col]]; }), x); }
+  function nIdx(n) { n = Math.max(1, Math.round(n)); return n <= 9 ? n - 1 : n <= 12 ? 9 : n <= 16 ? 10 : 11; }
+  function kGroup(meth, grp, n, gsp) {
+    n = Math.max(1, Math.round(n));
+    if (meth === 'D1' || meth === 'D2') { if (n === 1) { return 1; } var keys = [2, 3, 4, 5, 6, 7, 8, 9, 12, 16, 20], kk = keys[0], j; for (j = 0; j < keys.length; j++) { if (n >= keys[j]) { kk = keys[j]; } } return GGND[kk][Math.max(0, Math.min(4, gsp | 0))]; }
+    return (GRP[grp] || GRP.bunch)[nIdx(n)];
+  }
+  /* courant admissible de base (A) d'une section, avant correction */
+  function ampBase(mat, ins, meth, nLoaded, S) {
+    var mi = METHODS.indexOf(meth), v = null;
+    if (mat === 'Cu') {
+      if (nLoaded === 2 && mi <= 4 && CU2[S]) { v = CU2[S][mi]; } else { v = CU3[S] ? CU3[S][mi] : null; }
+    } else { v = AL3[S] ? AL3[S][mi] : null; }
+    if (v == null) { return null; }
+    return ins === 'XLPE' ? v * XLPE_RATIO : v;
+  }
+  function sizesFor(mat) { return SIZES.filter(function (s) { return mat === 'Cu' || s >= 16; }); }
+  function rhoHot(mat, th) { return RHO20[mat] * (1 + ALPHA[mat] * (th - 20)); }
+  /* chute de tension (V) pour un courant I (A) ; cos fi ; n phases ; U tension de reference (composee en triphase) */
+  function dropV(c, S, I, cos) {
+    var th = INS[c.ins].th, R = rhoHot(c.mat, th) * c.L / S, X = XL * c.L, sin = Math.sqrt(Math.max(0, 1 - cos * cos)), f = c.ph === 3 ? Math.sqrt(3) : 2;
+    return f * I * (R * cos + X * sin);
+  }
+  function peSize(S) { return S <= 16 ? S : S <= 35 ? 16 : S / 2; }
+  function iscMin(c, S) {     // methode conventionnelle (TN), courant de court-circuit minimal en bout de ligne (A)
+    var U0 = c.ph === 3 ? c.U / Math.sqrt(3) : c.U, m = c.mPE > 0 ? c.mPE : 1;
+    return 0.8 * U0 * S / (1.5 * RHO20[c.mat] * (1 + m) * c.L);
+  }
+  function size(c) {
+    var out = { c: c, warn: [], cand: {} }, cos = Math.max(0.05, Math.min(1, c.cos || 1)), eta = Math.max(0.05, Math.min(1, c.eta || 1)), Ib;
+    if (c.mode === 'I') { Ib = c.I; } else { Ib = c.ph === 3 ? c.P * 1000 / (Math.sqrt(3) * c.U * cos * eta) : c.P * 1000 / (c.U * cos * eta); }
+    out.Ib = Ib;
+    var nLoaded = c.ph === 3 ? 3 : 2;
+    var In = c.In > 0 ? c.In : (STD_IN.filter(function (x) { return x >= Ib; })[0] || Math.ceil(Ib / 100) * 100);
+    out.In = In; out.InAuto = !(c.In > 0);
+    var ground = c.meth === 'D1' || c.meth === 'D2';
+    var kT = interp((ground ? KGND : KAIR)[c.ins], c.Ta);
+    var kG = kGroup(c.meth, c.grp, c.nc, c.gsp);
+    var kS = ground ? interp2(KSOIL, c.rs, c.meth === 'D1' ? 1 : 2) : 1;
+    out.kT = kT; out.kG = kG; out.kS = kS; out.kTot = kT * kG * kS;
+    var sz = sizesFor(c.mat), i, S0 = null, byAmp = null, byDrop = null, bySc = null, byMag = null;
+    var kSc = c.mat === 'Cu' ? INS[c.ins].kCu : INS[c.ins].kAl, Iscmax = Math.max(0, c.Isc) * 1000;
+    var Mu = c.curve === 'adj' ? (c.mu > 0 ? c.mu : 10) : MU[c.curve] || 10;
+    out.Mu = Mu;
+    var dUlim = Math.max(0.1, c.dU - Math.max(0, c.dUpre || 0));
+    out.dUlim = dUlim;
+    for (i = 0; i < sz.length; i++) {
+      var S = sz[i], b = ampBase(c.mat, c.ins, c.meth, nLoaded, S);
+      if (byAmp == null && b != null && b * out.kTot >= In) { byAmp = S; }
+      if (byDrop == null && dropV(c, S, Ib, cos) / c.U * 100 <= dUlim) { byDrop = S; }
+      if (bySc == null && S >= Iscmax * Math.sqrt(Math.max(c.t, 0.001)) / kSc) { bySc = S; }
+      if (byMag == null && iscMin(c, S) >= Mu * In) { byMag = S; }
+    }
+    out.cand = { amp: byAmp, drop: byDrop, sc: bySc, mag: byMag };
+    var list = [byAmp, byDrop, bySc, byMag], missing = list.some(function (x) { return x == null; });
+    var best = 0, bind = null, names = ['amp', 'drop', 'sc', 'mag'];
+    list.forEach(function (x, k) { if (x != null && x > best) { best = x; bind = names[k]; } });
+    out.S = c.S > 0 ? c.S : best; out.Sauto = !(c.S > 0); out.bind = bind;
+    out.missing = missing;
+    if (missing) { var mk = []; if (byAmp == null) { mk.push('amp'); } if (byDrop == null) { mk.push('drop'); } if (bySc == null) { mk.push('sc'); } if (byMag == null) { mk.push('mag'); } out.missingList = mk; }
+    var S1 = out.S, b1 = ampBase(c.mat, c.ins, c.meth, nLoaded, S1);
+    out.IzBase = b1; out.Iz = b1 != null ? b1 * out.kTot : null;
+    out.dV = dropV(c, S1, Ib, cos); out.dPct = out.dV / c.U * 100;
+    out.IscMin = iscMin(c, S1); out.Imag = Mu * In;
+    out.sTherm = Iscmax * Math.sqrt(Math.max(c.t, 0.001)) / kSc;
+    out.Spe = peSize(S1); var nmin = c.mat === 'Cu' ? 16 : 25; out.Sn = c.ph === 1 ? S1 : (S1 <= nmin ? S1 : Math.max(S1 / 2, nmin));
+    out.checks = {
+      amp: out.Iz != null && Ib <= In && In <= out.Iz, drop: out.dPct <= dUlim + 1e-9, sc: S1 >= out.sTherm - 1e-9, mag: out.IscMin >= out.Imag - 1e-9, icu: !(c.Icu > 0) || c.Icu >= c.Isc - 1e-9
+    };
+    if (c.load === 'motor' && c.Id > 0) {       // chute de tension au demarrage
+      var Istart = Ib * c.Id, cs = 0.35; out.dStart = dropV(c, S1, Istart, cs) / c.U * 100;
+    }
+    return out;
+  }
+  root.ELEC = { SIZES: SIZES, STD_IN: STD_IN, MU: MU, METHODS: METHODS, CU3: CU3, CU2: CU2, AL3: AL3, XLPE_RATIO: XLPE_RATIO, INS: INS, size: size, dropV: dropV, iscMin: iscMin, ampBase: ampBase, kGroup: kGroup, interp: interp, rhoHot: rhoHot, peSize: peSize };
+  if (typeof module !== 'undefined') { module.exports = root.ELEC; }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+  if (typeof document === 'undefined') { return; }
+  /* ============ INTERFACE ELECTRICITE ============ */
+  var KEY = 'thermosys_elec_v1', _t = null, _last = null, EC = [], CUR = 0;
+  function EN() { return window.lang === 'en'; }
+  function T(fr, en) { return EN() ? en : fr; }
+  function $(id) { return document.getElementById(id); }
+  function num(id, d) { var e = $(id); if (!e) { return d; } var v = parseFloat(String(e.value).replace(',', '.')); return isFinite(v) ? v : d; }
+  function esc(x) { return String(x === undefined || x === null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function q(a) { return String(a).replace(/"/g, '&quot;'); }
+  function fx(x, n) { return isFinite(x) ? (Math.round(x * Math.pow(10, n)) / Math.pow(10, n)).toFixed(n) : '—'; }
+  function f0(x) { return fx(x, 0); }
+  function numI(v, step, onin, w) { return '<input class="fi" type="number" step="' + (step || 'any') + '" value="' + v + '" style="max-width:' + (w || 90) + 'px" oninput="' + onin + '">'; }
+  function selI(opts, cur, onch) { return '<select class="fsel" style="max-width:100%" onchange="' + onch + '">' + opts.map(function (o) { return '<option value="' + o.id + '"' + (String(o.id) === String(cur) ? ' selected' : '') + '>' + esc(T(o.fr, o.en)) + '</option>'; }).join('') + '</select>'; }
+  function frow(fr, en, html) { return '<div class="frow"><span class="flb">' + T(fr, en) + '</span>' + html + '</div>'; }
+  function sec(fr, en, body, open) { return '<details class="cpsec"' + (open ? ' open' : '') + '><summary data-cfr="' + q(fr) + '" data-cen="' + q(en) + '">' + fr + '</summary>' + body + '</details>'; }
+  function note(fr, en) { return '<div style="font-size:10px;color:var(--ts);margin:3px 0">' + T(fr, en) + '</div>'; }
+  var LOADS = [{ id: 'gen', fr: 'Charge courante (éclairage, prises, chauffage, climatisation)', en: 'General load (lighting, sockets, heating, air conditioning)' }, { id: 'motor', fr: 'Moteur (pompe, ventilateur, compresseur)', en: 'Motor (pump, fan, compressor)' }];
+  var PHS = [{ id: 1, fr: 'Monophasé (2 conducteurs chargés)', en: 'Single-phase (2 loaded conductors)' }, { id: 3, fr: 'Triphasé (3 conducteurs chargés)', en: 'Three-phase (3 loaded conductors)' }];
+  var METH = [
+    { id: 'A1', fr: 'A1 · conducteurs isolés dans un conduit, paroi isolante', en: 'A1 · insulated conductors in conduit, insulated wall', m: 'A1', g: 'bunch' }, { id: 'A2', fr: 'A2 · câble multiconducteur dans un conduit, paroi isolante', en: 'A2 · multicore cable in conduit, insulated wall', m: 'A2', g: 'bunch' },
+    { id: 'B1', fr: 'B1 · conducteurs isolés dans un conduit apparent ou encastré', en: 'B1 · insulated conductors in conduit on or in wall', m: 'B1', g: 'bunch' }, { id: 'B2', fr: 'B2 · câble multiconducteur dans un conduit apparent ou encastré', en: 'B2 · multicore cable in conduit on or in wall', m: 'B2', g: 'bunch' },
+    { id: 'C', fr: 'C · câble fixé sur une paroi ou chemin de câbles non perforé', en: 'C · cable clipped to wall or on unperforated tray', m: 'C', g: 'wall' }, { id: 'Cc', fr: 'C · câble fixé sous un plafond', en: 'C · cable fixed under a ceiling', m: 'C', g: 'ceil' },
+    { id: 'EP', fr: 'E, F · chemin de câbles perforé (calculé avec la colonne C, prudent)', en: 'E, F · perforated tray (calculated with column C, conservative)', m: 'C', g: 'perf' }, { id: 'EL', fr: 'E, F · échelle à câbles (calculé avec la colonne C, prudent)', en: 'E, F · cable ladder (calculated with column C, conservative)', m: 'C', g: 'ladder' },
+    { id: 'D1', fr: 'D1 · câble enterré dans un fourreau', en: 'D1 · buried cable in duct', m: 'D1', g: 'bunch' }, { id: 'D2', fr: 'D2 · câble enterré directement', en: 'D2 · directly buried cable', m: 'D2', g: 'bunch' }
+  ];
+  var CURVES = [{ id: 'B', fr: 'Disjoncteur courbe B (magnétique jusqu\'à 5 In)', en: 'Breaker curve B (magnetic up to 5 In)' }, { id: 'C', fr: 'Disjoncteur courbe C (jusqu\'à 10 In)', en: 'Breaker curve C (up to 10 In)' }, { id: 'D', fr: 'Disjoncteur courbe D (jusqu\'à 20 In)', en: 'Breaker curve D (up to 20 In)' }, { id: 'adj', fr: 'Disjoncteur réglable (seuil magnétique saisi)', en: 'Adjustable breaker (magnetic threshold entered)' }];
+  var TCL = [{ id: 0.01, fr: 'Disjoncteur modulaire limiteur (≈ 0,01 s)', en: 'Current-limiting modular breaker (≈ 0.01 s)' }, { id: 0.05, fr: 'Disjoncteur à boîtier moulé (≈ 0,05 s)', en: 'Moulded-case breaker (≈ 0.05 s)' }, { id: 0.1, fr: 'Coupure temporisée 0,1 s', en: 'Delayed trip 0.1 s' }, { id: 0.2, fr: 'Coupure temporisée 0,2 s', en: 'Delayed trip 0.2 s' }, { id: 0.4, fr: 'Coupure temporisée 0,4 s', en: 'Delayed trip 0.4 s' }];
+  var GSP = [{ id: 0, fr: 'Câbles contigus', en: 'Touching cables' }, { id: 1, fr: 'Un diamètre d\'écart', en: 'One diameter apart' }, { id: 2, fr: '0,125 m d\'écart', en: '0.125 m apart' }, { id: 3, fr: '0,25 m d\'écart', en: '0.25 m apart' }, { id: 4, fr: '0,5 m d\'écart', en: '0.5 m apart' }];
+  function newC(n) {
+    return { name: T('Circuit ', 'Circuit ') + (n || 1), load: 'gen', ph: 3, U: 400, mode: 'P', P: 10, I: 20, cos: 0.9, eta: 1, Id: 6, mat: 'Cu', ins: 'PVC', meth: 'C', nc: 1, gsp: 0, Ta: 30, rs: 2.5, L: 30, dU: 5, dUpre: 0, Isc: 10, tcl: 0.01, curve: 'C', mu: 10, Icu: 10, In: 0, S: 0, mPE: 1 };
+  }
+  function toEng(c) {
+    var m = METH.filter(function (x) { return x.id === c.meth; })[0] || METH[4];
+    return { ph: +c.ph, U: c.U, mode: c.mode, P: c.P, I: c.I, cos: c.cos, eta: c.load === 'motor' ? c.eta : 1, mat: c.mat, ins: c.ins, meth: m.m, grp: m.g, nc: c.nc, gsp: c.gsp, Ta: c.Ta, rs: c.rs, L: Math.max(0.1, c.L), dU: c.dU, dUpre: c.dUpre, Isc: c.Isc, t: c.tcl, curve: c.curve, mu: c.mu, Icu: c.Icu, In: c.In, S: c.S, mPE: c.mPE, load: c.load, Id: c.load === 'motor' ? c.Id : 0 };
+  }
+  /* ---------- liste et formulaire ---------- */
+  function listHtml() { return EC.map(function (c, i) { return '<button class="btn" style="margin:2px;' + (i === CUR ? 'outline:2px solid var(--ac)' : '') + '" onclick="elSel(' + i + ')">' + esc(c.name || ('C' + (i + 1))) + '</button>'; }).join('') + '<button class="btn" style="margin:2px" onclick="elAdd()">' + T('+ Circuit', '+ Circuit') + '</button>'; }
+  function formHtml() {
+    var c = EC[CUR]; if (!c) { return ''; }
+    var groundM = c.meth === 'D1' || c.meth === 'D2', kk = function (k) { return 'elC(\'' + k + '\',this.value)'; };
+    var h = '<div class="cprow">' +
+      frow('Nom du circuit :', 'Circuit name:', '<input class="fi" type="text" value="' + q(c.name) + '" style="max-width:100%" oninput="elC(\'name\',this.value)">') +
+      frow('Type de charge :', 'Load type:', selI(LOADS, c.load, kk('load'))) + frow('Réseau :', 'Supply:', selI(PHS, c.ph, kk('ph'))) +
+      frow('Tension (V) :', 'Voltage (V):', numI(c.U, '1', kk('U'), 80)) + note(c.ph == 3 ? 'Tension entre phases (400 V en général).' : 'Tension phase-neutre (230 V en général).', c.ph == 3 ? 'Line-to-line voltage (usually 400 V).' : 'Phase-to-neutral voltage (usually 230 V).') +
+      frow('Donnée de charge :', 'Load data:', selI([{ id: 'P', fr: 'Puissance (kW)', en: 'Power (kW)' }, { id: 'I', fr: 'Courant d\'emploi (A)', en: 'Design current (A)' }], c.mode, kk('mode'))) +
+      (c.mode === 'P' ? frow(c.load === 'motor' ? 'Puissance utile sur l\'arbre (kW) :' : 'Puissance absorbée (kW) :', c.load === 'motor' ? 'Shaft power (kW):' : 'Absorbed power (kW):', numI(c.P, 'any', kk('P'))) : frow('Courant d\'emploi Ib (A) :', 'Design current Ib (A):', numI(c.I, 'any', kk('I')))) +
+      frow('Facteur de puissance cos φ :', 'Power factor cos φ:', numI(c.cos, '0.01', kk('cos'), 80)) +
+      (c.load === 'motor' ? frow('Rendement du moteur :', 'Motor efficiency:', numI(c.eta, '0.01', kk('eta'), 80)) + frow('Courant de démarrage (multiple de Ib) :', 'Starting current (multiple of Ib):', numI(c.Id, '0.5', kk('Id'), 80)) : '') +
+      frow('Âme :', 'Conductor:', selI([{ id: 'Cu', fr: 'Cuivre', en: 'Copper' }, { id: 'Al', fr: 'Aluminium (à partir de 16 mm²)', en: 'Aluminium (16 mm² and above)' }], c.mat, kk('mat'))) +
+      frow('Isolant :', 'Insulation:', selI([{ id: 'PVC', fr: 'PVC (70 °C)', en: 'PVC (70 °C)' }, { id: 'XLPE', fr: 'PR ou EPR (90 °C)', en: 'XLPE or EPR (90 °C)' }], c.ins, kk('ins'))) +
+      frow('Mode de pose :', 'Installation method:', selI(METH, c.meth, kk('meth'))) +
+      frow('Circuits dans le même groupement :', 'Circuits in the same group:', numI(c.nc, '1', kk('nc'), 70)) +
+      (groundM ? frow('Disposition des câbles enterrés :', 'Buried cable layout:', selI(GSP, c.gsp, kk('gsp'))) + frow('Résistivité thermique du sol (K·m/W) :', 'Soil thermal resistivity (K·m/W):', numI(c.rs, '0.1', kk('rs'), 80)) : '') +
+      frow(groundM ? 'Température du sol (°C) :' : 'Température ambiante (°C) :', groundM ? 'Ground temperature (°C):' : 'Ambient temperature (°C):', numI(c.Ta, '1', kk('Ta'), 80)) +
+      frow('Longueur du circuit (m) :', 'Circuit length (m):', numI(c.L, '1', kk('L'), 80)) +
+      frow('Chute de tension admise (%) :', 'Allowed voltage drop (%):', numI(c.dU, '0.5', kk('dU'), 70)) + frow('Chute déjà utilisée en amont (%) :', 'Drop already used upstream (%):', numI(c.dUpre, '0.5', kk('dUpre'), 70)) +
+      frow('Courant de court-circuit à l\'origine (kA) :', 'Short-circuit current at origin (kA):', numI(c.Isc, '0.5', kk('Isc'), 80)) +
+      frow('Protection :', 'Protection:', selI(CURVES, c.curve, kk('curve'))) + (c.curve === 'adj' ? frow('Seuil magnétique (multiple de In) :', 'Magnetic threshold (× In):', numI(c.mu, '1', kk('mu'), 70)) : '') +
+      frow('Temps de coupure pour la tenue thermique :', 'Clearing time for thermal withstand:', selI(TCL, c.tcl, kk('tcl'))) + frow('Pouvoir de coupure de l\'appareil (kA) :', 'Device breaking capacity (kA):', numI(c.Icu, '0.5', kk('Icu'), 80)) +
+      frow('Calibre imposé In (A, 0 = automatique) :', 'Forced rating In (A, 0 = automatic):', numI(c.In, '1', kk('In'), 80)) + frow('Section imposée (mm², 0 = automatique) :', 'Forced cross-section (mm², 0 = automatic):', numI(c.S, '0.5', kk('S'), 80)) +
+      note('Réseau de distribution en schéma TN supposé pour la vérification du court-circuit minimal ; le conducteur de protection est supposé de même matière.', 'A TN earthing system is assumed for the minimum short-circuit check; the protective conductor is assumed to be of the same material.') +
+      '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px"><button class="btn" onclick="elDup()">' + T('Dupliquer', 'Duplicate') + '</button><button class="btn" onclick="elDel()">' + T('Supprimer ce circuit', 'Delete this circuit') + '</button></div></div>';
+    return h;
+  }
+  function draw() { var a = $('el_list'), b = $('el_form'); if (a) { a.innerHTML = listHtml(); } if (b) { b.innerHTML = formHtml(); } }
+  window.elSel = function (i) { CUR = i; draw(); window.elCalc(); };
+  window.elAdd = function () { EC.push(newC(EC.length + 1)); CUR = EC.length - 1; draw(); window.elDeb(); };
+  window.elDup = function () { var c = JSON.parse(JSON.stringify(EC[CUR])); c.name += ' (2)'; EC.push(c); CUR = EC.length - 1; draw(); window.elDeb(); };
+  window.elDel = function () { if (EC.length <= 1) { EC[0] = newC(1); } else { EC.splice(CUR, 1); CUR = Math.max(0, CUR - 1); } draw(); window.elDeb(); };
+  var TXT = { name: 1, load: 1, mode: 1, mat: 1, ins: 1, meth: 1, curve: 1 }, REDRAW = { load: 1, ph: 1, mode: 1, meth: 1, curve: 1, ins: 1, mat: 1 };
+  window.elC = function (k, v) {
+    var c = EC[CUR]; if (!c) { return; }
+    if (k === 'name') { c.name = v; var a = $('el_list'); if (a) { a.innerHTML = listHtml(); } window.elDeb(); return; }
+    if (TXT[k]) { c[k] = v; } else { var x = parseFloat(String(v).replace(',', '.')); c[k] = isFinite(x) ? x : 0; }
+    if (k === 'ph') { c.ph = +v; c.U = +v === 3 ? 400 : 230; }
+    if (k === 'tcl') { c.tcl = parseFloat(v); }
+    if (k === 'load' && v === 'motor') { c.cos = 0.85; c.eta = 0.92; }
+    if (k === 'load' && v === 'gen') { c.eta = 1; c.cos = 0.9; }
+    if (k === 'gsp') { c.gsp = parseInt(v, 10); }
+    if (REDRAW[k] || k === 'ph' || k === 'gsp') { draw(); }
+    window.elDeb();
+  };
+  /* ---------- page ---------- */
+  function buildPage() {
+    return '<div class="ph" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px"><span data-cfr="ÉLECTRICITÉ — SECTION DES CÂBLES ET PROTECTIONS (IEC 60364)" data-cen="ELECTRICAL — CABLE SIZING AND PROTECTION (IEC 60364)">ÉLECTRICITÉ — SECTION DES CÂBLES ET PROTECTIONS (IEC 60364)</span>' +
+      '<span style="display:flex;gap:4px;flex-wrap:wrap"><button class="btn" onclick="elExample()" data-cfr="Exemple" data-cen="Example">Exemple</button><button class="btn" onclick="elReset()" data-cfr="Nouveau" data-cen="New">Nouveau</button><button class="btn" onclick="elPrint()" data-cfr="Note imprimable" data-cen="Printable note">Note imprimable</button></span></div>' +
+      '<div style="font-size:10.5px;color:var(--ts);margin:2px 0 8px" data-cfr="Courant d\'emploi, calibre de la protection, section du câble (courant admissible, chute de tension, tenue thermique, court-circuit minimal) et conducteur de protection, circuit par circuit." data-cen="Design current, protective device rating, cable cross-section (current-carrying capacity, voltage drop, thermal withstand, minimum short-circuit) and protective conductor, circuit by circuit.">Courant d\'emploi, calibre de la protection, section du câble (courant admissible, chute de tension, tenue thermique, court-circuit minimal) et conducteur de protection, circuit par circuit.</div>' +
+      '<div class="cpmain"><div class="cpin">' +
+      sec('1. PROJET', '1. PROJECT', '<div class="frow"><span class="flb" data-cfr="Projet :" data-cen="Project:">Projet :</span><input class="fi" id="el_proj" type="text" style="max-width:100%" oninput="elDeb()"></div><div class="frow"><span class="flb" data-cfr="Client :" data-cen="Client:">Client :</span><input class="fi" id="el_cli" type="text" style="max-width:100%" oninput="elDeb()"></div><div class="frow"><span class="flb" data-cfr="Site :" data-cen="Site:">Site :</span><input class="fi" id="el_site" type="text" style="max-width:100%" oninput="elDeb()"></div>' +
+        '<div class="frow"><span class="flb" data-cfr="Coefficient de simultanéité du tableau :" data-cen="Panel simultaneity factor:">Coefficient de simultanéité du tableau :</span><input class="fi" id="el_ks" type="number" value="0.8" step="0.05" style="max-width:80px" oninput="elDeb()"></div>' + note('Le coefficient de simultanéité sert à estimer le courant total du tableau à partir de la somme des circuits. Il relève du jugement du concepteur.', 'The simultaneity factor is used to estimate the total panel current from the sum of the circuits. It is a design judgement.'), true) +
+      sec('2. CIRCUITS', '2. CIRCUITS', '<div id="el_list"></div><div id="el_form"></div>', true) +
+      '</div><div class="cpout" id="el_out"></div></div>';
+  }
+  /* ---------- calcul ---------- */
+  var WARN = {
+    nofit: ['Aucune section de la table ne satisfait toutes les conditions : répartissez la charge sur plusieurs circuits ou réduisez la longueur.', 'No tabulated cross-section meets all conditions: split the load over several circuits or reduce the length.'],
+    forcedS: ['La section imposée ne satisfait pas toutes les vérifications.', 'The forced cross-section does not meet all checks.'],
+    forcedIn: ['Le calibre imposé ne respecte pas Ib ≤ In ≤ Iz.', 'The forced rating does not satisfy Ib ≤ In ≤ Iz.'],
+    icu: ['Le pouvoir de coupure de l\'appareil est inférieur au courant de court-circuit à l\'origine.', 'The device breaking capacity is below the short-circuit current at origin.'],
+    start: ['La chute de tension au démarrage du moteur dépasse 15 % : vérifiez avec le constructeur (démarreur, variateur).', 'The voltage drop at motor starting exceeds 15 %: check with the manufacturer (starter, drive).'],
+    isc0: ['Courant de court-circuit à l\'origine nul : la tenue thermique n\'est pas vérifiée.', 'Zero short-circuit current at origin: thermal withstand is not checked.'],
+    alu: ['L\'aluminium n\'est pas proposé sous 16 mm².', 'Aluminium is not offered below 16 mm².'],
+    vlow: ['Le calibre normalisé retenu dépasse largement le courant d\'emploi : vérifiez si un calibre intermédiaire convient.', 'The selected standard rating is far above the design current: check whether an intermediate rating suits.'],
+    group: ['Plusieurs circuits sont groupés : le facteur de regroupement s\'applique à tous.', 'Several circuits are grouped: the grouping factor applies to all of them.'],
+    xlpe: ['Isolant PR/EPR : les courants admissibles sont dérivés des tables PVC (≈ 2 % sous la table IEC) ; confirmez avec la table B.52.5 pour un dimensionnement final.', 'XLPE/EPR insulation: ampacities are derived from the PVC tables (≈ 2 % below the IEC table); confirm with table B.52.5 for final sizing.'],
+    tmp: ['Température hors de la plage des tables de correction : le facteur est limité à la valeur extrême.', 'Temperature outside the correction-table range: the factor is limited to the extreme value.'],
+    ep: ['Chemin perforé ou échelle : le calcul utilise la colonne C (valeurs prudentes).', 'Perforated tray or ladder: the calculation uses column C (conservative values).']
+  };
+  function warnList(c, o, e) {
+    var w = [];
+    if (o.missing) { w.push('nofit'); }
+    if (!o.Sauto && !(o.checks.amp && o.checks.drop && o.checks.sc && o.checks.mag)) { w.push('forcedS'); }
+    if (!o.InAuto && !o.checks.amp) { w.push('forcedIn'); }
+    if (!o.checks.icu) { w.push('icu'); }
+    if (o.dStart != null && o.dStart > 15) { w.push('start'); }
+    if (!(c.Isc > 0)) { w.push('isc0'); }
+    if (c.mat === 'Al') { w.push('alu'); }
+    if (o.In > 1.6 * o.Ib && o.InAuto) { w.push('vlow'); }
+    if (c.nc > 1) { w.push('group'); }
+    if (c.ins === 'XLPE') { w.push('xlpe'); }
+    var ground = c.meth === 'D1' || c.meth === 'D2', tab = ground ? 'g' : 'a';
+    if (c.Ta < 10 || c.Ta > (c.ins === 'PVC' ? 60 : 80)) { w.push('tmp'); }
+    if (c.meth === 'EP' || c.meth === 'EL') { w.push('ep'); }
+    return w;
+  }
+  function run() { return EC.map(function (c) { var e = toEng(c); return { c: c, e: e, o: ELEC.size(e) }; }); }
+  var CRIT = { amp: ['Courant admissible', 'Current-carrying capacity'], drop: ['Chute de tension', 'Voltage drop'], sc: ['Tenue thermique au court-circuit', 'Thermal withstand'], mag: ['Court-circuit minimal en bout de ligne', 'Minimum short-circuit at line end'] };
+  function render() {
+    var out = $('el_out'); if (!out) { return; }
+    if (!EC.length) { EC.push(newC(1)); CUR = 0; draw(); }
+    var R = run(), r = R[CUR], c = r.c, o = r.o, e = r.e;
+    _last = { R: R, cur: CUR }; var card = function (t, v, s) { return '<div class="cpcard"><div class="cpct">' + t + '</div><div class="cpcv">' + v + '</div><div class="cpcs">' + s + '</div></div>'; };
+    var ok = function (b) { return b ? '<span style="color:#59a14f;font-weight:700">✓ ' + T('conforme', 'OK') + '</span>' : '<span style="color:var(--er);font-weight:700">✕ ' + T('non conforme', 'fails') + '</span>'; };
+    var html = '<div class="cph">' + esc(c.name) + '</div><div class="cpcards">' +
+      card(T('Section du câble', 'Cable cross-section'), f0(o.S * 10) / 10 + ' mm²', (c.mat === 'Cu' ? T('Cuivre', 'Copper') : T('Aluminium', 'Aluminium')) + ' · ' + c.ins + (o.Sauto && o.bind ? ' · ' + T('imposée par : ', 'set by: ') + T(CRIT[o.bind][0], CRIT[o.bind][1]).toLowerCase() : '')) +
+      card(T('Protection', 'Protection'), 'In = ' + f0(o.In) + ' A', T('courbe ', 'curve ') + (c.curve === 'adj' ? T('réglable ×', 'adjustable ×') + c.mu : c.curve) + ' · Ib = ' + fx(o.Ib, 1) + ' A') +
+      card(T('Chute de tension', 'Voltage drop'), fx(o.dPct, 2) + ' %', fx(o.dV, 1) + ' V · ' + T('admise', 'allowed') + ' ' + fx(o.dUlim, 1) + ' %') +
+      card(T('Conducteur de protection', 'Protective conductor'), f0(o.Spe * 10) / 10 + ' mm²', T('neutre ', 'neutral ') + f0(o.Sn * 10) / 10 + ' mm²') + '</div>';
+    html += '<div class="cph">' + T('Vérifications', 'Checks') + '</div><table class="cptb"><thead><tr><th>' + T('Critère', 'Criterion') + '</th><th>' + T('Valeur', 'Value') + '</th><th>' + T('Exigence', 'Requirement') + '</th><th></th></tr></thead><tbody>' +
+      '<tr><td>' + T('Surcharge : Ib ≤ In ≤ Iz', 'Overload: Ib ≤ In ≤ Iz') + '</td><td>' + fx(o.Ib, 1) + ' ≤ ' + f0(o.In) + ' ≤ ' + (o.Iz != null ? fx(o.Iz, 1) : '—') + ' A</td><td>Iz = I<sub>table</sub> ' + fx(o.IzBase, 0) + ' × ' + fx(o.kTot, 2) + '</td><td>' + ok(o.checks.amp) + '</td></tr>' +
+      '<tr><td>' + T('Chute de tension', 'Voltage drop') + '</td><td>' + fx(o.dPct, 2) + ' %</td><td>≤ ' + fx(o.dUlim, 1) + ' %</td><td>' + ok(o.checks.drop) + '</td></tr>' +
+      '<tr><td>' + T('Tenue thermique (S ≥ I·√t / k)', 'Thermal withstand (S ≥ I·√t / k)') + '</td><td>S ≥ ' + fx(o.sTherm, 1) + ' mm²</td><td>' + fx(c.Isc, 1) + ' kA · ' + c.tcl + ' s</td><td>' + ok(o.checks.sc) + '</td></tr>' +
+      '<tr><td>' + T('Court-circuit minimal en bout de ligne', 'Minimum short-circuit at line end') + '</td><td>' + f0(o.IscMin) + ' A</td><td>≥ ' + f0(o.Imag) + ' A (' + T('seuil magnétique', 'magnetic threshold') + ')</td><td>' + ok(o.checks.mag) + '</td></tr>' +
+      '<tr><td>' + T('Pouvoir de coupure', 'Breaking capacity') + '</td><td>' + fx(c.Icu, 1) + ' kA</td><td>≥ ' + fx(c.Isc, 1) + ' kA</td><td>' + ok(o.checks.icu) + '</td></tr>' +
+      (o.dStart != null ? '<tr><td>' + T('Chute de tension au démarrage', 'Voltage drop at starting') + '</td><td>' + fx(o.dStart, 1) + ' %</td><td>≤ 15 %</td><td>' + ok(o.dStart <= 15) + '</td></tr>' : '') + '</tbody></table>';
+    html += '<div style="font-size:10px;color:var(--ts)">' + T('Sections minimales par critère : ', 'Minimum cross-section by criterion: ') + ['amp', 'drop', 'sc', 'mag'].map(function (k) { return T(CRIT[k][0], CRIT[k][1]) + ' ' + (o.cand[k] != null ? o.cand[k] + ' mm²' : '—'); }).join(' · ') + '</div>';
+    var tot = 0, itot = 0;
+    html += '<div class="cph">' + T('Tous les circuits', 'All circuits') + '</div><table class="cptb"><thead><tr><th>' + T('Circuit', 'Circuit') + '</th><th>kW</th><th>Ib A</th><th>In A</th><th>mm²</th><th>ΔU %</th><th></th></tr></thead><tbody>' + R.map(function (x, i) {
+      var okAll = x.o.checks.amp && x.o.checks.drop && x.o.checks.sc && x.o.checks.mag && x.o.checks.icu && !x.o.missing, kwv = x.e.mode === 'P' ? x.e.P : (x.e.ph === 3 ? Math.sqrt(3) * x.e.U * x.o.Ib * x.e.cos / 1000 : x.e.U * x.o.Ib * x.e.cos / 1000);
+      tot += kwv; itot += x.o.Ib;
+      return '<tr style="cursor:pointer;' + (i === CUR ? 'font-weight:700;background:rgba(78,121,167,.15)' : '') + '" onclick="elSel(' + i + ')"><td>' + esc(x.c.name) + '</td><td>' + fx(kwv, 1) + '</td><td>' + fx(x.o.Ib, 1) + '</td><td>' + f0(x.o.In) + '</td><td>' + (x.o.S) + '</td><td>' + fx(x.o.dPct, 2) + '</td><td>' + (okAll ? '✓' : '✕') + '</td></tr>';
+    }).join('') + '</tbody></table>';
+    var ks = Math.max(0.1, Math.min(1, num('el_ks', 0.8)));
+    html += '<div style="font-size:11px;margin-top:4px">' + T('Puissance installée ', 'Installed power ') + '<b>' + fx(tot, 1) + ' kW</b> · ' + T('somme des courants ', 'sum of currents ') + '<b>' + fx(itot, 0) + ' A</b> · ' + T('courant du tableau avec simultanéité ', 'panel current with simultaneity ') + '<b>' + fx(itot * ks, 0) + ' A</b> (' + T('indicatif, courants additionnés arithmétiquement', 'indicative, currents added arithmetically') + ')</div>';
+    var w = warnList(c, o, e); _last.warn = w;
+    if (w.length) { html += '<div class="cph">' + T('Points d\'attention', 'Points to check') + '</div>' + w.map(function (k) { return '<div style="font-size:11px;color:var(--wn);margin:3px 0">⚠ ' + T(WARN[k][0], WARN[k][1]) + '</div>'; }).join(''); }
+    html += '<div style="font-size:10px;color:var(--ts);margin-top:8px">' + T('Le résultat est un projet de dimensionnement à valider : tables de la norme, régime de neutre, sélectivité et protection des personnes (différentiels) ne sont pas tous traités. Voir la note imprimable.', 'The result is a sizing proposal to be validated: not all of the standard tables, earthing system, discrimination and shock protection (RCDs) are covered. See the printable note.') + '</div>';
+    out.innerHTML = html; save();
+  }
+  window.elDeb = function () { clearTimeout(_t); _t = setTimeout(window.elCalc, 300); };
+  window.elCalc = function () { if (!$('el_out')) { return; } try { render(); } catch (er) { $('el_out').innerHTML = '<div style="color:var(--er);font-size:11px">' + esc(er && er.message) + '</div>'; } };
+  /* ---------- sauvegarde, exemple, nouveau ---------- */
+  function save() { try { var d = { EC: EC, CUR: CUR, f: {} }; document.querySelectorAll('#pg-elec input[id^="el_"]').forEach(function (e) { d.f[e.id] = e.value; }); localStorage.setItem(KEY, JSON.stringify(d)); } catch (e) { /* sans effet */ } }
+  function restore() { try { var d = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!d) { return false; } EC = d.EC || []; CUR = Math.min(d.CUR || 0, Math.max(0, EC.length - 1)); Object.keys(d.f || {}).forEach(function (id) { var e = $(id); if (e) { e.value = d.f[id]; } }); return true; } catch (e) { return false; } }
+  window.elExample = function () {
+    var a = newC(1); a.name = T('Pompe de circulation 7,5 kW', 'Circulation pump 7.5 kW'); a.load = 'motor'; a.P = 7.5; a.cos = 0.85; a.eta = 0.9; a.Id = 6; a.L = 60; a.meth = 'EP'; a.nc = 3; a.Ta = 35; a.curve = 'D'; a.Isc = 15; a.Icu = 25;
+    var b = newC(2); b.name = T('Groupe de climatisation 22 kW', 'Air-conditioning unit 22 kW'); b.P = 22; b.cos = 0.85; b.L = 50; b.meth = 'C'; b.Ta = 30; b.curve = 'C'; b.Isc = 10; b.Icu = 15;
+    var c = newC(3); c.name = T('Éclairage bureaux', 'Office lighting'); c.ph = 1; c.U = 230; c.P = 1.8; c.cos = 0.95; c.L = 35; c.meth = 'B1'; c.curve = 'B'; c.dU = 3; c.Isc = 6; c.Icu = 6;
+    EC = [a, b, c]; CUR = 0; draw(); window.elCalc();
+  };
+  window.elReset = function () { if (!window.confirm(T('Effacer toutes les données d\'ÉLECTRICITÉ ?', 'Clear all ELECTRICAL data?'))) { return; } try { localStorage.removeItem(KEY); } catch (e) { /* sans effet */ } EC = [newC(1)]; CUR = 0; $('pg-elec').innerHTML = buildPage(); draw(); applyLang(); window.elCalc(); };
+  /* ---------- note imprimable ---------- */
+  var SRC = [
+    [['IEC 60364-5-52', 'IEC 60364-5-52'], ['Courants admissibles (tables B.52.2 et B.52.4, modes de pose A1 à D2), facteurs de température B.52.14 et B.52.15, de regroupement B.52.17 et B.52.18, de résistivité du sol', 'Current-carrying capacities (tables B.52.2 and B.52.4, installation methods A1 to D2), temperature factors B.52.14 and B.52.15, grouping factors B.52.17 and B.52.18, soil resistivity'], ['Élevée pour le PVC ; PR/EPR dérivé (prudent)', 'High for PVC; XLPE/EPR derived (conservative)']],
+    [['IEC 60364-4-43', 'IEC 60364-4-43'], ['Protection contre les surcharges (Ib ≤ In ≤ Iz) et les courts-circuits (k²S² ≥ I²t, k = 115 / 143 cuivre, 76 / 94 aluminium)', 'Overload protection (Ib ≤ In ≤ Iz) and short-circuit protection (k²S² ≥ I²t, k = 115 / 143 copper, 76 / 94 aluminium)'], ['Élevée', 'High']],
+    [['IEC 60364-5-54', 'IEC 60364-5-54'], ['Section du conducteur de protection (S ≤ 16 : S ; 16 à 35 : 16 ; au-delà S/2)', 'Protective conductor size (S ≤ 16: S; 16 to 35: 16; above S/2)'], ['Élevée', 'High']],
+    [['IEC 60364-5-52, annexe G', 'IEC 60364-5-52, Annex G'], ['Chute de tension avec résistance à la température maximale de l\'âme et réactance 0,08 mΩ/m', 'Voltage drop with resistance at maximum conductor temperature and reactance 0.08 mΩ/m'], ['Élevée', 'High']],
+    [['Méthode conventionnelle (schéma TN)', 'Conventional method (TN system)'], ['Courant de court-circuit minimal en bout de ligne : 0,8·U0 / (1,5·ρ·(1 + m)·L / S)', 'Minimum short-circuit current at line end: 0.8·U0 / (1.5·ρ·(1 + m)·L / S)'], ['Moyenne : à confirmer avec l\'impédance réelle de la source', 'Medium: confirm with the actual source impedance']],
+    [['Tests internes du moteur', 'Internal engine tests'], ['18 cas à résultat connu (courant d\'emploi, calibres, tables, facteurs, chute de tension, court-circuit)', '18 cases with known results (design current, ratings, tables, factors, voltage drop, short-circuit)'], ['Élevée', 'High']]
+  ];
+  var NOTE = ['Cette note est une aide au dimensionnement. Elle ne remplace ni la norme en vigueur dans le pays, ni l\'étude complète de l\'installation (schéma de liaison à la terre, sélectivité, protection différentielle, courants de court-circuit réels, harmoniques, câbles en parallèle). Les courants admissibles de l\'isolant PR/EPR sont dérivés des tables PVC par le rapport 1,22 (racine de (90−30)/(70−30), arrondi vers le bas) : ils sont légèrement inférieurs à la table IEC B.52.5, donc prudents. Les modes de pose E et F sont calculés avec la colonne C. Les conducteurs en parallèle ne sont pas traités. Le dimensionnement final reste de la responsabilité du bureau d\'études et de l\'installateur.',
+    'This note is a sizing aid. It replaces neither the standard in force in the country nor the full installation study (earthing system, discrimination, residual-current protection, actual short-circuit currents, harmonics, parallel cables). XLPE/EPR ampacities are derived from the PVC tables with the ratio 1.22 (square root of (90−30)/(70−30), rounded down): they are slightly below the IEC table B.52.5, hence conservative. Installation methods E and F are calculated with column C. Parallel conductors are not covered. Final sizing remains the responsibility of the design office and the installer.'];
+  window.elPrint = function () {
+    if (!_last) { window.elCalc(); } if (!_last) { return; }
+    var R = _last.R, now = new Date(), pad = function (n) { return (n < 10 ? '0' : '') + n; }, ref = 'EL-' + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + '-' + pad(now.getHours()) + pad(now.getMinutes()), dateStr = pad(now.getDate()) + '/' + pad(now.getMonth() + 1) + '/' + now.getFullYear();
+    var h2 = function (a, b) { return '<h2>' + T(a, b) + '</h2>'; }, yes = function (b) { return b ? '✓' : '✕'; };
+    var nOk = R.filter(function (x) { var k = x.o.checks; return k.amp && k.drop && k.sc && k.mag && k.icu && !x.o.missing; }).length;
+    var body = '<div class="sum"><div class="sb"><div class="st">' + T('Circuits étudiés', 'Circuits studied') + '</div><div class="sv">' + R.length + '</div><div class="ss">' + nOk + ' ' + T('conformes', 'compliant') + '</div></div><div class="sb"><div class="st">' + T('Puissance installée', 'Installed power') + '</div><div class="sv2">' + fx(R.reduce(function (s, x) { return s + (x.e.mode === 'P' ? x.e.P : (x.e.ph === 3 ? Math.sqrt(3) * x.e.U * x.o.Ib * x.e.cos / 1000 : x.e.U * x.o.Ib * x.e.cos / 1000)); }, 0), 1) + ' kW</div><div class="ss">&Sigma; Ib = ' + fx(R.reduce(function (s, x) { return s + x.o.Ib; }, 0), 0) + ' A</div></div><div class="sb"><div class="st">' + T('Simultanéité', 'Simultaneity') + '</div><div class="sv2">' + fx(num('el_ks', 0.8), 2) + '</div><div class="ss">' + T('courant du tableau ≈ ', 'panel current ≈ ') + fx(R.reduce(function (s, x) { return s + x.o.Ib; }, 0) * num('el_ks', 0.8), 0) + ' A</div></div></div>';
+    body += h2('1. Récapitulatif', '1. Summary') + '<table class="tb"><tr><th style="text-align:left">' + T('Circuit', 'Circuit') + '</th><th>Ib A</th><th>In A</th><th>mm²</th><th>PE mm²</th><th>Iz A</th><th>ΔU %</th><th>Icc min A</th><th></th></tr>' + R.map(function (x) { var k = x.o.checks, okAll = k.amp && k.drop && k.sc && k.mag && k.icu && !x.o.missing; return '<tr><td>' + esc(x.c.name) + '</td><td>' + fx(x.o.Ib, 1) + '</td><td>' + f0(x.o.In) + '</td><td>' + x.o.S + '</td><td>' + x.o.Spe + '</td><td>' + (x.o.Iz != null ? fx(x.o.Iz, 0) : '—') + '</td><td>' + fx(x.o.dPct, 2) + '</td><td>' + f0(x.o.IscMin) + '</td><td>' + (okAll ? '✓' : '✕') + '</td></tr>'; }).join('') + '</table>';
+    body += h2('2. Détail par circuit', '2. Detail by circuit') + R.map(function (x) {
+      var c = x.c, o = x.o, e = x.e, k = o.checks, mt = METH.filter(function (m) { return m.id === c.meth; })[0] || METH[4];
+      return '<p class="n"><b>' + esc(c.name) + '</b> — ' + (e.ph === 3 ? T('triphasé ', 'three-phase ') : T('monophasé ', 'single-phase ')) + f0(e.U) + ' V, ' + (c.load === 'motor' ? T('moteur', 'motor') : T('charge courante', 'general load')) + ', ' + (e.mode === 'P' ? fx(e.P, 2) + ' kW, cos φ ' + fx(e.cos, 2) + (c.load === 'motor' ? ', η ' + fx(c.eta, 2) : '') : 'Ib ' + fx(e.I, 1) + ' A') + '</p>' +
+        '<table class="tb" style="max-width:175mm"><tr><th style="text-align:left">' + T('Donnée ou vérification', 'Item or check') + '</th><th style="text-align:left">' + T('Valeur', 'Value') + '</th><th></th></tr>' +
+        '<tr><td style="text-align:left">' + T('Pose', 'Installation') + '</td><td style="text-align:left">' + esc(T(mt.fr, mt.en)) + ' · ' + c.nc + ' ' + T('circuit(s)', 'circuit(s)') + ' · ' + f0(c.Ta) + ' °C · ' + f0(c.L) + ' m</td><td></td></tr>' +
+        '<tr><td style="text-align:left">' + T('Âme et isolant', 'Conductor and insulation') + '</td><td style="text-align:left">' + (c.mat === 'Cu' ? T('Cuivre', 'Copper') : 'Aluminium') + ' ' + c.ins + ' · ' + o.S + ' mm² · PE ' + o.Spe + ' mm² · N ' + o.Sn + ' mm²</td><td></td></tr>' +
+        '<tr><td style="text-align:left">Ib ≤ In ≤ Iz</td><td style="text-align:left">' + fx(o.Ib, 1) + ' ≤ ' + f0(o.In) + ' ≤ ' + (o.Iz != null ? fx(o.Iz, 1) : '—') + ' A (kT ' + fx(o.kT, 2) + ' · kG ' + fx(o.kG, 2) + (o.kS !== 1 ? ' · kS ' + fx(o.kS, 2) : '') + ')</td><td>' + yes(k.amp) + '</td></tr>' +
+        '<tr><td style="text-align:left">' + T('Chute de tension', 'Voltage drop') + '</td><td style="text-align:left">' + fx(o.dPct, 2) + ' % (' + fx(o.dV, 1) + ' V) ≤ ' + fx(o.dUlim, 1) + ' %</td><td>' + yes(k.drop) + '</td></tr>' +
+        '<tr><td style="text-align:left">' + T('Tenue thermique', 'Thermal withstand') + '</td><td style="text-align:left">S ≥ ' + fx(o.sTherm, 1) + ' mm² (' + fx(c.Isc, 1) + ' kA, ' + c.tcl + ' s)</td><td>' + yes(k.sc) + '</td></tr>' +
+        '<tr><td style="text-align:left">' + T('Court-circuit minimal', 'Minimum short-circuit') + '</td><td style="text-align:left">' + f0(o.IscMin) + ' A ≥ ' + f0(o.Imag) + ' A</td><td>' + yes(k.mag) + '</td></tr>' +
+        '<tr><td style="text-align:left">' + T('Pouvoir de coupure', 'Breaking capacity') + '</td><td style="text-align:left">' + fx(c.Icu, 1) + ' kA ≥ ' + fx(c.Isc, 1) + ' kA</td><td>' + yes(k.icu) + '</td></tr>' + (o.dStart != null ? '<tr><td style="text-align:left">' + T('Démarrage moteur', 'Motor starting') + '</td><td style="text-align:left">ΔU ' + fx(o.dStart, 1) + ' % ≤ 15 %</td><td>' + yes(o.dStart <= 15) + '</td></tr>' : '') + '</table>';
+    }).join('');
+    var all = []; R.forEach(function (x) { warnList(x.c, x.o, x.e).forEach(function (k) { if (all.indexOf(k) < 0) { all.push(k); } }); });
+    var n = 3; if (all.length) { body += h2(n + '. Points d\'attention', n + '. Points to check') + all.map(function (k) { return '<p class="n w">⚠ ' + T(WARN[k][0], WARN[k][1]) + '</p>'; }).join(''); n++; }
+    body += h2(n + '. Sources et niveau de confiance', n + '. Sources and confidence level') + '<table class="tb">' + SRC.map(function (r) { return '<tr><td style="text-align:left"><b>' + T(r[0][0], r[0][1]) + '</b></td><td style="text-align:left">' + T(r[1][0], r[1][1]) + '</td><td style="text-align:left">' + T(r[2][0], r[2][1]) + '</td></tr>'; }).join('') + '</table><p class="disc">' + T(NOTE[0], NOTE[1]) + '</p>';
+    var win = window.open('', '_blank', 'width=900,height=750');
+    if (!win) { if (typeof showToast === 'function') { showToast(T('Popup bloqué', 'Popup blocked'), 'w'); } return; }
+    win.document.write('<!DOCTYPE html><html lang="' + (EN() ? 'en' : 'fr') + '"><head><meta charset="UTF-8"><title>' + ref + ' — THERMOSYS</title><style>' + PRINT_CSS + '</style></head><body><div class="bar no-print"><button onclick="window.print()">' + T('Imprimer / enregistrer en PDF', 'Print / save as PDF') + '</button></div><div class="page"><div class="hdr"><div><div class="logo">THERMOSYS</div><div class="sub">' + T('POSTE DE TRAVAIL GÉNIE CLIMATIQUE', 'HVAC ENGINEERING WORKSTATION') + '</div></div><div><div class="doc">' + T('NOTE — CÂBLES ET PROTECTIONS', 'NOTE — CABLES AND PROTECTION') + '</div><div class="ref">' + ref + ' — ' + dateStr + '</div></div></div>' +
+      '<div class="ig"><div class="ib"><div class="it">' + T('Projet', 'Project') + '</div><div class="iv">' + esc($('el_proj').value) + '</div></div><div class="ib"><div class="it">' + T('Client', 'Client') + '</div><div class="iv">' + esc($('el_cli').value) + '</div></div><div class="ib"><div class="it">' + T('Site', 'Site') + '</div><div class="iv">' + esc($('el_site').value) + '</div></div><div class="ib"><div class="it">' + T('Établi par', 'Prepared by') + '</div><div class="iv"></div></div></div>' + body + '<div class="sg"><div class="ib"><div class="it">' + T('Établi par', 'Prepared by') + '</div></div><div class="ib"><div class="it">' + T('Vérifié par', 'Checked by') + '</div></div></div></div></body></html>');
+    win.document.close();
+  };
+  var PRINT_CSS = '*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;background:#e8ecf0;padding:20px 0;color:#1a3a5a;font-size:9.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:A4;margin:12mm}@media print{.no-print{display:none!important}body{background:#fff!important;padding:0!important}.page{box-shadow:none!important;width:auto!important;margin:0!important;padding:0!important}}' +
+    '.page{width:210mm;margin:0 auto;background:#fff;padding:14mm 16mm;box-shadow:0 6px 30px rgba(0,0,0,.18)}.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6mm;border-bottom:2pt solid #1a3a5a;padding-bottom:4mm}.logo{font-size:22pt;font-weight:900;letter-spacing:5px}.sub{font-size:7pt;color:#4a6a8a;letter-spacing:3px;margin-top:1.5mm}.doc{font-size:11pt;font-weight:700;color:#fff;background:#1a3a5a;padding:2.5mm 5mm;border-radius:2pt;text-align:right}.ref{font-size:7.5pt;color:#555;margin-top:1.5mm;text-align:right}' +
+    '.ig{display:grid;grid-template-columns:1fr 1fr;gap:3mm;margin-bottom:5mm}.ib{background:#f4f7fc;border-left:3pt solid #1a3a5a;padding:2.5mm 4mm}.it{font-size:6.5pt;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:1mm}.iv{font-size:9pt;color:#2a4a6a;min-height:4mm}.sum{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:3mm;margin-bottom:4mm}.sb{border:1pt solid #1a3a5a;border-radius:3pt;padding:3mm 4mm}.st{font-size:6.5pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}.sv{font-size:20pt;font-weight:800;margin:1mm 0}.sv2{font-size:14pt;font-weight:800;margin:1mm 0}.ss{font-size:7.5pt;color:#4a6a8a}' +
+    'h2{font-size:10.5pt;margin:5mm 0 2mm;padding:1.5mm 3mm;background:#1a3a5a;color:#fff;letter-spacing:.5px;page-break-after:avoid}table{width:100%;border-collapse:collapse;margin-bottom:2mm;page-break-inside:avoid}.tb th{background:#e3eaf3;padding:1.6mm 2mm;font-size:8pt;text-align:right}.tb td{padding:1.4mm 2mm;border-bottom:.5pt solid #d5deea;font-size:8.5pt;text-align:right}.tb td:first-child{text-align:left}.n{font-size:8.5pt;line-height:1.5;margin:3mm 0 1mm}.w{color:#9a5b00}.disc{font-size:7pt;color:#667;line-height:1.5;margin-top:5mm;border-top:.5pt solid #ccc;padding-top:2mm}.sg{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-top:6mm;page-break-inside:avoid}.sg .ib{height:22mm}.bar{position:sticky;top:0;text-align:center;padding:6px}.bar button{padding:8px 18px;font-size:11pt;cursor:pointer}';
+  /* ---------- installation ---------- */
+  function applyLang() { var root = $('pg-elec'); if (!root) { return; } root.querySelectorAll('[data-cfr]').forEach(function (el) { el.textContent = EN() ? el.getAttribute('data-cen') : el.getAttribute('data-cfr'); }); draw(); }
+  function install() {
+    if ($('pg-elec')) { return; }
+    var st = document.createElement('style');
+    st.textContent = '#pg-elec .cpmain{display:grid;grid-template-columns:minmax(300px,5fr) 6fr;gap:12px;align-items:start}@media(max-width:900px){#pg-elec .cpmain{grid-template-columns:1fr}}#pg-elec details.cpsec{border:1px solid var(--border);border-radius:6px;margin:0 0 8px;padding:0 8px 6px}#pg-elec details.cpsec>summary{cursor:pointer;font-weight:700;font-size:11px;padding:7px 0;color:var(--ac);list-style:none}#pg-elec details.cpsec>summary::-webkit-details-marker{display:none}#pg-elec .cprow{border:1px solid var(--border);border-radius:6px;padding:6px;margin:5px 0}' +
+      '#pg-elec .cpcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;margin-bottom:8px}#pg-elec .cpcard{border:1px solid var(--border);border-radius:6px;padding:7px 9px;background:var(--bgc)}#pg-elec .cpct{font-size:9.5px;color:var(--ts)}#pg-elec .cpcv{font-size:19px;font-weight:800;color:var(--ac);margin:2px 0}#pg-elec .cpcs{font-size:10px;color:var(--ts)}#pg-elec .cph{font-size:11px;font-weight:700;color:var(--ac);margin:10px 0 4px;border-bottom:1px solid var(--border);padding-bottom:2px}#pg-elec table.cptb{width:100%;border-collapse:collapse;font-size:11px}#pg-elec .cptb th{text-align:right;color:var(--ts);font-weight:600;padding:3px 4px;border-bottom:1px solid var(--border)}#pg-elec .cptb th:first-child,#pg-elec .cptb td:first-child{text-align:left}#pg-elec .cptb td{padding:3px 4px;text-align:right;border-bottom:1px solid var(--border)}';
+    document.head.appendChild(st);
+    var pg = document.createElement('div'); pg.className = 'page'; pg.id = 'pg-elec'; pg.innerHTML = buildPage();
+    var ref = $('pg-normes'); if (ref && ref.parentNode) { ref.parentNode.insertBefore(pg, ref); } else { document.body.appendChild(pg); }
+    var mn = document.createElement('button'); mn.className = 'mn'; mn.id = 'mn-elec'; mn.setAttribute('onclick', "goPage('elec')");
+    mn.innerHTML = '&#9889; <span id="mn_elec">ÉLECTRICITÉ</span>';
+    var refb = $('mn-heat') || $('mn-psy') || $('mn-chargepro') || $('mn-charge'); if (refb && refb.parentNode) { refb.parentNode.insertBefore(mn, refb.nextSibling); } else { var any = document.querySelector('button.mn'); if (any) { any.parentNode.appendChild(mn); } }
+    if (!restore() || !EC.length) { EC = [newC(1)]; CUR = 0; }
+    applyLang(); window.elCalc();
+  }
+  var _og = window.goPage;
+  window.goPage = function (page) { if (_og) { _og.apply(this, arguments); } if (page === 'elec') { setTimeout(function () { applyLang(); window.elCalc(); }, 30); } };
+  var _ot = window.toggleLang;
+  window.toggleLang = function () { if (_ot) { _ot.apply(this, arguments); } setTimeout(function () { applyLang(); if (_last) { window.elCalc(); } }, 140); };
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', install); } else { install(); }
+
+})();
+
+</script>
 <script id="protect-v1">
 (function(){
   document.addEventListener("contextmenu",function(e){e.preventDefault();return false;});
