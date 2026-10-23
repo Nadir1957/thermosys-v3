@@ -11403,10 +11403,11 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     return Math.exp(-5.6745359e3 / K + 6.3925247 - 9.677843e-3 * K + 6.2215701e-7 * K * K + 2.0747825e-9 * K * K * K - 9.484024e-13 * K * K * K * K + 4.1635019 * Math.log(K));
   }
   function dewOfPv(pv) {
-    var lo = -80, hi = 120, i, m;
-    if (pv <= psat(lo)) { return lo; }
-    for (i = 0; i < 60; i++) { m = (lo + hi) / 2; if (psat(m) < pv) { lo = m; } else { hi = m; } }
-    return (lo + hi) / 2;
+    if (!(pv > 0)) { return -80; }
+    var g = Math.log(pv / 610.94), T = 243.04 * g / (17.625 - g), k, f, d, lp = Math.log(pv);
+    if (!isFinite(T)) { return -80; }
+    for (k = 0; k < 4; k++) { f = Math.log(psat(T)) - lp; d = (Math.log(psat(T + 0.01)) - Math.log(psat(T))) / 0.01; if (!(d > 0)) { break; } T -= f / d; }
+    return Math.max(-80, Math.min(120, T));
   }
   function cpa(W) { return 1.006 + 1.86 * W; }
   function sW(T, W, P) {
@@ -11602,7 +11603,97 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     var seen = {}; out.warn = out.warn.filter(function (k) { if (seen[k]) { return false; } seen[k] = 1; return true; });
     return out;
   }
-  var ATE = { cascade: cascade, RANK: RANK, pAlt: pAlt, psat: psat, sRH: sRH, sW: sW, sH: sH, wSat: wSat, mix: mix, recovery: recovery, treat: treat, solve: solve, flowsOf: flowsOf, fansOf: fansOf, loadsOf: loadsOf,
+
+  /* ---------- fichier meteo EPW (EnergyPlus Weather) ---------- */
+  var CUM = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+  function parseEPW(text) {
+    var L = String(text).split(/\r?\n/), loc = null, i0 = -1, i;
+    for (i = 0; i < Math.min(L.length, 20); i++) {
+      if (L[i].indexOf('LOCATION,') === 0) { loc = L[i].split(','); }
+      if (L[i].indexOf('DATA PERIODS') === 0) { i0 = i + 1; break; }
+    }
+    if (!loc || i0 < 0) { return { err: 'format' }; }
+    var n = 0, T = [], RH = [], Pr = [], mo = [], dy = [], hr = [], lastT = 20, lastR = 50, lastP = 101325;
+    for (i = i0; i < L.length; i++) {
+      if (!L[i]) { continue; }
+      var f = L[i].split(','); if (f.length < 10) { continue; }
+      var m = parseInt(f[1], 10), d = parseInt(f[2], 10), h = parseInt(f[3], 10), t = parseFloat(f[6]), r = parseFloat(f[8]), p = parseFloat(f[9]);
+      if (!(m >= 1 && m <= 12 && d >= 1 && d <= 31 && h >= 1 && h <= 24)) { continue; }
+      if (!(t > -90 && t < 70)) { t = lastT; } if (!(r >= 1 && r <= 100)) { r = lastR; } if (!(p > 30000 && p < 120000)) { p = lastP; }
+      lastT = t; lastR = r; lastP = p;
+      T.push(t); RH.push(r); Pr.push(p); mo.push(m); dy.push(d); hr.push(h); n++;
+    }
+    if (n < 8000) { return { err: 'rows', n: n }; }
+    var W = new Array(n), Hh = new Array(n), Td = new Array(n);
+    for (i = 0; i < n; i++) { var st = sRH(T[i], RH[i], Pr[i]); W[i] = st.W; Hh[i] = st.h; Td[i] = st.Td; }
+    var doy = []; for (i = 0; i < n; i++) { doy.push(CUM[mo[i] - 1] + dy[i]); }
+    return { err: null, name: loc[1], region: loc[2], country: loc[3], source: loc[4], wmo: loc[5], lat: parseFloat(loc[6]), lon: parseFloat(loc[7]), elev: parseFloat(loc[9]) || 0, n: n, T: T, RH: RH, P: Pr, W: W, h: Hh, Td: Td, mon: mo, hr: hr, doy: doy };
+  }
+  function sortedCopy(a) { return a.slice().sort(function (x, y) { return x - y; }); }
+  function pctOf(sorted, p) { var n = sorted.length; return sorted[Math.min(n - 1, Math.max(0, Math.floor(p * n)))]; }
+  function meanWhere(wx, arr, ref, tol, val) {
+    var s = 0, c = 0, i; for (i = 0; i < wx.n; i++) { if (Math.abs(arr[i] - ref) <= tol) { s += val[i]; c++; } }
+    if (c < 5) { for (i = 0, s = 0, c = 0; i < wx.n; i++) { if (Math.abs(arr[i] - ref) <= tol * 3) { s += val[i]; c++; } } }
+    return c ? s / c : null;
+  }
+  /* conditions de calcul tirees des 8760 heures (annee typique : tend a sous-estimer les extremes publies par ASHRAE / services meteo) */
+  function designCond(wx) {
+    var P = 0, i; for (i = 0; i < wx.n; i++) { P += wx.P[i]; } P /= wx.n;
+    var sT = sortedCopy(wx.T), sH = sortedCopy(wx.h), sD = sortedCopy(wx.Td);
+    var out = { P: P };
+    var db04 = pctOf(sT, 0.996), db1 = pctOf(sT, 0.99), db2 = pctOf(sT, 0.98), w996 = pctOf(sT, 0.004), w99 = pctOf(sT, 0.01);
+    var Wc = meanWhere(wx, wx.T, db04, 0.6, wx.W);
+    out.db04 = { T: db04, RH: sW(db04, Wc, P).RH, W: Wc };
+    out.db1 = { T: db1 }; out.db2 = { T: db2 };
+    var h04 = pctOf(sH, 0.996), Th = meanWhere(wx, wx.h, h04, 1.0, wx.T), Wh = meanWhere(wx, wx.h, h04, 1.0, wx.W);
+    out.h04 = { T: Th, W: Wh, h: h04, RH: sW(Th, Wh, P).RH };
+    var td04 = pctOf(sD, 0.996), Tt = meanWhere(wx, wx.Td, td04, 0.5, wx.T), pvT = psat(td04), Wt = 0.621945 * pvT / (P - pvT);
+    out.td04 = { T: Tt, Td: td04, W: Wt, RH: sW(Tt, Wt, P).RH };
+    var Wwn = meanWhere(wx, wx.T, w996, 1.0, wx.W);
+    out.wn996 = { T: w996, RH: Math.min(100, sW(w996, Wwn, P).RH), W: Wwn }; out.wn99 = { T: w99 };
+    out.tmin = sT[0]; out.tmax = sT[wx.n - 1];
+    return out;
+  }
+  /* ---------- energie annuelle heure par heure ---------- */
+  function annual(c, wx, o) {
+    var F = o.F, FA = o.FA, N = wx.n, i, k, cfgs = [['sel', {}], ['noRec', { noRec: true }], ['fresh100', { noRecirc: true }], ['both', { noRec: true, noRecirc: true }]];
+    var score = function (t) { return t.cool / Math.max(1, c.cop) + (t.heat + t.reheat) / (c.hsrc === 'elec' ? 1 : Math.max(0.3, c.eff)) + t.humKW; };
+    var FAnr = FA.Ps * Math.max(0, 1 - (c.dpRec || 0) / Math.max(1, FA.dpS)) + FA.Pe;
+    var internal = F.ld.QsSum - c.envS, dTd = c.Tsum - c.Twin, tol = c.pharma ? 3 : 5, res = {}, Pn = F.P;
+    var dowOf = function (d) { return (d - 1) % 7; };
+    cfgs.forEach(function (cf) {
+      var a = { cool: 0, reheat: 0, heat: 0, humKg: 0, humKW: 0, fan: 0, hours: 0, off: 0, dev: 0, mon: [] };
+      for (k = 0; k < 12; k++) { a.mon.push({ cool: 0, heat: 0, hum: 0, fan: 0 }); }
+      for (i = 0; i < N; i++) {
+        var occ = true;
+        if (c.sch === 'sched') { var hh = wx.hr[i] - 1; occ = (c.h0 < c.h1 ? (hh >= c.h0 && hh < c.h1) : (hh >= c.h0 || hh < c.h1)) && dowOf(wx.doy[i]) < c.dpw; }
+        var f = 1;
+        if (!occ) { if (c.unocc === 'off') { a.off++; continue; } f = Math.max(0.05, c.redPct / 100); }
+        var m = F.m * f, Fh = { P: F.P, L: F.L, m: m, mFresh: c.recirc ? Math.min(m, F.mFresh * f) : m, ld: { G: occ ? F.ld.G : 0 } };
+        var FAh = { dT: FA.dT * f * f }, T = wx.T[i], E = sRH(T, wx.RH[i], Pn);
+        var t = dTd !== 0 ? (T - c.Twin) / dTd : 0.5; t = Math.max(-0.2, Math.min(1.2, t));
+        var env = c.envW + (c.envS - c.envW) * t, Qs = env + (occ ? internal : 0);
+        var r = season(c, Fh, FAh, E, Qs, 'x', cf[1]), tr = r.tr, mm = wx.mon[i] - 1, fanP = (cf[1].noRec ? FAnr : FA.P) * f * f * f;
+        if (!cf[1].noRec && c.rec && c.rec.type !== 'none') {            // by-pass automatique du recuperateur : on garde la meilleure des deux options
+          var o2 = {}; for (var kk in cf[1]) { o2[kk] = cf[1][kk]; } o2.noRec = true;
+          var r2 = season(c, Fh, FAh, E, Qs, 'x', o2);
+          if (score(r2.tr) < score(tr)) { r = r2; tr = r2.tr; fanP = FAnr * f * f * f; }
+        }
+        a.cool += tr.cool; a.reheat += tr.reheat; a.heat += tr.heat; a.humKg += tr.humKg; a.humKW += tr.humKW; a.fan += fanP; a.hours++;
+        a.mon[mm].cool += tr.cool; a.mon[mm].heat += tr.heat + tr.reheat; a.mon[mm].hum += tr.humKW; a.mon[mm].fan += fanP;
+        if (Math.abs(r.Lchk.RH - c.RHL) > tol || Math.abs(r.Lchk.T - c.TL) > 0.5) { a.dev++; }
+      }
+      // energies finales
+      a.heatTot = a.heat + a.reheat;
+      a.elChill = a.cool / c.cop; a.elHeat = c.hsrc === 'elec' ? a.heatTot : 0; a.fuel = c.hsrc === 'elec' ? 0 : a.heatTot / Math.max(0.3, c.eff);
+      a.elTot = a.elChill + a.elHeat + a.humKW + a.fan;
+      a.cost = (c.tarE > 0 ? a.elTot * c.tarE : 0) + (c.tarF > 0 ? a.fuel * c.tarF : 0);
+      res[cf[0]] = a;
+    });
+    res.hours = N; res.tol = tol;
+    return res;
+  }
+  var ATE = { parseEPW: parseEPW, designCond: designCond, annual: annual, cascade: cascade, RANK: RANK, pAlt: pAlt, psat: psat, sRH: sRH, sW: sW, sH: sH, wSat: wSat, mix: mix, recovery: recovery, treat: treat, solve: solve, flowsOf: flowsOf, fansOf: fansOf, loadsOf: loadsOf,
     ISO: ISO, GMP: GMP, HEPA: HEPA, HCL: HCL, EN16798: EN16798, CLS: CLS, sfpClass: sfpClass, freshEN16798: freshEN16798, cpa: cpa, dewOfPv: dewOfPv };
 
   window.AT_ENGINE = ATE;
@@ -11723,7 +11814,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       row('Rendement global ventilateur + moteur :', 'Overall fan + motor efficiency:', inp('etaFan', 0.65, '0.01')) +
       row('Moteur dans le flux d\'air :', 'Motor in the airstream:', sel('fanInAir', YN, 'yes')) +
       '<div style="font-size:10px;color:var(--ts)" data-cfr="Pertes de charge, facteur de contact et rendements : valeurs d\'ingénierie indicatives, non issues d\'une norme, à remplacer par les données du constructeur." data-cen="Pressure drops, contact factor and efficiencies: indicative engineering values, not from a standard, to be replaced by manufacturer data.">Pertes de charge, facteur de contact et rendements : valeurs d\'ingénierie indicatives, non issues d\'une norme, à remplacer par les données du constructeur.</div>', false);
-    var g = cascSection() + sec('8. IDENTIFICATION DU PROJET (NOTE IMPRIMÉE)', '8. PROJECT IDENTIFICATION (PRINTED NOTE)',
+    var g = cascSection() + wxSection() + sec('9. IDENTIFICATION DU PROJET (NOTE IMPRIMÉE)', '9. PROJECT IDENTIFICATION (PRINTED NOTE)',
       row('Projet :', 'Project:', '<input class="fi" id="at_proj" type="text" maxlength="80" style="max-width:100%;flex:1 1 55%">') +
       row('Client :', 'Client:', '<input class="fi" id="at_cli" type="text" maxlength="80" style="max-width:100%;flex:1 1 55%">') +
       row('Site :', 'Site:', '<input class="fi" id="at_site" type="text" maxlength="80" style="max-width:100%;flex:1 1 55%">') +
@@ -11750,7 +11841,8 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       recirc: recirc, recircAsked: $('at_recirc').value === 'yes', hazard: hazard, freshMode: $('at_freshMode').value, cat: $('at_cat').value, pol: $('at_pol').value, exhaust: num('at_exhaust', 0), freshMin: num('at_freshMin', 0), pDp: Math.max(0, num('at_pDp', 0)), pA: Math.max(0, num('at_pA', 0)),
       rec: { type: rt, eta: Math.min(0.95, Math.max(0, eta)), etax: Math.min(0.95, Math.max(0, etax)) }, recCls: $('at_recCls').value,
       beta: Math.min(0.99, Math.max(0.5, num('at_beta', 0.88))), vFace: num('at_vFace', 2.5), dTw: Math.max(1, num('at_dTw', 6)), dTh: Math.max(1, num('at_dTh', 20)), hsrc: $('at_hsrc').value, cop: Math.max(1, num('at_cop', 3)), dTduct: num('at_dTduct', 0), hepa: $('at_hepa').value,
-      dpPre: num('at_dpPre', 0), dpF: num('at_dpF', 0), dpHepa: $('at_hepa').value === 'none' ? 0 : num('at_dpHepa', 0), dpCoilC: num('at_dpCoilC', 0), dpCoilH: num('at_dpCoilH', 0), dpRec: rt === 'none' ? 0 : num('at_dpRec', 0), dpDuct: num('at_dpDuct', 0), dpExt: num('at_dpExt', 0), etaFan: num('at_etaFan', 0.65), fanInAir: $('at_fanInAir').value === 'yes'
+      dpPre: num('at_dpPre', 0), dpF: num('at_dpF', 0), dpHepa: $('at_hepa').value === 'none' ? 0 : num('at_dpHepa', 0), dpCoilC: num('at_dpCoilC', 0), dpCoilH: num('at_dpCoilH', 0), dpRec: rt === 'none' ? 0 : num('at_dpRec', 0), dpDuct: num('at_dpDuct', 0), dpExt: num('at_dpExt', 0), etaFan: num('at_etaFan', 0.65), fanInAir: $('at_fanInAir').value === 'yes',
+      sch: $('at_sch') ? $('at_sch').value : 'cont', h0: num('at_h0', 8), h1: num('at_h1', 18), dpw: Math.min(7, Math.max(1, Math.round(num('at_dpw', 5)))), unocc: $('at_unocc') ? $('at_unocc').value : 'off', redPct: Math.min(100, Math.max(5, num('at_redPct', 30))), eff: Math.min(1.2, Math.max(0.3, num('at_eff', 90) / 100)), tarE: Math.max(0, num('at_tarE', 0)), tarF: Math.max(0, num('at_tarF', 0))
     };
   }
 
@@ -11839,6 +11931,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     ['Eurovent (proposition 2024)', T0('Transfert d\'air extrait : 5 % (roues), 3 % (plaques)', 'Extract-air transfer: 5 % (wheels), 3 % (plates)'), 'sec'],
     ['ISO 16890 / catalogue Daikin', T0('Équivalences G4, F7, F9 avec ISO Coarse et ePM1', 'G4, F7, F9 equivalences with ISO Coarse and ePM1'), 'sec'],
     ['ASHRAE Fundamentals', T0('Psychrométrie (écart ≤ 0,6 % sur l\'humidité absolue face à CoolProp)', 'Psychrometrics (≤ 0.6 % on humidity ratio versus CoolProp)'), 'ver'],
+    ['Climate.OneBuilding.Org (TMYx), EnergyPlus EPW', T0('Années météo typiques horaires (fichier fourni par l\'utilisateur ; citer Lawrie & Crawley) ; conditions de calcul déduites des 8760 h, pouvant différer des valeurs publiées ASHRAE', 'Hourly typical weather years (user-supplied file; cite Lawrie & Crawley); design conditions derived from the 8760 h, may differ from published ASHRAE values'), 'ind'],
     [T0('Valeurs d\'ingénierie', 'Engineering values'), T0('Renouvellements d\'air par classe (sauf 20 vol/h en ISO 8 / grade D), pertes de charge, facteur de contact, vitesse en batterie, rendement ventilateur, chaleur par personne, coefficient de fuite 0,6', 'Air changes per class (except 20 ACH for ISO 8 / grade D), pressure drops, contact factor, coil velocity, fan efficiency, heat per person, leakage coefficient 0.6'), 'ind']
   ];
   function T0(fr, en) { return [fr, en]; }
@@ -11984,9 +12077,10 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     else { h += comfortBlock(c, o); }
     // comparaison
     h += '<div class="ph" style="margin-top:12px">' + T('COMPARAISON DES CHOIX (PUISSANCES DE POINTE)', 'COMPARISON OF CHOICES (PEAK LOADS)') + '</div>' + compTable(c, o);
+    h += annualBlock(c, o);
     h += srcBlock();
     h += '<div style="font-size:10px;color:var(--ts);margin-top:10px;line-height:1.5">' + T(NOTE[0], NOTE[1]) + '</div>';
-    out.innerHTML = h;
+    out.innerHTML = h; updWx();
   }
   function compTable(c, o) {
     var cfgs = [[T('Configuration retenue', 'Selected configuration'), o.sum, o.win], [T('Sans récupération', 'Without heat recovery'), o.sumNoRec, o.winNoRec], [T('100 % air neuf (sans recyclage)', '100 % fresh air (no recirculation)'), o.sum100, o.win100], [T('100 % air neuf et sans récupération', '100 % fresh air, no recovery'), o.sumBoth, o.winBoth]];
@@ -12015,6 +12109,129 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       '<tr><td>' + T('Air neuf minimal EN 16798-1 (cat. ' + c.cat + ')', 'EN 16798-1 minimum fresh air (cat. ' + c.cat + ')') + '</td><td style="text-align:right">' + f1(tot) + ' l/s — ' + f0(tot * 3.6) + ' m³/h</td></tr>' +
       '<tr style="border-top:1px solid var(--border)"><td>' + T('Filtration usuelle : pré-filtre ISO Coarse 55 % (≈ G4), filtre fin ePM1 50 % (≈ F7) ou 80 % (≈ F9)', 'Usual filtration: ISO Coarse 55 % pre-filter (≈ G4), ePM1 50 % (≈ F7) or 80 % (≈ F9) fine filter') + '</td><td style="text-align:right">ISO 16890</td></tr></table>';
     return h;
+  }
+
+  /* ---------- meteo EPW et energie annuelle ---------- */
+  var _wx = null, _dc = null, _wxErr = '', _wxName = '';
+  function wxSection() {
+    var YNs = [{ id: 'cont', fr: '24 h/24, 7 j/7', en: '24 h/day, 7 days/week' }, { id: 'sched', fr: 'Horaires définis ci-dessous', en: 'Schedule defined below' }];
+    var UN = [{ id: 'off', fr: 'Arrêt', en: 'Off' }, { id: 'red', fr: 'Débit réduit', en: 'Reduced airflow' }];
+    return sec('8. MÉTÉO (FICHIER EPW) ET ÉNERGIE ANNUELLE', '8. WEATHER (EPW FILE) AND ANNUAL ENERGY',
+      '<div style="font-size:10px;color:var(--ts);margin-bottom:4px" data-cfr="Chargez le fichier météo de la ville (format EPW, ou le .zip tel que téléchargé). Source gratuite couvrant presque tous les pays : climate.onebuilding.org (choisir la région, le pays, puis la station ; préférer les fichiers TMYx). Le fichier reste sur votre appareil. Citer : Lawrie L.K., Crawley D.B., Development of Global Typical Meteorological Years (TMYx)." data-cen="Load the weather file of the city (EPW format, or the .zip as downloaded). Free source covering almost every country: climate.onebuilding.org (choose region, country, then station; prefer TMYx files). The file stays on your device. Cite: Lawrie L.K., Crawley D.B., Development of Global Typical Meteorological Years (TMYx).">Chargez le fichier météo de la ville (format EPW, ou le .zip tel que téléchargé). Source gratuite couvrant presque tous les pays : climate.onebuilding.org (choisir la région, le pays, puis la station ; préférer les fichiers TMYx). Le fichier reste sur votre appareil. Citer : Lawrie L.K., Crawley D.B., Development of Global Typical Meteorological Years (TMYx).</div>' +
+      '<input type="file" id="at_wxfile" accept=".epw,.zip" onchange="atWxLoad(this)" style="width:100%;font-size:11px;margin:4px 0">' +
+      '<div id="at_wxbox" style="font-size:11px;margin:4px 0"></div>' +
+      row('Fonctionnement :', 'Operation:', sel('sch', YNs, 'cont')) +
+      row('Début (heure) :', 'Start (hour):', inp('h0', 8, '1')) + row('Fin (heure) :', 'End (hour):', inp('h1', 18, '1')) +
+      row('Jours par semaine :', 'Days per week:', inp('dpw', 5, '1')) +
+      row('Hors horaires :', 'Outside schedule:', sel('unocc', UN, 'off')) +
+      row('Débit réduit hors horaires (%) :', 'Reduced airflow outside schedule (%):', inp('redPct', 30, '5')) +
+      row('Rendement de la production de chaud (%) :', 'Heat generation efficiency (%):', inp('eff', 90, '1')) +
+      row('Prix du kWh électrique (0 = pas de coût) :', 'Electricity price per kWh (0 = no cost):', inp('tarE', 0, '0.01')) +
+      row('Prix du kWh combustible :', 'Fuel price per kWh:', inp('tarF', 0, '0.01')) +
+      '<div style="font-size:10px;color:var(--ts)" data-cfr="Le COP du groupe froid et la source de chaud sont à la section 6. La semaine type commence le lundi 1er janvier. Les prix servent seulement à comparer les choix." data-cen="Chiller COP and heat source are in section 6. The typical week starts on Monday 1 January. Prices are only used to compare choices.">Le COP du groupe froid et la source de chaud sont à la section 6. La semaine type commence le lundi 1er janvier. Les prix servent seulement à comparer les choix.</div>', false);
+  }
+  function readZip(buf) {
+    var dv = new DataView(buf), u8 = new Uint8Array(buf), i, eocd = -1, bad = function () { return Promise.reject(new Error('zip')); };
+    for (i = buf.byteLength - 22; i >= Math.max(0, buf.byteLength - 65557); i--) { if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; } }
+    if (eocd < 0) { return bad(); }
+    var n = dv.getUint16(eocd + 10, true), p = dv.getUint32(eocd + 16, true), ent = null;
+    for (i = 0; i < n; i++) {
+      if (p + 46 > buf.byteLength || dv.getUint32(p, true) !== 0x02014b50) { break; }
+      var meth = dv.getUint16(p + 10, true), cs = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), lo = dv.getUint32(p + 42, true), nm = new TextDecoder().decode(u8.subarray(p + 46, p + 46 + nl));
+      if (/\.epw$/i.test(nm)) { ent = { meth: meth, cs: cs, lo: lo }; break; }
+      p += 46 + nl + el + cl;
+    }
+    if (!ent || dv.getUint32(ent.lo, true) !== 0x04034b50) { return bad(); }
+    var ds = ent.lo + 30 + dv.getUint16(ent.lo + 26, true) + dv.getUint16(ent.lo + 28, true), data = u8.subarray(ds, ds + ent.cs);
+    if (ent.meth === 0) { return Promise.resolve(new TextDecoder().decode(data)); }
+    if (ent.meth === 8 && typeof DecompressionStream === 'function') {
+      var d = new DecompressionStream('deflate-raw'), w = d.writable.getWriter(); w.write(data); w.close();
+      return new Response(d.readable).arrayBuffer().then(function (b) { return new TextDecoder().decode(b); });
+    }
+    return bad();
+  }
+  window.atWxLoad = function (el) {
+    var f = el.files && el.files[0]; if (!f) { return; }
+    _wxErr = ''; _wxName = f.name;
+    if (f.size > 15 * 1024 * 1024) { _wx = null; _wxErr = T('Fichier trop volumineux.', 'File too large.'); window.atCalc(); return; }
+    var rd = new FileReader();
+    rd.onload = function () {
+      var buf = rd.result, u = new Uint8Array(buf), isZip = u[0] === 0x50 && u[1] === 0x4b, pr = isZip ? readZip(buf) : Promise.resolve(new TextDecoder('utf-8').decode(buf));
+      pr.then(function (txt) {
+        var w = ATE.parseEPW(txt);
+        if (w.err) { _wx = null; _dc = null; _wxErr = T('Fichier météo non reconnu (format EPW attendu, 8760 lignes horaires).', 'Weather file not recognised (EPW format expected, 8760 hourly rows).'); }
+        else { _wx = w; _dc = ATE.designCond(w); }
+        window.atCalc();
+      }, function () { _wx = null; _dc = null; _wxErr = T('Archive .zip illisible : décompressez-la et chargez le fichier .epw.', 'Unreadable .zip: unzip it and load the .epw file.'); window.atCalc(); });
+    };
+    rd.onerror = function () { _wxErr = T('Lecture du fichier impossible.', 'Cannot read the file.'); window.atCalc(); };
+    rd.readAsArrayBuffer(f);
+  };
+  window.atWxClear = function () { _wx = null; _dc = null; _wxErr = ''; var e = $('at_wxfile'); if (e) { e.value = ''; } window.atCalc(); };
+  window.atUseDesign = function (kind) {
+    if (!_dc) { return; }
+    var s = kind === 'h' ? _dc.h04 : _dc.db04, w = _dc.wn996;
+    setV('Tsum', f1(s.T)); setV('RHsum', f0(Math.min(100, s.RH))); setV('Twin', f1(w.T)); setV('RHwin', f0(Math.min(100, w.RH))); setV('alt', f0(_wx.elev));
+    window.atCalc();
+  };
+  function updWx() {
+    var b = $('at_wxbox'); if (!b) { return; }
+    if (_wxErr) { b.innerHTML = '<div style="color:var(--er)">' + esc(_wxErr) + '</div>'; return; }
+    if (!_wx) { b.innerHTML = '<div style="color:var(--ts)">' + T('Aucun fichier chargé : l\'énergie annuelle n\'est pas calculée.', 'No file loaded: annual energy is not calculated.') + '</div>'; return; }
+    var d = _dc, w = _wx, bt = 'class="btn" style="width:100%;margin:3px 0"';
+    b.innerHTML = '<div><b>' + esc(w.name) + '</b>, ' + esc(w.region ? w.region + ', ' : '') + esc(w.country) + ' — ' + T('station', 'station') + ' ' + esc(w.wmo) + ' — ' + f2(w.lat) + '°, ' + f2(w.lon) + '° — ' + f0(w.elev) + ' m — ' + esc(w.source) + '</div>' +
+      '<table style="width:100%;border-collapse:collapse;font-size:10.5px;margin:4px 0"><tr><td>' + T('Été, sec 0,4 %', 'Summer, dry bulb 0.4 %') + '</td><td style="text-align:right">' + f1(d.db04.T) + ' °C / ' + f0(d.db04.RH) + ' %</td></tr>' +
+      '<tr style="border-top:1px solid var(--border)"><td>' + T('Été, enthalpie 0,4 % (air humide)', 'Summer, enthalpy 0.4 % (humid air)') + '</td><td style="text-align:right">' + f1(d.h04.T) + ' °C / ' + f0(d.h04.RH) + ' % — ' + f1(d.h04.W * 1000) + ' g/kg</td></tr>' +
+      '<tr style="border-top:1px solid var(--border)"><td>' + T('Hiver 99,6 %', 'Winter 99.6 %') + '</td><td style="text-align:right">' + f1(d.wn996.T) + ' °C / ' + f0(d.wn996.RH) + ' %</td></tr>' +
+      '<tr style="border-top:1px solid var(--border)"><td>' + T('Extrêmes de l\'année type', 'Typical-year extremes') + '</td><td style="text-align:right">' + f1(d.tmin) + ' / ' + f1(d.tmax) + ' °C</td></tr></table>' +
+      '<button ' + bt + ' onclick="atUseDesign(\'db\')">' + T('Utiliser comme conditions de calcul (été sec 0,4 %, hiver 99,6 %)', 'Use as design conditions (summer dry bulb 0.4 %, winter 99.6 %)') + '</button>' +
+      '<button ' + bt + ' onclick="atUseDesign(\'h\')">' + T('Utiliser comme conditions de calcul (été enthalpie 0,4 %, hiver 99,6 %)', 'Use as design conditions (summer enthalpy 0.4 %, winter 99.6 %)') + '</button>' +
+      '<button ' + bt + ' onclick="atWxClear()">' + T('Retirer le fichier météo', 'Remove weather file') + '</button>' +
+      '<div style="font-size:10px;color:var(--ts)">' + T('Ces valeurs sont déduites d\'une année type : elles sous-estiment souvent les extrêmes publiés par ASHRAE ou le service météo national. Vérifier avant de dimensionner.', 'These values come from a typical year: they often underestimate the extremes published by ASHRAE or the national weather service. Check before sizing.') + '</div>';
+  }
+  var MONTHS = [['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'], ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']];
+  function monthChart(a, pal) {
+    var W = 520, H = 170, x0 = 38, y0 = 14, pw = W - x0 - 8, ph = H - y0 - 24, mx = 1, k;
+    for (k = 0; k < 12; k++) { mx = Math.max(mx, a.mon[k].cool, a.mon[k].heat); }
+    var step = Math.pow(10, Math.floor(Math.log(mx) / Math.LN10)), top = Math.ceil(mx / step) * step, bw = pw / 12, s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="' + T('Énergie thermique mensuelle', 'Monthly thermal energy') + '" font-family="Arial,sans-serif" font-size="9">';
+    for (k = 0; k <= 4; k++) { var yy = y0 + ph - ph * k / 4; s += '<line x1="' + x0 + '" x2="' + (W - 8) + '" y1="' + yy + '" y2="' + yy + '" stroke="' + pal.gr + '" stroke-width="0.6"/><text x="' + (x0 - 4) + '" y="' + (yy + 3) + '" text-anchor="end" fill="' + pal.tx + '">' + f0(top * k / 4) + '</text>'; }
+    for (k = 0; k < 12; k++) {
+      var hc = ph * a.mon[k].cool / top, hh = ph * a.mon[k].heat / top, bx = x0 + k * bw + bw * 0.12;
+      s += '<rect x="' + bx + '" y="' + (y0 + ph - hc) + '" width="' + bw * 0.38 + '" height="' + hc + '" fill="' + pal.sat + '"/><rect x="' + (bx + bw * 0.38) + '" y="' + (y0 + ph - hh) + '" width="' + bw * 0.38 + '" height="' + hh + '" fill="' + pal.mx + '"/><text x="' + (x0 + k * bw + bw / 2) + '" y="' + (H - 12) + '" text-anchor="middle" fill="' + pal.tx + '">' + MONTHS[0][k] + '</text>';
+    }
+    s += '<text x="' + x0 + '" y="9" fill="' + pal.tx + '">kWh</text><rect x="' + (W - 190) + '" y="2" width="8" height="8" fill="' + pal.sat + '"/><text x="' + (W - 178) + '" y="10" fill="' + pal.tx + '">' + T('froid', 'cooling') + '</text><rect x="' + (W - 120) + '" y="2" width="8" height="8" fill="' + pal.mx + '"/><text x="' + (W - 108) + '" y="10" fill="' + pal.tx + '">' + T('chaud + réchauffage', 'heating + reheat') + '</text></svg>';
+    return s;
+  }
+  function annualHtml(c, o, prn) {
+    var r = ATE.annual(c, _wx, o), a = r.sel, h = '', cur = (c.tarE > 0 || c.tarF > 0), A = o.F.ld.A, fm = function (x) { return Math.round(x).toLocaleString(EN() ? 'en-US' : 'fr-FR'); };
+    var rows = [
+      [T('Heures de fonctionnement / arrêt', 'Operating / stopped hours'), fm(a.hours) + ' / ' + fm(a.off) + ' h'],
+      [T('Batterie froide (énergie thermique)', 'Cooling coil (thermal energy)'), fm(a.cool) + ' kWh'],
+      [T('Chauffage + réchauffage (énergie thermique)', 'Heating + reheat (thermal energy)'), fm(a.heatTot) + ' kWh'],
+      [T('Humidification vapeur', 'Steam humidification'), fm(a.humKg) + ' kg — ' + fm(a.humKW) + ' kWh'],
+      [T('Ventilateurs (électricité)', 'Fans (electricity)'), fm(a.fan) + ' kWh'],
+      [T('Groupe froid (électricité, COP ' + f1(c.cop) + ')', 'Chiller (electricity, COP ' + f1(c.cop) + ')'), fm(a.elChill) + ' kWh'],
+      [c.hsrc === 'elec' ? T('Chauffage électrique', 'Electric heating') : T('Combustible de production de chaud (rendement ' + f0(c.eff * 100) + ' %)', 'Heat generation fuel (efficiency ' + f0(c.eff * 100) + ' %)'), fm(c.hsrc === 'elec' ? a.elHeat : a.fuel) + ' kWh'],
+      ['<b>' + T('Électricité totale', 'Total electricity') + '</b>', '<b>' + fm(a.elTot) + ' kWh</b> (' + f0(a.elTot / A) + ' kWh/m²)'],
+      cur ? [T('Coût annuel estimé', 'Estimated annual cost'), fm(a.cost)] : null
+    ].filter(function (x) { return x; });
+    h += '<table style="width:100%;border-collapse:collapse;font-size:11px">' + rows.map(function (x, i) { return '<tr' + (i ? ' style="border-top:1px solid var(--border)"' : '') + '><td>' + x[0] + '</td><td style="text-align:right">' + x[1] + '</td></tr>'; }).join('') + '</table>';
+    h += '<div style="margin-top:6px">' + monthChart(a, prn ? PALPRINT : PAL) + '</div>';
+    var names = [['sel', T('Configuration retenue', 'Selected configuration')], ['noRec', T('Sans récupération', 'Without heat recovery')], ['fresh100', T('100 % air neuf (sans recyclage)', '100 % fresh air (no recirculation)')], ['both', T('100 % air neuf et sans récupération', '100 % fresh air, no recovery')]], base = a.elTot + a.fuel;
+    h += '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:6px"><tr><th style="text-align:left"></th><th style="text-align:right">' + T('Froid', 'Cooling') + '</th><th style="text-align:right">' + T('Chaud', 'Heating') + '</th><th style="text-align:right">' + T('Énergie finale', 'Final energy') + '</th><th style="text-align:right">%</th></tr>' +
+      names.map(function (x, i) { var z = r[x[0]], tot = z.elTot + z.fuel; return '<tr style="border-top:1px solid var(--border)"><td>' + x[1] + '</td><td style="text-align:right">' + fm(z.cool) + '</td><td style="text-align:right">' + fm(z.heatTot) + '</td><td style="text-align:right">' + fm(tot) + '</td><td style="text-align:right">' + (i ? (tot >= base ? '+' : '') + f0((tot - base) / Math.max(1, base) * 100) : '—') + '</td></tr>'; }).join('') + '</table>' +
+      '<div style="font-size:10px;color:var(--ts);margin-top:3px">' + T('Énergies en kWh par an. Énergie finale = électricité + combustible.', 'Energies in kWh per year. Final energy = electricity + fuel.') + '</div>';
+    var w = [];
+    if (a.dev > 0.02 * Math.max(1, a.hours)) { w.push(T('Le local sort de sa consigne pendant ' + fm(a.dev) + ' h : batterie ou humidification insuffisante hors conditions de calcul, ou consigne irréalisable.', 'The room leaves its setpoint for ' + fm(a.dev) + ' h: coil or humidification inadequate outside design conditions, or setpoint unachievable.')); }
+    if (Math.abs(c.alt - _wx.elev) > 100) { w.push(T('L\'altitude saisie (' + f0(c.alt) + ' m) diffère de celle de la station (' + f0(_wx.elev) + ' m).', 'The entered altitude (' + f0(c.alt) + ' m) differs from the station (' + f0(_wx.elev) + ' m).')); }
+    w.push(T('Hypothèses : débit constant en fonctionnement (réduit hors horaires si choisi), charge de paroi interpolée linéairement entre les valeurs hiver et été selon la température extérieure, récupérateur avec by-pass automatique (la meilleure option heure par heure), sans givrage modélisé, humidificateur vapeur électrique, puissance ventilateur proportionnelle au cube du débit. Année météo type : ce n\'est pas une année réelle.', 'Assumptions: constant airflow while operating (reduced outside the schedule if chosen), envelope load interpolated linearly between winter and summer values by outside temperature, recovery unit with automatic bypass (best option hour by hour), no frost modelling, electric steam humidifier, fan power proportional to the cube of airflow. Typical weather year: not an actual year.'));
+    h += w.map(function (k) { return '<div style="font-size:10px;color:var(--ts);margin-top:3px">' + k + '</div>'; }).join('');
+    h += '<div style="font-size:10px;color:var(--ts);margin-top:3px">' + T('Fichier météo : ', 'Weather file: ') + esc(_wx.name) + ', ' + esc(_wx.country) + ' (' + esc(_wx.source) + '). ' + T('Si le fichier vient de Climate.OneBuilding.Org, citer Lawrie L.K., Crawley D.B., TMYx.', 'If the file comes from Climate.OneBuilding.Org, cite Lawrie L.K., Crawley D.B., TMYx.') + '</div>';
+    return h;
+  }
+  function annualBlock(c, o) {
+    if (!_wx) { return ''; }
+    return '<div class="ph" style="margin-top:12px">' + T('ÉNERGIE ANNUELLE (8760 H, FICHIER MÉTÉO)', 'ANNUAL ENERGY (8760 H, WEATHER FILE)') + '</div>' + annualHtml(c, o, false);
   }
 
   /* ---------- impression ---------- */
@@ -12060,6 +12277,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     }
     if (c.pharma) { var cc9 = readCasc(); if (cc9.on) { var r9 = ATE.cascade({ rho: 1 / F.L.v, rooms: cc9.rooms }), s9 = cascSummary(r9, c, o);
       body += h2(n + '. Cascade de pressions (locaux et sas)', n + '. Pressure cascade (rooms and airlocks)') + cascTables(cc9, r9, c, o, true) + kv([[T('Air neuf de compensation', 'Make-up fresh air'), f0(s9.fresh) + ' m³/h (' + f0(s9.pct) + ' %)'], [T('Traitement de cet air neuf, été / hiver (sans récupération)', 'Treating this fresh air, summer / winter (no recovery)'), f1(s9.cool) + ' / ' + f1(s9.heat) + ' kW']]) + r9.warn.map(function (k) { return '<p class="n w">⚠ ' + T(WARN[k][0], WARN[k][1]) + '</p>'; }).join(''); n++; } }
+    if (_wx) { body += h2(n + '. Météo et énergie annuelle', n + '. Weather and annual energy') + annualHtml(c, o, true).replace(/<table style="[^"]*">/g, '<table class="tb">').replace(/ style="[^"]*"/g, '').replace(/<div>/g, '<p class="n">').replace(/<\/div>/g, '</p>'); n++; }
     var w = checks(c, o);
     body += h2(n + '. Comparaison des choix', n + '. Comparison of choices') + compTable(c, o).replace(/<table style="[^"]*">/, '<table class="tb">').replace(/ style="[^"]*"/g, ''); n++;
     if (w.length) { body += h2(n + '. Points d\'attention', n + '. Points to check') + w.map(function (k) { return '<p class="n w">⚠ ' + T(WARN[k][0], WARN[k][1]) + '</p>'; }).join(''); n++; }
