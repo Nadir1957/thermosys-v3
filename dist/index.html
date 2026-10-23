@@ -1683,8 +1683,8 @@
 <div class="panel" style="margin-bottom:10px">
 <div class="ph">&#128214; Présentation / Overview</div>
 <div style="font-size:12px;line-height:1.8;margin-top:8px">
-<b>Thermosys v3</b> est une station de travail HVAC professionnelle tout-en-un, accessible depuis tout navigateur web sur PC, tablette et smartphone. Elle regroupe une vingtaine de modules couvrant l'ensemble des besoins des techniciens, ingénieurs, bureaux d'études, installateurs, centres de formation et universités spécialisés en génie climatique, froid et climatisation.<br><br>
-<i><b>Thermosys v3</b> is an all-in-one professional HVAC workstation, accessible from any web browser on PC, tablet and smartphone. It brings together about twenty modules covering all needs of technicians, engineers, design offices, installers, training centres and universities specialising in HVAC, refrigeration and air conditioning.</i>
+<b>Thermosys v3</b> est une station de travail HVAC professionnelle tout-en-un, accessible depuis tout navigateur web sur PC, tablette et smartphone. Elle regroupe plus de vingt modules couvrant l'ensemble des besoins des techniciens, ingénieurs, bureaux d'études, installateurs, centres de formation et universités spécialisés en génie climatique, froid et climatisation.<br><br>
+<i><b>Thermosys v3</b> is an all-in-one professional HVAC workstation, accessible from any web browser on PC, tablet and smartphone. It brings together more than twenty modules covering all needs of technicians, engineers, design offices, installers, training centres and universities specialising in HVAC, refrigeration and air conditioning.</i>
 </div>
 </div>
 
@@ -1965,8 +1965,91 @@
 </div>
 </div>
 
+
+<!-- THERMOSYS-AIDE-V3 -->
+<div style="margin-top:10px;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+<div style="background:var(--tm);color:#000;padding:8px 12px;font-weight:700;font-size:12px">&#10052; 19. CHARGE PRO — Charges thermiques horaires / Hourly cooling loads</div>
+<div style="padding:10px;font-size:11px;line-height:1.8">
+&#9679; Calcule la charge de refroidissement d'un local heure par heure sur la journée de pointe : parois (inertie), vitrages avec protections solaires, occupants, éclairage, équipements, air neuf et infiltration. Donne la puissance à installer, l'heure de pointe, la répartition sensible / latent et les graphiques empilés.<br>
+&#9679; <b>Météo :</b> ville de la liste ou fichier météo .epw / .zip de n'importe quelle ville (conditions de calcul déduites automatiquement), avec courbe mensuelle de charge.<br>
+&#9679; <b>Note imprimable :</b> hypothèses, résultats, graphiques et sources avec niveau de confiance. Pré-dimensionnement à valider.<br><br>
+<i>&#9679; Calculates the cooling load of a room hour by hour over the peak day: walls (thermal mass), glazing with solar protection, occupants, lighting, equipment, fresh air and infiltration. Gives the capacity to install, peak hour, sensible / latent split and stacked charts.<br>
+&#9679; <b>Weather:</b> city from the list or .epw / .zip weather file of any city (design conditions derived automatically), with a monthly load curve.<br>
+&#9679; <b>Printable note:</b> assumptions, results, charts and sources with confidence level. Preliminary sizing to be validated.</i>
+</div>
+</div>
+
+<div style="margin-top:10px;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+<div style="background:var(--tm);color:#000;padding:8px 12px;font-weight:700;font-size:12px">&#127744; 20. PSYCHRO — Air humide et procédés / Moist air and processes</div>
+<div style="padding:10px;font-size:11px;line-height:1.8">
+&#9679; Propriétés de l'air humide (ASHRAE) à partir de deux données : température, humidité, point de rosée, enthalpie, volume massique, avec altitude. Procédés : chauffage, humidification vapeur ou adiabatique, batterie froide avec déshumidification (facteur de contact), mélange d'air.<br>
+&#9679; Résultats : puissances sensible, latente et totale, condensat, facteur de chaleur sensible, diagramme psychrométrique et note imprimable. Option d'affichage en unités impériales.<br><br>
+<i>&#9679; Moist-air properties (ASHRAE) from two inputs: temperature, humidity, dew point, enthalpy, specific volume, with altitude. Processes: heating, steam or adiabatic humidification, cooling coil with dehumidification (contact factor), air mixing.<br>
+&#9679; Results: sensible, latent and total power, condensate, sensible heat ratio, psychrometric chart and printable note. Optional imperial unit display.</i>
+</div>
+</div>
+
+<div style="margin-top:10px;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+<div style="background:var(--tm);color:#000;padding:8px 12px;font-weight:700;font-size:12px">&#128293; 21. CHAUFFAGE — Déperditions EN 12831 / Heat loss</div>
+<div style="padding:10px;font-size:11px;line-height:1.8">
+&#9679; Calcule les déperditions de chauffage local par local (méthode simplifiée EN 12831) : parois, ponts thermiques, sol (ISO 13370), renouvellement d'air (ventilation simple ou double flux avec récupération) et relance. Donne la puissance par local et du bâtiment, avec graphique et note.<br>
+&#9679; <b>Températures de base :</b> saisie ou déduites d'un fichier météo. Annexe nationale à vérifier pour votre pays.<br><br>
+<i>&#9679; Calculates heating heat loss room by room (simplified EN 12831): walls, thermal bridges, ground (ISO 13370), air change (simple or balanced ventilation with heat recovery) and warm-up. Gives power per room and for the building, with chart and note.<br>
+&#9679; <b>Design temperatures:</b> entered or derived from a weather file. National annex to be checked for your country.</i>
+</div>
+</div>
+
+<div style="margin-top:10px;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+<div style="background:var(--tm);color:#000;padding:8px 12px;font-weight:700;font-size:12px">&#9889; 22. ÉLECTRICITÉ — Câbles et protections (IEC 60364) / Cables and protection</div>
+<div style="padding:10px;font-size:11px;line-height:1.8">
+&#9679; Dimensionne circuit par circuit : courant d'emploi, calibre de la protection, section du câble (courant admissible avec facteurs de température et de regroupement, chute de tension, tenue thermique au court-circuit, court-circuit minimal en bout de ligne), conducteur de protection et neutre, démarrage moteur.<br>
+&#9679; <b>Limites :</b> schéma TN, câbles PVC en tables de la norme et PR/EPR dérivé de façon prudente, modes de pose E et F calculés avec la colonne C, pas de câbles en parallèle. Les valeurs sont à confirmer avec la norme en vigueur dans votre pays.<br><br>
+<i>&#9679; Sizes circuit by circuit: design current, protective device rating, cable cross-section (current-carrying capacity with temperature and grouping factors, voltage drop, thermal withstand, minimum short-circuit at line end), protective and neutral conductors, motor starting.<br>
+&#9679; <b>Limits:</b> TN system, PVC cables from the standard tables and XLPE/EPR derived conservatively, installation methods E and F calculated with column C, no parallel cables. Values must be confirmed against the standard in force in your country.</i>
+</div>
+</div>
+
+<div style="margin-top:10px;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+<div style="background:var(--tm);color:#000;padding:8px 12px;font-weight:700;font-size:12px">&#9881; 23. MÉCATRONIQUE — Signaux, moteurs, vibrations, volets / Mechatronics</div>
+<div style="padding:10px;font-size:11px;line-height:1.8">
+&#9679; Conversion des signaux 0-10 V et 4-20 mA avec détection de fil coupé ; sondes Pt100, Pt1000 et CTN ; moteur et variateur (courant, vitesse, courant minimal du variateur, lois des ventilateurs et économie d'énergie, contrôle des courants mesurés) ; zones de vibration ISO 10816-3 ; couple du servomoteur de volet ; simulation et code de la logique « vibration élevée » ; dépannage guidé en 4 arbres.<br>
+&#9679; <b>Important :</b> outils de calcul et d'aide au diagnostic, sans connexion à des machines. Le code de sécurité est un exemple pédagogique, pas une fonction de sécurité certifiée.<br><br>
+<i>&#9679; 0-10 V and 4-20 mA signal conversion with cut-wire detection; Pt100, Pt1000 and NTC probes; motor and drive (current, speed, minimum drive current, fan laws and energy saving, measured-current check); ISO 10816-3 vibration zones; damper actuator torque; simulation and code of the "high vibration" logic; guided troubleshooting in 4 trees.<br>
+&#9679; <b>Important:</b> calculation and diagnostic-aid tools, with no connection to machines. The safety code is a teaching example, not a certified safety function.</i>
+</div>
+</div>
+
+<div style="margin-top:10px;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+<div style="background:var(--tm);color:#000;padding:8px 12px;font-weight:700;font-size:12px">&#128193; 24. PROJET — Dossier commun et PDF combiné / Shared project and combined PDF</div>
+<div style="padding:10px;font-size:11px;line-height:1.8">
+&#9679; Renseignez le projet, le client, le site et l'auteur une seule fois : ces informations sont reportées sur les notes. Le bouton « PDF combiné » regroupe en un seul document, avec page de garde et sommaire, les notes des modules utilisés (CHARGE PRO, PSYCHRO, CHAUFFAGE, ÉLECTRICITÉ, MÉCATRONIQUE).<br>
+&#9679; « Enregistrer le projet » crée un fichier .json avec toutes les données des modules ; « Ouvrir un projet » le recharge sur cet appareil ou un autre.<br><br>
+<i>&#9679; Enter the project, client, site and author once: this information is carried over to the notes. The "Combined PDF" button gathers, in one document with a cover page and contents, the notes of the modules you used (CHARGE PRO, PSYCHRO, HEATING, ELECTRICAL, MECHATRONICS).<br>
+&#9679; "Save project" creates a .json file with all the module data; "Open a project" reloads it on this device or another.</i>
+</div>
+</div>
+
+<div style="margin-top:10px;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+<div style="background:var(--tm);color:#000;padding:8px 12px;font-weight:700;font-size:12px">&#127760; 25. UNITÉS — SI / Impérial</div>
+<div style="padding:10px;font-size:11px;line-height:1.8">
+&#9679; En haut des modules CHARGE PRO, PSYCHRO, CHAUFFAGE, ÉLECTRICITÉ et MÉCATRONIQUE, les boutons « SI » et « Impérial » choisissent l'affichage. En impérial, les champs de saisie montrent la conversion (°F, ft, ft², CFM, Btu/h, hp) et les résultats et notes affichent les deux unités ; ÉLECTRICITÉ ajoute l'équivalent AWG / kcmil des sections.<br>
+&#9679; Les saisies et les calculs restent en unités SI : seul l'affichage change. Les différences de température ne sont pas converties.<br><br>
+<i>&#9679; At the top of the CHARGE PRO, PSYCHRO, HEATING, ELECTRICAL and MECHATRONICS modules, the "SI" and "Imperial" buttons choose the display. In imperial, input fields show the conversion (°F, ft, ft², CFM, Btu/h, hp) and results and notes show both units; ELECTRICAL adds the AWG / kcmil equivalent of cross-sections.<br>
+&#9679; Inputs and calculations stay in SI units: only the display changes. Temperature differences are not converted.</i>
+</div>
+</div>
+
 </div><div class="panel" style="margin-bottom:10px">
 <div class="ph">&#10067; FAQ — Questions fréquentes / Frequently Asked Questions</div>
+
+<div style="margin-top:10px;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+<div style="background:var(--bg2);padding:8px 12px;font-weight:700;font-size:11px;border-bottom:1px solid var(--border)">&#10067; Comment obtenir un seul PDF pour tout le projet ? / How to get one PDF for the whole project?</div>
+<div style="padding:10px;font-size:11px;line-height:1.8">
+Utilisez chaque module normalement (les données sont mémorisées sur votre appareil), puis ouvrez l'onglet PROJET, renseignez le projet, le client et le site, vérifiez les modules cochés et cliquez sur « PDF combiné ». Dans la fenêtre qui s'ouvre, choisissez « Imprimer / enregistrer en PDF ».<br>
+<i>Use each module as usual (data is stored on your device), then open the PROJECT tab, fill in the project, client and site, check the ticked modules and click "Combined PDF". In the window that opens, choose "Print / save as PDF".</i>
+</div>
+</div>
+
 
 <div style="margin-top:10px;border:1px solid var(--border);border-radius:6px;overflow:hidden">
 <div style="background:var(--bg2);padding:8px 12px;font-weight:700;font-size:11px;border-bottom:1px solid var(--border)">&#10067; Où trouver le fichier météo d'une ville ? / Where to find a city weather file?</div>
@@ -14610,7 +14693,8 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
     { id: 'chpro', key: 'thermosys_chpro_v1', fr: 'CHARGE PRO — charges thermiques', en: 'CHARGE PRO — cooling loads', fn: 'cpPrint', page: 'chargepro' },
     { id: 'psy', key: 'thermosys_psy_v1', fr: 'PSYCHRO — air humide', en: 'PSYCHRO — moist air', fn: 'pyPrint', page: 'psy' },
     { id: 'heat', key: 'thermosys_heat_v1', fr: 'CHAUFFAGE — déperditions EN 12831', en: 'HEATING — EN 12831 heat loss', fn: 'htPrint', page: 'heat' },
-    { id: 'elec', key: 'thermosys_elec_v1', fr: 'ÉLECTRICITÉ — câbles et protections', en: 'ELECTRICAL — cables and protection', fn: 'elPrint', page: 'elec' }
+    { id: 'elec', key: 'thermosys_elec_v1', fr: 'ÉLECTRICITÉ — câbles et protections', en: 'ELECTRICAL — cables and protection', fn: 'elPrint', page: 'elec' },
+    { id: 'mecha', key: 'thermosys_mecha_v1', fr: 'MÉCATRONIQUE — signaux, moteur, vibrations, volets', en: 'MECHATRONICS — signals, motor, vibration, dampers', fn: 'mcPrint', page: 'mecha' }
   ];
   function EN() { return window.lang === 'en'; }
   function T(fr, en) { return EN() ? en : fr; }
@@ -14756,7 +14840,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
   window.__unitsMod = true;
   if (typeof document === 'undefined') { return; }
   /* ============ UNITES IMPERIALES : affichage double, calculs inchanges (SI) ============ */
-  var KEY = 'thermosys_units_v1', MARK = '​', PAGES = ['pg-chargepro', 'pg-heat', 'pg-elec'], ALLP = ['pg-chargepro', 'pg-psy', 'pg-heat', 'pg-elec'];
+  var KEY = 'thermosys_units_v1', MARK = '​', PAGES = ['pg-chargepro', 'pg-heat', 'pg-elec', 'pg-mecha'], ALLP = ['pg-chargepro', 'pg-psy', 'pg-heat', 'pg-elec', 'pg-mecha'];
   var imp = false, busy = false;
   function EN() { return window.lang === 'en'; }
   function T(fr, en) { return EN() ? en : fr; }
@@ -14819,7 +14903,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
   function refresh() {
     if (busy) { return; } busy = true;
     try {
-      PAGES.forEach(function (id) { var pg = $(id); if (pg) { hints(pg, id === 'pg-elec' ? 'el' : ''); walkOut(pg, id === 'pg-elec' ? 'el' : ''); } });
+      PAGES.forEach(function (id) { var pg = $(id); if (pg) { var md = (id === 'pg-elec' || id === 'pg-mecha') ? 'el' : ''; hints(pg, md); walkOut(pg, md); } });
     } catch (e) { /* sans effet */ }
     busy = false;
   }
@@ -14842,7 +14926,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
     if (!w || !w.document || !imp) { return w; }
     try {
       var d = w.document, ow = d.write.bind(d);
-      d.write = function (h) { if (typeof h === 'string') { if (/class="cvr"/.test(h)) { h = h.split(/(?=<div class="m\d mpage">)/).map(function (p) { return /^<div class="m2 /.test(p) ? p : convHTML(p, /^<div class="m4 /.test(p) ? 'el' : ''); }).join(''); } else if (!/<title>PS-/.test(h)) { h = convHTML(h, /<title>EL-/.test(h) ? 'el' : ''); } } return ow(h); };
+      d.write = function (h) { if (typeof h === 'string') { if (/class="cvr"/.test(h)) { h = h.split(/(?=<div class="m\d mpage">)/).map(function (p) { return /^<div class="m2 /.test(p) ? p : convHTML(p, /^<div class="m[45] /.test(p) ? 'el' : ''); }).join(''); } else if (!/<title>PS-/.test(h)) { h = convHTML(h, /<title>(EL|MC)-/.test(h) ? 'el' : ''); } } return ow(h); };
     } catch (e) { /* sans effet */ }
     return w;
   };
