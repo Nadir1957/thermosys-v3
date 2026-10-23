@@ -12117,7 +12117,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       '<tr style="border-top:1px solid var(--border)"><td>' + T('Écart de soufflage obtenu', 'Resulting supply temperature difference') + '</td><td style="text-align:right">' + f1(F.dTact) + ' K</td></tr>' +
       '<tr style="border-top:1px solid var(--border)"><td>' + T('Section de batterie (à ' + f1(c.vFace) + ' m/s)', 'Coil face area (at ' + f1(c.vFace) + ' m/s)') + '</td><td style="text-align:right">' + f2(o.faceA) + ' m²</td></tr></table>';
     // saisons
-    [['sum', T('ÉTÉ — REFROIDISSEMENT ET DÉSHUMIDIFICATION', 'SUMMER — COOLING AND DEHUMIDIFICATION'), sm], ['win', T('HIVER — CHAUFFAGE ET HUMIDIFICATION', 'WINTER — HEATING AND HUMIDIFICATION'), wn]].forEach(function (s) {
+    [['sum', o.sum.tr.dry ? T('ÉTÉ — REFROIDISSEMENT ET DÉSHUMIDIFICATION PAR ROUE DESSICCANTE', 'SUMMER — COOLING AND DESICCANT WHEEL DEHUMIDIFICATION') : T('ÉTÉ — REFROIDISSEMENT ET DÉSHUMIDIFICATION', 'SUMMER — COOLING AND DEHUMIDIFICATION'), sm], ['win', o.win.tr.dry ? T('HIVER — DÉSHUMIDIFICATION PAR ROUE DESSICCANTE', 'WINTER — DESICCANT WHEEL DEHUMIDIFICATION') : T('HIVER — CHAUFFAGE ET HUMIDIFICATION', 'WINTER — HEATING AND HUMIDIFICATION'), wn]].forEach(function (s) {
       var res = o[s[0]], l = s[2];
       h += '<div class="ph" style="margin-top:12px">' + s[1] + '</div>' + stTable(res, F, false) + '<div style="margin-top:6px">' + chartSVG(res, F, PAL) + '</div>';
       h += '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:6px">' +
