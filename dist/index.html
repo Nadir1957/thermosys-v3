@@ -4544,14 +4544,16 @@ function calcGaine(){
 // Valeurs indicatives (Δh, ρ) à conditions AC typiques — à vérifier avec les données constructeur.
 // ═══════════════════════════════════════════════
 var FRIGO_PROPS = {
-  r410a: {dh:165, rhoLiq:1020, rhoVap:25, name:'R410A'},
-  r32:   {dh:275, rhoLiq:970,  rhoVap:21, name:'R32'},
-  r134a: {dh:148, rhoLiq:1146, rhoVap:16, name:'R134a'},
-  r404a: {dh:115, rhoLiq:970,  rhoVap:36, name:'R404A'},
-  r290:  {dh:315, rhoLiq:480,  rhoVap:11, name:'R290'}
+  /* THERMOSYS-FIAB-V3 */ /* T evap. 5 C, T cond. 45 C, surchauffe 5 K, sous-refroidissement 5 K (CoolProp) ; rhoDis = gaz de refoulement ; mu en uPa.s ; kE, kC = pente de saturation en kPa/K a l'evaporation / a la condensation */
+  r410a: {dh:163, rhoLiq:981,  rhoVap:35, rhoDis:94,  muS:12.5, muD:16.2, muL:98,  kE:28.6, kC:65, name:'R410A'},
+  r32:   {dh:247, rhoLiq:896,  rhoVap:25, rhoDis:62,  muS:12.8, muD:16.3, muL:93,  kE:29.3, kC:66, name:'R32'},
+  r134a: {dh:150, rhoLiq:1148, rhoVap:17, rhoDis:54,  muS:11.1, muD:13.0, muL:162, kE:12.2, kC:30, name:'R134a'},
+  r404a: {dh:113, rhoLiq:969,  rhoVap:35, rhoDis:106, muS:11.3, muD:14.3, muL:106, kE:21.6, kC:48, name:'R404A'},
+  r290:  {dh:282, rhoLiq:468,  rhoVap:12, rhoDis:32,  muS:7.7,  muD:9.3,  muL:83,  kE:16.2, kC:34, name:'R290'}
 };
 // Tubes ACR cuivre standard (diamètre extérieur, mm) — séries pouces courantes en frigorifique
 var ACR_TUBES_MM = [6.35,9.53,12.7,15.88,19.05,22.23,28.58,34.93,41.28,53.98,66.68,79.38,104.78];
+var ACR_WALL_MM  = [0.76,0.81,0.81,0.89,0.89,1.14,1.27,1.40,1.52,1.78,2.03,2.29,2.54];
 
 function calcRefrigPipe(){
   var fr = (typeof lang!=='undefined' && lang==='fr');
@@ -4574,18 +4576,23 @@ function calcRefrigPipe(){
     ligneLabel_fr = riser ? 'Ligne aspiration (colonne montante)' : 'Ligne aspiration (horizontale)';
     ligneLabel_en = riser ? 'Suction line (vertical riser)' : 'Suction line (horizontal)';
   } else {
-    vTarget = 12; rho = fp.rhoVap; ligneLabel_fr='Ligne refoulement'; ligneLabel_en='Discharge line';
+    vTarget = 12; rho = fp.rhoDis || fp.rhoVap; ligneLabel_fr='Ligne refoulement'; ligneLabel_en='Discharge line';
   }
 
   var area = mdot / (rho * vTarget); // m2
   var Dm = Math.sqrt(4*area/Math.PI);
   var Dmm = Dm*1000;
-  var DN = ACR_TUBES_MM.reduce(function(best,d){ return Math.abs(d-Dmm) < Math.abs(best-Dmm) ? d : best; }, ACR_TUBES_MM[0]);
-  var vReel = mdot / (rho * Math.PI * Math.pow((DN/1000)/2,2));
+  var _mu = (ligne==='liquide' ? fp.muL : (ligne==='aspiration' ? fp.muS : fp.muD)) * 1e-6, _kk = (ligne==='aspiration' ? fp.kE : fp.kC);
+  function _sz(i){ var id = ACR_TUBES_MM[i] - 2*ACR_WALL_MM[i]; var v = mdot / (rho * Math.PI * Math.pow((id/1000)/2,2)); var Re = rho*v*(id/1000)/_mu;
+    var fr_ = Re < 2300 ? 64/Re : 0.25/Math.pow(Math.log10(1.5e-6/(3.7*id/1000)+5.74/Math.pow(Re,0.9)),2);
+    var dP = fr_*(leq/(id/1000))*rho*v*v/2/1000; return {id:id, v:v, dP:dP, dT:dP/_kk}; }
+  var _ix = 0; ACR_TUBES_MM.forEach(function(d,i){ if (Math.abs(_sz(i).id-Dmm) < Math.abs(_sz(_ix).id-Dmm)) _ix = i; });
+  while (_ix < ACR_TUBES_MM.length-1 && _sz(_ix).dT > 1) _ix++;
+  var DN = ACR_TUBES_MM[_ix], _z = _sz(_ix), IDmm = _z.id, vReel = _z.v, _dP = _z.dP, _dT = _z.dT;
 
   var ranges = {
     liquide:    {min:0.5, max:1.5},
-    aspiration: {min: riser?10:8, max: riser?12:15},
+    aspiration: {min: riser?7:4, max: 15},
     refoulement:{min:5,  max:18}
   };
   var rg = ranges[ligne];
@@ -4598,6 +4605,9 @@ function calcRefrigPipe(){
     [fr?'Débit massique estimé':'Estimated mass flow', (mdot*3600).toFixed(1)+' kg/h'],
     [fr?'Diamètre calculé':'Calculated diameter', Dmm.toFixed(1)+' mm'],
     [fr?'Tube ACR normalisé':'Standard ACR tube', '⌀ '+DN.toFixed(2)+' mm ('+ (DN/25.4).toFixed(3)+'")'],
+    [fr?'Diamètre intérieur (paroi ACR)':'Inner diameter (ACR wall)', IDmm.toFixed(1)+' mm'],
+    [fr?'Perte de charge (L éq. saisie)':'Pressure drop (equiv. length)', _dP.toFixed(1)+' kPa ≈ '+_dT.toFixed(2)+' K '+(_dT<=1?'✅':'⚠️')],
+    [fr?'Conditions de référence':'Reference conditions', fr?'T évap. 5 °C / T cond. 45 °C':'Evap. 5 °C / cond. 45 °C'],
     [fr?'Vitesse réelle':'Actual velocity', vReel.toFixed(2)+' m/s '+(vOk?'✅':'⚠️')],
     [fr?'Plage recommandée':'Recommended range', rg.min+' – '+rg.max+' m/s'],
     [fr?'Longueur équiv. saisie':'Equiv. length entered', leq+' m']
@@ -4616,6 +4626,7 @@ function calcRefrigPipe(){
     (fr ? 'Estimation indicative (méthode vitesse, propriétés fluide approximatives) — à vérifier avec le logiciel ou les abaques du fabricant avant exécution.'
         : 'Indicative estimate (velocity method, approximate fluid properties) — verify against manufacturer software or charts before construction.')+
     '</div>';
+  if (_dT > 1) html += '<div style="margin-top:6px;color:var(--wn);font-size:11px">'+(fr ? '⚠️ Perte de charge > 1 K de température de saturation même avec le plus gros tube : raccourcir la ligne ou changer de schéma.' : '⚠️ Pressure drop > 1 K saturation temperature even with the largest tube: shorten the line or change the layout.')+'</div>';
   el.innerHTML = html;
   if (typeof logHist === 'function') logHist('Frigo: '+fp.name+', '+ligne+', '+cap+'kW');
 }
