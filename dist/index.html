@@ -11464,6 +11464,30 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     return o;
   }
 
+  /* ---------- salle tres seche : pre-refroidissement + roue dessiccante + post-refroidissement ---------- */
+  function treatDry(M, tgtT, tgtW, m, beta, P, spec) {
+    var o = { steps: [], cool: 0, coolS: 0, coolL: 0, reheat: 0, heat: 0, humKg: 0, humKW: 0, cond: 0, flags: ['dryOn'], ADP: null, BF: null, C: null, pts: [M], regenKW: 0, wheelKg: 0, dry: true }, cur = M, Wpre = Math.max(wSat(8, P), tgtW);
+    if (cur.W > Wpre + 1e-5) {                        // batterie froide jusqu'a un point de rosee de 8 C
+      var Wa = cur.W + (Wpre - cur.W) / beta, ta = dewOfPv(P * Wa / (0.621945 + Wa)), Tc = cur.T + beta * (ta - cur.T), C = sW(Tc, Wpre, P);
+      o.ADP = ta; o.BF = 1 - beta; o.C = C; o.pts.push({ n: 'ADP', T: ta, W: wSat(ta, P) }); C.n = 'C'; o.pts.push(C);
+      var hSens = 1.006 * Tc + cur.W * (2501 + 1.86 * Tc);
+      o.cool = m * (cur.h - C.h) - m * (cur.W - C.W) * HW * Tc; o.coolS = m * (cur.h - hSens); o.coolL = o.cool - o.coolS; o.cond = m * (cur.W - C.W) * 3600;
+      if (ta < 3) { o.flags.push('adpLow'); }
+      cur = C;
+    }
+    var Wout = Math.min(cur.W, tgtW), rem = m * (cur.W - Wout);
+    if (rem > 1e-9) {                                 // roue dessiccante : transformation adiabatique (enthalpie constante)
+      var Tw = (cur.h - 2501 * Wout) / (1.006 + 1.86 * Wout), D = sW(Tw, Wout, P); D.n = 'D'; o.pts.push(D);
+      o.wheelKg = rem * 3600; o.regenKW = rem * (spec > 0 ? spec : 5000);
+      if (dewOfPv(P * Wout / (0.621945 + Wout)) < -60) { o.flags.push('dryLimit'); }
+      cur = D;
+    }
+    var Ts = sW(tgtT, cur.W, P); Ts.n = 'T';
+    if (tgtT < cur.T - 0.01) { var q = m * (cur.h - Ts.h); o.cool += q; o.coolS += q; o.pts.push(Ts); }
+    else if (tgtT > cur.T + 0.01) { o.reheat += m * (Ts.h - cur.h); Ts.n = 'RH'; o.pts.push(Ts); }
+    return o;
+  }
+
   /* ---------- donnees normatives ---------- */
   var ISO = { 5: { p05: 3520, p1: 832, p5: null }, 6: { p05: 35200, p1: 8320, p5: 293 }, 7: { p05: 352000, p1: 83200, p5: 2930 }, 8: { p05: 3520000, p1: 832000, p5: 29300 }, 9: { p05: 35200000, p1: 8320000, p5: 293000 } };
   var GMP = { A: { r05: 3520, o05: 3520, r5: null, o5: null, iso: 'ISO 5 / ISO 5' }, B: { r05: 3520, o05: 352000, r5: null, o5: 2930, iso: 'ISO 5 / ISO 7' }, C: { r05: 352000, o05: 3520000, r5: 2930, o5: 29300, iso: 'ISO 7 / ISO 8' }, D: { r05: 3520000, o05: null, r5: 29300, o5: null, iso: 'ISO 8 / (CCS)' } };
@@ -11541,7 +11565,8 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     var dTs = QsRoom / (m * cpa(L.W)); var Ts = L.T - dTs; res.Ts = Ts;
     var Ws = Math.max(0, L.W - G / m); res.Ws = Ws;
     var tgtT = Ts - FA.dT - c.dTduct;                      // sortie de traitement avant ventilateur
-    var tr = treat(M, tgtT, Ws, m, c.beta, P);
+    var useDry = c.desic !== 'no' && M.W > Ws + 1e-5 && (c.desic === 'yes' || dewOfPv(P * Ws / (0.621945 + Ws)) < 5);
+    var tr = useDry ? treatDry(M, tgtT, Ws, m, c.beta, P, c.regenSpec) : treat(M, tgtT, Ws, m, c.beta, P);
     res.tr = tr; res.tgtT = tgtT;
     var after = tr.pts[tr.pts.length - 1];
     var Sfan = sW(tgtT + FA.dT, tr.pts[tr.pts.length - 1].W, P);
@@ -11655,45 +11680,71 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     return out;
   }
   /* ---------- energie annuelle heure par heure ---------- */
+  function copFactor(T, plr) {       // loi indicative : groupe a condensation par air, nominal a 35 C, charge pleine
+    var ft = Math.max(0.6, Math.min(1.5, 1 - 0.025 * (T - 35))), g;
+    plr = Math.max(0, Math.min(1, plr));
+    g = plr >= 0.75 ? 1 : plr >= 0.5 ? 1 + 0.15 * (0.75 - plr) / 0.25 : plr >= 0.25 ? 1.15 - 0.2 * (0.5 - plr) / 0.25 : 0.6 + 0.35 * plr / 0.25;
+    return ft * g;
+  }
   function annual(c, wx, o) {
     var F = o.F, FA = o.FA, N = wx.n, i, k, cfgs = [['sel', {}], ['noRec', { noRec: true }], ['fresh100', { noRecirc: true }], ['both', { noRec: true, noRecirc: true }]];
-    var score = function (t) { return t.cool / Math.max(1, c.cop) + (t.heat + t.reheat) / (c.hsrc === 'elec' ? 1 : Math.max(0.3, c.eff)) + t.humKW; };
+    var score = function (t) { return t.cool / Math.max(1, c.cop) + (t.heat + t.reheat + (t.regenKW || 0)) / (c.hsrc === 'elec' ? 1 : Math.max(0.3, c.eff)) + t.humKW; };
     var FAnr = FA.Ps * Math.max(0, 1 - (c.dpRec || 0) / Math.max(1, FA.dpS)) + FA.Pe;
-    var internal = F.ld.QsSum - c.envS, dTd = c.Tsum - c.Twin, tol = c.pharma ? 3 : 5, res = {}, Pn = F.P;
+    var internal = F.ld.QsSum - c.envS, dTd = c.Tsum - c.Twin, tol = c.RHL < 10 ? 1.5 : (c.pharma ? 3 : 5), res = {}, Pn = F.P;
+    var A = F.ld.A, vL = F.L.v, capD = Math.max(1, o.sum.tr.cool), cpL = cpa(F.L.W), dTsD = Math.max(0.5, c.dTs);
+    var prof = c.sch === 'prof' && c.pwd && c.pwe, vav = c.ctl === 'vav', dcv = c.dcv === 'yes' && c.recirc && c.freshMode === 'en' && prof, cvar = c.copVar === 'yes';
+    var base = Math.min(1, Math.max(0, (c.base === undefined ? 30 : c.base) / 100));
     var dowOf = function (d) { return (d - 1) % 7; };
     cfgs.forEach(function (cf) {
-      var a = { cool: 0, reheat: 0, heat: 0, humKg: 0, humKW: 0, fan: 0, hours: 0, off: 0, dev: 0, mon: [] };
+      var a = { cool: 0, reheat: 0, heat: 0, regen: 0, humKg: 0, humKW: 0, fan: 0, fanConst: 0, elChill: 0, hours: 0, off: 0, dev: 0, flowSum: 0, peak: 0, plr: [0, 0, 0, 0], plrE: [0, 0, 0, 0], mon: [] };
       for (k = 0; k < 12; k++) { a.mon.push({ cool: 0, heat: 0, hum: 0, fan: 0 }); }
       for (i = 0; i < N; i++) {
-        var occ = true;
-        if (c.sch === 'sched') { var hh = wx.hr[i] - 1; occ = (c.h0 < c.h1 ? (hh >= c.h0 && hh < c.h1) : (hh >= c.h0 || hh < c.h1)) && dowOf(wx.doy[i]) < c.dpw; }
-        var f = 1;
+        var hh = wx.hr[i] - 1, dow = dowOf(wx.doy[i]), occ = true, pf = 1;
+        if (c.sch === 'sched') { occ = (c.h0 < c.h1 ? (hh >= c.h0 && hh < c.h1) : (hh >= c.h0 || hh < c.h1)) && dow < c.dpw; pf = occ ? 1 : 0; }
+        else if (prof) { var arr = dow >= 5 ? c.pwe : c.pwd; pf = Math.max(0, Math.min(1, (arr[hh] || 0) / 100)); occ = pf > 0; }
+        var intF = occ ? 1 : 0, latF = occ ? 1 : 0, f = 1;
+        if (prof) { intF = base + (1 - base) * pf; latF = pf; }
         if (!occ) { if (c.unocc === 'off') { a.off++; continue; } f = Math.max(0.05, c.redPct / 100); }
-        var m = F.m * f, Fh = { P: F.P, L: F.L, m: m, mFresh: c.recirc ? Math.min(m, F.mFresh * f) : m, ld: { G: occ ? F.ld.G : 0 } };
-        var FAh = { dT: FA.dT * f * f }, T = wx.T[i], E = sRH(T, wx.RH[i], Pn);
+        var T = wx.T[i], E = sRH(T, wx.RH[i], Pn);
         var t = dTd !== 0 ? (T - c.Twin) / dTd : 0.5; t = Math.max(-0.2, Math.min(1.2, t));
-        var env = c.envW + (c.envS - c.envW) * t, Qs = env + (occ ? internal : 0);
+        var env = c.envW + (c.envS - c.envW) * t, Qs = env + internal * intF;
+        var mReq = dcv ? Math.max(F.leakVol + F.exVol, F.minVol, freshEN16798(c.nP * pf, A, c.cat, c.pol) / 1000) / vL : F.mFreshReq;
+        var m, mFr;
+        if (!occ) { m = F.m * f; mFr = c.recirc ? Math.min(m, F.mFresh * f) : m; }
+        else {
+          m = F.m;
+          if (vav) { var mth = Math.abs(Qs) / (cpL * dTsD), mmin = Math.max(F.mAch, F.mUd, c.recirc ? mReq : 0, Math.min(100, Math.max(5, c.vavMin || 40)) / 100 * F.m); m = Math.min(F.m, Math.max(mmin, mth)); }
+          mFr = c.recirc ? Math.min(m, dcv ? mReq : F.mFresh) : m;
+        }
+        f = m / F.m;
+        var Fh = { P: F.P, L: F.L, m: m, mFresh: mFr, ld: { G: F.ld.G * latF } }, FAh = { dT: FA.dT * f * f };
         var r = season(c, Fh, FAh, E, Qs, 'x', cf[1]), tr = r.tr, mm = wx.mon[i] - 1, fanP = (cf[1].noRec ? FAnr : FA.P) * f * f * f;
         if (!cf[1].noRec && c.rec && c.rec.type !== 'none') {            // by-pass automatique du recuperateur : on garde la meilleure des deux options
           var o2 = {}; for (var kk in cf[1]) { o2[kk] = cf[1][kk]; } o2.noRec = true;
           var r2 = season(c, Fh, FAh, E, Qs, 'x', o2);
           if (score(r2.tr) < score(tr)) { r = r2; tr = r2.tr; fanP = FAnr * f * f * f; }
         }
-        a.cool += tr.cool; a.reheat += tr.reheat; a.heat += tr.heat; a.humKg += tr.humKg; a.humKW += tr.humKW; a.fan += fanP; a.hours++;
-        a.mon[mm].cool += tr.cool; a.mon[mm].heat += tr.heat + tr.reheat; a.mon[mm].hum += tr.humKW; a.mon[mm].fan += fanP;
+        var regen = tr.regenKW || 0, plr = tr.cool / capD, cop = cvar && tr.cool > 0.01 ? c.cop * copFactor(T, plr) : c.cop;
+        a.cool += tr.cool; a.reheat += tr.reheat; a.heat += tr.heat; a.regen += regen; a.humKg += tr.humKg; a.humKW += tr.humKW; a.fan += fanP; a.fanConst += FA.P; a.hours++; a.flowSum += f;
+        a.elChill += tr.cool / Math.max(0.5, cop);
+        if (tr.cool > 0.01) { var bn = Math.min(3, Math.floor(plr * 4)); a.plr[bn]++; a.plrE[bn] += tr.cool; if (tr.cool > a.peak) { a.peak = tr.cool; } }
+        a.mon[mm].cool += tr.cool; a.mon[mm].heat += tr.heat + tr.reheat + regen; a.mon[mm].hum += tr.humKW; a.mon[mm].fan += fanP;
         if (Math.abs(r.Lchk.RH - c.RHL) > tol || Math.abs(r.Lchk.T - c.TL) > 0.5) { a.dev++; }
       }
       // energies finales
-      a.heatTot = a.heat + a.reheat;
-      a.elChill = a.cool / c.cop; a.elHeat = c.hsrc === 'elec' ? a.heatTot : 0; a.fuel = c.hsrc === 'elec' ? 0 : a.heatTot / Math.max(0.3, c.eff);
+      a.heatTot = a.heat + a.reheat + a.regen;
+      a.elHeat = c.hsrc === 'elec' ? a.heatTot : 0; a.fuel = c.hsrc === 'elec' ? 0 : a.heatTot / Math.max(0.3, c.eff);
       a.elTot = a.elChill + a.elHeat + a.humKW + a.fan;
       a.cost = (c.tarE > 0 ? a.elTot * c.tarE : 0) + (c.tarF > 0 ? a.fuel * c.tarF : 0);
+      a.copAvg = a.elChill > 0 ? a.cool / a.elChill : c.cop;
+      a.flowAvg = a.hours > 0 ? a.flowSum / a.hours : 0;
       res[cf[0]] = a;
     });
-    res.hours = N; res.tol = tol;
+    res.hours = N; res.tol = tol; res.capD = capD;
     return res;
   }
-  var ATE = { parseEPW: parseEPW, designCond: designCond, annual: annual, cascade: cascade, RANK: RANK, pAlt: pAlt, psat: psat, sRH: sRH, sW: sW, sH: sH, wSat: wSat, mix: mix, recovery: recovery, treat: treat, solve: solve, flowsOf: flowsOf, fansOf: fansOf, loadsOf: loadsOf,
+
+  var ATE = { treatDry: treatDry, copFactor: copFactor, dewOfPv: dewOfPv, parseEPW: parseEPW, designCond: designCond, annual: annual, cascade: cascade, RANK: RANK, pAlt: pAlt, psat: psat, sRH: sRH, sW: sW, sH: sH, wSat: wSat, mix: mix, recovery: recovery, treat: treat, solve: solve, flowsOf: flowsOf, fansOf: fansOf, loadsOf: loadsOf,
     ISO: ISO, GMP: GMP, HEPA: HEPA, HCL: HCL, EN16798: EN16798, CLS: CLS, sfpClass: sfpClass, freshEN16798: freshEN16798, cpa: cpa, dewOfPv: dewOfPv };
 
   window.AT_ENGINE = ATE;
@@ -11706,6 +11757,8 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
   function f0(x) { return String(Math.round(x)); }
   function f1(x) { return (Math.round(x * 10) / 10).toFixed(1); }
   function f2(x) { return (Math.round(x * 100) / 100).toFixed(2); }
+  function fh(x) { return x < 10 ? f1(x) : f0(x); }
+  function tdOf(c) { return ATE.dewOfPv(c.RHL / 100 * ATE.psat(c.TL)); }
   function f3(x) { return (Math.round(x * 1000) / 1000).toFixed(3); }
   function esc(x) { return String(x === undefined || x === null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function txt(id) { var e = $(id); return e ? String(e.value || '').trim() : ''; }
@@ -11761,7 +11814,9 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       row('Classe du local :', 'Room class:', sel('cls', CLSOPT, 'iso8', 'atClsChange')) +
       row('Appareil :', 'Equipment:', sel('unit', UNITS, 'cta')) +
       row('Longueur (m) :', 'Length (m):', inp('Lg', 8, '0.1')) + row('Largeur (m) :', 'Width (m):', inp('Wd', 6, '0.1')) + row('Hauteur sous plafond (m) :', 'Ceiling height (m):', inp('Hh', 3, '0.1')) +
-      row('T° du local (°C) :', 'Room temperature (°C):', inp('TL', 22, '0.5')) + row('Humidité relative du local (%) :', 'Room relative humidity (%):', inp('RHL', 50, '1')) +
+      row('T° du local (°C) :', 'Room temperature (°C):', inp('TL', 22, '0.5')) +
+      row('Consigne d\'humidité :', 'Humidity setpoint:', sel('hmode', [{ id: 'rh', fr: 'Humidité relative', en: 'Relative humidity' }, { id: 'dp', fr: 'Point de rosée (salle sèche)', en: 'Dew point (dry room)' }], 'rh')) +
+      row('Humidité relative du local (%) :', 'Room relative humidity (%):', inp('RHL', 50, '0.1')) + row('Point de rosée du local (°C) :', 'Room dew point (°C):', inp('TdL', 11, '0.5')) +
       row('Altitude du site (m) :', 'Site altitude (m):', inp('alt', 0, '10')), true);
     var b = sec('2. CONDITIONS EXTÉRIEURES DE CALCUL', '2. OUTSIDE DESIGN CONDITIONS',
       row('Été : T° sèche (°C) :', 'Summer: dry bulb (°C):', inp('Tsum', 37, '0.5')) + row('Été : humidité relative (%) :', 'Summer: relative humidity (%):', inp('RHsum', 38, '1')) +
@@ -11799,6 +11854,8 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       row('Vitesse de passage en batterie (m/s) :', 'Coil face velocity (m/s):', inp('vFace', 2.5, '0.1')) +
       row('Régime d\'eau glacée ΔT (K) :', 'Chilled water ΔT (K):', inp('dTw', 6, '0.5')) +
       row('Régime d\'eau chaude ΔT (K) :', 'Hot water ΔT (K):', inp('dTh', 20, '1')) +
+      row('Roue dessiccante (salle très sèche) :', 'Desiccant wheel (very dry room):', sel('desic', [{ id: 'auto', fr: 'Automatique (point de rosée visé < 5 °C)', en: 'Automatic (target dew point < 5 °C)' }, { id: 'yes', fr: 'Toujours', en: 'Always' }, { id: 'no', fr: 'Jamais (batterie froide seule)', en: 'Never (cooling coil only)' }], 'auto')) +
+      row('Énergie de régénération (kJ par kg d\'eau) :', 'Regeneration energy (kJ per kg of water):', inp('regen', 5000, '100')) +
       row('Production de chaud :', 'Heat source:', sel('hsrc', HSRC, 'hw')) +
       row('COP / EER de la production froid :', 'Cooling COP / EER:', inp('cop', 3, '0.1')) +
       row('Gain de chaleur du réseau de soufflage (K) :', 'Supply duct heat gain (K):', inp('dTduct', 0.3, '0.1')) +
@@ -11814,7 +11871,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       row('Rendement global ventilateur + moteur :', 'Overall fan + motor efficiency:', inp('etaFan', 0.65, '0.01')) +
       row('Moteur dans le flux d\'air :', 'Motor in the airstream:', sel('fanInAir', YN, 'yes')) +
       '<div style="font-size:10px;color:var(--ts)" data-cfr="Pertes de charge, facteur de contact et rendements : valeurs d\'ingénierie indicatives, non issues d\'une norme, à remplacer par les données du constructeur." data-cen="Pressure drops, contact factor and efficiencies: indicative engineering values, not from a standard, to be replaced by manufacturer data.">Pertes de charge, facteur de contact et rendements : valeurs d\'ingénierie indicatives, non issues d\'une norme, à remplacer par les données du constructeur.</div>', false);
-    var g = cascSection() + wxSection() + sec('9. IDENTIFICATION DU PROJET (NOTE IMPRIMÉE)', '9. PROJECT IDENTIFICATION (PRINTED NOTE)',
+    var g = cascSection() + wxSection() + ppSection() + sec('10. IDENTIFICATION DU PROJET (NOTE IMPRIMÉE)', '10. PROJECT IDENTIFICATION (PRINTED NOTE)',
       row('Projet :', 'Project:', '<input class="fi" id="at_proj" type="text" maxlength="80" style="max-width:100%;flex:1 1 55%">') +
       row('Client :', 'Client:', '<input class="fi" id="at_cli" type="text" maxlength="80" style="max-width:100%;flex:1 1 55%">') +
       row('Site :', 'Site:', '<input class="fi" id="at_site" type="text" maxlength="80" style="max-width:100%;flex:1 1 55%">') +
@@ -11822,19 +11879,24 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     return '<div class="ptitle"><span data-cfr="TRAITEMENT D\'AIR — CTA, ROOFTOP ET SALLES PROPRES" data-cen="AIR TREATMENT — AHU, ROOFTOP AND CLEAN ROOMS">TRAITEMENT D\'AIR — CTA, ROOFTOP ET SALLES PROPRES</span></div>' +
       '<div class="g2"><div class="panel" id="at_in">' + a + b + c + d + e + f + g +
       '<button class="btn" style="width:100%;margin-top:8px" onclick="atExample()" data-cfr="Charger un exemple de référence (CTA avec récupérateur et caisson de mélange)" data-cen="Load a reference example (AHU with heat recovery and mixing box)">Charger un exemple de référence (CTA avec récupérateur et caisson de mélange)</button>' +
+      '<button class="btn" style="width:100%;margin-top:6px" onclick="atExampleDry()" data-cfr="Charger un exemple : salle sèche (point de rosée −40 °C, roue dessiccante)" data-cen="Load an example: dry room (−40 °C dew point, desiccant wheel)">Charger un exemple : salle sèche (point de rosée −40 °C, roue dessiccante)</button>' +
       '<button class="btn bp" style="width:100%;margin-top:6px" onclick="atCalcBtn()" data-cfr="Calculer" data-cen="Calculate">Calculer</button>' +
       '<button class="btn" style="width:100%;margin-top:6px" onclick="atPrint()" data-cfr="Imprimer la note de dimensionnement (PDF)" data-cen="Print sizing note (PDF)">Imprimer la note de dimensionnement (PDF)</button></div>' +
       '<div class="panel" id="at_out"></div></div>';
   }
 
   function readInputs() {
+    var hm = $('at_hmode') ? $('at_hmode').value : 'rh', TLv = num('at_TL', 22), RHLv;
+    if (hm === 'dp') { var Tdv = Math.min(TLv - 0.1, Math.max(-80, num('at_TdL', 11))); RHLv = Math.min(95, 100 * ATE.psat(Tdv) / ATE.psat(TLv)); setV('RHL', f2(RHLv)); }
+    else { RHLv = Math.min(95, Math.max(0.1, num('at_RHL', 50))); setV('TdL', f1(ATE.dewOfPv(RHLv / 100 * ATE.psat(TLv)))); }
+    var pwd = [], pwe = [], hq; for (hq = 0; hq < 24; hq++) { pwd.push(Math.min(100, Math.max(0, num('at_pw' + hq, 0)))); pwe.push(Math.min(100, Math.max(0, num('at_pe' + hq, 0)))); }
     var rt = $('at_recType').value, eta = num('at_eta', 0) / 100, etax = num('at_etax', 0) / 100;
     if (rt === 'enth') { /* roue enthalpique : humidite transferee */ } else { etax = 0; }
     var pharma = $('at_mode').value === 'pharma', hazard = $('at_hazard').value === 'yes';
     var recirc = $('at_recirc').value === 'yes' && !hazard;
     return {
       mode: $('at_mode').value, pharma: pharma, cls: $('at_cls').value, unit: $('at_unit').value,
-      Lg: Math.max(1, num('at_Lg', 8)), Wd: Math.max(1, num('at_Wd', 6)), Hh: Math.max(2, num('at_Hh', 3)), TL: num('at_TL', 22), RHL: Math.min(95, Math.max(10, num('at_RHL', 50))), alt: num('at_alt', 0),
+      Lg: Math.max(1, num('at_Lg', 8)), Wd: Math.max(1, num('at_Wd', 6)), Hh: Math.max(2, num('at_Hh', 3)), TL: TLv, RHL: RHLv, hmode: hm, alt: num('at_alt', 0),
       Tsum: num('at_Tsum', 37), RHsum: Math.min(100, Math.max(5, num('at_RHsum', 38))), Twin: num('at_Twin', 3), RHwin: Math.min(100, Math.max(5, num('at_RHwin', 80))),
       envS: num('at_envS', 0), envW: num('at_envW', 0), nP: Math.max(0, num('at_nP', 0)), pS: num('at_pS', 75), pL: num('at_pL', 55), lightW: num('at_lightW', 0), equipKW: num('at_equipKW', 0), procKg: Math.max(0, num('at_procKg', 0)),
       dTs: num('at_dTs', 4), ach: Math.max(0, num('at_ach', 0)), udA: Math.max(0, num('at_udA', 0)), udV: Math.max(0, num('at_udV', 0.45)), userQ: Math.max(0, num('at_userQ', 0)),
@@ -11842,7 +11904,8 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       rec: { type: rt, eta: Math.min(0.95, Math.max(0, eta)), etax: Math.min(0.95, Math.max(0, etax)) }, recCls: $('at_recCls').value,
       beta: Math.min(0.99, Math.max(0.5, num('at_beta', 0.88))), vFace: num('at_vFace', 2.5), dTw: Math.max(1, num('at_dTw', 6)), dTh: Math.max(1, num('at_dTh', 20)), hsrc: $('at_hsrc').value, cop: Math.max(1, num('at_cop', 3)), dTduct: num('at_dTduct', 0), hepa: $('at_hepa').value,
       dpPre: num('at_dpPre', 0), dpF: num('at_dpF', 0), dpHepa: $('at_hepa').value === 'none' ? 0 : num('at_dpHepa', 0), dpCoilC: num('at_dpCoilC', 0), dpCoilH: num('at_dpCoilH', 0), dpRec: rt === 'none' ? 0 : num('at_dpRec', 0), dpDuct: num('at_dpDuct', 0), dpExt: num('at_dpExt', 0), etaFan: num('at_etaFan', 0.65), fanInAir: $('at_fanInAir').value === 'yes',
-      sch: $('at_sch') ? $('at_sch').value : 'cont', h0: num('at_h0', 8), h1: num('at_h1', 18), dpw: Math.min(7, Math.max(1, Math.round(num('at_dpw', 5)))), unocc: $('at_unocc') ? $('at_unocc').value : 'off', redPct: Math.min(100, Math.max(5, num('at_redPct', 30))), eff: Math.min(1.2, Math.max(0.3, num('at_eff', 90) / 100)), tarE: Math.max(0, num('at_tarE', 0)), tarF: Math.max(0, num('at_tarF', 0))
+      sch: $('at_sch') ? $('at_sch').value : 'cont', h0: num('at_h0', 8), h1: num('at_h1', 18), dpw: Math.min(7, Math.max(1, Math.round(num('at_dpw', 5)))), unocc: $('at_unocc') ? $('at_unocc').value : 'off', redPct: Math.min(100, Math.max(5, num('at_redPct', 30))), eff: Math.min(1.2, Math.max(0.3, num('at_eff', 90) / 100)), tarE: Math.max(0, num('at_tarE', 0)), tarF: Math.max(0, num('at_tarF', 0)),
+      desic: $('at_desic') ? $('at_desic').value : 'auto', regenSpec: Math.min(10000, Math.max(2500, num('at_regen', 5000))), ctl: $('at_ctl') ? $('at_ctl').value : 'cav', vavMin: Math.min(100, Math.max(5, num('at_vavMin', 40))), dcv: $('at_dcv') ? $('at_dcv').value : 'no', copVar: $('at_copVar') ? $('at_copVar').value : 'no', base: Math.min(100, Math.max(0, num('at_base', 30))), pwd: pwd, pwe: pwe
     };
   }
 
@@ -11890,6 +11953,9 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
 
   /* ---------- textes ---------- */
   var WARN = {
+    dryOn: ['Roue dessiccante utilisée pour atteindre ce point de rosée : l\'énergie de régénération est une valeur d\'ingénierie indicative (5 000 kJ par kg d\'eau par défaut), à remplacer par les données du constructeur de la roue.', 'Desiccant wheel used to reach this dew point: regeneration energy is an indicative engineering value (5,000 kJ per kg of water by default), to be replaced by the wheel manufacturer\'s data.'],
+    dryLimit: ['Point de rosée visé inférieur à −60 °C : au-delà de ce que fait une roue simple ; prévoir une roue à deux étages ou un déshydrateur spécial.', 'Target dew point below −60 °C: beyond what a single wheel achieves; plan a two-stage wheel or a special dehumidifier.'],
+    dryInf: ['Salle très sèche : les ouvertures de portes, les sas et les fuites d\'air humide dominent en pratique la charge d\'humidité ; elles ne sont pas calculées ici (les représenter par l\'humidité de procédé).', 'Very dry room: door openings, airlocks and humid-air leakage dominate the moisture load in practice; they are not calculated here (represent them with the process moisture input).'],
     over: ['Le facteur de contact choisi ne permet pas d\'atteindre à la fois la T° et l\'humidité de soufflage : l\'air est plus sec que demandé. Augmentez le facteur de contact ou revoyez l\'écart de soufflage.', 'The chosen contact factor cannot reach both supply temperature and humidity: the air is drier than requested. Increase the contact factor or review the supply temperature difference.'],
     adpLow: ['Point de rosée d\'appareil (ADP) inférieur à 3 °C : risque de givre sur la batterie, régime d\'eau glacée ou évaporation très bas.', 'Apparatus dew point (ADP) below 3 °C: coil icing risk, very low chilled water or evaporating temperature.'],
     condSens: ['Le refroidissement sensible passe sous le point de rosée : de la condensation apparaît, revoyez la chaîne de traitement.', 'Sensible cooling drops below the dew point: condensation occurs, review the treatment chain.'],
@@ -11932,7 +11998,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     ['ISO 16890 / catalogue Daikin', T0('Équivalences G4, F7, F9 avec ISO Coarse et ePM1', 'G4, F7, F9 equivalences with ISO Coarse and ePM1'), 'sec'],
     ['ASHRAE Fundamentals', T0('Psychrométrie (écart ≤ 0,6 % sur l\'humidité absolue face à CoolProp)', 'Psychrometrics (≤ 0.6 % on humidity ratio versus CoolProp)'), 'ver'],
     ['Climate.OneBuilding.Org (TMYx), EnergyPlus EPW', T0('Années météo typiques horaires (fichier fourni par l\'utilisateur ; citer Lawrie & Crawley) ; conditions de calcul déduites des 8760 h, pouvant différer des valeurs publiées ASHRAE', 'Hourly typical weather years (user-supplied file; cite Lawrie & Crawley); design conditions derived from the 8760 h, may differ from published ASHRAE values'), 'ind'],
-    [T0('Valeurs d\'ingénierie', 'Engineering values'), T0('Renouvellements d\'air par classe (sauf 20 vol/h en ISO 8 / grade D), pertes de charge, facteur de contact, vitesse en batterie, rendement ventilateur, chaleur par personne, coefficient de fuite 0,6', 'Air changes per class (except 20 ACH for ISO 8 / grade D), pressure drops, contact factor, coil velocity, fan efficiency, heat per person, leakage coefficient 0.6'), 'ind']
+    [T0('Valeurs d\'ingénierie', 'Engineering values'), T0('Renouvellements d\'air par classe (sauf 20 vol/h en ISO 8 / grade D), pertes de charge, facteur de contact, vitesse en batterie, rendement ventilateur, chaleur par personne, coefficient de fuite 0,6, énergie de régénération de la roue dessiccante, loi de COP selon la charge et la température, débit minimal du VAV, profils horaires types', 'Air changes per class (except 20 ACH for ISO 8 / grade D), pressure drops, contact factor, coil velocity, fan efficiency, heat per person, leakage coefficient 0.6, desiccant wheel regeneration energy, COP law versus load and temperature, minimum VAV airflow, typical hourly profiles'), 'ind']
   ];
   function T0(fr, en) { return [fr, en]; }
   var CONF = { ver: ['Texte officiel ou calcul vérifié', 'Official text or verified calculation'], pub: ['Tableau public de la norme, à confirmer', 'Public table of the standard, to be confirmed'], sec: ['Source secondaire, à confirmer dans la norme en vigueur', 'Secondary source, to be confirmed in the current standard'], ind: ['Indicatif, non imposé par une norme', 'Indicative, not imposed by a standard'] };
@@ -11980,7 +12046,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
   var _last = null;
   function stRows(res, F) {
     var rows = [['E', T('Air extérieur', 'Outside air'), res.E], ['R', T('Après récupération', 'After recovery'), res.R], ['M', T('Mélange air neuf + recyclé', 'Mixed fresh + recirculated'), res.M]];
-    var names = { ADP: T('Point de rosée d\'appareil', 'Apparatus dew point'), C: T('Sortie batterie froide', 'Cooling coil leaving'), RH: T('Après réchauffage', 'After reheat'), B: T('Avant humidificateur', 'Before humidifier'), H: T('Après humidificateur', 'After humidifier'), T: T('Après traitement sensible', 'After sensible treatment') };
+    var names = { ADP: T('Point de rosée d\'appareil', 'Apparatus dew point'), C: T('Sortie batterie froide', 'Cooling coil leaving'), RH: T('Après réchauffage', 'After reheat'), B: T('Avant humidificateur', 'Before humidifier'), H: T('Après humidificateur', 'After humidifier'), T: T('Après traitement sensible', 'After sensible treatment'), D: T('Sortie roue dessiccante', 'Desiccant wheel leaving') };
     res.tr.pts.forEach(function (p) { if (p.n) { rows.push([p.n, names[p.n] || p.n, p]); } });
     rows.push(['S', T('Soufflage (après ventilateur)', 'Supply (after fan)'), res.S]); rows.push(['L', T('Local (consigne)', 'Room (setpoint)'), F.L]);
     return rows;
@@ -11988,11 +12054,11 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
   function stTable(res, F, pr) {
     var tdS = pr ? '' : ' style="text-align:right"';
     return '<table class="' + (pr ? 'tb' : '') + '" style="width:100%;border-collapse:collapse;font-size:11px"><tr><th style="text-align:left"></th><th' + tdS + '>T °C</th><th' + tdS + '>HR %</th><th' + tdS + '>g/kg</th><th' + tdS + '>h kJ/kg</th></tr>' +
-      stRows(res, F).map(function (r) { var p = r[2]; return '<tr style="border-top:1px solid var(--border)"><td><b>' + r[0] + '</b> ' + r[1] + '</td><td' + tdS + '>' + f1(p.T) + '</td><td' + tdS + '>' + (p.RH !== undefined ? f0(p.RH) : '100') + '</td><td' + tdS + '>' + f2(p.W * 1000) + '</td><td' + tdS + '>' + (p.h !== undefined ? f1(p.h) : '') + '</td></tr>'; }).join('') + '</table>';
+      stRows(res, F).map(function (r) { var p = r[2]; return '<tr style="border-top:1px solid var(--border)"><td><b>' + r[0] + '</b> ' + r[1] + '</td><td' + tdS + '>' + f1(p.T) + '</td><td' + tdS + '>' + (p.RH !== undefined ? fh(p.RH) : '100') + '</td><td' + tdS + '>' + f2(p.W * 1000) + '</td><td' + tdS + '>' + (p.h !== undefined ? f1(p.h) : '') + '</td></tr>'; }).join('') + '</table>';
   }
   function loadsOfRes(c, o, res, kind) {
     var tr = res.tr, r = { cool: tr.cool, coolS: tr.coolS, coolL: tr.coolL, reheat: tr.reheat, heat: tr.heat, humKg: tr.humKg, humKW: tr.humKW, cond: tr.cond };
-    var heatTot = r.heat + r.reheat, elH = c.hsrc === 'elec' ? heatTot : 0;
+    r.regen = tr.regenKW || 0; r.wheelKg = tr.wheelKg || 0; var heatTot = r.heat + r.reheat + r.regen, elH = c.hsrc === 'elec' ? heatTot : 0;
     r.heatTot = heatTot; r.elCool = r.cool / c.cop; r.elHeat = elH; r.elPk = r.elCool + o.FA.P + elH + r.humKW;
     r.wCool = r.cool / (4.186 * c.dTw); r.wHeat = heatTot / (4.186 * c.dTh);
     return r;
@@ -12003,7 +12069,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     var w = [], F = o.F, cl = o.cl;
     if (c.hazard && c.recircAsked) { w.push('hazard'); }
     if (!c.recirc) { w.push('recircOff'); }
-    var tol = c.pharma ? 3 : 5;   // tolerance d'humidite relative du local (points de HR) : valeur d'ingenierie
+    var tol = c.RHL < 10 ? 1.5 : (c.pharma ? 3 : 5);   // tolerance d'humidite relative du local (points de HR) : valeur d'ingenierie
     ['sum', 'win'].forEach(function (k) { o[k].tr.flags.forEach(function (f) { if (f === 'over' && Math.abs(o[k].Lchk.RH - c.RHL) <= tol) { return; } if (w.indexOf(f) < 0) { w.push(f); } }); });
     if (o.sum.recCond || o.win.recCond) { w.push('recCond'); }
     var rtx = c.rec.type; if (rtx !== 'none' && c.rec.eta > 0) { var tx = o.win.Texh; if (tx !== undefined && tx < 1) { w.push('frost'); } }
@@ -12018,6 +12084,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       if (cl.udaf) { if (!(c.udA > 0 && c.udV > 0)) { w.push('udNone'); } else if (c.udV < 0.36 || c.udV > 0.54) { w.push('udRange'); } }
     }
     ['sum', 'win'].forEach(function (k) { var L = o[k].Lchk; if (Math.abs(L.RH - c.RHL) > tol || Math.abs(L.T - c.TL) > 0.3) { if (w.indexOf('dev') < 0) { w.push('dev'); } } });
+    if (c.RHL < 10) { w.push('dryInf'); }
     if (o.FA.sfpCl >= 5) { w.push('sfp'); }
     return w;
   }
@@ -12062,8 +12129,9 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
           : '<tr><td>' + T('Batterie chaude / préchauffage', 'Heating coil / preheat') + '</td><td style="text-align:right"><b>' + f1(l.heatTot) + ' kW</b></td></tr>' +
           '<tr style="border-top:1px solid var(--border)"><td>' + T('Débit d\'eau chaude (ΔT ' + f1(c.dTh) + ' K)', 'Hot water flow (ΔT ' + f1(c.dTh) + ' K)') + '</td><td style="text-align:right">' + f2(l.wHeat) + ' l/s</td></tr>' +
           '<tr style="border-top:1px solid var(--border)"><td>' + T('Humidificateur vapeur', 'Steam humidifier') + '</td><td style="text-align:right">' + f1(l.humKg) + ' kg/h — ' + f1(l.humKW) + ' kW</td></tr>') +
+        (res.tr.dry ? '<tr style="border-top:1px solid var(--border)"><td>' + T('Roue dessiccante : eau retirée / régénération', 'Desiccant wheel: water removed / regeneration') + '</td><td style="text-align:right">' + f1(l.wheelKg) + ' kg/h / ' + f1(l.regen) + ' kW</td></tr>' : '') +
         '<tr style="border-top:1px solid var(--border)"><td>' + T('Puissance électrique de pointe estimée', 'Estimated peak electrical power') + '</td><td style="text-align:right">' + f1(l.elPk) + ' kW</td></tr>' +
-        '<tr style="border-top:1px solid var(--border)"><td>' + T('Local obtenu (contrôle)', 'Resulting room (check)') + '</td><td style="text-align:right">' + f1(res.Lchk.T) + ' °C / ' + f0(res.Lchk.RH) + ' %</td></tr></table>';
+        '<tr style="border-top:1px solid var(--border)"><td>' + T('Local obtenu (contrôle)', 'Resulting room (check)') + '</td><td style="text-align:right">' + f1(res.Lchk.T) + ' °C / ' + fh(res.Lchk.RH) + ' %</td></tr></table>';
     });
     // ventilateurs
     var FA = o.FA;
@@ -12111,10 +12179,44 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     return h;
   }
 
+  /* ---------- charge partielle fine : profils horaires, VAV, air neuf selon occupation, COP variable ---------- */
+  var PROF = {
+    office: { wd: [0, 0, 0, 0, 0, 0, 0, 20, 60, 90, 100, 100, 80, 80, 100, 100, 100, 90, 60, 30, 10, 0, 0, 0], we: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+    shop: { wd: [0, 0, 0, 0, 0, 0, 0, 0, 30, 60, 80, 90, 100, 100, 100, 100, 100, 100, 90, 60, 20, 0, 0, 0], we: [0, 0, 0, 0, 0, 0, 0, 0, 30, 60, 80, 90, 100, 100, 100, 100, 100, 100, 90, 60, 20, 0, 0, 0] },
+    hosp: { wd: [40, 40, 40, 40, 40, 40, 60, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 70, 70, 70, 70, 40, 40], we: [40, 40, 40, 40, 40, 40, 40, 40, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 40, 40, 40] },
+    ind: { wd: [0, 0, 0, 0, 0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 0, 0], we: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }
+  };
+  function profGrid(pre, arr) {
+    var h = '', i; for (i = 0; i < 24; i++) { h += '<label class="atgc"><span>' + i + ' h</span><input class="fi" id="at_' + pre + i + '" type="number" min="0" max="100" step="5" value="' + arr[i] + '" oninput="atProfEdit()"></label>'; }
+    return '<div class="atg">' + h + '</div>';
+  }
+  function ppSection() {
+    var PR = [{ id: 'office', fr: 'Bureaux (lun-ven, 8 h-18 h)', en: 'Offices (Mon-Fri, 8-18 h)' }, { id: 'shop', fr: 'Commerce (7 j/7, 8 h-20 h)', en: 'Retail (7 days, 8-20 h)' }, { id: 'hosp', fr: 'Hôpital / local occupé 24 h', en: 'Hospital / 24 h occupied room' }, { id: 'ind', fr: 'Industrie 2 équipes (lun-ven, 6 h-22 h)', en: 'Industry 2 shifts (Mon-Fri, 6-22 h)' }, { id: 'cust', fr: 'Personnalisé', en: 'Custom' }];
+    var YN2 = [{ id: 'no', fr: 'Non', en: 'No' }, { id: 'yes', fr: 'Oui', en: 'Yes' }];
+    return sec('9. CHARGE PARTIELLE FINE (PROFILS, DÉBIT VARIABLE, COP)', '9. DETAILED PART LOAD (PROFILES, VARIABLE AIRFLOW, COP)',
+      '<div style="font-size:10px;color:var(--ts);margin-bottom:4px" data-cfr="Ces réglages agissent sur l\'énergie annuelle (section 8). Pour utiliser les profils horaires, choisir « Profil horaire » dans « Fonctionnement » de la section 8." data-cen="These settings act on annual energy (section 8). To use the hourly profiles, choose &quot;Hourly profile&quot; in &quot;Operation&quot; of section 8.">Ces réglages agissent sur l\'énergie annuelle (section 8). Pour utiliser les profils horaires, choisir « Profil horaire » dans « Fonctionnement » de la section 8.</div>' +
+      row('Profil type :', 'Typical profile:', sel('pprof', PR, 'office', 'atProfPreset')) +
+      '<div style="font-size:11px;margin-top:4px" data-cfr="Semaine (lundi à vendredi) : activité en % pour chaque heure" data-cen="Weekdays (Monday to Friday): activity in % for each hour">Semaine (lundi à vendredi) : activité en % pour chaque heure</div>' + profGrid('pw', PROF.office.wd) +
+      '<div style="font-size:11px" data-cfr="Week-end (samedi, dimanche)" data-cen="Weekend (Saturday, Sunday)">Week-end (samedi, dimanche)</div>' + profGrid('pe', PROF.office.we) +
+      row('Charge interne permanente (% de la charge interne) :', 'Permanent internal load (% of internal load):', inp('base', 30, '5')) +
+      row('Air neuf selon l\'occupation :', 'Fresh air by occupancy:', sel('dcv', YN2, 'no')) +
+      row('Régulation du débit :', 'Airflow control:', sel('ctl', [{ id: 'cav', fr: 'Débit constant', en: 'Constant airflow' }, { id: 'vav', fr: 'Débit variable (VAV)', en: 'Variable airflow (VAV)' }], 'cav')) +
+      row('Débit minimal du VAV (% du débit de calcul) :', 'Minimum VAV airflow (% of design airflow):', inp('vavMin', 40, '5')) +
+      row('COP du groupe froid selon la charge et la température :', 'Chiller COP versus load and temperature:', sel('copVar', YN2, 'no')) +
+      '<div style="font-size:10px;color:var(--ts)" data-cfr="Le VAV ne réduit pas le débit en dessous des renouvellements d\'air, du flux unidirectionnel ni de l\'air neuf requis. COP variable : loi indicative d\'un groupe à condensation par air, COP nominal à 35 °C extérieur et pleine charge, −2,5 % par kelvin au-dessus, meilleur à mi-charge. À remplacer par les données du constructeur." data-cen="VAV never reduces airflow below air changes, unidirectional flow or required fresh air. Variable COP: indicative law for an air-cooled chiller, nominal COP at 35 °C outdoor and full load, −2.5 % per kelvin above, better at half load. Replace with manufacturer data.">Le VAV ne réduit pas le débit en dessous des renouvellements d\'air, du flux unidirectionnel ni de l\'air neuf requis. COP variable : loi indicative d\'un groupe à condensation par air, COP nominal à 35 °C extérieur et pleine charge, −2,5 % par kelvin au-dessus, meilleur à mi-charge. À remplacer par les données du constructeur.</div>', false);
+  }
+  window.atProfPreset = function () { var k = $('at_pprof').value, p = PROF[k], h; if (p) { for (h = 0; h < 24; h++) { setV('pw' + h, p.wd[h]); setV('pe' + h, p.we[h]); } } window.atDeb(); };
+  window.atProfEdit = function () { var e = $('at_pprof'); if (e) { e.value = 'cust'; } window.atDeb(); };
+  window.atExampleDry = function () {
+    var v = { mode: 'comfort', cls: 'none', unit: 'cta', Lg: 20, Wd: 10, Hh: 4, TL: 20, hmode: 'dp', TdL: -40, alt: 0, Tsum: 35, RHsum: 40, Twin: 5, RHwin: 70, envS: 6, envW: -4, nP: 6, pS: 75, pL: 55, lightW: 10, equipKW: 15, procKg: 0, dTs: 6, ach: 15, udA: 0, userQ: 0, recirc: 'yes', hazard: 'no', freshMode: 'en', cat: 'II', pol: 'low', exhaust: 0, freshMin: 0, pDp: 15, pA: 0.03, recType: 'plate', recCls: 'man', eta: 64, etax: 0, hepa: 'none', dpHepa: 0, desic: 'auto', regen: 5000 };
+    Object.keys(v).forEach(function (k) { setV(k, v[k]); });
+    window.atCalc();
+  };
+
   /* ---------- meteo EPW et energie annuelle ---------- */
   var _wx = null, _dc = null, _wxErr = '', _wxName = '';
   function wxSection() {
-    var YNs = [{ id: 'cont', fr: '24 h/24, 7 j/7', en: '24 h/day, 7 days/week' }, { id: 'sched', fr: 'Horaires définis ci-dessous', en: 'Schedule defined below' }];
+    var YNs = [{ id: 'cont', fr: '24 h/24, 7 j/7', en: '24 h/day, 7 days/week' }, { id: 'sched', fr: 'Horaires définis ci-dessous', en: 'Schedule defined below' }, { id: 'prof', fr: 'Profil horaire (section 9)', en: 'Hourly profile (section 9)' }];
     var UN = [{ id: 'off', fr: 'Arrêt', en: 'Off' }, { id: 'red', fr: 'Débit réduit', en: 'Reduced airflow' }];
     return sec('8. MÉTÉO (FICHIER EPW) ET ÉNERGIE ANNUELLE', '8. WEATHER (EPW FILE) AND ANNUAL ENERGY',
       '<div style="font-size:10px;color:var(--ts);margin-bottom:4px" data-cfr="Chargez le fichier météo de la ville (format EPW, ou le .zip tel que téléchargé). Source gratuite couvrant presque tous les pays : climate.onebuilding.org (boutons ci-dessous : boutons ci-dessous : choisir la région, le pays, puis la station ; préférer les fichiers TMYx). Le fichier reste sur votre appareil. Citer : Lawrie L.K., Crawley D.B., Development of Global Typical Meteorological Years (TMYx)." data-cen="Load the weather file of the city (EPW format, or the .zip as downloaded). Free source covering almost every country: climate.onebuilding.org (buttons below: buttons below: choose region, country, then station; prefer TMYx files). The file stays on your device. Cite: Lawrie L.K., Crawley D.B., Development of Global Typical Meteorological Years (TMYx).">Chargez le fichier météo de la ville (format EPW, ou le .zip tel que téléchargé). Source gratuite couvrant presque tous les pays : climate.onebuilding.org (boutons ci-dessous : boutons ci-dessous : choisir la région, le pays, puis la station ; préférer les fichiers TMYx). Le fichier reste sur votre appareil. Citer : Lawrie L.K., Crawley D.B., Development of Global Typical Meteorological Years (TMYx).</div>' +
@@ -12209,16 +12311,23 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     var rows = [
       [T('Heures de fonctionnement / arrêt', 'Operating / stopped hours'), fm(a.hours) + ' / ' + fm(a.off) + ' h'],
       [T('Batterie froide (énergie thermique)', 'Cooling coil (thermal energy)'), fm(a.cool) + ' kWh'],
-      [T('Chauffage + réchauffage (énergie thermique)', 'Heating + reheat (thermal energy)'), fm(a.heatTot) + ' kWh'],
+      [T('Chauffage + réchauffage' + (a.regen > 0 ? ' + régénération' : '') + ' (énergie thermique)', 'Heating + reheat' + (a.regen > 0 ? ' + regeneration' : '') + ' (thermal energy)'), fm(a.heatTot) + ' kWh'],
+      a.regen > 0 ? [T('dont régénération de la roue dessiccante', 'of which desiccant wheel regeneration'), fm(a.regen) + ' kWh'] : null,
       [T('Humidification vapeur', 'Steam humidification'), fm(a.humKg) + ' kg — ' + fm(a.humKW) + ' kWh'],
       [T('Ventilateurs (électricité)', 'Fans (electricity)'), fm(a.fan) + ' kWh'],
-      [T('Groupe froid (électricité, COP ' + f1(c.cop) + ')', 'Chiller (electricity, COP ' + f1(c.cop) + ')'), fm(a.elChill) + ' kWh'],
+      [c.copVar === 'yes' ? T('Groupe froid (électricité, COP moyen ' + f2(a.copAvg) + ', nominal ' + f1(c.cop) + ')', 'Chiller (electricity, average COP ' + f2(a.copAvg) + ', nominal ' + f1(c.cop) + ')') : T('Groupe froid (électricité, COP ' + f1(c.cop) + ')', 'Chiller (electricity, COP ' + f1(c.cop) + ')'), fm(a.elChill) + ' kWh'],
+      (c.ctl === 'vav' || c.sch === 'prof') ? [T('Débit moyen en fonctionnement / ventilateurs vs débit constant', 'Average airflow while operating / fans vs constant airflow'), f0(a.flowAvg * 100) + ' % / ' + (a.fanConst > 0 ? f0(a.fan / a.fanConst * 100) : '—') + ' %'] : null,
       [c.hsrc === 'elec' ? T('Chauffage électrique', 'Electric heating') : T('Combustible de production de chaud (rendement ' + f0(c.eff * 100) + ' %)', 'Heat generation fuel (efficiency ' + f0(c.eff * 100) + ' %)'), fm(c.hsrc === 'elec' ? a.elHeat : a.fuel) + ' kWh'],
       ['<b>' + T('Électricité totale', 'Total electricity') + '</b>', '<b>' + fm(a.elTot) + ' kWh</b> (' + f0(a.elTot / A) + ' kWh/m²)'],
       cur ? [T('Coût annuel estimé', 'Estimated annual cost'), fm(a.cost)] : null
     ].filter(function (x) { return x; });
     h += '<table style="width:100%;border-collapse:collapse;font-size:11px">' + rows.map(function (x, i) { return '<tr' + (i ? ' style="border-top:1px solid var(--border)"' : '') + '><td>' + x[0] + '</td><td style="text-align:right">' + x[1] + '</td></tr>'; }).join('') + '</table>';
     h += '<div style="margin-top:6px">' + monthChart(a, prn ? PALPRINT : PAL) + '</div>';
+    if (a.cool > 0) {
+      var bandN = ['0–25 %', '25–50 %', '50–75 %', '75–100 %'];
+      h += '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:6px"><tr><th style="text-align:left">' + T('Charge de la batterie froide (% de la pointe de calcul, ' + f1(r.capD) + ' kW)', 'Cooling coil load (% of design peak, ' + f1(r.capD) + ' kW)') + '</th><th style="text-align:right">' + T('Heures', 'Hours') + '</th><th style="text-align:right">' + T('Énergie', 'Energy') + '</th></tr>' +
+        bandN.map(function (b, i) { return '<tr style="border-top:1px solid var(--border)"><td>' + b + '</td><td style="text-align:right">' + fm(a.plr[i]) + ' h</td><td style="text-align:right">' + f0(a.plrE[i] / a.cool * 100) + ' %</td></tr>'; }).join('') + '</table>';
+    }
     var names = [['sel', T('Configuration retenue', 'Selected configuration')], ['noRec', T('Sans récupération', 'Without heat recovery')], ['fresh100', T('100 % air neuf (sans recyclage)', '100 % fresh air (no recirculation)')], ['both', T('100 % air neuf et sans récupération', '100 % fresh air, no recovery')]], base = a.elTot + a.fuel;
     h += '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:6px"><tr><th style="text-align:left"></th><th style="text-align:right">' + T('Froid', 'Cooling') + '</th><th style="text-align:right">' + T('Chaud', 'Heating') + '</th><th style="text-align:right">' + T('Énergie finale', 'Final energy') + '</th><th style="text-align:right">%</th></tr>' +
       names.map(function (x, i) { var z = r[x[0]], tot = z.elTot + z.fuel; return '<tr style="border-top:1px solid var(--border)"><td>' + x[1] + '</td><td style="text-align:right">' + fm(z.cool) + '</td><td style="text-align:right">' + fm(z.heatTot) + '</td><td style="text-align:right">' + fm(tot) + '</td><td style="text-align:right">' + (i ? (tot >= base ? '+' : '') + f0((tot - base) / Math.max(1, base) * 100) : '—') + '</td></tr>'; }).join('') + '</table>' +
@@ -12226,7 +12335,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     var w = [];
     if (a.dev > 0.02 * Math.max(1, a.hours)) { w.push(T('Le local sort de sa consigne pendant ' + fm(a.dev) + ' h : batterie ou humidification insuffisante hors conditions de calcul, ou consigne irréalisable.', 'The room leaves its setpoint for ' + fm(a.dev) + ' h: coil or humidification inadequate outside design conditions, or setpoint unachievable.')); }
     if (Math.abs(c.alt - _wx.elev) > 100) { w.push(T('L\'altitude saisie (' + f0(c.alt) + ' m) diffère de celle de la station (' + f0(_wx.elev) + ' m).', 'The entered altitude (' + f0(c.alt) + ' m) differs from the station (' + f0(_wx.elev) + ' m).')); }
-    w.push(T('Hypothèses : débit constant en fonctionnement (réduit hors horaires si choisi), charge de paroi interpolée linéairement entre les valeurs hiver et été selon la température extérieure, récupérateur avec by-pass automatique (la meilleure option heure par heure), sans givrage modélisé, humidificateur vapeur électrique, puissance ventilateur proportionnelle au cube du débit. Année météo type : ce n\'est pas une année réelle.', 'Assumptions: constant airflow while operating (reduced outside the schedule if chosen), envelope load interpolated linearly between winter and summer values by outside temperature, recovery unit with automatic bypass (best option hour by hour), no frost modelling, electric steam humidifier, fan power proportional to the cube of airflow. Typical weather year: not an actual year.'));
+    w.push(T('Hypothèses : débit constant en fonctionnement (réduit hors horaires si choisi), charge de paroi interpolée linéairement entre les valeurs hiver et été selon la température extérieure, récupérateur avec by-pass automatique (la meilleure option heure par heure), sans givrage modélisé, humidificateur vapeur électrique, puissance ventilateur proportionnelle au cube du débit, régénération de la roue dessiccante fournie par la source de chaud choisie, profils horaires identiques toute l\'année. Année météo type : ce n\'est pas une année réelle.', 'Assumptions: constant airflow while operating (reduced outside the schedule if chosen), envelope load interpolated linearly between winter and summer values by outside temperature, recovery unit with automatic bypass (best option hour by hour), no frost modelling, electric steam humidifier, fan power proportional to the cube of airflow, desiccant wheel regeneration supplied by the selected heat source, same hourly profiles all year. Typical weather year: not an actual year.'));
     h += w.map(function (k) { return '<div style="font-size:10px;color:var(--ts);margin-top:3px">' + k + '</div>'; }).join('');
     h += '<div style="font-size:10px;color:var(--ts);margin-top:3px">' + T('Fichier météo : ', 'Weather file: ') + esc(_wx.name) + ', ' + esc(_wx.country) + ' (' + esc(_wx.source) + '). ' + T('Si le fichier vient de Climate.OneBuilding.Org, citer Lawrie L.K., Crawley D.B., TMYx.', 'If the file comes from Climate.OneBuilding.Org, cite Lawrie L.K., Crawley D.B., TMYx.') + '</div>';
     return h;
@@ -12251,7 +12360,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       '<div class="sb"><div class="st">' + T('Chauffage', 'Heating') + '</div><div class="sv2">' + f1(wn.heatTot) + ' kW</div><div class="ss">' + T('hiver', 'winter') + ' — ' + f1(wn.humKg) + ' kg/h ' + T('vapeur', 'steam') + '</div></div></div>';
     body += h2('1. Hypothèses de calcul', '1. Design assumptions') + '<div class="two">' + kv([
       [T('Application', 'Application'), (c.pharma ? T('Salle blanche / pharmaceutique', 'Cleanroom / pharmaceutical') : T('Confort / tertiaire / industriel', 'Comfort / commercial / industrial'))],
-      [T('Classe du local', 'Room class'), T(cl.fr, cl.en)], [T('Local', 'Room'), f1(c.Lg) + ' × ' + f1(c.Wd) + ' × ' + f1(c.Hh) + ' m — ' + f0(F.ld.V) + ' m³'], [T('Consigne', 'Setpoint'), f1(c.TL) + ' °C / ' + f0(c.RHL) + ' %'], [T('Altitude / pression', 'Altitude / pressure'), f0(c.alt) + ' m / ' + f1(F.P / 100) + ' hPa'],
+      [T('Classe du local', 'Room class'), T(cl.fr, cl.en)], [T('Local', 'Room'), f1(c.Lg) + ' × ' + f1(c.Wd) + ' × ' + f1(c.Hh) + ' m — ' + f0(F.ld.V) + ' m³'], [T('Consigne', 'Setpoint'), f1(c.TL) + ' °C / ' + fh(c.RHL) + ' % (' + T('point de rosée', 'dew point') + ' ' + f1(tdOf(c)) + ' °C)'], [T('Altitude / pression', 'Altitude / pressure'), f0(c.alt) + ' m / ' + f1(F.P / 100) + ' hPa'],
       [T('Extérieur été', 'Outside summer'), f1(c.Tsum) + ' °C / ' + f0(c.RHsum) + ' %'], [T('Extérieur hiver', 'Outside winter'), f1(c.Twin) + ' °C / ' + f0(c.RHwin) + ' %']]) + kv([
       [T('Charge sensible été', 'Sensible load summer'), f1(F.ld.QsSum) + ' kW'], [T('Charge sensible hiver', 'Sensible load winter'), f1(F.ld.QsWin) + ' kW'], [T('Humidité émise', 'Moisture gain'), f2(F.ld.G) + ' kg/h'],
       [T('Récupération', 'Heat recovery'), T(rt.fr, rt.en) + (c.rec.type === 'none' ? '' : ' — ' + f0(c.rec.eta * 100) + ' %')], [T('Recyclage', 'Recirculation'), c.recirc ? T('Oui', 'Yes') : T('Non (100 % air neuf)', 'No (100 % fresh air)')], [T('Facteur de contact batterie', 'Coil contact factor'), f2(c.beta)], [T('Appareil', 'Equipment'), c.unit === 'roof' ? 'Rooftop' : 'CTA / AHU']]) + '</div>';
@@ -12263,8 +12372,8 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       body += h2(s[1], s[2]) + stTable(res, F, true) + '<div class="chart">' + chartSVG(res, F, PALPRINT) + '</div>' + '<div class="two">' + kv(s[0] === 'sum' ? [
         [T('Batterie froide (totale)', 'Cooling coil (total)'), f1(l.cool) + ' kW'], [T('dont sensible / latent', 'of which sensible / latent'), f1(l.coolS) + ' / ' + f1(l.coolL) + ' kW'], [T('ADP / by-pass', 'ADP / bypass'), res.tr.ADP !== null ? f1(res.tr.ADP) + ' °C / ' + f2(res.tr.BF) : '—'], [T('Condensats', 'Condensate'), f1(l.cond) + ' kg/h']] :
         [[T('Chauffage', 'Heating'), f1(l.heatTot) + ' kW'], [T('Vapeur', 'Steam'), f1(l.humKg) + ' kg/h — ' + f1(l.humKW) + ' kW']]) + kv(s[0] === 'sum' ? [
-        [T('Eau glacée (ΔT ' + f1(c.dTw) + ' K)', 'Chilled water (ΔT ' + f1(c.dTw) + ' K)'), f2(l.wCool) + ' l/s'], [T('Réchauffage', 'Reheat'), f1(l.reheat) + ' kW'], [T('Puissance électrique de pointe', 'Peak electrical power'), f1(l.elPk) + ' kW'], [T('Local obtenu', 'Resulting room'), f1(res.Lchk.T) + ' °C / ' + f0(res.Lchk.RH) + ' %']] :
-        [[T('Eau chaude (ΔT ' + f1(c.dTh) + ' K)', 'Hot water (ΔT ' + f1(c.dTh) + ' K)'), f2(l.wHeat) + ' l/s'], [T('Puissance électrique de pointe', 'Peak electrical power'), f1(l.elPk) + ' kW'], [T('Local obtenu', 'Resulting room'), f1(res.Lchk.T) + ' °C / ' + f0(res.Lchk.RH) + ' %']]) + '</div>';
+        [T('Eau glacée (ΔT ' + f1(c.dTw) + ' K)', 'Chilled water (ΔT ' + f1(c.dTw) + ' K)'), f2(l.wCool) + ' l/s'], [T('Réchauffage', 'Reheat'), f1(l.reheat) + ' kW'], [T('Puissance électrique de pointe', 'Peak electrical power'), f1(l.elPk) + ' kW'], [T('Local obtenu', 'Resulting room'), f1(res.Lchk.T) + ' °C / ' + fh(res.Lchk.RH) + ' %']] :
+        [[T('Eau chaude (ΔT ' + f1(c.dTh) + ' K)', 'Hot water (ΔT ' + f1(c.dTh) + ' K)'), f2(l.wHeat) + ' l/s'], [T('Puissance électrique de pointe', 'Peak electrical power'), f1(l.elPk) + ' kW'], [T('Local obtenu', 'Resulting room'), f1(res.Lchk.T) + ' °C / ' + fh(res.Lchk.RH) + ' %']]) + '</div>' + (res.tr.dry ? kv([[T('Roue dessiccante : eau retirée', 'Desiccant wheel: water removed'), f1(l.wheelKg) + ' kg/h'], [T('Énergie de régénération', 'Regeneration energy'), f1(l.regen) + ' kW']]) : '');
     });
     body += h2('5. Ventilateurs et section', '5. Fans and face area') + '<div class="two">' + kv([[T('Pression totale soufflage', 'Supply total pressure'), f0(FA.dpS) + ' Pa'], [T('Puissance soufflage / reprise', 'Supply / extract power'), f2(FA.Ps) + ' / ' + f2(FA.Pe) + ' kW']]) + kv([[T('SFP', 'SFP'), f0(FA.sfp) + ' W/(m³/s) — SFP ' + FA.sfpCl], [T('Section de batterie', 'Coil face area'), f2(o.faceA) + ' m² (' + f1(c.vFace) + ' m/s)']]) + '</div>';
     var n = 6;
@@ -12348,7 +12457,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
   function install() {
     if ($('pg-airtreat')) { return; }
     var st = document.createElement('style');
-    st.textContent = '#pg-airtreat details.atsec{border:1px solid var(--border);border-radius:6px;margin:0 0 8px;padding:0 8px 6px}#pg-airtreat details.atsec>summary{cursor:pointer;font-weight:700;font-size:11px;padding:7px 0;color:var(--ac);list-style:none}#pg-airtreat details.atsec>summary::-webkit-details-marker{display:none}#pg-airtreat .frow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:3px 0}#pg-airtreat .frow .flb{flex:1;min-width:0;font-size:11px}#pg-airtreat .frow .fi{height:30px;padding:2px 8px;font-size:13px;flex:0 0 auto}#pg-airtreat .frow .fsel{flex:0 1 58%;min-width:0;height:30px;font-size:12px}';
+    st.textContent = '#pg-airtreat details.atsec{border:1px solid var(--border);border-radius:6px;margin:0 0 8px;padding:0 8px 6px}#pg-airtreat details.atsec>summary{cursor:pointer;font-weight:700;font-size:11px;padding:7px 0;color:var(--ac);list-style:none}#pg-airtreat details.atsec>summary::-webkit-details-marker{display:none}#pg-airtreat .atg{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;margin:3px 0 6px}#pg-airtreat .atgc{display:flex;flex-direction:column;align-items:center;font-size:9px;color:var(--ts)}#pg-airtreat .atgc input{width:100%;min-width:0;max-width:none;height:26px;padding:1px 2px;font-size:11px;text-align:center}#pg-airtreat .frow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:3px 0}#pg-airtreat .frow .flb{flex:1;min-width:0;font-size:11px}#pg-airtreat .frow .fi{height:30px;padding:2px 8px;font-size:13px;flex:0 0 auto}#pg-airtreat .frow .fsel{flex:0 1 58%;min-width:0;height:30px;font-size:12px}';
     document.head.appendChild(st);
     var pg = document.createElement('div'); pg.className = 'page'; pg.id = 'pg-airtreat'; pg.innerHTML = buildPage();
     var ref = $('pg-normes'); if (ref && ref.parentNode) { ref.parentNode.insertBefore(pg, ref); } else { document.body.appendChild(pg); }
