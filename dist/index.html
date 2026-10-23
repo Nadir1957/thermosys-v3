@@ -14867,6 +14867,343 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
 })();
 
 </script>
+<script id="mecha-module">
+/* THERMOSYS - Module MECATRONIQUE (signaux, sondes, moteur/variateur, vibrations, servomoteur de volet, securite, depannage) */
+(function () {
+  'use strict';
+  if (typeof window === 'undefined') { return; }
+  if (window.__mechaMod) { return; }
+  window.__mechaMod = true;
+/* Thermosys - MECATRONIQUE : signaux, capteurs, moteur/variateur, vibrations, servomoteur de volet, logique de securite.
+ * Unites SI. Sources : NAMUR NE43 (4-20 mA), IEC 60751 (Pt100), ISO 10816-3 / 20816-3 (zones de vibration),
+ * lois des ventilateurs (similitude), guides de dimensionnement de servomoteurs de volets (couple par m2).        */
+(function (root) {
+  'use strict';
+  var R = {};
+  /* ---------- signaux ---------- */
+  var SIG = { '0-10': { s0: 0, s1: 10, u: 'V', lo: 0, hi: 10 }, '2-10': { s0: 2, s1: 10, u: 'V', lo: 1.8, hi: 10.5 }, '0-20': { s0: 0, s1: 20, u: 'mA', lo: 0, hi: 21 }, '4-20': { s0: 4, s1: 20, u: 'mA', lo: 3.6, hi: 21 } };
+  R.SIG = SIG;
+  R.sigToPhys = function (type, val, lo, hi) {
+    var d = SIG[type], pct = (val - d.s0) / (d.s1 - d.s0), fault = null;
+    if (type === '4-20' && val < 3.6) { fault = 'low'; } else if (type === '4-20' && val > 21) { fault = 'high'; }
+    else if (type === '2-10' && val < 1.8) { fault = 'low'; } else if (type === '2-10' && val > 10.5) { fault = 'high'; }
+    else if (val < d.s0 - 0.001 || val > d.s1 + 0.001) { fault = pct < 0 ? 'under' : 'over'; }
+    return { phys: lo + pct * (hi - lo), pct: pct * 100, fault: fault };
+  };
+  R.physToSig = function (type, phys, lo, hi) {
+    var d = SIG[type], pct = hi === lo ? 0 : (phys - lo) / (hi - lo), v = d.s0 + pct * (d.s1 - d.s0);
+    return { sig: v, pct: pct * 100, clamp: pct < 0 || pct > 1 };
+  };
+  /* ---------- sondes ---------- */
+  var A = 3.9083e-3, B = -5.775e-7, C = -4.183e-12;
+  R.rtd = function (R0, t) { return t >= 0 ? R0 * (1 + A * t + B * t * t) : R0 * (1 + A * t + B * t * t + C * (t - 100) * t * t * t); };
+  R.rtdInv = function (R0, r) {
+    var t = (r / R0 - 1) / A, i, f, df;
+    for (i = 0; i < 40; i++) { f = R.rtd(R0, t) - r; df = (R.rtd(R0, t + 0.01) - R.rtd(R0, t - 0.01)) / 0.02; var dt = f / df; t -= dt; if (Math.abs(dt) < 1e-9) { break; } }
+    return t;
+  };
+  R.ntc = function (R25, beta, tc) { return R25 * Math.exp(beta * (1 / (tc + 273.15) - 1 / 298.15)); };
+  R.ntcInv = function (R25, beta, r) { return 1 / (1 / 298.15 + Math.log(r / R25) / beta) - 273.15; };
+  /* ---------- moteur et variateur ---------- */
+  R.sync = function (f, poles) { return 120 * f / poles; };
+  R.motorI = function (ph, U, P, cos, eta) { return P * 1000 / ((ph === 3 ? Math.sqrt(3) : 1) * U * cos * eta); };
+  R.vfdI = function (Im, duty, alt) { var k = duty === 'heavy' ? 1.1 : 1.0, der = alt > 1000 ? 1 - 0.01 * (alt - 1000) / 100 : 1; return { k: k, der: der, Imin: Im * k / der }; };
+  R.fanLaw = function (n1, n2, Q1, dp1, P1) { var r = n2 / n1; return { r: r, Q2: Q1 * r, dp2: dp1 * r * r, P2: P1 * r * r * r }; };
+  R.imbalance = function (ia, ib, ic) { var m = (ia + ib + ic) / 3, dev = Math.max(Math.abs(ia - m), Math.abs(ib - m), Math.abs(ic - m)); return { mean: m, pct: m > 0 ? dev / m * 100 : 0 }; };
+  /* ---------- vibrations (vitesse efficace, mm/s) ---------- */
+  var ZONES = { // [A/B, B/C, C/D]
+    g1r: [2.3, 4.5, 7.1], g1f: [3.5, 7.1, 11.0], g2r: [1.4, 2.8, 4.5], g2f: [2.3, 4.5, 7.1], c1: [0.71, 1.8, 4.5] };
+  R.ZONES = ZONES;
+  R.zone = function (key, v) { var z = ZONES[key]; return v <= z[0] ? 'A' : v <= z[1] ? 'B' : v <= z[2] ? 'C' : 'D'; };
+  R.vFromDisp = function (dpp_um, f) { return Math.PI * f * dpp_um / 1000 / Math.SQRT2; };   // pic-a-pic (um) -> vitesse efficace (mm/s)
+  R.vFromAcc = function (a_g, f) { return 1000 * a_g * 9.80665 / (2 * Math.PI * f) / Math.SQRT2; }; // acceleration crete (g) -> vitesse efficace
+  /* ---------- servomoteur de volet ---------- */
+  var IN_LB_FT2 = 0.112985 / 0.0929030; // in.lbf/ft2 -> N.m/m2
+  var TQ = { // in.lbf par ft2, colonnes <=1000, 1000-2500, 2500-3000 fpm
+    opp: [3, 4.5, 6], par: [4, 6, 8], oppS: [5, 7.5, 10], parS: [7, 10.5, 14] };
+  R.TQ = TQ; R.IN_LB_FT2 = IN_LB_FT2;
+  R.ACT = [2, 5, 10, 15, 20, 30, 40, 60, 80, 120];
+  R.damper = function (area, type, seals, v, sf) {
+    var key = type + (seals ? 'S' : ''), col = v <= 5.08 ? 0 : v <= 12.7 ? 1 : 2, out = v > 15.24;
+    var tpm = TQ[key][col] * IN_LB_FT2, T = area * tpm, Tr = T * sf, pick = null, i;
+    for (i = 0; i < R.ACT.length; i++) { if (R.ACT[i] >= Tr) { pick = R.ACT[i]; break; } }
+    return { tpm: tpm, T: T, Treq: Tr, pick: pick, out: out, col: col };
+  };
+  /* ---------- logique de securite (simulation) ---------- */
+  R.trip = function (samples, thr, delay, dt) {
+    var start = -1, i;   // duree continue mesuree depuis le premier echantillon au-dessus du seuil
+    for (i = 0; i < samples.length; i++) {
+      if (samples[i] > thr) { if (start < 0) { start = i; } if ((i - start) * dt >= delay) { return { idx: i, t: i * dt, t0: start * dt }; } } else { start = -1; }
+    }
+    return null;
+  };
+  if (typeof module !== 'undefined') { module.exports = R; }
+  root.MECH = R;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+  if (typeof document === 'undefined') { return; }
+  var MECH = window.MECH;
+  /* ============ INTERFACE MECATRONIQUE ============ */
+  var KEY = 'thermosys_mecha_v1', _t = null, LASTD = {};
+  function EN() { return window.lang === 'en'; }
+  function T(fr, en) { return EN() ? en : fr; }
+  function $(id) { return document.getElementById(id); }
+  function num(id, d) { var e = $(id); if (!e) { return d; } var v = parseFloat(String(e.value).replace(',', '.')); return isFinite(v) ? v : d; }
+  function val(id, d) { var e = $(id); return e ? e.value : d; }
+  function esc(x) { return String(x === undefined || x === null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function q(a) { return String(a).replace(/"/g, '&quot;'); }
+  function fx(x, n) { return isFinite(x) ? (Math.round(x * Math.pow(10, n)) / Math.pow(10, n)).toFixed(n) : '—'; }
+  function L(fr, en) { return '<span data-cfr="' + q(fr) + '" data-cen="' + q(en) + '">' + fr + '</span>'; }
+  function opt(v, fr, en, sel) { return '<option value="' + v + '"' + (sel ? ' selected' : '') + ' data-cfr="' + q(fr) + '" data-cen="' + q(en) + '">' + fr + '</option>'; }
+  function nin(id, v, w, st) { return '<input class="fi" id="' + id + '" type="number" step="' + (st || 'any') + '" value="' + v + '" style="max-width:' + (w || 100) + 'px" oninput="mcDeb()">'; }
+  function sel(id, opts) { return '<select class="fsel" id="' + id + '" style="max-width:100%" onchange="mcDeb()">' + opts + '</select>'; }
+  function row(fr, en, html) { return '<div class="frow"><span class="flb" data-cfr="' + q(fr) + '" data-cen="' + q(en) + '">' + fr + '</span>' + html + '</div>'; }
+  function sec(n, fr, en, body, open) { return '<details class="cpsec"' + (open ? ' open' : '') + '><summary data-cfr="' + q(fr) + '" data-cen="' + q(en) + '">' + fr + '</summary>' + body + '<div class="mc-out" id="mc_o' + n + '"></div></details>'; }
+  function note(fr, en) { return '<div style="font-size:10px;color:var(--ts);margin:3px 0" data-cfr="' + q(fr) + '" data-cen="' + q(en) + '">' + fr + '</div>'; }
+  function kv(rows) { return '<table class="cptb">' + rows.filter(Boolean).map(function (r) { return '<tr><td>' + r[0] + '</td><td style="text-align:right;font-weight:600">' + r[1] + '</td></tr>'; }).join('') + '</table>'; }
+  function msg(kind, t) { var c = kind === 'er' ? 'var(--er)' : kind === 'ok' ? '#59a14f' : 'var(--wn)'; return '<div style="font-size:11px;color:' + c + ';margin:4px 0">' + (kind === 'ok' ? '✓ ' : kind === 'er' ? '✕ ' : '⚠ ') + t + '</div>'; }
+  /* ---------- page ---------- */
+  function build() {
+    var h = '<div class="ph" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px"><span data-cfr="MÉCATRONIQUE — SIGNAUX, MOTEURS, VIBRATIONS, VOLETS" data-cen="MECHATRONICS — SIGNALS, MOTORS, VIBRATION, DAMPERS">MÉCATRONIQUE — SIGNAUX, MOTEURS, VIBRATIONS, VOLETS</span><span style="display:flex;gap:4px;flex-wrap:wrap"><button class="btn" onclick="mcExample()" data-cfr="Exemple" data-cen="Example">Exemple</button><button class="btn" onclick="mcReset()" data-cfr="Nouveau" data-cen="New">Nouveau</button><button class="btn" onclick="mcPrint()" data-cfr="Note imprimable" data-cen="Printable note">Note imprimable</button></span></div>' +
+      '<div style="font-size:10.5px;color:var(--ts);margin:2px 0 8px" data-cfr="Outils de calcul et d\'aide au diagnostic pour la mécatronique des centrales de traitement d\'air : signaux 0-10 V et 4-20 mA, sondes, moteur et variateur, vibrations, servomoteur de volet, logique de sécurité, dépannage guidé. Pas de supervision en direct." data-cen="Calculation and diagnostic-aid tools for air-handling-unit mechatronics: 0-10 V and 4-20 mA signals, sensors, motor and drive, vibration, damper actuator, safety logic, guided troubleshooting. No live supervision.">Outils de calcul et d\'aide au diagnostic pour la mécatronique des centrales de traitement d\'air : signaux 0-10 V et 4-20 mA, sondes, moteur et variateur, vibrations, servomoteur de volet, logique de sécurité, dépannage guidé. Pas de supervision en direct.</div><div style="max-width:860px">';
+    h += sec(0, '0. PROJET', '0. PROJECT', row('Projet :', 'Project:', '<input class="fi" id="mc_proj" type="text" style="max-width:100%" oninput="mcDeb()">') + row('Client :', 'Client:', '<input class="fi" id="mc_cli" type="text" style="max-width:100%" oninput="mcDeb()">') + row('Site :', 'Site:', '<input class="fi" id="mc_site" type="text" style="max-width:100%" oninput="mcDeb()">'), false);
+    h += sec(1, '1. SIGNAUX ANALOGIQUES (0-10 V, 4-20 mA)', '1. ANALOGUE SIGNALS (0-10 V, 4-20 mA)',
+      row('Type de signal :', 'Signal type:', sel('mc_stype', opt('4-20', '4-20 mA', '4-20 mA', 1) + opt('0-10', '0-10 V', '0-10 V') + opt('2-10', '2-10 V', '2-10 V') + opt('0-20', '0-20 mA', '0-20 mA'))) +
+      row('Grandeur physique, valeur à 0 % :', 'Physical quantity, value at 0 %:', nin('mc_slo', 0, 90)) + row('Valeur à 100 % :', 'Value at 100 %:', nin('mc_shi', 100, 90)) + row('Unité (texte libre) :', 'Unit (free text):', '<input class="fi" id="mc_sun" type="text" value="°C" style="max-width:90px" oninput="mcDeb()">') +
+      row('Signal mesuré (V ou mA) :', 'Measured signal (V or mA):', nin('mc_sval', 12, 90)) + row('Valeur physique voulue :', 'Wanted physical value:', nin('mc_sphys', 50, 90)) +
+      note('Le 4-20 mA détecte un fil coupé (signal sous 3,6 mA, recommandation NAMUR NE43) ; le 0-10 V ne le détecte pas.', 'The 4-20 mA signal detects a cut wire (below 3.6 mA, NAMUR NE43 recommendation); 0-10 V does not.'), true);
+    h += sec(2, '2. SONDES DE TEMPÉRATURE (Pt100, Pt1000, CTN)', '2. TEMPERATURE SENSORS (Pt100, Pt1000, NTC)',
+      row('Type de sonde :', 'Sensor type:', sel('mc_rtype', opt('100', 'Pt100', 'Pt100', 1) + opt('1000', 'Pt1000', 'Pt1000') + opt('ntc', 'CTN (NTC)', 'NTC thermistor'))) +
+      row('Résistance mesurée (Ω) :', 'Measured resistance (Ω):', nin('mc_rR', 119.4, 100)) + row('Température connue (°C) :', 'Known temperature (°C):', nin('mc_rT', 50, 90)) +
+      row('CTN : résistance à 25 °C (Ω) :', 'NTC: resistance at 25 °C (Ω):', nin('mc_r25', 10000, 100)) + row('CTN : coefficient bêta (K) :', 'NTC: beta coefficient (K):', nin('mc_rb', 3950, 90)) +
+      note('Pt100 / Pt1000 selon IEC 60751 (classe A ou B non distinguée). Les CTN dépendent du fabricant : saisissez les valeurs de la fiche technique.', 'Pt100 / Pt1000 per IEC 60751 (class A or B not distinguished). NTC values depend on the manufacturer: enter the datasheet values.'), false);
+    h += sec(3, '3. MOTEUR ET VARIATEUR DE FRÉQUENCE', '3. MOTOR AND VARIABLE-FREQUENCY DRIVE',
+      row('Réseau :', 'Supply:', sel('mc_mph', opt('3', 'Triphasé', 'Three-phase', 1) + opt('1', 'Monophasé', 'Single-phase'))) + row('Tension (V) :', 'Voltage (V):', nin('mc_mU', 400, 80)) + row('Puissance utile sur l\'arbre (kW) :', 'Shaft power (kW):', nin('mc_mP', 7.5, 80)) +
+      row('Facteur de puissance cos φ :', 'Power factor cos φ:', nin('mc_mcos', 0.85, 80, '0.01')) + row('Rendement :', 'Efficiency:', nin('mc_meta', 0.9, 80, '0.01')) + row('Nombre de pôles :', 'Number of poles:', sel('mc_mpol', opt('2', '2', '2') + opt('4', '4', '4', 1) + opt('6', '6', '6') + opt('8', '8', '8'))) +
+      row('Fréquence réseau (Hz) :', 'Supply frequency (Hz):', sel('mc_mf', opt('50', '50', '50', 1) + opt('60', '60', '60'))) + row('Vitesse nominale plaque (tr/min) :', 'Nameplate speed (rpm):', nin('mc_mn', 1450, 90)) + row('Fréquence de consigne (Hz) :', 'Frequency setpoint (Hz):', nin('mc_mfs', 40, 80)) +
+      row('Type de charge :', 'Load type:', sel('mc_mduty', opt('var', 'Couple variable (ventilateur, pompe)', 'Variable torque (fan, pump)', 1) + opt('heavy', 'Couple constant (convoyeur, compresseur)', 'Constant torque (conveyor, compressor)'))) + row('Altitude d\'installation (m) :', 'Installation altitude (m):', nin('mc_malt', 500, 80)) +
+      '<div style="font-size:11px;font-weight:700;margin:8px 0 2px;color:var(--ac)" data-cfr="Lois des ventilateurs et économie d\'énergie" data-cen="Fan laws and energy saving">Lois des ventilateurs et économie d\'énergie</div>' +
+      row('Vitesse de référence (tr/min) :', 'Reference speed (rpm):', nin('mc_fn1', 1450, 90)) + row('Nouvelle vitesse (tr/min) :', 'New speed (rpm):', nin('mc_fn2', 1160, 90)) + row('Débit de référence (m³/h) :', 'Reference airflow (m³/h):', nin('mc_fQ', 10000, 100)) + row('Pression de référence (Pa) :', 'Reference pressure (Pa):', nin('mc_fdp', 500, 90)) + row('Puissance absorbée de référence (kW) :', 'Reference absorbed power (kW):', nin('mc_fP', 5, 80)) + row('Heures de fonctionnement par an :', 'Operating hours per year:', nin('mc_fh', 4000, 90)) +
+      '<div style="font-size:11px;font-weight:700;margin:8px 0 2px;color:var(--ac)" data-cfr="Contrôle des courants mesurés (pince ampèremétrique)" data-cen="Measured-current check (clamp meter)">Contrôle des courants mesurés (pince ampèremétrique)</div>' +
+      row('Courant nominal plaque (A) :', 'Nameplate current (A):', nin('mc_cin', 14.5, 80)) + row('Courant phase L1 (A) :', 'Phase L1 current (A):', nin('mc_ia', 13.8, 80)) + row('Courant phase L2 (A) :', 'Phase L2 current (A):', nin('mc_ib', 14.1, 80)) + row('Courant phase L3 (A) :', 'Phase L3 current (A):', nin('mc_ic', 13.9, 80)), false);
+    h += sec(4, '4. VIBRATIONS (ISO 10816-3 / 20816-3)', '4. VIBRATION (ISO 10816-3 / 20816-3)',
+      row('Classe de machine :', 'Machine class:', sel('mc_vg', opt('c1', 'Petite machine jusqu\'à 15 kW (ISO 10816-1, classe I)', 'Small machine up to 15 kW (ISO 10816-1, class I)') + opt('g2r', 'Groupe 2 (15 à 300 kW), support rigide', 'Group 2 (15 to 300 kW), rigid support', 1) + opt('g2f', 'Groupe 2 (15 à 300 kW), support souple', 'Group 2 (15 to 300 kW), flexible support') + opt('g1r', 'Groupe 1 (plus de 300 kW), support rigide', 'Group 1 (over 300 kW), rigid support') + opt('g1f', 'Groupe 1 (plus de 300 kW), support souple', 'Group 1 (over 300 kW), flexible support'))) +
+      row('Vitesse de vibration mesurée (mm/s efficace) :', 'Measured vibration velocity (mm/s rms):', nin('mc_vv', 3.2, 90)) +
+      '<div style="font-size:11px;font-weight:700;margin:8px 0 2px;color:var(--ac)" data-cfr="Aide : convertir un déplacement ou une accélération en vitesse" data-cen="Helper: convert displacement or acceleration to velocity">Aide : convertir un déplacement ou une accélération en vitesse</div>' +
+      row('Fréquence de vibration (Hz) :', 'Vibration frequency (Hz):', nin('mc_vf', 24.2, 80)) + row('Déplacement crête à crête (µm) :', 'Peak-to-peak displacement (µm):', nin('mc_vd', 60, 80)) + row('Accélération crête (g) :', 'Peak acceleration (g):', nin('mc_va', 0.5, 80)) +
+      note('Les limites normalisées valent pour la vitesse efficace à large bande (10 à 1000 Hz) mesurée sur les paliers. Les ventilateurs industriels ont aussi la norme ISO 14694 : vérifiez les exigences du constructeur.', 'Standard limits apply to broadband rms velocity (10 to 1000 Hz) measured on the bearings. Industrial fans also have ISO 14694: check the manufacturer requirements.'), false);
+    h += sec(5, '5. SERVOMOTEUR DE VOLET', '5. DAMPER ACTUATOR',
+      row('Largeur du volet (m) :', 'Damper width (m):', nin('mc_dw', 1.2, 80)) + row('Hauteur du volet (m) :', 'Damper height (m):', nin('mc_dh', 0.8, 80)) + row('Nombre de volets sur le même servomoteur :', 'Number of dampers on the same actuator:', nin('mc_dn', 1, 70, '1')) +
+      row('Type de lames :', 'Blade type:', sel('mc_dt', opt('opp', 'Lames opposées', 'Opposed blades', 1) + opt('par', 'Lames parallèles', 'Parallel blades'))) + row('Joints d\'étanchéité :', 'Blade seals:', sel('mc_ds', opt('0', 'Sans joints', 'Without seals', 1) + opt('1', 'Avec joints', 'With seals'))) +
+      row('Vitesse de l\'air dans le volet (m/s) :', 'Air velocity at the damper (m/s):', nin('mc_dv', 6, 80)) + row('Coefficient de sécurité :', 'Safety factor:', nin('mc_dsf', 1.25, 80, '0.05')) +
+      note('Couples par m² d\'après des guides de dimensionnement usuels (valeurs forfaitaires). La fiche du constructeur du volet prime toujours.', 'Torques per m² from common sizing guides (flat values). The damper manufacturer\'s data sheet always takes precedence.'), false);
+    h += sec(6, '6. LOGIQUE DE SÉCURITÉ « VIBRATION ÉLEVÉE » (SIMULATION ET CODE)', '6. "HIGH VIBRATION" SAFETY LOGIC (SIMULATION AND CODE)',
+      row('Seuil de coupure (mm/s) :', 'Trip threshold (mm/s):', nin('mc_ethr', 4.5, 80)) + row('Durée au-dessus du seuil avant coupure (s) :', 'Time above threshold before trip (s):', nin('mc_edel', 5, 80)) + row('Intervalle entre mesures (s) :', 'Interval between samples (s):', nin('mc_edt', 1, 70, '0.1')) +
+      '<div class="frow"><span class="flb" data-cfr="Mesures de vibration (mm/s, séparées par des espaces ou virgules) :" data-cen="Vibration samples (mm/s, separated by spaces or commas):">Mesures de vibration (mm/s, séparées par des espaces ou virgules) :</span></div><textarea class="fi" id="mc_eser" rows="3" style="width:100%;max-width:100%" oninput="mcDeb()">2.1 2.2 2.4 3.1 4.2 4.8 5.1 5.3 5.2 5.4 5.6 5.9 6.2 3.0</textarea>' +
+      '<div style="display:flex;gap:4px;flex-wrap:wrap;margin:4px 0"><button class="btn" onclick="mcCode(\'cpp\')">C++ (Arduino)</button><button class="btn" onclick="mcCode(\'st\')">IEC 61131-3 (ST)</button><button class="btn" onclick="mcCode(\'pseudo\')" data-cfr="Pseudo-code" data-cen="Pseudo-code">Pseudo-code</button></div><pre id="mc_code" style="font-size:10.5px;white-space:pre-wrap;background:var(--bgc);border:1px solid var(--border);border-radius:6px;padding:8px;display:none"></pre>' +
+      note('Exemple pédagogique. Une fonction de sécurité réelle exige un automate ou relais de sécurité certifié et une analyse de risque : ce code n\'en tient pas lieu.', 'Teaching example. A real safety function requires a certified safety PLC or relay and a risk assessment: this code is not a substitute.'), false);
+    h += sec(7, '7. ARCHITECTURE DE RÉFÉRENCE : DU CAPTEUR À L\'ÉCRAN', '7. REFERENCE ARCHITECTURE: FROM SENSOR TO SCREEN',
+      '<div style="font-size:11px;line-height:1.55">' + T('', '') + '<div data-cfr="Capteurs (accéléromètre, codeur, capteur à effet Hall, sondes) → entrées analogiques ou numériques de l\'automate → registres Modbus (RTU RS-485 ou TCP) ou objets BACnet → passerelle (serveur de communication) → connexion sécurisée (HTTPS / WebSocket authentifiée) → interface web. La coupure de sécurité reste dans l\'automate, jamais dans la page web. Cette application ne se connecte pas à des machines : elle calcule et aide au diagnostic." data-cen="Sensors (accelerometer, encoder, Hall-effect sensor, probes) → PLC analogue or digital inputs → Modbus registers (RTU RS-485 or TCP) or BACnet objects → gateway (communication server) → secure connection (HTTPS / authenticated WebSocket) → web interface. The safety trip stays in the PLC, never in the web page. This application does not connect to machines: it calculates and aids diagnosis.">Capteurs (accéléromètre, codeur, capteur à effet Hall, sondes) → entrées analogiques ou numériques de l\'automate → registres Modbus (RTU RS-485 ou TCP) ou objets BACnet → passerelle (serveur de communication) → connexion sécurisée (HTTPS / WebSocket authentifiée) → interface web. La coupure de sécurité reste dans l\'automate, jamais dans la page web. Cette application ne se connecte pas à des machines : elle calcule et aide au diagnostic.</div></div>', false);
+    h += '<details class="cpsec" open><summary data-cfr="8. DÉPANNAGE GUIDÉ" data-cen="8. GUIDED TROUBLESHOOTING">8. DÉPANNAGE GUIDÉ</summary><div id="mc_tree"></div></details></div>';
+    return h;
+  }
+  /* ---------- calculs ---------- */
+  function c1() {
+    var ty = val('mc_stype', '4-20'), lo = num('mc_slo', 0), hi = num('mc_shi', 100), un = (val('mc_sun', '') || '').trim(), sv = num('mc_sval', 0), pv = num('mc_sphys', 0), d = MECH.SIG[ty];
+    var a = MECH.sigToPhys(ty, sv, lo, hi), b = MECH.physToSig(ty, pv, lo, hi), h = '', su = d.u;
+    h += kv([[T('Signal ', 'Signal ') + fx(sv, 2) + ' ' + su, fx(a.phys, 2) + ' ' + esc(un) + ' (' + fx(a.pct, 1) + ' %)'], [fx(pv, 2) + ' ' + esc(un) + ' ' + T('correspond à', 'corresponds to'), fx(b.sig, 2) + ' ' + su + ' (' + fx(b.pct, 1) + ' %)']]);
+    if (a.fault === 'low') { h += msg('er', T('Signal sous le seuil de défaut : fil coupé, capteur hors tension ou entrée en court-circuit. Ne pas utiliser la valeur affichée.', 'Signal below the fault threshold: cut wire, unpowered sensor or shorted input. Do not use the displayed value.')); }
+    else if (a.fault === 'high') { h += msg('wn', T('Signal au-dessus de la plage normale : défaut de capteur ou de boucle.', 'Signal above the normal range: sensor or loop fault.')); }
+    else if (a.fault) { h += msg('wn', T('Signal hors plage nominale (' + su + ').', 'Signal outside the nominal range (' + su + ').')); }
+    if (b.clamp) { h += msg('wn', T('La valeur voulue sort de la plage 0 à 100 % : le signal sera saturé.', 'The wanted value is outside the 0 to 100 % range: the signal will saturate.')); }
+    LASTD.s1 = { ty: ty, lo: lo, hi: hi, un: un, sv: sv, pv: pv, a: a, b: b, su: su }; $('mc_o1').innerHTML = h;
+  }
+  function c2() {
+    var rt = val('mc_rtype', '100'), r = num('mc_rR', 0), t = num('mc_rT', 0), r25 = num('mc_r25', 10000), bt = num('mc_rb', 3950), tf, rf;
+    if (rt === 'ntc') { tf = r > 0 ? MECH.ntcInv(r25, bt, r) : NaN; rf = MECH.ntc(r25, bt, t); } else { var R0 = +rt; tf = MECH.rtdInv(R0, r); rf = MECH.rtd(R0, t); }
+    var h = kv([[fx(r, 2) + ' Ω', fx(tf, 2) + ' °C'], [fx(t, 2) + ' °C', fx(rf, 2) + ' Ω']]);
+    if (rt !== 'ntc' && (tf < -200 || tf > 850)) { h += msg('er', T('Résistance hors de la plage de la sonde (-200 à 850 °C) : circuit ouvert ou en court-circuit.', 'Resistance outside the sensor range (-200 to 850 °C): open or shorted circuit.')); }
+    if (rt === 'ntc' && (tf < -50 || tf > 150)) { h += msg('wn', T('Température hors de la plage usuelle d\'une CTN.', 'Temperature outside the usual NTC range.')); }
+    LASTD.s2 = { rt: rt, r: r, tf: tf, t: t, rf: rf }; $('mc_o2').innerHTML = h;
+  }
+  function c3() {
+    var ph = +val('mc_mph', '3'), U = num('mc_mU', 400), P = num('mc_mP', 0), cs = num('mc_mcos', 0.85), et = num('mc_meta', 0.9), pol = +val('mc_mpol', '4'), f = +val('mc_mf', '50'), nn = num('mc_mn', 1450), fs = num('mc_mfs', 50), duty = val('mc_mduty', 'var'), alt = num('mc_malt', 0);
+    var In = MECH.motorI(ph, U, P, cs, et), ns = MECH.sync(f, pol), ncur = nn * fs / f, v = MECH.vfdI(In, duty, alt);
+    var h = kv([[T('Courant nominal calculé', 'Calculated rated current'), fx(In, 1) + ' A'], [T('Vitesse de synchronisme', 'Synchronous speed'), fx(ns, 0) + ' ' + T('tr/min', 'rpm')], [T('Vitesse à ' + fx(fs, 1) + ' Hz (approchée)', 'Speed at ' + fx(fs, 1) + ' Hz (approximate)'), fx(ncur, 0) + ' ' + T('tr/min', 'rpm') + ' (' + fx(fs / f * 100, 0) + ' %)'], [T('Courant de sortie minimal du variateur', 'Minimum drive output current'), fx(v.Imin, 1) + ' A']]);
+    h += note('Le variateur retenu doit avoir un courant de sortie permanent au moins égal à cette valeur (couple variable : courant moteur ; couple constant : +10 %, déclassement en altitude de 1 % par 100 m au-dessus de 1000 m à titre indicatif). Vérifiez les tables du constructeur.', 'The selected drive must have a continuous output current at least equal to this value (variable torque: motor current; constant torque: +10 %, altitude derating of 1 % per 100 m above 1000 m as a typical value). Check the manufacturer tables.').replace('<div', '<div class="mc-n"');
+    if (fs < 0.3 * f && duty === 'var') { h += msg('wn', T('Fréquence très basse : le refroidissement du moteur (ventilateur sur l\'arbre) et le point de fonctionnement du ventilateur sont à vérifier.', 'Very low frequency: motor cooling (shaft fan) and the fan operating point must be checked.')); }
+    if (fs > f) { h += msg('wn', T('Fonctionnement au-dessus de la fréquence réseau : vérifier la tenue mécanique et la puissance disponible.', 'Operation above the supply frequency: check mechanical strength and available power.')); }
+    /* lois des ventilateurs */
+    var n1 = num('mc_fn1', 1450), n2 = num('mc_fn2', 1160), Q = num('mc_fQ', 0), dp = num('mc_fdp', 0), Pf = num('mc_fP', 0), hrs = num('mc_fh', 0), fl = MECH.fanLaw(n1, n2, Q, dp, Pf), esav = (Pf - fl.P2) * hrs;
+    h += '<div class="cph">' + T('Lois des ventilateurs', 'Fan laws') + '</div>' + kv([[T('Rapport de vitesse', 'Speed ratio'), fx(fl.r * 100, 1) + ' %'], [T('Débit', 'Airflow'), fx(fl.Q2, 0) + ' m³/h'], [T('Pression', 'Pressure'), fx(fl.dp2, 0) + ' Pa'], [T('Puissance absorbée', 'Absorbed power'), fx(fl.P2, 2) + ' kW (' + fx(fl.r * fl.r * fl.r * 100, 0) + ' %)'], [T('Énergie économisée par an', 'Energy saved per year'), fx(esav, 0) + ' kWh']]);
+    h += note('Hypothèse : circuit sans pression statique constante (réseau de gaines classique) et rendement du ventilateur inchangé. Les pertes du variateur ne sont pas déduites.', 'Assumption: no constant static pressure (typical duct system) and unchanged fan efficiency. Drive losses are not deducted.');
+    /* courants mesures */
+    var Ia = num('mc_ia', 0), Ib = num('mc_ib', 0), Ic = num('mc_ic', 0), Inom = num('mc_cin', 0), im = MECH.imbalance(Ia, Ib, Ic), load = Inom > 0 ? im.mean / Inom * 100 : 0;
+    h += '<div class="cph">' + T('Courants mesurés', 'Measured currents') + '</div>' + kv([[T('Courant moyen', 'Mean current'), fx(im.mean, 2) + ' A (' + fx(load, 0) + ' % ' + T('du nominal', 'of rated') + ')'], [T('Déséquilibre des phases', 'Phase imbalance'), fx(im.pct, 1) + ' %']]);
+    if (im.pct > 10) { h += msg('er', T('Déséquilibre supérieur à 10 % : arrêter et chercher la cause (phase faible, connexion, bobinage, tension d\'alimentation).', 'Imbalance above 10 %: stop and find the cause (weak phase, connection, winding, supply voltage).')); } else if (im.pct > 5) { h += msg('wn', T('Déséquilibre supérieur à 5 % : à corriger rapidement.', 'Imbalance above 5 %: correct soon.')); } else if (im.pct > 2) { h += msg('wn', T('Déséquilibre entre 2 et 5 % : à surveiller.', 'Imbalance between 2 and 5 %: monitor.')); } else { h += msg('ok', T('Phases équilibrées.', 'Phases balanced.')); }
+    if (Inom > 0) { if (load > 110) { h += msg('er', T('Surcharge : courant supérieur à 110 % du nominal (obstruction de débit inversée, roulement, tension basse).', 'Overload: current above 110 % of rated (reversed airflow restriction, bearing, low voltage).')); } else if (load < 50) { h += msg('wn', T('Courant très faible : courroie cassée ou patinante, ventilateur à vide, sens de rotation inversé ou volet fermé côté refoulement.', 'Very low current: broken or slipping belt, unloaded fan, reversed rotation or closed discharge damper.')); } else { h += msg('ok', T('Charge du moteur plausible.', 'Plausible motor load.')); } }
+    LASTD.s3 = { ph: ph, U: U, P: P, cs: cs, et: et, pol: pol, f: f, nn: nn, fs: fs, duty: duty, alt: alt, In: In, ns: ns, ncur: ncur, v: v, n1: n1, n2: n2, Q: Q, dp: dp, Pf: Pf, hrs: hrs, fl: fl, esav: esav, Ia: Ia, Ib: Ib, Ic: Ic, Inom: Inom, im: im, load: load };
+    $('mc_o3').innerHTML = h;
+  }
+  var ADV = { A: ['Machine neuve ou en très bon état.', 'New or in very good condition.'], B: ['Fonctionnement continu admissible.', 'Acceptable for continuous operation.'], C: ['Insatisfaisant pour un fonctionnement continu : planifier une intervention (équilibrage, alignement, roulements).', 'Unsatisfactory for continuous operation: plan an intervention (balancing, alignment, bearings).'], D: ['Niveau dangereux pour la machine : arrêt et intervention immédiate.', 'Dangerous level for the machine: stop and intervene immediately.'] };
+  function c4() {
+    var g = val('mc_vg', 'g2r'), v = num('mc_vv', 0), z = MECH.ZONES[g], zn = MECH.zone(g, v), f = num('mc_vf', 25), dd = num('mc_vd', 0), aa = num('mc_va', 0);
+    var h = kv([[T('Limites de zones (mm/s)', 'Zone limits (mm/s)'), 'A/B ' + z[0] + ' · B/C ' + z[1] + ' · C/D ' + z[2]], [T('Vitesse mesurée', 'Measured velocity'), fx(v, 2) + ' mm/s'], [T('Zone', 'Zone'), '<b>' + zn + '</b>']]);
+    h += msg(zn === 'D' ? 'er' : zn === 'C' ? 'wn' : 'ok', T(ADV[zn][0], ADV[zn][1]));
+    h += '<div class="cph">' + T('Conversions', 'Conversions') + ' (' + fx(f, 1) + ' Hz)</div>' + kv([[fx(dd, 1) + ' µm ' + T('crête à crête', 'peak-to-peak'), fx(MECH.vFromDisp(dd, f), 2) + ' mm/s ' + T('efficace', 'rms')], [fx(aa, 2) + ' g ' + T('crête', 'peak'), fx(MECH.vFromAcc(aa, f), 2) + ' mm/s ' + T('efficace', 'rms')]]);
+    h += note('Conversions valables pour une vibration sinusoïdale à fréquence unique.', 'Conversions valid for a single-frequency sinusoidal vibration.');
+    LASTD.s4 = { g: g, v: v, z: z, zn: zn, f: f, dd: dd, aa: aa }; $('mc_o4').innerHTML = h;
+  }
+  function c5() {
+    var w = num('mc_dw', 0), hh = num('mc_dh', 0), n = Math.max(1, num('mc_dn', 1)), ty = val('mc_dt', 'opp'), se = val('mc_ds', '0') === '1', v = num('mc_dv', 0), sf = Math.max(1, num('mc_dsf', 1.25)), A = w * hh * n, d = MECH.damper(A, ty, se, v, sf);
+    var h = kv([[T('Surface totale', 'Total area'), fx(A, 2) + ' m²'], [T('Couple unitaire retenu', 'Unit torque used'), fx(d.tpm, 2) + ' N·m/m²'], [T('Couple calculé', 'Calculated torque'), fx(d.T, 2) + ' N·m'], [T('Couple avec coefficient de sécurité', 'Torque with safety factor'), fx(d.Treq, 2) + ' N·m'], [T('Servomoteur à choisir (couple nominal)', 'Actuator to choose (rated torque)'), d.pick ? '≥ ' + d.pick + ' N·m' : T('au-delà de 120 N·m : plusieurs servomoteurs', 'above 120 N·m: several actuators')]]);
+    if (d.out) { h += msg('er', T('Vitesse d\'air au-delà de 15 m/s : hors des valeurs du tableau, demandez le couple au constructeur.', 'Air velocity above 15 m/s: outside the table values, ask the manufacturer for the torque.')); }
+    LASTD.s5 = { w: w, h: hh, n: n, ty: ty, se: se, v: v, sf: sf, A: A, d: d }; $('mc_o5').innerHTML = h;
+  }
+  function parseSer() { return (val('mc_eser', '') || '').split(/[\s,;]+/).map(function (x) { return parseFloat(x.replace(',', '.')); }).filter(function (x) { return isFinite(x); }); }
+  function chart(ser, thr, dt, tripIdx) {
+    if (!ser.length) { return ''; }
+    var W = 560, H = 170, pl = 38, pr = 8, pt = 10, pb = 24, mx = Math.max.apply(null, ser.concat([thr])) * 1.15, n = ser.length, X = function (i) { return pl + (n > 1 ? i / (n - 1) : 0.5) * (W - pl - pr); }, Y = function (v) { return pt + (1 - v / mx) * (H - pt - pb); };
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="max-width:600px;background:var(--bgc);border:1px solid var(--border);border-radius:6px"><line x1="' + pl + '" y1="' + Y(0) + '" x2="' + (W - pr) + '" y2="' + Y(0) + '" stroke="#888" stroke-width="1"/><line x1="' + pl + '" y1="' + pt + '" x2="' + pl + '" y2="' + Y(0) + '" stroke="#888" stroke-width="1"/>';
+    s += '<line x1="' + pl + '" y1="' + Y(thr) + '" x2="' + (W - pr) + '" y2="' + Y(thr) + '" stroke="#e15759" stroke-width="1.2" stroke-dasharray="5 3"/><text x="' + (W - pr) + '" y="' + (Y(thr) - 3) + '" text-anchor="end" font-size="9" fill="#e15759">' + T('seuil', 'threshold') + ' ' + fx(thr, 1) + '</text>';
+    s += '<polyline fill="none" stroke="#4e79a7" stroke-width="2" points="' + ser.map(function (v, i) { return X(i).toFixed(1) + ',' + Y(v).toFixed(1); }).join(' ') + '"/>';
+    ser.forEach(function (v, i) { s += '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(v).toFixed(1) + '" r="2.4" fill="' + (v > thr ? '#e15759' : '#4e79a7') + '"/>'; });
+    if (tripIdx !== null && tripIdx !== undefined) { s += '<line x1="' + X(tripIdx).toFixed(1) + '" y1="' + pt + '" x2="' + X(tripIdx).toFixed(1) + '" y2="' + Y(0) + '" stroke="#e15759" stroke-width="1.6"/><text x="' + (X(tripIdx) - 4).toFixed(1) + '" y="' + (pt + 9) + '" text-anchor="end" font-size="9.5" font-weight="700" fill="#e15759">' + T('COUPURE', 'TRIP') + '</text>'; }
+    s += '<text x="' + (pl - 4) + '" y="' + (Y(mx / 1.15) + 3) + '" text-anchor="end" font-size="9" fill="#888">' + fx(mx / 1.15, 1) + '</text><text x="' + (pl - 4) + '" y="' + (Y(0) + 3) + '" text-anchor="end" font-size="9" fill="#888">0</text><text x="' + (W / 2) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="9" fill="#888">' + T('temps (s)', 'time (s)') + ' — 0 à ' + fx((n - 1) * dt, 0) + ' s · mm/s</text></svg>';
+    return s;
+  }
+  function c6() {
+    var thr = num('mc_ethr', 4.5), del = num('mc_edel', 5), dt = Math.max(0.01, num('mc_edt', 1)), ser = parseSer(), tr = MECH.trip(ser, thr, del, dt);
+    var h = chart(ser, thr, dt, tr ? tr.idx : null);
+    if (!ser.length) { h += msg('wn', T('Saisissez des mesures pour lancer la simulation.', 'Enter samples to run the simulation.')); }
+    else if (tr) { h += msg('er', T('Coupure à t = ' + fx(tr.t, 1) + ' s : vibration au-dessus de ' + fx(thr, 1) + ' mm/s pendant ' + fx(del, 1) + ' s consécutives. Message : « PANNE MÉCANIQUE IMMINENTE ».', 'Trip at t = ' + fx(tr.t, 1) + ' s: vibration above ' + fx(thr, 1) + ' mm/s for ' + fx(del, 1) + ' consecutive seconds. Message: "IMMINENT MECHANICAL FAILURE".')); }
+    else { h += msg('ok', T('Aucune coupure : le seuil n\'est pas dépassé assez longtemps de façon continue.', 'No trip: the threshold is not exceeded long enough without interruption.')); }
+    LASTD.s6 = { thr: thr, del: del, dt: dt, ser: ser, tr: tr }; $('mc_o6').innerHTML = h;
+  }
+  var CODE = {
+    cpp: function (thr, del) { return '// Surveillance vibration ventilateur (exemple pedagogique, pas une fonction SIL)\nconst float SEUIL_MMS   = ' + thr + ';   // mm/s efficace\nconst unsigned long DELAI_MS = ' + Math.round(del * 1000) + ';   // duree continue avant coupure\nunsigned long debutDepassement = 0;\nbool depassement = false, coupure = false;\n\nvoid surveillerVibration(float vib_mms) {\n  if (coupure) return;                      // verrouille jusqu\'au acquittement\n  if (vib_mms > SEUIL_MMS) {\n    if (!depassement) { depassement = true; debutDepassement = millis(); }\n    if (millis() - debutDepassement >= DELAI_MS) {\n      coupure = true;\n      digitalWrite(PIN_MARCHE_MOTEUR, LOW);  // coupure du moteur (relais de securite en parallele)\n      envoyerAlerte("Panne mecanique imminente");  // Modbus: bit d\'alarme ; WebSocket via passerelle\n    }\n  } else {\n    depassement = false;                    // le compteur repart de zero\n  }\n}\nvoid acquitter() { coupure = false; depassement = false; }  // action volontaire et protegee'; },
+    st: function (thr, del) { return '(* IEC 61131-3 - Surveillance vibration ventilateur (exemple pedagogique) *)\nVAR\n  Vib_mms  : REAL;        (* vitesse efficace mesuree *)\n  Seuil    : REAL := ' + thr + ';\n  Depasse  : BOOL;\n  Tempo    : TON;\n  Coupure  : BOOL;        (* memorise *)\n  Ack      : BOOL;        (* acquittement *)\n  MarcheMoteur : BOOL;\nEND_VAR\n\nDepasse := Vib_mms > Seuil;\nTempo(IN := Depasse, PT := T#' + fx(del, 1) + 's);\nIF Tempo.Q THEN Coupure := TRUE; END_IF;\nIF Ack AND NOT Depasse THEN Coupure := FALSE; END_IF;\nMarcheMoteur := MarcheDemandee AND NOT Coupure;   (* coupure du moteur *)\nAlarme_PanneImminente := Coupure;                 (* bit Modbus vers la supervision *)'; },
+    pseudo: function (thr, del) { return 'A chaque mesure (periodique) :\n  si vibration > ' + thr + ' mm/s :\n      si le chronometre n\'est pas lance : le lancer\n      si duree continue >= ' + fx(del, 1) + ' s :\n          verrouiller la coupure\n          couper la marche du moteur\n          envoyer l\'alarme "Panne mecanique imminente" a la supervision\n  sinon :\n      remettre le chronometre a zero\nLa remise en marche exige un acquittement volontaire apres inspection.'; }
+  };
+  window.mcCode = function (k) { var p = $('mc_code'); p.style.display = 'block'; p.textContent = CODE[k](num('mc_ethr', 4.5), num('mc_edel', 5)); };
+  /* ---------- depannage guide ---------- */
+  var TREES = {
+    start: { t: ['Le ventilateur ne démarre pas', 'The fan does not start'], n: {
+      a: { q: ['Le variateur ou le démarreur affiche-t-il un défaut ?', 'Does the drive or starter show a fault?'], o: [['Oui', 'Yes', 'r1'], ['Non', 'No', 'b']] },
+      b: { q: ['Y a-t-il de la tension sur les 3 phases en amont (sectionneur, disjoncteur) ?', 'Is there voltage on all 3 phases upstream (isolator, breaker)?'], o: [['Non', 'No', 'r2'], ['Oui', 'Yes', 'c']] },
+      c: { q: ['L\'ordre de marche arrive-t-il au variateur ou au contacteur (chaîne de sécurité fermée : antigel, incendie, thermique, pressostat) ?', 'Does the run command reach the drive or contactor (safety chain closed: frost, fire, thermal, pressure switch)?'], o: [['Non', 'No', 'r3'], ['Oui', 'Yes', 'd']] },
+      d: { q: ['Arbre libre : tourne-t-il à la main, hors tension et consigné, sans point dur ?', 'Free shaft: does it turn by hand, de-energised and locked out, without tight spots?'], o: [['Non', 'No', 'r4'], ['Oui', 'Yes', 'r5']] },
+      r1: { r: [['Relevez le code de défaut et consultez le tableau des défauts du constructeur.', 'Note the fault code and check the manufacturer fault table.'], ['Défauts fréquents : surintensité, surcharge thermique, sous-tension, perte de phase (voir l\'arbre « Défaut du variateur »).', 'Frequent faults: overcurrent, thermal overload, undervoltage, phase loss (see the "Drive fault" tree).']] },
+      r2: { r: [['Défaut d\'alimentation : fusibles, disjoncteur déclenché, ordre ou perte de phase, contacts du sectionneur.', 'Supply fault: fuses, tripped breaker, phase order or loss, isolator contacts.']] },
+      r3: { r: [['Cherchez le contact ouvert dans la boucle : thermostat antigel, détecteur de fumée, pressostat de filtre, porte de visite, relais thermique, arrêt d\'urgence.', 'Look for the open contact in the loop: frost thermostat, smoke detector, filter pressure switch, access door, thermal relay, emergency stop.'], ['Vérifiez aussi l\'ordre de marche de la GTC ou de l\'automate (mode manuel / auto).', 'Also check the run command from the BMS or PLC (manual / auto mode).']] },
+      r4: { r: [['Blocage mécanique : roulements grippés, turbine qui frotte, courroie ou accouplement bloqué, corps étranger.', 'Mechanical blockage: seized bearings, rubbing impeller, jammed belt or coupling, foreign object.']] },
+      r5: { r: [['Moteur ou variateur : mesurez la tension de sortie sur U-V-W (personne habilitée), l\'isolement des enroulements (mégohmmètre) et le couplage étoile ou triangle selon la plaque.', 'Motor or drive: measure the output voltage on U-V-W (qualified person), winding insulation (megohmmeter) and the star or delta connection per the nameplate.']] } } },
+    vfd: { t: ['Défaut du variateur', 'Drive fault'], n: {
+      a: { q: ['Quel type de défaut est affiché ?', 'What kind of fault is displayed?'], o: [['Surintensité', 'Overcurrent', 'r1'], ['Surtension du bus continu', 'DC bus overvoltage', 'r2'], ['Sous-tension ou perte de phase', 'Undervoltage or phase loss', 'r3'], ['Surchauffe du variateur', 'Drive overtemperature', 'r4'], ['Défaut à la terre', 'Earth fault', 'r5']] },
+      r1: { r: [['Rampe d\'accélération trop courte ou charge bloquée : allongez la rampe, vérifiez la mécanique.', 'Acceleration ramp too short or blocked load: lengthen the ramp, check the mechanics.'], ['Court-circuit entre phases ou vers la terre : débranchez le moteur et testez le variateur à vide, puis le câble et le moteur.', 'Phase-to-phase or earth short: disconnect the motor and test the drive unloaded, then the cable and motor.']] },
+      r2: { r: [['Décélération trop rapide : allongez la rampe ou ajoutez une résistance de freinage.', 'Deceleration too fast: lengthen the ramp or add a braking resistor.'], ['Tension réseau trop haute ou ventilateur entraîné par le courant d\'air (rotation en moulinet) à l\'arrêt.', 'Mains voltage too high or fan windmilling from airflow when stopped.']] },
+      r3: { r: [['Mesurez les 3 phases à l\'entrée : fusible fondu, contact du sectionneur, borne desserrée.', 'Measure the 3 input phases: blown fuse, isolator contact, loose terminal.'], ['Chutes de tension au démarrage d\'autres machines : vérifiez la section et la source.', 'Voltage dips when other machines start: check the cable size and the source.']] },
+      r4: { r: [['Filtres du variateur encrassés, ventilateur interne en panne, armoire trop chaude ou fermée.', 'Dirty drive filters, failed internal fan, cabinet too hot or closed.'], ['Fréquence de découpage trop élevée ou déclassement oublié (altitude, température).', 'Switching frequency too high or forgotten derating (altitude, temperature).']] },
+      r5: { r: [['Isolement du câble moteur ou du bobinage : mesure au mégohmmètre (moteur débranché du variateur).', 'Motor cable or winding insulation: megohmmeter test (motor disconnected from the drive).'], ['Câble blindé trop long ou humide : vérifiez les presse-étoupes.', 'Shielded cable too long or wet: check the glands.']] } } },
+    damper: { t: ['Le volet ne bouge pas ou bouge mal', 'The damper does not move or moves badly'], n: {
+      a: { q: ['Le servomoteur reçoit-il sa tension d\'alimentation (24 V ou 230 V selon modèle) ?', 'Does the actuator receive its supply voltage (24 V or 230 V per model)?'], o: [['Non', 'No', 'r1'], ['Oui', 'Yes', 'b']] },
+      b: { q: ['Le signal de commande (0-10 V ou 2-10 V) varie-t-il quand on change la consigne ?', 'Does the control signal (0-10 V or 2-10 V) change when the setpoint changes?'], o: [['Non', 'No', 'r2'], ['Oui', 'Yes', 'c']] },
+      c: { q: ['Le servomoteur tourne-t-il à vide, désaccouplé du volet ?', 'Does the actuator turn unloaded, uncoupled from the damper?'], o: [['Non', 'No', 'r3'], ['Oui', 'Yes', 'r4']] },
+      r1: { r: [['Transformateur ou fusible 24 V, câblage, polarité. Mesurez entre les bornes d\'alimentation du servomoteur.', '24 V transformer or fuse, wiring, polarity. Measure across the actuator supply terminals.']] },
+      r2: { r: [['Problème en amont : régulateur ou automate en manuel, sortie analogique défaillante, câble coupé, mauvaise borne (voir « Signaux analogiques »).', 'Upstream problem: controller or PLC in manual, failed analogue output, cut cable, wrong terminal (see "Analogue signals").']] },
+      r3: { r: [['Servomoteur défectueux ou position de fin de course mal réglée : remplacez ou ré-initialisez (adaptation de course).', 'Defective actuator or poorly set end stop: replace or re-initialise (travel adaptation).']] },
+      r4: { r: [['Volet dur : paliers grippés, lames déformées, joints trop serrés, tringlerie voilée. Mesurez le couple nécessaire et comparez au servomoteur (section 5).', 'Stiff damper: seized bearings, bent blades, over-tight seals, bent linkage. Measure the required torque and compare with the actuator (section 5).'], ['Vérifiez aussi la fixation du servomoteur et le sens d\'action (ouvre à la montée du signal).', 'Also check the actuator mounting and direction of action (opens as the signal rises).']] } } },
+    sensor: { t: ['Mesure incohérente (sonde ou signal)', 'Inconsistent reading (sensor or signal)'], n: {
+      a: { q: ['Quel type de signal est utilisé ?', 'What type of signal is used?'], o: [['4-20 mA', '4-20 mA', 'b'], ['0-10 V', '0-10 V', 'c'], ['Sonde Pt100 / Pt1000 / CTN', 'Pt100 / Pt1000 / NTC probe', 'd']] },
+      b: { q: ['Le courant mesuré en série est-il inférieur à 3,6 mA ?', 'Is the series-measured current below 3.6 mA?'], o: [['Oui', 'Yes', 'r1'], ['Non', 'No', 'r2']] },
+      c: { q: ['La tension à l\'entrée de l\'automate est-elle plus basse qu\'au capteur ?', 'Is the voltage at the PLC input lower than at the sensor?'], o: [['Oui', 'Yes', 'r3'], ['Non', 'No', 'r4']] },
+      d: { q: ['La résistance mesurée sonde débranchée correspond-elle à la température réelle (section 2) ?', 'Does the resistance measured with the probe disconnected match the real temperature (section 2)?'], o: [['Non', 'No', 'r5'], ['Oui', 'Yes', 'r6']] },
+      r1: { r: [['Boucle ouverte : fil coupé, capteur non alimenté (24 V), borne desserrée, entrée automate en défaut.', 'Open loop: cut wire, unpowered sensor (24 V), loose terminal, faulty PLC input.']] },
+      r2: { r: [['Contrôlez la plage configurée (début et fin d\'échelle), l\'alimentation de la boucle et la masse. Comparez avec la section 1.', 'Check the configured range (start and end of scale), loop supply and ground. Compare with section 1.']] },
+      r3: { r: [['Chute de tension dans le câble trop long ou trop fin, ou mauvaise connexion de la masse commune.', 'Voltage drop in a cable that is too long or thin, or a bad common ground connection.']] },
+      r4: { r: [['Parasites (câble signal près d\'un câble de puissance ou du variateur) : séparez, utilisez un câble blindé relié à la terre d\'un seul côté.', 'Interference (signal cable near a power or drive cable): separate them, use shielded cable grounded at one end only.'], ['Vérifiez l\'échelle du capteur et celle de l\'automate.', 'Check the sensor scale and the PLC scale.']] },
+      r5: { r: [['Sonde défectueuse, humide ou mal placée : remplacez, ou contrôlez le doigt de gant et le contact thermique.', 'Defective, wet or badly placed probe: replace it, or check the thermowell and thermal contact.']] },
+      r6: { r: [['La sonde est bonne : suspectez le câble (résistance de ligne en 2 fils : ajoutez 0,4 Ω par ohm de câble pour une Pt100), les bornes ou la configuration du type de sonde dans l\'automate.', 'The probe is good: suspect the cable (2-wire line resistance: add the cable ohms to a Pt100 reading), terminals or the probe type configuration in the PLC.']] } } }
+  };
+  var TS = { tree: 'start', node: 'a', path: [] };
+  function drawTree() {
+    var box = $('mc_tree'); if (!box) { return; }
+    var tr = TREES[TS.tree], nd = tr.n[TS.node], h = '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">' + Object.keys(TREES).map(function (k) { return '<button class="btn" style="' + (k === TS.tree ? 'outline:2px solid var(--ac)' : '') + '" onclick="mcTree(\'' + k + '\')">' + esc(T(TREES[k].t[0], TREES[k].t[1])) + '</button>'; }).join('') + '</div>';
+    if (!nd) { nd = tr.n.a; TS.node = 'a'; }
+    if (nd.q) { h += '<div style="font-size:12px;font-weight:600;margin:6px 0">' + esc(T(nd.q[0], nd.q[1])) + '</div><div style="display:flex;gap:6px;flex-wrap:wrap">' + nd.o.map(function (o) { return '<button class="btn" onclick="mcStep(\'' + o[2] + '\')">' + esc(T(o[0], o[1])) + '</button>'; }).join('') + '</div>'; }
+    else { h += '<div class="cph">' + T('Causes probables et contrôles', 'Likely causes and checks') + '</div>' + nd.r.map(function (r) { return '<div style="font-size:11.5px;margin:4px 0">• ' + esc(T(r[0], r[1])) + '</div>'; }).join('') + '<button class="btn" style="margin-top:8px" onclick="mcTree(\'' + TS.tree + '\')">' + T('Recommencer', 'Start again') + '</button>'; }
+    h += '<div style="font-size:10px;color:var(--ts);margin-top:10px">' + T('Consignes de sécurité : couper et consigner l\'alimentation avant toute intervention sur les connexions ; les mesures sous tension sont réservées à du personnel habilité. Ces arbres donnent des pistes : ils ne remplacent pas la documentation du constructeur.', 'Safety: isolate and lock out the supply before working on connections; live measurements are for authorised staff only. These trees give leads: they do not replace the manufacturer documentation.') + '</div>';
+    box.innerHTML = h;
+  }
+  window.mcTree = function (k) { TS = { tree: k, node: 'a', path: [] }; drawTree(); };
+  window.mcStep = function (n) { TS.node = n; drawTree(); };
+  /* ---------- calcul global, sauvegarde ---------- */
+  function calc() { [c1, c2, c3, c4, c5, c6].forEach(function (f) { try { f(); } catch (e) { /* section vide */ } }); save(); }
+  window.mcDeb = function () { clearTimeout(_t); _t = setTimeout(calc, 250); };
+  function save() { try { var d = {}; document.querySelectorAll('#pg-mecha input[id^="mc_"], #pg-mecha select[id^="mc_"], #pg-mecha textarea[id^="mc_"]').forEach(function (e) { d[e.id] = e.value; }); localStorage.setItem(KEY, JSON.stringify(d)); } catch (e) { /* sans effet */ } }
+  function restore() { try { var d = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!d) { return; } Object.keys(d).forEach(function (id) { var e = $(id); if (e) { e.value = d[id]; } }); } catch (e) { /* sans effet */ } }
+  window.mcExample = function () {
+    var set = { mc_stype: '4-20', mc_slo: 0, mc_shi: 100, mc_sun: '°C', mc_sval: 12, mc_sphys: 50, mc_rtype: '100', mc_rR: 119.4, mc_rT: 50, mc_mph: '3', mc_mU: 400, mc_mP: 7.5, mc_mcos: 0.85, mc_meta: 0.9, mc_mpol: '4', mc_mf: '50', mc_mn: 1450, mc_mfs: 40, mc_mduty: 'var', mc_malt: 500, mc_fn1: 1450, mc_fn2: 1160, mc_fQ: 10000, mc_fdp: 500, mc_fP: 5, mc_fh: 4000, mc_cin: 14.5, mc_ia: 13.8, mc_ib: 14.1, mc_ic: 13.9, mc_vg: 'g2r', mc_vv: 3.2, mc_vf: 24.2, mc_vd: 60, mc_va: 0.5, mc_dw: 1.2, mc_dh: 0.8, mc_dn: 1, mc_dt: 'opp', mc_ds: '0', mc_dv: 6, mc_dsf: 1.25, mc_ethr: 4.5, mc_edel: 5, mc_edt: 1, mc_eser: '2.1 2.2 2.4 3.1 4.2 4.8 5.1 5.3 5.2 5.4 5.6 5.9 6.2 3.0' };
+    Object.keys(set).forEach(function (id) { var e = $(id); if (e) { e.value = set[id]; } }); calc(); document.querySelectorAll('#pg-mecha details').forEach(function (d) { d.open = true; });
+  };
+  window.mcReset = function () { if (!window.confirm(T('Effacer toutes les données de MÉCATRONIQUE ?', 'Clear all MECHATRONICS data?'))) { return; } try { localStorage.removeItem(KEY); } catch (e) { /* sans effet */ } $('pg-mecha').innerHTML = build(); TS = { tree: 'start', node: 'a', path: [] }; applyLang(); calc(); };
+  /* ---------- note imprimable ---------- */
+  var SRC = [
+    ['NAMUR NE43', 'Niveaux de signal 4-20 mA en défaut (sous 3,6 mA, au-dessus de 21 mA)', 'Signal levels of 4-20 mA in fault (below 3.6 mA, above 21 mA)', 'Élevée', 'High'],
+    ['IEC 60751', 'Courbe résistance-température Pt100 / Pt1000 (coefficients A, B, C)', 'Pt100 / Pt1000 resistance-temperature curve (A, B, C coefficients)', 'Élevée', 'High'],
+    ['ISO 10816-3 / ISO 20816-3', 'Zones de sévérité vibratoire A à D pour machines de 15 kW à plus de 300 kW, supports rigides ou souples', 'Vibration severity zones A to D for machines from 15 kW to over 300 kW, rigid or flexible supports', 'Élevée (valeurs à confirmer avec la norme)', 'High (confirm values with the standard)'],
+    ['ISO 10816-1 (classe I)', 'Limites des petites machines jusqu\'à 15 kW : 0,71 / 1,8 / 4,5 mm/s', 'Limits of small machines up to 15 kW: 0.71 / 1.8 / 4.5 mm/s', 'Moyenne : édition ancienne', 'Medium: older edition'],
+    ['Lois de similitude des ventilateurs', 'Q ∝ n, ΔP ∝ n², P ∝ n³', 'Q ∝ n, ΔP ∝ n², P ∝ n³', 'Élevée', 'High'],
+    ['Guides de dimensionnement de servomoteurs de volets', 'Couple par m² selon type de lames, joints et vitesse d\'air (valeurs forfaitaires converties en N·m/m²)', 'Torque per m² by blade type, seals and air velocity (flat values converted to N·m/m²)', 'Moyenne : toujours confirmer avec le constructeur du volet', 'Medium: always confirm with the damper manufacturer'],
+    ['Pratique usuelle', 'Courant minimal du variateur (couple variable ×1,0 ; constant ×1,1), déclassement altitude 1 % / 100 m au-dessus de 1000 m, déséquilibre de courant 2 / 5 / 10 %', 'Minimum drive current (variable torque ×1.0; constant ×1.1), altitude derating 1 % / 100 m above 1000 m, current imbalance 2 / 5 / 10 %', 'Indicative : voir la documentation du constructeur', 'Indicative: see manufacturer documentation']
+  ];
+  window.mcPrint = function () {
+    calc(); var D = LASTD, now = new Date(), pad = function (n) { return (n < 10 ? '0' : '') + n; }, ref = 'MC-' + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + '-' + pad(now.getHours()) + pad(now.getMinutes()), ds = pad(now.getDate()) + '/' + pad(now.getMonth() + 1) + '/' + now.getFullYear();
+    var h2 = function (a, b) { return '<h2>' + T(a, b) + '</h2>'; }, tb = function (rows) { return '<table class="tb" style="max-width:175mm">' + rows.map(function (r) { return '<tr><td style="text-align:left">' + r[0] + '</td><td>' + r[1] + '</td></tr>'; }).join('') + '</table>'; };
+    var s1 = D.s1, s2 = D.s2, s3 = D.s3, s4 = D.s4, s5 = D.s5, s6 = D.s6, body = '';
+    var zl = { A: T('A (très bon)', 'A (very good)'), B: T('B (acceptable)', 'B (acceptable)'), C: T('C (insatisfaisant)', 'C (unsatisfactory)'), D: T('D (dangereux)', 'D (dangerous)') };
+    body += '<div class="sum"><div class="sb"><div class="st">' + T('Moteur', 'Motor') + '</div><div class="sv2">' + fx(s3.In, 1) + ' A</div><div class="ss">' + fx(s3.P, 1) + ' kW</div></div><div class="sb"><div class="st">' + T('Vibrations', 'Vibration') + '</div><div class="sv2">' + T('Zone ', 'Zone ') + s4.zn + '</div><div class="ss">' + fx(s4.v, 2) + ' mm/s</div></div><div class="sb"><div class="st">' + T('Servomoteur de volet', 'Damper actuator') + '</div><div class="sv2">' + (s5.d.pick ? '≥ ' + s5.d.pick + ' N·m' : '—') + '</div><div class="ss">' + fx(s5.A, 2) + ' m²</div></div></div>';
+    body += h2('1. Signaux et sondes', '1. Signals and sensors') + tb([[T('Signal ', 'Signal ') + s1.ty + ' : ' + fx(s1.sv, 2) + ' ' + s1.su, fx(s1.a.phys, 2) + ' ' + esc(s1.un) + (s1.a.fault === 'low' ? ' — ' + T('BOUCLE OUVERTE', 'OPEN LOOP') : '')], [fx(s1.pv, 2) + ' ' + esc(s1.un) + ' → ' + T('signal', 'signal'), fx(s1.b.sig, 2) + ' ' + s1.su], [fx(s2.r, 2) + ' Ω (' + (s2.rt === 'ntc' ? 'NTC' : 'Pt' + s2.rt) + ')', fx(s2.tf, 2) + ' °C'], [fx(s2.t, 2) + ' °C', fx(s2.rf, 2) + ' Ω']]);
+    body += h2('2. Moteur, variateur et ventilateur', '2. Motor, drive and fan') + tb([[T('Courant nominal calculé', 'Calculated rated current'), fx(s3.In, 1) + ' A'], [T('Vitesse de synchronisme', 'Synchronous speed'), fx(s3.ns, 0) + ' ' + T('tr/min', 'rpm')], [T('Vitesse à ' + fx(s3.fs, 1) + ' Hz', 'Speed at ' + fx(s3.fs, 1) + ' Hz'), fx(s3.ncur, 0) + ' ' + T('tr/min', 'rpm')], [T('Courant de sortie minimal du variateur', 'Minimum drive output current'), fx(s3.v.Imin, 1) + ' A (' + (s3.duty === 'var' ? T('couple variable', 'variable torque') : T('couple constant', 'constant torque')) + ', ' + fx(s3.alt, 0) + ' m)'],
+      [T('Vitesse ' + fx(s3.n2, 0) + ' / ' + fx(s3.n1, 0) + ' tr/min : débit, pression, puissance', 'Speed ' + fx(s3.n2, 0) + ' / ' + fx(s3.n1, 0) + ' rpm: airflow, pressure, power'), fx(s3.fl.Q2, 0) + ' m³/h · ' + fx(s3.fl.dp2, 0) + ' Pa · ' + fx(s3.fl.P2, 2) + ' kW'], [T('Énergie économisée par an', 'Energy saved per year'), fx(s3.esav, 0) + ' kWh'],
+      [T('Courants mesurés L1 / L2 / L3', 'Measured currents L1 / L2 / L3'), fx(s3.Ia, 1) + ' / ' + fx(s3.Ib, 1) + ' / ' + fx(s3.Ic, 1) + ' A'], [T('Charge moyenne, déséquilibre', 'Mean load, imbalance'), fx(s3.load, 0) + ' % · ' + fx(s3.im.pct, 1) + ' %']]);
+    body += h2('3. Vibrations', '3. Vibration') + tb([[T('Limites de zones A/B · B/C · C/D', 'Zone limits A/B · B/C · C/D'), s4.z.join(' · ') + ' mm/s'], [T('Vitesse mesurée', 'Measured velocity'), fx(s4.v, 2) + ' mm/s'], [T('Zone', 'Zone'), zl[s4.zn]], [T('Conclusion', 'Conclusion'), esc(T(ADV[s4.zn][0], ADV[s4.zn][1]))]]);
+    body += h2('4. Servomoteur de volet', '4. Damper actuator') + tb([[T('Surface totale', 'Total area'), fx(s5.A, 2) + ' m² (' + s5.n + ' × ' + fx(s5.w, 2) + ' × ' + fx(s5.h, 2) + ' m)'], [T('Type, joints, vitesse d\'air', 'Type, seals, air velocity'), (s5.ty === 'opp' ? T('lames opposées', 'opposed blades') : T('lames parallèles', 'parallel blades')) + ', ' + (s5.se ? T('avec joints', 'with seals') : T('sans joints', 'without seals')) + ', ' + fx(s5.v, 1) + ' m/s'], [T('Couple calculé / avec sécurité ×' + fx(s5.sf, 2), 'Calculated torque / with safety ×' + fx(s5.sf, 2)), fx(s5.d.T, 2) + ' / ' + fx(s5.d.Treq, 2) + ' N·m'], [T('Servomoteur à choisir', 'Actuator to choose'), s5.d.pick ? '≥ ' + s5.d.pick + ' N·m' : '—']]);
+    body += h2('5. Logique de sécurité « vibration élevée »', '5. "High vibration" safety logic') + '<p class="n">' + T('Seuil ' + fx(s6.thr, 1) + ' mm/s pendant ' + fx(s6.del, 1) + ' s consécutives. ', 'Threshold ' + fx(s6.thr, 1) + ' mm/s for ' + fx(s6.del, 1) + ' consecutive seconds. ') + (s6.tr ? T('Simulation : coupure à t = ' + fx(s6.tr.t, 1) + ' s.', 'Simulation: trip at t = ' + fx(s6.tr.t, 1) + ' s.') : T('Simulation : aucune coupure.', 'Simulation: no trip.')) + '</p>' + chart(s6.ser, s6.thr, s6.dt, s6.tr ? s6.tr.idx : null);
+    body += h2('6. Sources et niveau de confiance', '6. Sources and confidence level') + '<table class="tb">' + SRC.map(function (r) { return '<tr><td style="text-align:left"><b>' + r[0] + '</b></td><td style="text-align:left">' + esc(T(r[1], r[2])) + '</td><td style="text-align:left">' + esc(T(r[3], r[4])) + '</td></tr>'; }).join('') + '</table><p class="disc">' + T('Cette note est une aide au calcul et au diagnostic. Elle ne remplace ni les normes, ni les fiches des constructeurs, ni l\'analyse de risque d\'une fonction de sécurité. Le code de la logique de sécurité est un exemple pédagogique : une coupure de sécurité réelle exige un équipement certifié. Les interventions sur installation électrique sont réservées au personnel habilité.', 'This note is a calculation and diagnostic aid. It replaces neither the standards, the manufacturer data sheets, nor the risk analysis of a safety function. The safety logic code is a teaching example: a real safety trip requires certified equipment. Work on electrical installations is reserved to authorised staff.') + '</p>';
+    var win = window.open('', '_blank', 'width=900,height=750');
+    if (!win) { if (typeof showToast === 'function') { showToast(T('Popup bloqué', 'Popup blocked'), 'w'); } return; }
+    win.document.write('<!DOCTYPE html><html lang="' + (EN() ? 'en' : 'fr') + '"><head><meta charset="UTF-8"><title>' + ref + ' — THERMOSYS</title><style>' + PRINT_CSS + '</style></head><body><div class="bar no-print"><button onclick="window.print()">' + T('Imprimer / enregistrer en PDF', 'Print / save as PDF') + '</button></div><div class="page"><div class="hdr"><div><div class="logo">THERMOSYS</div><div class="sub">' + T('POSTE DE TRAVAIL GÉNIE CLIMATIQUE', 'HVAC ENGINEERING WORKSTATION') + '</div></div><div><div class="doc">' + T('NOTE — MÉCATRONIQUE', 'NOTE — MECHATRONICS') + '</div><div class="ref">' + ref + ' — ' + ds + '</div></div></div>' +
+      '<div class="ig"><div class="ib"><div class="it">' + T('Projet', 'Project') + '</div><div class="iv">' + esc(val('mc_proj', '')) + '</div></div><div class="ib"><div class="it">' + T('Client', 'Client') + '</div><div class="iv">' + esc(val('mc_cli', '')) + '</div></div><div class="ib"><div class="it">' + T('Site', 'Site') + '</div><div class="iv">' + esc(val('mc_site', '')) + '</div></div><div class="ib"><div class="it">' + T('Établi par', 'Prepared by') + '</div><div class="iv"></div></div></div>' + body + '<div class="sg"><div class="ib"><div class="it">' + T('Établi par', 'Prepared by') + '</div></div><div class="ib"><div class="it">' + T('Vérifié par', 'Checked by') + '</div></div></div></div></body></html>');
+    win.document.close();
+  };
+  var PRINT_CSS = '*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;background:#e8ecf0;padding:20px 0;color:#1a3a5a;font-size:9.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:A4;margin:12mm}@media print{.no-print{display:none!important}body{background:#fff!important;padding:0!important}.page{box-shadow:none!important;width:auto!important;margin:0!important;padding:0!important}}' +
+    '.page{width:210mm;margin:0 auto;background:#fff;padding:14mm 16mm;box-shadow:0 6px 30px rgba(0,0,0,.18)}.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6mm;border-bottom:2pt solid #1a3a5a;padding-bottom:4mm}.logo{font-size:22pt;font-weight:900;letter-spacing:5px}.sub{font-size:7pt;color:#4a6a8a;letter-spacing:3px;margin-top:1.5mm}.doc{font-size:11pt;font-weight:700;color:#fff;background:#1a3a5a;padding:2.5mm 5mm;border-radius:2pt;text-align:right}.ref{font-size:7.5pt;color:#555;margin-top:1.5mm;text-align:right}' +
+    '.ig{display:grid;grid-template-columns:1fr 1fr;gap:3mm;margin-bottom:5mm}.ib{background:#f4f7fc;border-left:3pt solid #1a3a5a;padding:2.5mm 4mm}.it{font-size:6.5pt;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:1mm}.iv{font-size:9pt;color:#2a4a6a;min-height:4mm}.sum{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3mm;margin-bottom:4mm}.sb{border:1pt solid #1a3a5a;border-radius:3pt;padding:3mm 4mm}.st{font-size:6.5pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}.sv2{font-size:15pt;font-weight:800;margin:1mm 0}.ss{font-size:7.5pt;color:#4a6a8a}' +
+    'h2{font-size:10.5pt;margin:5mm 0 2mm;padding:1.5mm 3mm;background:#1a3a5a;color:#fff;letter-spacing:.5px;page-break-after:avoid}table{width:100%;border-collapse:collapse;margin-bottom:2mm;page-break-inside:avoid}.tb th{background:#e3eaf3;padding:1.6mm 2mm;font-size:8pt;text-align:right}.tb td{padding:1.4mm 2mm;border-bottom:.5pt solid #d5deea;font-size:8.5pt;text-align:right}.tb td:first-child{text-align:left}.n{font-size:8.5pt;line-height:1.5;margin:2mm 0}.disc{font-size:7pt;color:#667;line-height:1.5;margin-top:5mm;border-top:.5pt solid #ccc;padding-top:2mm}.sg{display:grid;grid-template-columns:1fr 1fr;gap:4mm;margin-top:6mm;page-break-inside:avoid}.sg .ib{height:22mm}.bar{position:sticky;top:0;text-align:center;padding:6px}.bar button{padding:8px 18px;font-size:11pt;cursor:pointer}svg{max-width:150mm;margin:2mm 0}';
+  /* ---------- installation ---------- */
+  function applyLang() { var root = $('pg-mecha'); if (!root) { return; } root.querySelectorAll('[data-cfr]').forEach(function (el) { el.textContent = EN() ? el.getAttribute('data-cen') : el.getAttribute('data-cfr'); }); drawTree(); }
+  function install() {
+    if ($('pg-mecha')) { return; }
+    var st = document.createElement('style');
+    st.textContent = '#pg-mecha details.cpsec{border:1px solid var(--border);border-radius:6px;margin:0 0 8px;padding:0 8px 8px}#pg-mecha details.cpsec>summary{cursor:pointer;font-weight:700;font-size:11px;padding:7px 0;color:var(--ac);list-style:none}#pg-mecha details.cpsec>summary::-webkit-details-marker{display:none}#pg-mecha .cph{font-size:11px;font-weight:700;color:var(--ac);margin:10px 0 4px;border-bottom:1px solid var(--border);padding-bottom:2px}#pg-mecha table.cptb{width:100%;border-collapse:collapse;font-size:11px;margin:6px 0}#pg-mecha .cptb td{padding:3px 4px;border-bottom:1px solid var(--border)}#pg-mecha .mc-out{margin-top:6px}';
+    document.head.appendChild(st);
+    var pg = document.createElement('div'); pg.className = 'page'; pg.id = 'pg-mecha'; pg.innerHTML = build();
+    var ref = $('pg-normes'); if (ref && ref.parentNode) { ref.parentNode.insertBefore(pg, ref); } else { document.body.appendChild(pg); }
+    var mn = document.createElement('button'); mn.className = 'mn'; mn.id = 'mn-mecha'; mn.setAttribute('onclick', "goPage('mecha')");
+    mn.innerHTML = '&#9881; <span id="mn_mecha">MÉCATRONIQUE</span>';
+    var refb = $('mn-elec') || $('mn-heat'); if (refb && refb.parentNode) { refb.parentNode.insertBefore(mn, refb.nextSibling); } else { var any = document.querySelector('button.mn'); if (any) { any.parentNode.appendChild(mn); } }
+    restore(); applyLang(); calc();
+  }
+  var _og = window.goPage;
+  window.goPage = function (page) { if (_og) { _og.apply(this, arguments); } if (page === 'mecha') { setTimeout(function () { applyLang(); calc(); }, 30); } };
+  var _ot = window.toggleLang;
+  window.toggleLang = function () { if (_ot) { _ot.apply(this, arguments); } setTimeout(function () { applyLang(); calc(); }, 140); };
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', install); } else { install(); }
+
+})();
+
+</script>
 <script id="protect-v1">
 (function(){
   document.addEventListener("contextmenu",function(e){e.preventDefault();return false;});
