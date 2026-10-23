@@ -3181,7 +3181,7 @@ function renderChargeAgg(){
     [fr?'Charge totale bâtiment':'Total building load', total.toFixed(1) + ' kW']
   ];
   resEl.innerHTML = lines.map(function(p){
-    return '<div class="frow"><span class="flb">'+p[0]+' :</span><b>'+p[1]+'</b></div>';
+    return '<div class="frow"><span class="flb">'+p[0]+' :</span><b>'+__sxl(p[1])+'</b></div>';
   }).join('');
   if (typeof logHist === 'function') logHist((fr?'Agregation batiment: ':'Building aggregation: ') + chgAggRooms.length + (fr?' pieces, ':' rooms, ') + total.toFixed(1) + 'kW');
 }
@@ -3946,10 +3946,12 @@ async function deleteDvFavorite(){
   loadDvFavorites();
 }
 
+function __sx(x){return String(x==null?"":x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");} /* THERMOSYS-SECU1 */
+function __sxl(x){if(typeof x==="number")return x;return __sx(x).replace(/&lt;(\/?)(b|i|sub|sup|small|br)&gt;/g,"<$1$2>");}
 function renderDevis() {
   var body = document.getElementById('dvBody'); if (!body) return;
   body.innerHTML = devisLines.map(function(l) {
-    return '<tr><td class="k">'+l.ref+'</td><td style="font-size:11px">'+l.brand+' — '+l.des+'</td>'
+    return '<tr><td class="k">'+__sx(l.ref)+'</td><td style="font-size:11px">'+__sx(l.brand)+' — '+__sx(l.des)+'</td>'
       +'<td class="v">'+l.qty+'</td><td class="v">'+fmtMoney(l.prix)+'</td>'
       +'<td class="v" style="color:var(--ac);font-family:var(--fmo)">'+fmtMoney(l.tot)+'</td>'
       +'<td><button class="btn bd" style="padding:4px 9px;min-height:34px;font-size:11px" data-lid="'+l.id+'" onclick="rmDvLine(parseInt(this.getAttribute(\'data-lid\')))">×</button></td></tr>';
@@ -3987,8 +3989,8 @@ function exportDv() {
   if (!devisLines.length) { showToast(L?'Aucune ligne à exporter':'No lines to export','w'); return; }
   var rows = devisLines.map(function(l,i){
     return '<tr style="background:'+(i%2?'#f8fafc':'#fff')+'">'
-      +'<td style="padding:5px 8px;border:1pt solid #dde;font-family:Courier New,monospace;font-size:9pt">'+l.ref+'</td>'
-      +'<td style="padding:5px 8px;border:1pt solid #dde;font-size:9pt">'+l.brand+' — '+l.des+'</td>'
+      +'<td style="padding:5px 8px;border:1pt solid #dde;font-family:Courier New,monospace;font-size:9pt">'+__sx(l.ref)+'</td>'
+      +'<td style="padding:5px 8px;border:1pt solid #dde;font-size:9pt">'+__sx(l.brand)+' — '+__sx(l.des)+'</td>'
       +'<td style="padding:5px 8px;border:1pt solid #dde;text-align:center;font-size:9pt">'+l.qty+'</td>'
       +'<td style="padding:5px 8px;border:1pt solid #dde;text-align:right;font-size:9pt">'+fmtMoney(l.prix)+'</td>'
       +'<td style="padding:5px 8px;border:1pt solid #dde;text-align:right;font-weight:700;color:#1a3a5a;font-size:9pt">'+fmtMoney(l.tot)+'</td>'
@@ -4609,7 +4611,7 @@ function calcGaine(){
   lines.push([fr?'Vitesse retenue':'Selected velocity', v.toFixed(2)+' m/s '+(vOk?'✅':'⚠️')]);
 
   var html = lines.map(function(p){
-    return '<div class="frow"><span class="flb">'+p[0]+' :</span><b>'+p[1]+'</b></div>';
+    return '<div class="frow"><span class="flb">'+p[0]+' :</span><b>'+__sxl(p[1])+'</b></div>';
   }).join('');
   if (!vOk) {
     html += '<div style="margin-top:6px;color:var(--wn);font-size:11px">'+
@@ -4697,7 +4699,7 @@ function calcRefrigPipe(){
   ];
 
   var html = lines.map(function(p){
-    return '<div class="frow"><span class="flb">'+p[0]+' :</span><b>'+p[1]+'</b></div>';
+    return '<div class="frow"><span class="flb">'+p[0]+' :</span><b>'+__sxl(p[1])+'</b></div>';
   }).join('');
   if (!vOk) {
     html += '<div style="margin-top:6px;color:var(--wn);font-size:11px">'+
@@ -5006,7 +5008,7 @@ function calcDewPoint(){
     [fr?'Température de surface obtenue':'Achieved surface temperature', TsFinal.toFixed(1) + ' °C']
   ];
   var html = lines.map(function(p){
-    return '<div class="frow"><span class="flb">'+p[0]+' :</span><b>'+p[1]+'</b></div>';
+    return '<div class="frow"><span class="flb">'+p[0]+' :</span><b>'+__sxl(p[1])+'</b></div>';
   }).join('');
   html += '<div style="font-size:9.5px;color:var(--ts);margin-top:8px">' + (fr ? 'Calcul par conduction radiale + convection/rayonnement en surface. À vérifier avec le fabricant d\'isolant pour toute application critique.' : 'Radial conduction + surface convection/radiation calculation. Verify with the insulation manufacturer for any critical application.') + '</div>';
   el.innerHTML = html;
@@ -5033,7 +5035,7 @@ function calcAcoustic(){
     [fr?'Type d\'implantation':'Installation type', (type==='wall') ? (fr?'Contre mur / sol':'Against wall / ground') : (fr?'Champ libre':'Free field')]
   ];
   var html = lines.map(function(p){
-    return '<div class="frow"><span class="flb">'+p[0]+' :</span><b>'+p[1]+'</b></div>';
+    return '<div class="frow"><span class="flb">'+p[0]+' :</span><b>'+__sxl(p[1])+'</b></div>';
   }).join('');
   html += '<div style="font-size:9.5px;color:var(--ts);margin-top:8px">' + (fr ? 'Calcul en propagation libre. À vérifier avec un acousticien qualifié pour toute étude réglementaire officielle.' : 'Free-field propagation calculation. Verify with a qualified acoustic engineer for any official regulatory study.') + '</div>';
   el.innerHTML = html;
@@ -5104,7 +5106,7 @@ function calcRefnet(){
   lines.push([fr?'Référence Refnet':'Refnet reference', ref || (fr?'Hors plage — vérifier logiciel constructeur':'Out of range — check manufacturer software')]);
   lines.push([fr?'Plage correspondante':'Matching range', seuilTxt || '—']);
   var html = lines.map(function(p){
-    return '<div class="frow"><span class="flb">'+p[0]+' :</span><b>'+p[1]+'</b></div>';
+    return '<div class="frow"><span class="flb">'+p[0]+' :</span><b>'+__sxl(p[1])+'</b></div>';
   }).join('');
   html += '<div style="margin-top:8px;font-size:10px;color:var(--ts)">'+
     (fr ? 'Source : '+(REFNET_SOURCES[brand]||'')+'. Vérifier la référence exacte auprès du logiciel constructeur avant exécution.'
@@ -5141,7 +5143,7 @@ function populateParentDropdown(){
   var current = sel.value;
   var opts = ['<option value="" data-fr="— Départ (source) —" data-en="— Start (source) —">'+(fr?'— Départ (source) —':'— Start (source) —')+'</option>'];
   reseauSegments.forEach(function(s){
-    opts.push('<option value="'+s.id+'">'+s.name+'</option>');
+    opts.push('<option value="'+s.id+'">'+__sx(s.name)+'</option>');
   });
   sel.innerHTML = opts.join('');
   if (reseauSegments.some(function(s){ return String(s.id)===current; })) sel.value = current;
@@ -5230,7 +5232,7 @@ function renderReseau(){
     body.innerHTML = reseauSegments.map(function(s){
       var detail = (fr?'Linéaire':'Linear')+': '+s.dPLin.toFixed(0)+' Pa | '+(fr?'Singulières':'Singular')+': '+s.dPSing.toFixed(0)+' Pa';
       var parent = s.parentId!=null ? reseauSegments.find(function(x){ return x.id===s.parentId; }) : null;
-      var nameCell = s.name + (parent ? '<div style="font-size:8.5px;color:var(--ts)">↳ '+parent.name+'</div>' : '');
+      var nameCell = __sx(s.name) + (parent ? '<div style="font-size:8.5px;color:var(--ts)">↳ '+__sx(parent.name)+'</div>' : '');
       var isCrit = critIds.indexOf(s.id)!==-1;
       var rowStyle = isCrit ? ' style="background:rgba(0,229,255,.07)"' : '';
       return '<tr'+rowStyle+'><td>'+nameCell+'</td><td>'+s.Q+'</td><td>'+s.D+'</td><td>'+s.L+'</td>'+
@@ -5252,7 +5254,7 @@ function renderReseau(){
   var totalDPSing = crit.path.reduce(function(s,seg){ return s+seg.dPSing; }, 0);
   var totalL = crit.path.reduce(function(s,seg){ return s+seg.L; }, 0);
   var hmt = totalDP/(1000*9.81);
-  var pathNames = crit.path.map(function(s){ return s.name; }).join(' → ');
+  var pathNames = crit.path.map(function(s){ return __sx(s.name); }).join(' → ');
   var lines = [
     (fr?'Nombre de tronçons (réseau complet)':'Number of segments (full network)')+' : '+reseauSegments.length,
     (fr?'Circuit le plus défavorisé':'Most unfavorable circuit')+' : '+pathNames,
@@ -5331,7 +5333,7 @@ function renderReseauSVG(){
     parts.push('<rect x="'+p.x+'" y="'+y1+'" width="'+segW+'" height="'+thick+'" rx="3" fill="'+col+'" fill-opacity="0.22" stroke="'+col+'" stroke-width="'+sw+'"/>');
     parts.push('<circle cx="'+p.x+'" cy="'+p.y+'" r="4" fill="'+col+'"/>');
     parts.push('<circle cx="'+(p.x+segW)+'" cy="'+p.y+'" r="4" fill="'+col+'"/>');
-    parts.push('<text x="'+(p.x+segW/2)+'" y="'+(y1-8)+'" text-anchor="middle" font-size="10" fill="var(--tp)" font-weight="700">'+s.name+'</text>');
+    parts.push('<text x="'+(p.x+segW/2)+'" y="'+(y1-8)+'" text-anchor="middle" font-size="10" fill="var(--tp)" font-weight="700">'+__sx(s.name)+'</text>');
     parts.push('<text x="'+(p.x+segW/2)+'" y="'+(p.y+thick/2+16)+'" text-anchor="middle" font-size="9" fill="var(--ts)">D'+s.D+' L'+s.L+'</text>');
     parts.push('<text x="'+(p.x+segW/2)+'" y="'+(p.y+thick/2+29)+'" text-anchor="middle" font-size="9.5" fill="'+col+'" font-weight="700">'+s.dP.toFixed(0)+' Pa</text>');
   });
@@ -5458,7 +5460,7 @@ function buildReseauSVGPrint(){
     var col = isCrit ? WN : AC;
     parts.push('<rect x="'+p.x+'" y="'+y1+'" width="'+segW+'" height="'+thick+'" rx="3" fill="'+col+'" fill-opacity="0.15" stroke="'+col+'" stroke-width="'+(isCrit?2.5:1.5)+'"/>');
     parts.push('<circle cx="'+p.x+'" cy="'+p.y+'" r="4" fill="'+col+'"/><circle cx="'+(p.x+segW)+'" cy="'+p.y+'" r="4" fill="'+col+'"/>');
-    parts.push('<text x="'+(p.x+segW/2)+'" y="'+(y1-8)+'" text-anchor="middle" font-size="10" fill="'+AC+'" font-weight="700">'+s.name+'</text>');
+    parts.push('<text x="'+(p.x+segW/2)+'" y="'+(y1-8)+'" text-anchor="middle" font-size="10" fill="'+AC+'" font-weight="700">'+__sx(s.name)+'</text>');
     parts.push('<text x="'+(p.x+segW/2)+'" y="'+(p.y+thick/2+16)+'" text-anchor="middle" font-size="9" fill="'+TS+'">D'+s.D+' L'+s.L+'</text>');
     parts.push('<text x="'+(p.x+segW/2)+'" y="'+(p.y+thick/2+29)+'" text-anchor="middle" font-size="9.5" fill="'+col+'" font-weight="700">'+s.dP.toFixed(0)+' Pa</text>');
   });
@@ -5478,7 +5480,7 @@ function exportReseau(){
   var rows = reseauSegments.map(function(s){
     var isCrit = critIds.indexOf(s.id)!==-1;
     return '<tr style="'+(isCrit?'background:#fdecea':'background:#fff')+'">'
-      +'<td style="padding:5px 8px;border:1pt solid #dde;font-size:9pt">'+s.name+(isCrit?' ★':'')+'</td>'
+      +'<td style="padding:5px 8px;border:1pt solid #dde;font-size:9pt">'+__sx(s.name)+(isCrit?' ★':'')+'</td>'
       +'<td style="padding:5px 8px;border:1pt solid #dde;text-align:center;font-size:9pt">'+s.Q+'</td>'
       +'<td style="padding:5px 8px;border:1pt solid #dde;text-align:center;font-size:9pt">'+s.D+'</td>'
       +'<td style="padding:5px 8px;border:1pt solid #dde;text-align:center;font-size:9pt">'+s.L+'</td>'
@@ -5486,7 +5488,7 @@ function exportReseau(){
       +'</tr>';
   }).join('');
 
-  var pathNames = crit.path.map(function(s){ return s.name; }).join(' → ');
+  var pathNames = crit.path.map(function(s){ return __sx(s.name); }).join(' → ');
   var hmt = (crit.total/(1000*9.81)*1.1).toFixed(2);
 
   var win = window.open('','_blank','width=900,height=750');
@@ -6852,7 +6854,7 @@ function runVerifIT246() {
       var el = document.getElementById('histLog');
       if (el) {
         el.innerHTML = parsed.map(function(item) {
-          return '<div class="ll"><span class="lt">[' + item.t + ']</span><span class="ls i">' + item.msg + '</span></div>';
+          return '<div class="ll"><span class="lt">[' + __sx(item.t) + ']</span><span class="ls i">' + __sx(item.msg) + '</span></div>';
         }).join('');
       }
       return true;
@@ -15287,6 +15289,33 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
 
 })();
 
+</script>
+<script id="secu1-module">
+/* THERMOSYS-SECU1 : durcissement XSS. Echappe les textes saisis et neutralise les caracteres de balisage. */
+(function(){ if (window.__secu1) return; window.__secu1 = true;
+  var map = {'<':'\u2039','>':'\u203A','"':'\u201D'};
+  function clean(v){ return String(v).replace(/[<>"]/g, function(c){return map[c];}); }
+  function fix(e){ var t=e.target; if(!t||!t.tagName) return; var tag=t.tagName;
+    if(tag==='TEXTAREA' || (tag==='INPUT' && (!t.type || t.type==='text' || t.type==='search'))){
+      var v=t.value, c=clean(v); if(v!==c){ var s=t.selectionStart; t.value=c; try{t.setSelectionRange(s,s);}catch(x){} } } }
+  document.addEventListener('input', fix, true);
+  document.addEventListener('change', fix, true);
+  document.addEventListener('paste', function(e){ setTimeout(function(){fix(e);},0); }, true);
+  /* journal : texte seulement */
+  var _t = function(){ try{ return new Date().toLocaleTimeString('fr-FR'); }catch(e){ return ''; } };
+  var origLog = window.logHist;
+  if (typeof origLog === 'function') {
+    window.logHist = function(msg){
+      try{ window.hist.unshift({t:_t(), msg:String(msg)}); var el=document.getElementById('histLog');
+        if(el) el.innerHTML = window.hist.map(function(i){return '<div class="ll"><span class="lt">'+__sx(i.t)+'</span><span class="ls i">'+__sx(i.msg)+'</span></div>';}).join('');
+      }catch(e){ return origLog.apply(this, arguments); }
+    };
+  }
+  var origToast = window.showToast;
+  if (typeof origToast === 'function') {
+    window.showToast = function(m,t){ return origToast.call(this, String(m==null?'':m).replace(/</g,'&lt;').replace(/>/g,'&gt;'), t); };
+  }
+})();
 </script>
 <script id="protect-v1">
 (function(){
