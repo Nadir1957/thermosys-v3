@@ -13466,6 +13466,356 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
 })();
 
 </script>
+<script id="psy-module">
+/* THERMOSYS - Module PSYCHRO (air humide, procedes de traitement, melange, diagramme)
+   Moteur (PSY) separe de l'interface. Bilingue FR/EN. */
+(function () {
+  'use strict';
+  if (typeof window === 'undefined') { return; }
+  if (window.__psyMod) { return; }
+  window.__psyMod = true;
+/* Thermosys - PSYCHRO : moteur psychrometrique (air humide) - ASHRAE Fundamentals ch.1 (Hyland-Wexler)
+ * Unites SI : T en C, W en kg/kg d'air sec, h en kJ/kg d'air sec, v en m3/kg d'air sec, P en Pa.            */
+(function (root) {
+  'use strict';
+  var P0 = 101325, HS = 2676, CW = 4.186;
+  function pAlt(z) { return P0 * Math.pow(1 - 2.25577e-5 * Math.max(-500, Math.min(5000, z)), 5.2559); }
+  function psat(T) {
+    var K = T + 273.15;
+    if (T >= 0) { return Math.exp(-5.8002206e3 / K + 1.3914993 - 4.8640239e-2 * K + 4.1764768e-5 * K * K - 1.4452093e-8 * K * K * K + 6.5459673 * Math.log(K)); }
+    return Math.exp(-5.6745359e3 / K + 6.3925247 - 9.677843e-3 * K + 6.2215701e-7 * K * K + 2.0747825e-9 * K * K * K - 9.484024e-13 * K * K * K * K + 4.1635019 * Math.log(K));
+  }
+  function dewOfPv(pv) {
+    if (!(pv > 0)) { return -80; }
+    var g = Math.log(pv / 610.94), T = 243.04 * g / (17.625 - g), k, f, d, lp = Math.log(pv);
+    if (!isFinite(T)) { return -80; }
+    for (k = 0; k < 6; k++) { f = Math.log(psat(T)) - lp; d = (Math.log(psat(T + 0.01)) - Math.log(psat(T))) / 0.01; if (!(d > 0)) { break; } T -= f / d; }
+    return Math.max(-80, Math.min(120, T));
+  }
+  function wSat(T, P) { var ps = psat(T); return ps < P ? 0.621945 * ps / (P - ps) : Infinity; }
+  function wFromTwb(T, Twb, P) {
+    var ws = wSat(Twb, P);
+    if (Twb >= 0) { return ((2501 - 2.326 * Twb) * ws - 1.006 * (T - Twb)) / (2501 + 1.86 * T - 4.186 * Twb); }
+    return ((2830 - 0.24 * Twb) * ws - 1.006 * (T - Twb)) / (2830 + 1.86 * T - 2.1 * Twb);
+  }
+  function twbOf(T, W, P) {
+    var lo = -60, hi = T, k;
+    if (wFromTwb(T, hi, P) < W) { return T; }
+    for (k = 0; k < 60; k++) { var m = (lo + hi) / 2; if (wFromTwb(T, m, P) > W) { hi = m; } else { lo = m; } }
+    return (lo + hi) / 2;
+  }
+  /* etat complet a partir de (T, W) */
+  function fromTW(T, W, P) {
+    var pv = P * W / (0.621945 + W), ps = psat(T), ws = wSat(T, P);
+    var v = 0.287042 * (T + 273.15) * (1 + 1.607858 * W) / (P / 1000);
+    return { T: T, W: W, h: 1.006 * T + W * (2501 + 1.86 * T), RH: 100 * pv / ps, Td: dewOfPv(pv), Twb: twbOf(T, W, P), v: v, rho: (1 + W) / v, pv: pv, ps: ps, Ws: ws, mu: W / ws * 100, P: P, sat: W > ws * 1.0000001 };
+  }
+  /* mode : 'rh' (%), 'twb', 'td', 'w' (kg/kg), 'wg' (g/kg), 'h' (kJ/kg) */
+  function state(T, mode, val, P) {
+    var W;
+    if (mode === 'rh') { var pv = psat(T) * val / 100; if (pv >= P) { return { err: 'range' }; } W = 0.621945 * pv / (P - pv); }
+    else if (mode === 'twb') { if (val > T + 1e-9) { return { err: 'twb' }; } W = wFromTwb(T, val, P); }
+    else if (mode === 'td') { if (val > T + 1e-9) { return { err: 'td' }; } var p2 = psat(val); if (p2 >= P) { return { err: 'range' }; } W = 0.621945 * p2 / (P - p2); }
+    else if (mode === 'wg') { W = val / 1000; }
+    else if (mode === 'w') { W = val; }
+    else if (mode === 'h') { W = (val - 1.006 * T) / (2501 + 1.86 * T); }
+    else { return { err: 'mode' }; }
+    if (!isFinite(W) || W < 0) { return { err: 'neg' }; }
+    var s = fromTW(T, W, P);
+    if (s.sat) { s.err = 'sat'; }
+    return s;
+  }
+  function fromHW(h, W, P) { return fromTW((h - 2501 * W) / (1.006 + 1.86 * W), W, P); }
+  function mix(a, ma, b, mb, P) { var s = ma + mb; return fromHW((ma * a.h + mb * b.h) / s, (ma * a.W + mb * b.W) / s, P); }
+  /* debit massique d'air sec (kg/s) pour un debit volumique (m3/h) a l'etat a */
+  function mdot(flow, a) { return flow / 3600 / a.v; }
+
+  /* ---------- procedes de A vers B ---------- */
+  function sensible(A, T2, P) {
+    var Td = A.Td, o = { flags: [] };
+    if (T2 < Td - 1e-9) { var B = fromTW(T2, wSat(T2, P), P); o.B = B; o.flags.push('fog'); return o; }
+    o.B = fromTW(T2, A.W, P); return o;
+  }
+  function steam(A, RH2, P) {
+    var lo = A.W, hi = wSat(A.T + 30, P), k, B;
+    if (RH2 / 100 * psat(A.T) <= A.pv - 1e-9 && RH2 / 100 <= A.RH / 100) { return { B: A, flags: ['already'] }; }
+    for (k = 0; k < 80; k++) {
+      var m = (lo + hi) / 2, h2 = A.h + (m - A.W) * HS, s = fromHW(h2, m, P);
+      if (s.RH > RH2) { hi = m; } else { lo = m; }
+    }
+    var W2 = (lo + hi) / 2; B = fromHW(A.h + (W2 - A.W) * HS, W2, P);
+    return { B: B, flags: B.sat ? ['sat'] : [] };
+  }
+  function adiabatic(A, eta, P) {
+    var Tw = A.Twb, Ws = wSat(Tw, P), W2 = A.W + eta * (Ws - A.W), h2 = A.h + (W2 - A.W) * CW * Tw;
+    return { B: fromHW(h2, W2, P), flags: [] };
+  }
+  /* batterie froide : droite A-ADP, facteur de contact beta = 1 - BF */
+  function coil(A, Tadp, beta, P) {
+    var Wa = wSat(Tadp, P), T2 = A.T + beta * (Tadp - A.T), W2 = A.W + beta * (Wa - A.W), fl = [];
+    if (A.W <= Wa) { return { B: fromTW(T2, A.W + beta * (Wa - A.W) * 0, P), flags: ['dry'], ADP: { T: Tadp, W: Wa } }; }
+    if (W2 > wSat(T2, P)) { W2 = wSat(T2, P); fl.push('cap'); }
+    return { B: fromTW(T2, W2, P), flags: fl, ADP: { T: Tadp, W: Wa } };
+  }
+  /* puissances pour un debit volumique (m3/h) a l'etat A. Cooling > 0 = froid retire, heating > 0 = chaleur apportee */
+  function powers(A, B, flow) {
+    var m = mdot(flow, A), dW = B.W - A.W, hwat = dW >= 0 ? CW * 15 : CW * B.T;
+    var Q = m * (B.h - A.h) - m * dW * hwat;           // kW, > 0 : chaleur apportee a l'air (hors eau)
+    var Qs = m * (fromTW(B.T, A.W, A.P).h - A.h);       // sensible : A -> (T2, W1)
+    var Ql = Q - Qs;
+    return { m: m, Q: Q, Qs: Qs, Ql: Ql, water: m * dW * 3600, shr: Math.abs(Q) > 1e-9 ? Qs / Q : NaN };
+  }
+  root.PSY = { P0: P0, pAlt: pAlt, psat: psat, dewOfPv: dewOfPv, wSat: wSat, wFromTwb: wFromTwb, twbOf: twbOf, fromTW: fromTW, fromHW: fromHW, state: state, mix: mix, mdot: mdot, sensible: sensible, steam: steam, adiabatic: adiabatic, coil: coil, powers: powers };
+  if (typeof module !== 'undefined') { module.exports = root.PSY; }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+  if (typeof document === 'undefined') { return; }
+  /* ============ INTERFACE PSYCHRO ============ */
+  var KEY = 'thermosys_psy_v1', _t = null, _last = null;
+  function EN() { return window.lang === 'en'; }
+  function T(fr, en) { return EN() ? en : fr; }
+  function $(id) { return document.getElementById(id); }
+  function num(id, d) { var e = $(id); if (!e) { return d; } var v = parseFloat(String(e.value).replace(',', '.')); return isFinite(v) ? v : d; }
+  function esc(x) { return String(x === undefined || x === null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function q(a) { return String(a).replace(/"/g, '&quot;'); }
+  function fx(x, n) { return isFinite(x) ? (Math.round(x * Math.pow(10, n)) / Math.pow(10, n)).toFixed(n) : '—'; }
+  function inp(id, v, step, w) { return '<input class="fi" id="py_' + id + '" type="number" value="' + v + '"' + (step ? ' step="' + step + '"' : ' step="any"') + ' style="max-width:' + (w || 96) + 'px" oninput="pyDeb()">'; }
+  function selx(id, opts, cur, fn) {
+    return '<select class="fsel" id="py_' + id + '" onchange="' + (fn || 'pyDeb') + '(this)" style="max-width:100%" data-m="' + q(cur) + '">' + opts.map(function (o) {
+      return '<option value="' + o.id + '"' + (String(o.id) === String(cur) ? ' selected' : '') + ' data-cfr="' + q(o.fr) + '" data-cen="' + q(o.en) + '">' + o.fr + '</option>';
+    }).join('') + '</select>';
+  }
+  function row(fr, en, html) { return '<div class="frow"><span class="flb" data-cfr="' + q(fr) + '" data-cen="' + q(en) + '">' + fr + '</span>' + html + '</div>'; }
+  function sec(fr, en, body, open) { return '<details class="cpsec"' + (open ? ' open' : '') + '><summary data-cfr="' + q(fr) + '" data-cen="' + q(en) + '">' + fr + '</summary>' + body + '</details>'; }
+  function note(fr, en) { return '<div style="font-size:10px;color:var(--ts);margin:3px 0" data-cfr="' + q(fr) + '" data-cen="' + q(en) + '">' + fr + '</div>'; }
+  var MODES = [{ id: 'rh', fr: 'Humidité relative (%)', en: 'Relative humidity (%)', u: '%', d: 50 }, { id: 'twb', fr: 'Température humide (°C)', en: 'Wet-bulb temperature (°C)', u: '°C', d: 18 }, { id: 'td', fr: 'Température de rosée (°C)', en: 'Dew point (°C)', u: '°C', d: 12 }, { id: 'wg', fr: 'Humidité absolue (g/kg)', en: 'Humidity ratio (g/kg)', u: 'g/kg', d: 10 }, { id: 'h', fr: 'Enthalpie (kJ/kg)', en: 'Enthalpy (kJ/kg)', u: 'kJ/kg', d: 50 }];
+  var PROCS = [{ id: 'man', fr: 'Point B saisi à la main', en: 'Point B entered manually' }, { id: 'sens', fr: 'Chauffage ou refroidissement sensible', en: 'Sensible heating or cooling' }, { id: 'steam', fr: 'Humidification à la vapeur', en: 'Steam humidification' }, { id: 'adia', fr: 'Humidification adiabatique (laveur, panneau)', en: 'Adiabatic humidification (washer, pad)' }, { id: 'coil', fr: 'Batterie froide avec déshumidification', en: 'Cooling and dehumidifying coil' }];
+  function modeOf(id) { return MODES.filter(function (m) { return m.id === id; })[0]; }
+  function stRow(pre, label, dT, dMode, dVal) {
+    return row(label[0], label[1], inp(pre + 'T', dT, '0.5')) + row('Autre donnée :', 'Second parameter:', selx(pre + 'M', MODES, dMode, 'pyMode')) + row('Valeur :', 'Value:', inp(pre + 'V', dVal, 'any'));
+  }
+  function buildPage() {
+    return '<div class="ph" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px"><span data-cfr="PSYCHRO — AIR HUMIDE ET PROCÉDÉS" data-cen="PSYCHRO — MOIST AIR AND PROCESSES">PSYCHRO — AIR HUMIDE ET PROCÉDÉS</span>' +
+      '<span style="display:flex;gap:4px;flex-wrap:wrap"><button class="btn" onclick="pyExample()" data-cfr="Exemple" data-cen="Example">Exemple</button><button class="btn" onclick="pyReset()" data-cfr="Nouveau" data-cen="New">Nouveau</button><button class="btn" onclick="pyPrint()" data-cfr="Note imprimable" data-cen="Printable note">Note imprimable</button></span></div>' +
+      '<div style="font-size:10.5px;color:var(--ts);margin:2px 0 8px" data-cfr="Propriétés de l\'air humide (ASHRAE Fundamentals, ch. 1), pression selon l\'altitude, procédés de traitement avec puissances, mélange de deux airs et diagramme." data-cen="Moist-air properties (ASHRAE Fundamentals, ch. 1), pressure from altitude, treatment processes with capacities, mixing of two airs and chart.">Propriétés de l\'air humide (ASHRAE Fundamentals, ch. 1), pression selon l\'altitude, procédés de traitement avec puissances, mélange de deux airs et diagramme.</div>' +
+      '<div class="cpmain"><div class="cpin">' +
+      sec('1. SITE ET DÉBIT', '1. SITE AND AIRFLOW', row('Projet :', 'Project:', '<input class="fi" id="py_proj" type="text" style="max-width:100%" oninput="pyDeb()">') + row('Altitude (m) :', 'Altitude (m):', inp('alt', 0, '10')) + row('Débit d\'air au point de départ (m³/h) :', 'Airflow at the start point (m³/h):', inp('flow', 1000, '100')) + row('Unités impériales :', 'Imperial units:', selx('imp', [{ id: 0, fr: 'Non', en: 'No' }, { id: 1, fr: 'Oui, en complément', en: 'Yes, in addition' }], 0, 'pyDeb')) + note('La pression atmosphérique est calculée à partir de l\'altitude (atmosphère normalisée).', 'Atmospheric pressure is calculated from altitude (standard atmosphere).'), true) +
+      sec('2. POINT A (DÉPART)', '2. POINT A (START)', stRow('a', ['Température sèche (°C) :', 'Dry-bulb temperature (°C):'], 32, 'rh', 50), true) +
+      sec('3. MÉLANGE AVEC UN AUTRE AIR (OPTION)', '3. MIXING WITH ANOTHER AIR (OPTION)', row('Activer le mélange :', 'Enable mixing:', selx('mx', [{ id: 0, fr: 'Non', en: 'No' }, { id: 1, fr: 'Oui : A + C donne le point M', en: 'Yes: A + C gives point M' }], 0, 'pyDeb')) + stRow('c', ['Température sèche de C (°C) :', 'Dry-bulb temperature of C (°C):'], 24, 'rh', 50) + row('Débit de C (m³/h) :', 'Airflow of C (m³/h):', inp('cflow', 3000, '100')) + note('Les débits sont ramenés en masse d\'air sec avant le mélange. Si M dépasse la saturation, du brouillard se forme.', 'Flows are converted to dry-air mass before mixing. If M exceeds saturation, fog forms.'), false) +
+      sec('4. PROCÉDÉ ET POINT B', '4. PROCESS AND POINT B', row('Procédé :', 'Process:', selx('proc', PROCS, 'man', 'pyProc')) + row('Départ du procédé :', 'Process start:', selx('from', [{ id: 'A', fr: 'Point A', en: 'Point A' }, { id: 'M', fr: 'Point M (mélange)', en: 'Point M (mix)' }], 'A', 'pyDeb')) +
+        '<div id="py_bman">' + stRow('b', ['Température sèche de B (°C) :', 'Dry-bulb temperature of B (°C):'], 20, 'rh', 60) + '</div>' +
+        '<div id="py_bsens">' + row('Température finale (°C) :', 'Final temperature (°C):', inp('t2', 20, '0.5')) + '</div>' +
+        '<div id="py_bsteam">' + row('Humidité relative finale (%) :', 'Final relative humidity (%):', inp('rh2', 60, '1')) + '</div>' +
+        '<div id="py_badia">' + row('Efficacité du humidificateur (%) :', 'Humidifier efficiency (%):', inp('eta', 85, '1')) + '</div>' +
+        '<div id="py_bcoil">' + row('Température de l\'ADP, surface de la batterie (°C) :', 'Coil surface (ADP) temperature (°C):', inp('adp', 8, '0.5')) + row('Facteur de contact (%) :', 'Contact factor (%):', inp('beta', 85, '1')) + note('Le facteur de contact est la part de l\'air qui atteint la température de la surface. Facteur de by-pass = 100 % moins le facteur de contact.', 'The contact factor is the share of air reaching the surface temperature. Bypass factor = 100 % minus the contact factor.') + '</div>', true) +
+      '</div><div class="cpout" id="py_out"></div></div>';
+  }
+  function showProc() {
+    var p = $('py_proc').value;
+    [['man', 'py_bman'], ['sens', 'py_bsens'], ['steam', 'py_bsteam'], ['adia', 'py_badia'], ['coil', 'py_bcoil']].forEach(function (k) { var e = $(k[1]); if (e) { e.style.display = p === k[0] ? 'block' : 'none'; } });
+  }
+  window.pyProc = function () { showProc(); window.pyDeb(); };
+  window.pyMode = function (el) {
+    var pre = el.id.slice(3, 4), old = el.getAttribute('data-m'), nu = el.value, s;
+    try { s = readState(pre, old); } catch (e) { s = null; }
+    el.setAttribute('data-m', nu);
+    var v = $('py_' + pre + 'V'); if (!v) { return; }
+    if (s && !s.err) { v.value = nu === 'rh' ? fx(s.RH, 3) : nu === 'twb' ? fx(s.Twb, 3) : nu === 'td' ? fx(s.Td, 3) : nu === 'wg' ? fx(s.W * 1000, 4) : fx(s.h, 3); } else { v.value = modeOf(nu).d; }
+    window.pyDeb();
+  };
+  function pressure() { return PSY.pAlt(num('py_alt', 0)); }
+  function readState(pre, mode) { return PSY.state(num('py_' + pre + 'T', 20), mode || $('py_' + pre + 'M').value, num('py_' + pre + 'V', 50), pressure()); }
+  var ERR = { sat: ['La valeur dépasse la saturation (brouillard) : choisissez une valeur plus basse.', 'The value exceeds saturation (fog): enter a lower value.'], twb: ['La température humide ne peut pas dépasser la température sèche.', 'Wet bulb cannot exceed dry bulb.'], td: ['La température de rosée ne peut pas dépasser la température sèche.', 'Dew point cannot exceed dry bulb.'], range: ['Valeur hors du domaine de calcul.', 'Value outside the calculation range.'], neg: ['Humidité négative : valeur impossible.', 'Negative humidity: impossible value.'], mode: ['Donnée inconnue.', 'Unknown parameter.'] };
+  var WARN = {
+    fog: ['Le refroidissement sensible demandé descend sous le point de rosée : l\'air serait déshumidifié. Le point B est ramené à la saturation. Utilisez le procédé « batterie froide » pour fixer l\'ADP et le facteur de contact.', 'The requested sensible cooling goes below the dew point: the air would be dehumidified. Point B is brought to saturation. Use the "cooling coil" process to set ADP and contact factor.'],
+    already: ['L\'humidité demandée est inférieure ou égale à l\'humidité de départ : aucune humidification n\'est nécessaire.', 'The requested humidity is not above the starting humidity: no humidification is needed.'],
+    sat: ['Le point final dépasse la saturation : de la vapeur condenserait en brouillard ; réduisez la consigne ou chauffez l\'air.', 'The final point exceeds saturation: vapour would condense as fog; lower the target or heat the air.'],
+    dry: ['L\'ADP est au-dessus du point de rosée de l\'air : la batterie ne déshumidifie pas (refroidissement sensible).', 'The ADP is above the air dew point: the coil does not dehumidify (sensible cooling).'],
+    cap: ['L\'air en sortie de batterie est limité à la saturation.', 'Coil leaving air is limited to saturation.'],
+    mixfog: ['Le mélange est sursaturé : un brouillard se forme. Le point M est ramené à la saturation sur la droite de mélange ; vérifiez la réalité du procédé.', 'The mixture is supersaturated: fog forms. Check that the process is real.'],
+    frost: ['Point de rosée sous 0 °C : c\'est un point de givre (calcul sur la glace).', 'Dew point below 0 °C: this is a frost point (calculated over ice).'],
+    adpice: ['ADP sous 0 °C : risque de givrage de la batterie.', 'ADP below 0 °C: coil frosting risk.']
+  };
+  /* ---------- calcul ---------- */
+  function compute() {
+    var P = pressure(), flow = Math.max(0, num('py_flow', 1000)), R = { P: P, flow: flow, warn: [], err: [] };
+    var A = readState('a'); if (A.err) { R.err.push(['A', A.err]); return R; }
+    R.A = A;
+    var start = A, startFlow = flow;
+    if ($('py_mx').value === '1') {
+      var C = readState('c'); if (C.err) { R.err.push(['C', C.err]); return R; }
+      var cf = Math.max(0, num('py_cflow', 0)), ma = PSY.mdot(flow, A), mc = PSY.mdot(cf, C);
+      if (ma + mc <= 0) { R.err.push(['M', 'range']); return R; }
+      var M = PSY.mix(A, ma, C, mc, P);
+      if (M.sat) { var Ms = PSY.fromTW(M.T, PSY.wSat(M.T, P), P); R.warn.push('mixfog'); M = Ms; }
+      R.C = C; R.cflow = cf; R.M = M; R.mm = ma + mc;
+      if ($('py_from').value === 'M') { start = M; startFlow = (ma + mc) * M.v * 3600; }
+    }
+    R.start = start; R.startFlow = startFlow;
+    var p = $('py_proc').value, o = null, B = null;
+    if (p === 'man') { B = readState('b'); if (B.err) { R.err.push(['B', B.err]); return R; } }
+    else if (p === 'sens') { o = PSY.sensible(start, num('py_t2', 20), P); }
+    else if (p === 'steam') { o = PSY.steam(start, Math.max(0, Math.min(100, num('py_rh2', 60))), P); }
+    else if (p === 'adia') { o = PSY.adiabatic(start, Math.max(0, Math.min(100, num('py_eta', 85))) / 100, P); }
+    else if (p === 'coil') { var Ta = num('py_adp', 8); o = PSY.coil(start, Ta, Math.max(0.01, Math.min(1, num('py_beta', 85) / 100)), P); R.ADP = o.ADP; if (Ta < 0) { R.warn.push('adpice'); } }
+    if (o) { B = o.B; o.flags.forEach(function (f) { R.warn.push(f); }); }
+    R.B = B; R.proc = p;
+    R.pw = PSY.powers(start, B, startFlow);
+    [A, R.C, R.M, B].forEach(function (s) { if (s && s.Td < 0 && R.warn.indexOf('frost') < 0) { R.warn.push('frost'); } });
+    var kind;
+    if (Math.abs(B.W - start.W) * 1000 < 0.02) { kind = B.T > start.T + 0.01 ? ['Chauffage sensible', 'Sensible heating'] : B.T < start.T - 0.01 ? ['Refroidissement sensible', 'Sensible cooling'] : ['Aucun changement', 'No change']; }
+    else if (B.W < start.W) { kind = B.T < start.T ? ['Refroidissement avec déshumidification', 'Cooling and dehumidification'] : ['Déshumidification', 'Dehumidification']; }
+    else { kind = B.T > start.T + 0.3 ? ['Chauffage et humidification', 'Heating and humidification'] : B.T < start.T - 0.3 ? ['Humidification avec refroidissement', 'Humidification with cooling'] : ['Humidification', 'Humidification']; }
+    R.kind = kind;
+    if (p === 'coil' && o && o.ADP && start.W > o.ADP.W) { R.bf = 1 - num('py_beta', 85) / 100; }
+    return R;
+  }
+  /* ---------- affichage ---------- */
+  var IMP = function (R) { return $('py_imp') && $('py_imp').value === '1'; };
+  function propRows(cols, imp) {
+    var defs = [
+      ['Température sèche', 'Dry bulb', '°C', function (s) { return fx(s.T, 1); }, '°F', function (s) { return fx(s.T * 1.8 + 32, 1); }],
+      ['Humidité relative', 'Relative humidity', '%', function (s) { return fx(s.RH, 1); }],
+      ['Humidité absolue', 'Humidity ratio', 'g/kg', function (s) { return fx(s.W * 1000, 2); }, 'gr/lb', function (s) { return fx(s.W * 7000, 1); }],
+      ['Température de rosée', 'Dew point', '°C', function (s) { return fx(s.Td, 1); }, '°F', function (s) { return fx(s.Td * 1.8 + 32, 1); }],
+      ['Température humide', 'Wet bulb', '°C', function (s) { return fx(s.Twb, 1); }, '°F', function (s) { return fx(s.Twb * 1.8 + 32, 1); }],
+      ['Enthalpie', 'Enthalpy', 'kJ/kg', function (s) { return fx(s.h, 1); }, 'BTU/lb', function (s) { return fx(s.h * 0.429923, 1); }],
+      ['Volume massique (air sec)', 'Specific volume (dry air)', 'm³/kg', function (s) { return fx(s.v, 3); }, 'ft³/lb', function (s) { return fx(s.v * 16.0185, 2); }],
+      ['Masse volumique (air humide)', 'Density (moist air)', 'kg/m³', function (s) { return fx(s.rho, 3); }, 'lb/ft³', function (s) { return fx(s.rho * 0.062428, 4); }],
+      ['Pression partielle de vapeur', 'Vapour partial pressure', 'Pa', function (s) { return fx(s.pv, 0); }],
+      ['Degré de saturation', 'Degree of saturation', '%', function (s) { return fx(s.mu, 1); }]
+    ];
+    return defs.map(function (d) {
+      var cells = cols.map(function (c) { var s = c[1]; return '<td>' + d[3](s) + (imp && d[4] ? '<div style="font-size:9.5px;color:var(--ts)">' + d[5](s) + ' ' + d[4] + '</div>' : '') + '</td>'; }).join('');
+      return '<tr><td>' + T(d[0], d[1]) + '</td><td style="color:var(--ts)">' + d[2] + '</td>' + cells + '</tr>';
+    }).join('');
+  }
+  function chart(R, pal) {
+    var pts = [['A', R.A], R.C ? ['C', R.C] : null, R.M ? ['M', R.M] : null, ['B', R.B]].filter(Boolean), P = R.P;
+    var Tl = Math.min.apply(null, pts.map(function (p) { return p[1].T; })), Th = Math.max.apply(null, pts.map(function (p) { return p[1].T; })), Wh = Math.max.apply(null, pts.map(function (p) { return p[1].W * 1000; }));
+    var Tmin = Math.min(0, Math.floor((Tl - 3) / 5) * 5), Tmax = Math.max(40, Math.ceil((Th + 3) / 5) * 5), Wmax = Math.min(60, Math.max(20, Math.ceil(Wh * 1.3 / 5) * 5));
+    var Wd = 640, Ht = 400, ml = 36, mr = 44, mt = 12, mb = 32, pw = Wd - ml - mr, ph = Ht - mt - mb;
+    var X = function (t) { return ml + (t - Tmin) / (Tmax - Tmin) * pw; }, Y = function (w) { return mt + ph * (1 - w / Wmax); }, t, i, k, s;
+    s = '<svg viewBox="0 0 ' + Wd + ' ' + Ht + '" style="width:100%;max-width:760px;display:block;margin:6px auto" role="img" aria-label="' + q(T('Diagramme psychrométrique', 'Psychrometric chart')) + '"><defs><clipPath id="pyclip' + (pal.id || '') + '"><rect x="' + ml + '" y="' + mt + '" width="' + pw + '" height="' + ph + '"/></clipPath></defs><g font-size="9" fill="' + pal.tx + '" font-family="Arial,sans-serif">';
+    for (t = Math.ceil(Tmin / 5) * 5; t <= Tmax; t += 5) { s += '<line x1="' + X(t) + '" x2="' + X(t) + '" y1="' + mt + '" y2="' + (mt + ph) + '" stroke="' + pal.gr + '" stroke-width="0.5"/><text x="' + X(t) + '" y="' + (Ht - 18) + '" text-anchor="middle">' + t + '</text>'; }
+    for (k = 0; k <= Wmax; k += 5) { s += '<line x1="' + ml + '" x2="' + (Wd - mr) + '" y1="' + Y(k) + '" y2="' + Y(k) + '" stroke="' + pal.gr + '" stroke-width="0.5"/><text x="' + (Wd - mr + 4) + '" y="' + (Y(k) + 3) + '">' + k + '</text>'; }
+    s += '<text x="' + (ml + pw / 2) + '" y="' + (Ht - 4) + '" text-anchor="middle">' + T('Température sèche (°C)', 'Dry-bulb temperature (°C)') + '</text><text x="' + (Wd - 2) + '" y="10" text-anchor="end">g/kg</text>';
+    s += '<g clip-path="url(#pyclip' + (pal.id || '') + ')">';
+    var hstep = (Tmax - Tmin) > 55 ? 20 : 10, hmax = 1.006 * Tmax + Wmax / 1000 * (2501 + 1.86 * Tmax);
+    for (var h = Math.ceil(-20 / hstep) * hstep; h <= hmax; h += hstep) {
+      var d = '', on = false, lastp = null;
+      for (i = 0; i <= 80; i++) { var w = Wmax * i / 80, tt = (h - 2501 * w / 1000) / (1.006 + 1.86 * w / 1000); if (w / 1000 <= PSY.wSat(tt, P) && tt >= Tmin - 1 && tt <= Tmax + 1) { d += (on ? 'L' : 'M') + X(tt) + ',' + Y(w); on = true; lastp = [tt, w]; } else { on = false; } }
+      if (d) { s += '<path d="' + d + '" fill="none" stroke="' + pal.hl + '" stroke-width="0.5" stroke-dasharray="3,2"/>'; }
+    }
+    for (k = 10; k <= 100; k += 10) {
+      var dd = '', f = true; for (t = Tmin; t <= Tmax; t += 0.5) { var pv = PSY.psat(t) * k / 100; if (pv >= P) { break; } var ww = 1000 * 0.621945 * pv / (P - pv); dd += (f ? 'M' : 'L') + X(t) + ',' + Y(ww); f = false; }
+      s += '<path d="' + dd + '" fill="none" stroke="' + (k === 100 ? pal.ln : pal.rh) + '" stroke-width="' + (k === 100 ? 1.8 : 0.8) + '"/>';
+    }
+    s += '</g>';
+    for (k = 20; k <= 80; k += 20) { var tl = Tmin + (Tmax - Tmin) * 0.84, pvl = PSY.psat(tl) * k / 100, wl = 1000 * 0.621945 * pvl / (P - pvl); if (wl < Wmax) { s += '<text x="' + (X(tl) - 2) + '" y="' + (Y(wl) - 3) + '" font-size="8" text-anchor="end" fill="' + pal.rh + '">' + k + ' %</text>'; } }
+    var path = function (a, b, dash) { return '<line x1="' + X(a.T) + '" y1="' + Y(a.W * 1000) + '" x2="' + X(b.T) + '" y2="' + Y(b.W * 1000) + '" stroke="' + pal.pr + '" stroke-width="1.6"' + (dash ? ' stroke-dasharray="4,3"' : '') + '/>'; };
+    var start = R.start;
+    if (R.M) { s += path(R.A, R.M, true) + path(R.C, R.M, true); }
+    if (R.ADP) { s += '<line x1="' + X(start.T) + '" y1="' + Y(start.W * 1000) + '" x2="' + X(R.ADP.T) + '" y2="' + Y(R.ADP.W * 1000) + '" stroke="' + pal.pr + '" stroke-width="0.8" stroke-dasharray="2,3"/><circle cx="' + X(R.ADP.T) + '" cy="' + Y(R.ADP.W * 1000) + '" r="3" fill="none" stroke="' + pal.pr + '"/><text x="' + (X(R.ADP.T) + 5) + '" y="' + (Y(R.ADP.W * 1000) - 4) + '" font-weight="700">ADP</text>'; }
+    s += path(start, R.B, false);
+    var cols = { A: '#e15759', B: '#4e79a7', C: '#59a14f', M: '#b07aa1' };
+    pts.forEach(function (p) { s += '<circle cx="' + X(p[1].T) + '" cy="' + Y(p[1].W * 1000) + '" r="4.5" fill="' + cols[p[0]] + '" stroke="#fff" stroke-width="1"/><text x="' + (X(p[1].T) + 7) + '" y="' + (Y(p[1].W * 1000) - 6) + '" font-size="11" font-weight="700" fill="' + cols[p[0]] + '">' + p[0] + '</text>'; });
+    s += '</g></svg><div style="font-size:9.5px;color:' + pal.tx + ';text-align:center">' + T('Courbes de 10 % à 100 % d\'humidité relative ; pointillés fins : enthalpie constante (tous les ' + hstep + ' kJ/kg).', 'Curves from 10 % to 100 % relative humidity; fine dashes: constant enthalpy (every ' + hstep + ' kJ/kg).') + '</div>';
+    return s;
+  }
+  var PALUI = { tx: 'var(--ts)', gr: 'var(--border)', ln: 'var(--tp)', rh: 'var(--ts)', hl: 'var(--ts)', pr: 'var(--tp)' }, PALPR = { id: 'p', tx: '#4a6a8a', gr: '#e1e8f0', ln: '#1a3a5a', rh: '#7f98b4', hl: '#9cb0c8', pr: '#1a3a5a' };
+  function powerCards(R) {
+    var pw = R.pw, kind = R.kind, heat = pw.Q > 0, card = function (t, v, s) { return '<div class="cpcard"><div class="cpct">' + t + '</div><div class="cpcv">' + v + '</div><div class="cpcs">' + s + '</div></div>'; };
+    var cards = card(T('Procédé', 'Process'), '<span style="font-size:13px">' + T(kind[0], kind[1]) + '</span>', T('de ' + (R.M && $('py_from').value === 'M' ? 'M' : 'A') + ' vers B', 'from ' + (R.M && $('py_from').value === 'M' ? 'M' : 'A') + ' to B'));
+    var Qa = Math.abs(pw.Q);
+    cards += card(heat ? T('Puissance de chauffe', 'Heating capacity') : T('Puissance frigorifique', 'Cooling capacity'), fx(Qa, 2) + ' kW', Math.abs(pw.Q) > 0.005 ? fx(Qa * 3412.14, 0) + ' BTU/h' + (heat ? '' : ' · ' + fx(Qa / 3.517, 2) + ' TR') : '');
+    if (Math.abs(pw.Ql) > 0.005 && Math.abs(pw.Qs) > 0.005 || Math.abs(pw.Ql) > 0.005) { cards += card(T('Sensible / latent', 'Sensible / latent'), fx(Math.abs(pw.Qs), 2) + ' / ' + fx(Math.abs(pw.Ql), 2) + ' kW', isFinite(pw.shr) ? T('FCS', 'SHR') + ' ' + fx(Math.abs(pw.shr), 2) : ''); }
+    if (Math.abs(pw.water) > 0.005) { cards += card(pw.water < 0 ? T('Condensats', 'Condensate') : T('Eau évaporée', 'Water evaporated'), fx(Math.abs(pw.water), 1) + ' kg/h', fx(Math.abs(pw.water) / 3.785 * 1, 2) + ' gal/h'); }
+    cards += card(T('Débit massique d\'air sec', 'Dry-air mass flow'), fx(pw.m, 3) + ' kg/s', fx(pw.m * 3600, 0) + ' kg/h');
+    if (R.bf != null) { cards += card(T('Facteur de by-pass', 'Bypass factor'), fx(R.bf * 100, 0) + ' %', 'ADP ' + fx(R.ADP.T, 1) + ' °C'); }
+    if (R.proc === 'steam' && pw.water > 0) { var hq = pw.m * (pw.water / 3600 / pw.m) * (2676 - 4.186 * 15); cards += card(T('Puissance du générateur de vapeur', 'Steam generator power'), fx(pw.water / 3600 * (2676 - 4.186 * 15), 2) + ' kW', T('eau d\'alimentation à 15 °C', 'feed water at 15 °C')); }
+    return '<div class="cpcards">' + cards + '</div>';
+  }
+  function render() {
+    var out = $('py_out'); if (!out) { return; }
+    var R = compute(), imp = IMP();
+    if (R.err.length) { _last = null; out.innerHTML = R.err.map(function (e) { var m = ERR[e[1]] || ERR.range; return '<div style="padding:8px;font-size:12px;color:var(--er)">' + T('Point ' + e[0] + ' : ', 'Point ' + e[0] + ': ') + T(m[0], m[1]) + '</div>'; }).join(''); return; }
+    _last = R;
+    var cols = [['A', R.A]]; if (R.C) { cols.push(['C', R.C]); cols.push(['M', R.M]); } cols.push(['B', R.B]);
+    var html = '<div class="cph">' + T('Pression atmosphérique : ', 'Atmospheric pressure: ') + '<b>' + fx(R.P / 1000, 2) + ' kPa</b> (' + fx(num('py_alt', 0), 0) + ' m)</div>';
+    html += '<table class="cptb"><thead><tr><th>' + T('Propriété', 'Property') + '</th><th></th>' + cols.map(function (c) { return '<th style="text-align:right">' + c[0] + '</th>'; }).join('') + '</tr></thead><tbody>' + propRows(cols, imp) + '</tbody></table>';
+    html += '<div class="cph">' + T('Procédé et puissances', 'Process and capacities') + '</div>' + powerCards(R);
+    html += '<div class="cph">' + T('Diagramme psychrométrique', 'Psychrometric chart') + '</div>' + chart(R, PALUI);
+    if (R.warn.length) { html += '<div class="cph">' + T('Points d\'attention', 'Points to check') + '</div>' + R.warn.map(function (k) { return '<div style="font-size:11px;color:var(--wn);margin:3px 0">⚠ ' + T(WARN[k][0], WARN[k][1]) + '</div>'; }).join(''); }
+    html += '<div style="font-size:10px;color:var(--ts);margin-top:8px">' + T('Puissances : chaleur ou froid échangé avec l\'air, eau de condensat ou d\'humidification comprise. Sensible = de A à la température de B à humidité constante ; latent = le reste.', 'Capacities: heat or cooling exchanged with the air, condensate or humidification water included. Sensible = from A to B\'s temperature at constant humidity; latent = the rest.') + '</div>';
+    out.innerHTML = html; save();
+  }
+  window.pyDeb = function () { clearTimeout(_t); _t = setTimeout(window.pyCalc, 300); };
+  window.pyCalc = function () { if (!$('py_aT')) { return; } try { render(); } catch (e) { var o = $('py_out'); if (o) { o.innerHTML = '<div style="color:var(--er);font-size:11px">' + esc(e && e.message) + '</div>'; } } };
+  /* ---------- sauvegarde, exemple, nouveau ---------- */
+  function save() { try { var d = {}; document.querySelectorAll('#pg-psy input[id^="py_"], #pg-psy select[id^="py_"]').forEach(function (e) { d[e.id] = e.value; if (e.tagName === 'SELECT') { d[e.id + '#m'] = e.getAttribute('data-m'); } }); localStorage.setItem(KEY, JSON.stringify(d)); } catch (e) { /* sans effet */ } }
+  function restore() { try { var d = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!d) { return false; } Object.keys(d).forEach(function (id) { if (id.slice(-2) === '#m') { return; } var e = $(id); if (e) { e.value = d[id]; if (e.tagName === 'SELECT') { e.setAttribute('data-m', e.value); } } }); return true; } catch (e) { return false; } }
+  function put(id, v) { var e = $('py_' + id); if (e) { e.value = v; if (e.tagName === 'SELECT') { e.setAttribute('data-m', v); } } }
+  window.pyExample = function () {
+    put('alt', 0); put('flow', 5000); put('aT', 35); put('aM', 'rh'); put('aV', 45); put('mx', 0); put('cT', 24); put('cM', 'rh'); put('cV', 50); put('cflow', 1500); put('proc', 'coil'); put('from', 'A'); put('adp', 8); put('beta', 85);
+    showProc(); window.pyCalc();
+  };
+  window.pyReset = function () {
+    if (!window.confirm(T('Effacer toutes les données de PSYCHRO ?', 'Clear all PSYCHRO data?'))) { return; }
+    try { localStorage.removeItem(KEY); } catch (e) { /* sans effet */ }
+    $('pg-psy').innerHTML = buildPage(); showProc(); applyLang(); window.pyCalc();
+  };
+  /* ---------- note imprimable ---------- */
+  window.pyPrint = function () {
+    if (!_last) { window.pyCalc(); } if (!_last) { return; }
+    var R = _last, imp = IMP(), now = new Date(), pad = function (n) { return (n < 10 ? '0' : '') + n; }, ref = 'PS-' + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + '-' + pad(now.getHours()) + pad(now.getMinutes()), dateStr = pad(now.getDate()) + '/' + pad(now.getMonth() + 1) + '/' + now.getFullYear();
+    var cols = [['A', R.A]]; if (R.C) { cols.push(['C', R.C]); cols.push(['M', R.M]); } cols.push(['B', R.B]);
+    var pw = R.pw, heat = pw.Q > 0;
+    var kvr = function (a, b) { return '<tr><td>' + a + '</td><td>' + b + '</td></tr>'; };
+    var body = '<div class="sum"><div class="sb"><div class="st">' + T('Procédé', 'Process') + '</div><div class="sv2">' + T(R.kind[0], R.kind[1]) + '</div><div class="ss">' + fx(R.startFlow, 0) + ' m³/h</div></div><div class="sb"><div class="st">' + (heat ? T('Puissance de chauffe', 'Heating capacity') : T('Puissance frigorifique', 'Cooling capacity')) + '</div><div class="sv">' + fx(Math.abs(pw.Q), 2) + ' kW</div><div class="ss">' + fx(Math.abs(pw.Q) * 3412.14, 0) + ' BTU/h</div></div><div class="sb"><div class="st">' + T('Sensible / latent', 'Sensible / latent') + '</div><div class="sv2">' + fx(Math.abs(pw.Qs), 2) + ' / ' + fx(Math.abs(pw.Ql), 2) + '</div><div class="ss">' + (Math.abs(pw.water) > 0.005 ? fx(Math.abs(pw.water), 1) + ' kg/h ' + (pw.water < 0 ? T('de condensat', 'condensate') : T('d\'eau', 'of water')) : '') + '</div></div></div>';
+    body += '<h2>' + T('1. Données', '1. Inputs') + '</h2><table class="kv">' + kvr(T('Altitude / pression', 'Altitude / pressure'), fx(num('py_alt', 0), 0) + ' m / ' + fx(R.P / 1000, 2) + ' kPa') + kvr(T('Débit au départ', 'Flow at start'), fx(R.flow, 0) + ' m³/h') + kvr(T('Procédé', 'Process'), esc($('py_proc').options[$('py_proc').selectedIndex].textContent)) + (R.ADP ? kvr('ADP / ' + T('facteur de contact', 'contact factor'), fx(R.ADP.T, 1) + ' °C / ' + fx(num('py_beta', 85), 0) + ' %') : '') + '</table>';
+    body += '<h2>' + T('2. Propriétés de l\'air', '2. Air properties') + '</h2><table class="tb"><tr><th style="text-align:left">' + T('Propriété', 'Property') + '</th><th></th>' + cols.map(function (c) { return '<th>' + c[0] + '</th>'; }).join('') + '</tr>' + propRows(cols, imp) + '</table>';
+    body += '<h2>' + T('3. Diagramme', '3. Chart') + '</h2><div class="chart">' + chart(R, PALPR) + '</div>';
+    if (R.warn.length) { body += '<h2>' + T('4. Points d\'attention', '4. Points to check') + '</h2>' + R.warn.map(function (k) { return '<p class="n w">⚠ ' + T(WARN[k][0], WARN[k][1]) + '</p>'; }).join(''); }
+    body += '<h2>' + T('Références', 'References') + '</h2><p class="n">' + T('ASHRAE Handbook — Fundamentals, ch. 1 (Psychrométrie) : pression de saturation de Hyland et Wexler, humidité absolue, enthalpie, volume massique, température humide. Pression atmosphérique : atmosphère normalisée. Précision : humidité absolue à moins de 0,6 % des propriétés de référence CoolProp ; point de rosée à 0,02 K près.', 'ASHRAE Handbook — Fundamentals, ch. 1 (Psychrometrics): Hyland and Wexler saturation pressure, humidity ratio, enthalpy, specific volume, wet bulb. Atmospheric pressure: standard atmosphere. Accuracy: humidity ratio within 0.6 % of CoolProp reference properties; dew point within 0.02 K.') + '</p><p class="disc">' + T('Cette note est une aide au calcul. Les procédés sont idéalisés (batterie par facteur de contact, humidification vapeur à enthalpie de vapeur de 2 676 kJ/kg, humidification adiabatique à température humide constante). Le dimensionnement final reste de la responsabilité du bureau d\'études.', 'This note is a calculation aid. Processes are idealised (coil by contact factor, steam humidification at 2,676 kJ/kg vapour enthalpy, adiabatic humidification at constant wet bulb). Final sizing remains the responsibility of the design office.') + '</p>';
+    var win = window.open('', '_blank', 'width=900,height=750');
+    if (!win) { if (typeof showToast === 'function') { showToast(T('Popup bloqué', 'Popup blocked'), 'w'); } return; }
+    win.document.write('<!DOCTYPE html><html lang="' + (EN() ? 'en' : 'fr') + '"><head><meta charset="UTF-8"><title>' + ref + ' — THERMOSYS</title><style>' + PRINT_CSS + '</style></head><body><div class="bar no-print"><button onclick="window.print()">' + T('Imprimer / enregistrer en PDF', 'Print / save as PDF') + '</button></div><div class="page"><div class="hdr"><div><div class="logo">THERMOSYS</div><div class="sub">' + T('POSTE DE TRAVAIL GÉNIE CLIMATIQUE', 'HVAC ENGINEERING WORKSTATION') + '</div></div><div><div class="doc">' + T('NOTE — AIR HUMIDE', 'NOTE — MOIST AIR') + '</div><div class="ref">' + ref + ' — ' + dateStr + '</div></div></div><div class="ig"><div class="ib"><div class="it">' + T('Projet', 'Project') + '</div><div class="iv">' + esc(($('py_proj') || {}).value || '') + '</div></div><div class="ib"><div class="it">' + T('Établi par', 'Prepared by') + '</div><div class="iv"></div></div></div>' + body + '</div></body></html>');
+    win.document.close();
+  };
+  var PRINT_CSS = '*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;background:#e8ecf0;padding:20px 0;color:#1a3a5a;font-size:9.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:A4;margin:12mm}@media print{.no-print{display:none!important}body{background:#fff!important;padding:0!important}.page{box-shadow:none!important;width:auto!important;margin:0!important;padding:0!important}}' +
+    '.page{width:210mm;margin:0 auto;background:#fff;padding:14mm 16mm;box-shadow:0 6px 30px rgba(0,0,0,.18)}.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6mm;border-bottom:2pt solid #1a3a5a;padding-bottom:4mm}.logo{font-size:22pt;font-weight:900;letter-spacing:5px}.sub{font-size:7pt;color:#4a6a8a;letter-spacing:3px;margin-top:1.5mm}.doc{font-size:11pt;font-weight:700;color:#fff;background:#1a3a5a;padding:2.5mm 5mm;border-radius:2pt;text-align:right}.ref{font-size:7.5pt;color:#555;margin-top:1.5mm;text-align:right}' +
+    '.ig{display:grid;grid-template-columns:1fr 1fr;gap:3mm;margin-bottom:5mm}.ib{background:#f4f7fc;border-left:3pt solid #1a3a5a;padding:2.5mm 4mm}.it{font-size:6.5pt;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:1mm}.iv{font-size:9pt;color:#2a4a6a;min-height:4mm}.sum{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:3mm;margin-bottom:4mm}.sb{border:1pt solid #1a3a5a;border-radius:3pt;padding:3mm 4mm}.st{font-size:6.5pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}.sv{font-size:20pt;font-weight:800;margin:1mm 0}.sv2{font-size:12pt;font-weight:800;margin:1mm 0}.ss{font-size:7.5pt;color:#4a6a8a}' +
+    'h2{font-size:10.5pt;margin:5mm 0 2mm;padding:1.5mm 3mm;background:#1a3a5a;color:#fff;letter-spacing:.5px;page-break-after:avoid}table{width:100%;border-collapse:collapse;margin-bottom:2mm;page-break-inside:avoid}.kv td{padding:1.4mm 2mm;border-bottom:.5pt solid #d5deea;font-size:8.5pt}.kv td:first-child{color:#4a6a8a;width:48%}.kv td:last-child{font-weight:700;text-align:right}.tb th{background:#e3eaf3;padding:1.6mm 2mm;font-size:8pt;text-align:right}.tb td{padding:1.4mm 2mm;border-bottom:.5pt solid #d5deea;font-size:8.5pt;text-align:right}.tb td:first-child{text-align:left}.chart{max-width:165mm;margin:2mm auto;page-break-inside:avoid}.n{font-size:8.5pt;line-height:1.5;margin:1.5mm 0}.w{color:#9a5b00}.disc{font-size:7pt;color:#667;line-height:1.5;margin-top:5mm;border-top:.5pt solid #ccc;padding-top:2mm}.bar{position:sticky;top:0;text-align:center;padding:6px}.bar button{padding:8px 18px;font-size:11pt;cursor:pointer}';
+  /* ---------- installation ---------- */
+  function applyLang() {
+    var root = $('pg-psy'); if (!root) { return; }
+    root.querySelectorAll('[data-cfr]').forEach(function (el) { el.textContent = EN() ? el.getAttribute('data-cen') : el.getAttribute('data-cfr'); });
+  }
+  function install() {
+    if ($('pg-psy')) { return; }
+    if (!document.getElementById('chargepro-style-shared')) {
+      var st = document.createElement('style'); st.id = 'chargepro-style-shared';
+      st.textContent = '#pg-psy .cpmain{display:grid;grid-template-columns:minmax(300px,5fr) 6fr;gap:12px;align-items:start}@media(max-width:900px){#pg-psy .cpmain{grid-template-columns:1fr}}#pg-psy details.cpsec{border:1px solid var(--border);border-radius:6px;margin:0 0 8px;padding:0 8px 6px}#pg-psy details.cpsec>summary{cursor:pointer;font-weight:700;font-size:11px;padding:7px 0;color:var(--ac);list-style:none}#pg-psy details.cpsec>summary::-webkit-details-marker{display:none}' +
+        '#pg-psy .cpcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;margin-bottom:8px}#pg-psy .cpcard{border:1px solid var(--border);border-radius:6px;padding:7px 9px;background:var(--bgc)}#pg-psy .cpct{font-size:9.5px;color:var(--ts)}#pg-psy .cpcv{font-size:19px;font-weight:800;color:var(--ac);margin:2px 0}#pg-psy .cpcs{font-size:10px;color:var(--ts)}#pg-psy .cph{font-size:11px;font-weight:700;color:var(--ac);margin:10px 0 4px;border-bottom:1px solid var(--border);padding-bottom:2px}#pg-psy table.cptb{width:100%;border-collapse:collapse;font-size:11px}#pg-psy .cptb th{text-align:right;color:var(--ts);font-weight:600;padding:3px 4px;border-bottom:1px solid var(--border)}#pg-psy .cptb th:first-child,#pg-psy .cptb td:first-child{text-align:left}#pg-psy .cptb td{padding:3px 4px;text-align:right;border-bottom:1px solid var(--border)}';
+      document.head.appendChild(st);
+    }
+    var pg = document.createElement('div'); pg.className = 'page'; pg.id = 'pg-psy'; pg.innerHTML = buildPage();
+    var ref = $('pg-normes'); if (ref && ref.parentNode) { ref.parentNode.insertBefore(pg, ref); } else { document.body.appendChild(pg); }
+    var mn = document.createElement('button'); mn.className = 'mn'; mn.id = 'mn-psy'; mn.setAttribute('onclick', "goPage('psy')");
+    mn.innerHTML = '&#128167; <span id="mn_psy">PSYCHRO</span>';
+    var refb = $('mn-chargepro') || $('mn-airtreat') || $('mn-charge'); if (refb && refb.parentNode) { refb.parentNode.insertBefore(mn, refb.nextSibling); } else { var any = document.querySelector('button.mn'); if (any) { any.parentNode.appendChild(mn); } }
+    restore(); showProc(); applyLang(); window.pyCalc();
+  }
+  var _og = window.goPage;
+  window.goPage = function (page) { if (_og) { _og.apply(this, arguments); } if (page === 'psy') { setTimeout(function () { applyLang(); window.pyCalc(); }, 30); } };
+  var _ot = window.toggleLang;
+  window.toggleLang = function () { if (_ot) { _ot.apply(this, arguments); } setTimeout(function () { applyLang(); if (_last) { window.pyCalc(); } }, 140); };
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', install); } else { install(); }
+
+})();
+
+</script>
 <script id="protect-v1">
 (function(){
   document.addEventListener("contextmenu",function(e){e.preventDefault();return false;});
