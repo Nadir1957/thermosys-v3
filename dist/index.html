@@ -14747,6 +14747,126 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
 })();
 
 </script>
+<script id="units-module">
+/* THERMOSYS - Module UNITES (affichage SI / imperial en double, calculs inchanges) */
+(function () {
+  'use strict';
+  if (typeof window === 'undefined') { return; }
+  if (window.__unitsMod) { return; }
+  window.__unitsMod = true;
+  if (typeof document === 'undefined') { return; }
+  /* ============ UNITES IMPERIALES : affichage double, calculs inchanges (SI) ============ */
+  var KEY = 'thermosys_units_v1', MARK = '​', PAGES = ['pg-chargepro', 'pg-heat', 'pg-elec'], ALLP = ['pg-chargepro', 'pg-psy', 'pg-heat', 'pg-elec'];
+  var imp = false, busy = false;
+  function EN() { return window.lang === 'en'; }
+  function T(fr, en) { return EN() ? en : fr; }
+  function $(id) { return document.getElementById(id); }
+  try { imp = localStorage.getItem(KEY) === 'imp'; } catch (e) { imp = false; }
+  var AWG = [[0.823, 'AWG 18'], [1.31, 'AWG 16'], [2.08, 'AWG 14'], [3.31, 'AWG 12'], [5.26, 'AWG 10'], [8.37, 'AWG 8'], [13.3, 'AWG 6'], [21.2, 'AWG 4'], [26.7, 'AWG 3'], [33.6, 'AWG 2'], [42.4, 'AWG 1'], [53.5, 'AWG 1/0'], [67.4, 'AWG 2/0'], [85.0, 'AWG 3/0'], [107.2, 'AWG 4/0'], [127, '250 kcmil'], [152, '300 kcmil'], [177, '350 kcmil'], [203, '400 kcmil'], [253, '500 kcmil'], [304, '600 kcmil'], [380, '750 kcmil'], [507, '1000 kcmil']];
+  function awg(s) { for (var i = 0; i < AWG.length; i++) { if (AWG[i][0] >= s * 0.985) { return AWG[i][1]; } } return '> 1000 kcmil'; }
+  function grp(n, d) { var s = n.toFixed(d), p = s.split('.'); p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' '); return p.join('.'); }
+  /* unite SI -> [fonction de conversion, texte] ; null = pas de conversion */
+  var CONV = {
+    '°C': function (v) { return grp(v * 9 / 5 + 32, 1) + ' °F'; },
+    'kW': function (v) { return grp(v * 3412.14, Math.abs(v) < 1 ? 0 : 0) + ' Btu/h'; },
+    'm³/h': function (v) { return grp(v * 0.588578, Math.abs(v) < 100 ? 1 : 0) + ' CFM'; },
+    'm²': function (v) { return grp(v * 10.7639, 1) + ' ft²'; },
+    'm': function (v) { return grp(v * 3.28084, 1) + ' ft'; },
+    'mm²': function (v) { return awg(v); },
+    'm/s': function (v) { return grp(v * 196.85, 0) + ' fpm'; },
+    'Pa': function (v) { return grp(v * 0.00401463, 3) + ' in.wg'; },
+    'kg/h': function (v) { return grp(v * 2.20462, 0) + ' lb/h'; },
+    'kJ/kg': function (v) { return grp(v * 0.429923, 1) + ' Btu/lb'; },
+    'W/(m²·K)': function (v) { return grp(v * 0.17611, 3) + ' Btu/(h·ft²·°F)'; }
+  };
+  var RE = /([−-]?\d+(?:[.,]\d+)?)([  ]?)(W\/\(m²·K\)|m³\/h|mm²|m²|kW|°C|kg\/h|kJ\/kg|m\/s|Pa|m)(?![\w²³\/·\-]|\s?\()/g;
+  function convText(t, mode) {
+    if (!imp || t.indexOf(MARK) >= 0) { return t; }
+    return t.replace(RE, function (all, num, sp, unit, off) {
+      var before = t.slice(Math.max(0, off - 12), off);
+      if (unit === '°C' && /(Δ|±|amplitude|écart|swing|range)\s*[=:]?\s*$/i.test(before)) { return all; }
+      if (unit === 'm' && /\d$/.test(before)) { return all; }
+      var v = parseFloat(num.replace('−', '-').replace(',', '.')); if (!isFinite(v)) { return all; }
+      var f = (mode === 'el' && unit === 'kW') ? function (x) { return grp(x * 1.34102, 1) + ' hp'; } : CONV[unit]; if (!f) { return all; }
+      return all + ' (' + f(v) + ')' + MARK;
+    });
+  }
+  function strip(t) { return t.replace(/ \([^()]*\)​/g, ''); }
+  function convHTML(html, mode) {
+    if (!imp) { return html; }
+    return html.split(/(<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>)/i).map(function (part, i) {
+      if (i % 2 === 1) { return part; }
+      return part.replace(/>([^<>]+)</g, function (m, t) { return '>' + convText(t, mode).replace(/​/g, '') + '<'; });
+    }).join('');
+  }
+  /* ---- ecran : conversion des textes de resultats ---- */
+  function walkOut(root, mode) {
+    var tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: function (n) { var p = n.parentNode; if (!p || /^(SCRIPT|STYLE|TEXTAREA|OPTION|BUTTON)$/.test(p.nodeName) || (p.closest && p.closest('.un-hint,.un-tg,.cpmain > .cpin,#cp_in,#ht_in,.cpin'))) { return NodeFilter.FILTER_REJECT; } return NodeFilter.FILTER_ACCEPT; } }), nodes = [], n;
+    while ((n = tw.nextNode())) { nodes.push(n); }
+    nodes.forEach(function (x) { var s = x.nodeValue, r = imp ? convText(s, mode) : (s.indexOf(MARK) >= 0 ? strip(s) : s); if (r !== s) { x.nodeValue = r; } });
+  }
+  /* ---- saisie : bulle de conversion a cote des champs ---- */
+  var LAB = /\(([^()]+)\)\s*:?\s*$/;
+  function hints(root, mode) {
+    root.querySelectorAll('.frow').forEach(function (row) {
+      var lb = row.querySelector('.flb'), inp = row.querySelector('input[type="number"]'); if (!lb || !inp) { return; }
+      var m = LAB.exec((lb.textContent || '').trim()), u = m && m[1].trim(), h = row.querySelector('.un-hint');
+      if (!imp || !u || !CONV[u]) { if (h) { h.remove(); } return; }
+      if (!h) { h = document.createElement('span'); h.className = 'un-hint'; h.style.cssText = 'font-size:10px;color:var(--ts);margin-left:6px;white-space:nowrap'; inp.insertAdjacentElement('afterend', h); }
+      var v = parseFloat(String(inp.value).replace(',', '.')); h.textContent = isFinite(v) ? '= ' + ((mode === 'el' && u === 'kW') ? grp(v * 1.34102, 1) + ' hp' : CONV[u](v)) : '';
+    });
+  }
+  function refresh() {
+    if (busy) { return; } busy = true;
+    try {
+      PAGES.forEach(function (id) { var pg = $(id); if (pg) { hints(pg, id === 'pg-elec' ? 'el' : ''); walkOut(pg, id === 'pg-elec' ? 'el' : ''); } });
+    } catch (e) { /* sans effet */ }
+    busy = false;
+  }
+  var _tm = null;
+  function later() { clearTimeout(_tm); _tm = setTimeout(refresh, 60); }
+  /* ---- interrupteur ---- */
+  function btnHtml() { return '<span class="un-tg" style="display:inline-flex;gap:0;margin-left:8px;vertical-align:middle"><button class="btn un-si" onclick="unSet(false)" style="border-radius:6px 0 0 6px;font-size:10px;padding:3px 8px">SI</button><button class="btn un-imp" onclick="unSet(true)" style="border-radius:0 6px 6px 0;font-size:10px;padding:3px 8px">' + T('Impérial', 'Imperial') + '</button></span>'; }
+  function paintBtns() { document.querySelectorAll('.un-tg').forEach(function (s) { var a = s.querySelector('.un-si'), b = s.querySelector('.un-imp'); b.textContent = T('Impérial', 'Imperial'); a.style.outline = imp ? 'none' : '2px solid var(--ac)'; b.style.outline = imp ? '2px solid var(--ac)' : 'none'; }); }
+  window.unSet = function (v) {
+    imp = !!v; try { localStorage.setItem(KEY, imp ? 'imp' : 'si'); } catch (e) { /* sans effet */ }
+    var pi = $('py_imp'); if (pi) { pi.value = imp ? '1' : '0'; if (typeof window.pyCalc === 'function') { try { window.pyCalc(); } catch (e) { /* sans effet */ } } }
+    ['cpCalc', 'htCalc', 'elCalc'].forEach(function (f) { if (typeof window[f] === 'function' && $({ cpCalc: 'cp_out', htCalc: 'ht_out', elCalc: 'el_out' }[f])) { try { window[f](); } catch (e) { /* sans effet */ } } });
+    paintBtns(); setTimeout(refresh, 80);
+  };
+  window.UNITS = { isImp: function () { return imp; }, html: convHTML, text: convText };
+  /* ---- notes imprimees : conversion avant ecriture ---- */
+  var _open = window.open;
+  window.open = function () {
+    var w = _open.apply(window, arguments);
+    if (!w || !w.document || !imp) { return w; }
+    try {
+      var d = w.document, ow = d.write.bind(d);
+      d.write = function (h) { if (typeof h === 'string') { if (/class="cvr"/.test(h)) { h = h.split(/(?=<div class="m\d mpage">)/).map(function (p) { return /^<div class="m2 /.test(p) ? p : convHTML(p, /^<div class="m4 /.test(p) ? 'el' : ''); }).join(''); } else if (!/<title>PS-/.test(h)) { h = convHTML(h, /<title>EL-/.test(h) ? 'el' : ''); } } return ow(h); };
+    } catch (e) { /* sans effet */ }
+    return w;
+  };
+  /* ---- installation ---- */
+  function install() {
+    ALLP.forEach(function (id) {
+      var pg = $(id); if (!pg || pg.querySelector('.un-tg')) { return; }
+      var ph = pg.querySelector('.ph'), host = ph && ph.querySelector('span'); if (!host) { return; }
+      host.insertAdjacentHTML('beforeend', btnHtml());
+      pg.addEventListener('input', later, true); pg.addEventListener('change', later, true);
+      new MutationObserver(function () { if (!busy) { later(); } }).observe(pg, { childList: true, subtree: true, characterData: true });
+    });
+    var py = $('py_imp'); if (py && imp) { py.value = '1'; }
+    paintBtns(); later();
+  }
+  var _og = window.goPage;
+  window.goPage = function () { if (_og) { _og.apply(this, arguments); } setTimeout(function () { install(); later(); }, 80); };
+  var _ot = window.toggleLang;
+  window.toggleLang = function () { if (_ot) { _ot.apply(this, arguments); } setTimeout(function () { paintBtns(); later(); }, 200); };
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', function () { setTimeout(install, 400); }); } else { setTimeout(install, 400); }
+
+})();
+
+</script>
 <script id="protect-v1">
 (function(){
   document.addEventListener("contextmenu",function(e){e.preventDefault();return false;});
