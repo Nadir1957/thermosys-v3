@@ -14596,6 +14596,157 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
 })();
 
 </script>
+<script id="proj-module">
+/* THERMOSYS - Module PROJET (dossier commun : PDF combine des notes, export/import du projet) */
+(function () {
+  'use strict';
+  if (typeof window === 'undefined') { return; }
+  if (window.__projMod) { return; }
+  window.__projMod = true;
+  if (typeof document === 'undefined') { return; }
+  /* ============ PROJET COMMUN : PDF combine + export/import ============ */
+  var KEY = 'thermosys_proj_v1';
+  var MODS = [
+    { id: 'chpro', key: 'thermosys_chpro_v1', fr: 'CHARGE PRO — charges thermiques', en: 'CHARGE PRO — cooling loads', fn: 'cpPrint', page: 'chargepro' },
+    { id: 'psy', key: 'thermosys_psy_v1', fr: 'PSYCHRO — air humide', en: 'PSYCHRO — moist air', fn: 'pyPrint', page: 'psy' },
+    { id: 'heat', key: 'thermosys_heat_v1', fr: 'CHAUFFAGE — déperditions EN 12831', en: 'HEATING — EN 12831 heat loss', fn: 'htPrint', page: 'heat' },
+    { id: 'elec', key: 'thermosys_elec_v1', fr: 'ÉLECTRICITÉ — câbles et protections', en: 'ELECTRICAL — cables and protection', fn: 'elPrint', page: 'elec' }
+  ];
+  function EN() { return window.lang === 'en'; }
+  function T(fr, en) { return EN() ? en : fr; }
+  function $(id) { return document.getElementById(id); }
+  function esc(x) { return String(x === undefined || x === null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function has(m) { try { return !!localStorage.getItem(m.key); } catch (e) { return false; } }
+  function toast(fr, en) { if (typeof showToast === 'function') { showToast(T(fr, en), 'w'); } else { window.alert(T(fr, en)); } }
+  /* capture du HTML qu'une fonction d'impression ecrit dans sa fenetre */
+  function capture(fn) {
+    var buf = '', ow = window.open, fake = { document: { write: function (h) { buf += h; }, close: function () { /* rien */ } }, focus: function () { /* rien */ }, print: function () { /* rien */ } };
+    window.open = function () { return fake; };
+    try { if (typeof window[fn] === 'function') { window[fn](); } } catch (e) { buf = ''; } finally { window.open = ow; }
+    return buf;
+  }
+  /* CSS : prefixe chaque selecteur pour que les styles des notes ne se melangent pas */
+  function scope(css, pre) {
+    var out = '';
+    try {
+      var sh = new CSSStyleSheet(); sh.replaceSync(css);
+      var fix = function (sel) { return sel.split(',').map(function (s) { s = s.trim(); if (s === '*' || s === 'html' || s === 'body') { return pre + (s === '*' ? ' *' : ''); } return pre + ' ' + s.replace(/^(html|body)\s+/, ''); }).join(','); };
+      var walk = function (rules) {
+        var o = '';
+        for (var i = 0; i < rules.length; i++) {
+          var r = rules[i];
+          if (r.type === 1) { o += fix(r.selectorText) + '{' + r.style.cssText + '}'; }
+          else if (r.type === 4) { o += '@media ' + r.conditionText + '{' + walk(r.cssRules) + '}'; }
+        }
+        return o;
+      };
+      out = walk(sh.cssRules);
+    } catch (e) { out = ''; }
+    return out;
+  }
+  function extract(html, idx, info) {
+    if (!html) { return null; }
+    var d = new DOMParser().parseFromString(html, 'text/html'), pg = d.querySelector('.page'); if (!pg) { return null; }
+    var css = ''; d.querySelectorAll('style').forEach(function (s) { css += s.textContent + '\n'; });
+    pg.querySelectorAll('.no-print').forEach(function (n) { n.remove(); });
+    var ref = (pg.querySelector('.ref') || {}).textContent || '';
+    if (info) {
+      pg.querySelectorAll('.ig .ib').forEach(function (b) {
+        var t = ((b.querySelector('.it') || {}).textContent || '').toLowerCase(), v = b.querySelector('.iv'); if (!v) { return; }
+        if (/^(projet|project)$/.test(t) && info.proj) { v.textContent = info.proj; }
+        else if (/^(client)$/.test(t) && info.cli) { v.textContent = info.cli; }
+        else if (/^(site|lieu|location)$/.test(t) && info.site) { v.textContent = info.site; }
+        else if (/^(établi par|etabli par|prepared by)$/.test(t) && info.by) { v.textContent = info.by; }
+      });
+    }
+    return { css: scope(css, '.m' + idx), body: '<div class="m' + idx + ' mpage">' + pg.outerHTML + '</div>', ref: ref.trim() };
+  }
+  function build() {
+    return '<div class="ph" data-cfr="PROJET — DOSSIER COMMUN ET PDF COMBINÉ" data-cen="PROJECT — SHARED FILE AND COMBINED PDF">PROJET — DOSSIER COMMUN ET PDF COMBINÉ</div>' +
+      '<div style="font-size:10.5px;color:var(--ts);margin:2px 0 8px" data-cfr="Regroupez les notes de calcul de tous les modules dans un seul document PDF, et sauvegardez ou rouvrez le projet complet dans un fichier." data-cen="Gather the calculation notes of all modules in one PDF document, and save or reopen the complete project in a file.">Regroupez les notes de calcul de tous les modules dans un seul document PDF, et sauvegardez ou rouvrez le projet complet dans un fichier.</div>' +
+      '<div style="max-width:720px"><div class="frow"><span class="flb" data-cfr="Projet :" data-cen="Project:">Projet :</span><input class="fi" id="pj_proj" type="text" style="max-width:100%" oninput="pjSave()"></div>' +
+      '<div class="frow"><span class="flb" data-cfr="Client :" data-cen="Client:">Client :</span><input class="fi" id="pj_cli" type="text" style="max-width:100%" oninput="pjSave()"></div>' +
+      '<div class="frow"><span class="flb" data-cfr="Site :" data-cen="Site:">Site :</span><input class="fi" id="pj_site" type="text" style="max-width:100%" oninput="pjSave()"></div>' +
+      '<div class="frow"><span class="flb" data-cfr="Établi par :" data-cen="Prepared by:">Établi par :</span><input class="fi" id="pj_by" type="text" style="max-width:100%" oninput="pjSave()"></div>' +
+      '<div class="ph" style="margin-top:12px" data-cfr="Modules à inclure" data-cen="Modules to include">Modules à inclure</div><div id="pj_mods"></div>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px"><button class="btn" onclick="pjPrint()" data-cfr="PDF combiné" data-cen="Combined PDF">PDF combiné</button><button class="btn" onclick="pjExport()" data-cfr="Enregistrer le projet (.json)" data-cen="Save project (.json)">Enregistrer le projet (.json)</button><button class="btn" onclick="document.getElementById(\'pj_file\').click()" data-cfr="Ouvrir un projet" data-cen="Open a project">Ouvrir un projet</button><input type="file" id="pj_file" accept=".json,application/json" style="display:none" onchange="pjImport(this)"></div>' +
+      '<div style="font-size:10px;color:var(--ts);margin-top:8px" data-cfr="Un module apparaît « avec données » dès que vous l\'avez utilisé sur cet appareil. Ouvrir un projet remplace les données des modules de cet appareil." data-cen="A module shows as “with data” once you have used it on this device. Opening a project replaces the module data on this device."> Un module apparaît « avec données » dès que vous l\'avez utilisé sur cet appareil. Ouvrir un projet remplace les données des modules de cet appareil.</div></div>';
+  }
+  var SEL = {};
+  function drawMods() {
+    var box = $('pj_mods'); if (!box) { return; }
+    box.innerHTML = MODS.map(function (m) {
+      var d = has(m), on = SEL[m.id] === undefined ? d : SEL[m.id];
+      return '<label style="display:flex;gap:8px;align-items:center;margin:5px 0;font-size:12px"><input type="checkbox" ' + (on ? 'checked ' : '') + 'onchange="pjSel(\'' + m.id + '\',this.checked)"><span>' + esc(T(m.fr, m.en)) + '</span><span style="font-size:10px;color:' + (d ? '#59a14f' : 'var(--ts)') + '">' + (d ? T('avec données', 'with data') : T('vide', 'empty')) + '</span></label>';
+    }).join('');
+  }
+  window.pjSel = function (id, v) { SEL[id] = v; pjSave(); };
+  window.pjSave = function () { try { var d = { sel: SEL, f: {} }; ['pj_proj', 'pj_cli', 'pj_site', 'pj_by'].forEach(function (i) { d.f[i] = $(i).value; }); localStorage.setItem(KEY, JSON.stringify(d)); } catch (e) { /* sans effet */ } };
+  function restore() { try { var d = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!d) { return; } SEL = d.sel || {}; Object.keys(d.f || {}).forEach(function (i) { var e = $(i); if (e) { e.value = d.f[i]; } }); } catch (e) { /* sans effet */ } }
+  window.pjExport = function () {
+    var d = { app: 'thermosys', kind: 'project', version: 1, date: new Date().toISOString(), info: {}, data: {} };
+    ['pj_proj', 'pj_cli', 'pj_site', 'pj_by'].forEach(function (i) { d.info[i] = $(i).value; });
+    MODS.forEach(function (m) { try { var v = localStorage.getItem(m.key); if (v) { d.data[m.key] = v; } } catch (e) { /* sans effet */ } });
+    var name = ($('pj_proj').value || 'projet').replace(/[^\w\-]+/g, '_').slice(0, 40) + '.thermosys.json';
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(d)], { type: 'application/json' })); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  };
+  window.pjImport = function (inp) {
+    var f = inp.files && inp.files[0]; if (!f) { return; }
+    var rd = new FileReader();
+    rd.onload = function () {
+      try {
+        var d = JSON.parse(rd.result);
+        if (!d || d.app !== 'thermosys' || d.kind !== 'project' || !d.data) { throw new Error('format'); }
+        if (!window.confirm(T('Remplacer les données des modules de cet appareil par celles du projet ?', 'Replace the module data on this device with the project data?'))) { inp.value = ''; return; }
+        MODS.forEach(function (m) { try { if (d.data[m.key]) { localStorage.setItem(m.key, d.data[m.key]); } else { localStorage.removeItem(m.key); } } catch (e) { /* sans effet */ } });
+        try { localStorage.setItem(KEY, JSON.stringify({ sel: {}, f: d.info || {} })); } catch (e) { /* sans effet */ }
+        window.location.reload();
+      } catch (e) { toast('Fichier de projet non reconnu.', 'Project file not recognised.'); inp.value = ''; }
+    };
+    rd.readAsText(f);
+  };
+  window.pjPrint = function () {
+    var info = { proj: $('pj_proj').value.trim(), cli: $('pj_cli').value.trim(), site: $('pj_site').value.trim(), by: $('pj_by').value.trim() };
+    var parts = [], skipped = [];
+    MODS.forEach(function (m, i) {
+      var on = SEL[m.id] === undefined ? has(m) : SEL[m.id]; if (!on) { return; }
+      var r = extract(capture(m.fn), i + 1, info);
+      if (r) { parts.push({ m: m, r: r }); } else { skipped.push(m); }
+    });
+    if (!parts.length) { toast('Aucune note à regrouper : utilisez d\'abord au moins un module.', 'No note to combine: use at least one module first.'); return; }
+    var now = new Date(), pad = function (n) { return (n < 10 ? '0' : '') + n; }, ref = 'PJ-' + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + '-' + pad(now.getHours()) + pad(now.getMinutes()), ds = pad(now.getDate()) + '/' + pad(now.getMonth() + 1) + '/' + now.getFullYear();
+    var cover = '<div class="cvr"><div class="cl">THERMOSYS</div><div class="cs">' + T('POSTE DE TRAVAIL GÉNIE CLIMATIQUE', 'HVAC ENGINEERING WORKSTATION') + '</div><div class="ct">' + T('DOSSIER DE NOTES DE CALCUL', 'CALCULATION NOTES FILE') + '</div><div class="cp">' + esc(info.proj || T('Projet sans titre', 'Untitled project')) + '</div>' +
+      '<table class="ci"><tr><td>' + T('Client', 'Client') + '</td><td>' + esc(info.cli) + '</td></tr><tr><td>' + T('Site', 'Site') + '</td><td>' + esc(info.site) + '</td></tr><tr><td>' + T('Établi par', 'Prepared by') + '</td><td>' + esc(info.by) + '</td></tr><tr><td>' + T('Date', 'Date') + '</td><td>' + ds + '</td></tr><tr><td>' + T('Référence', 'Reference') + '</td><td>' + ref + '</td></tr></table>' +
+      '<div class="cc">' + T('Contenu', 'Contents') + '</div><table class="ci">' + parts.map(function (p, n) { return '<tr><td>' + (n + 1) + '. ' + esc(T(p.m.fr, p.m.en)) + '</td><td>' + esc(p.r.ref) + '</td></tr>'; }).join('') + '</table>' +
+      (skipped.length ? '<p class="cw">' + T('Non inclus (pas de résultat) : ', 'Not included (no result): ') + skipped.map(function (m) { return esc(T(m.fr, m.en)); }).join(', ') + '</p>' : '') +
+      '<p class="cd">' + T('Les notes ci-après sont des aides au dimensionnement établies avec THERMOSYS. Elles ne remplacent ni les normes en vigueur ni l\'étude de l\'ingénieur responsable ; chaque note précise ses sources, ses hypothèses et ses limites.', 'The following notes are sizing aids produced with THERMOSYS. They replace neither the standards in force nor the study of the responsible engineer; each note states its sources, assumptions and limits.') + '</p></div>';
+    var css = '*{box-sizing:border-box}body{margin:0;background:#e8ecf0;font-family:Arial,Helvetica,sans-serif;color:#1a3a5a;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:A4;margin:12mm}.bar{position:sticky;top:0;text-align:center;padding:6px;background:#e8ecf0}.bar button{padding:8px 18px;font-size:11pt;cursor:pointer}' +
+      '.cvr{width:210mm;margin:12px auto;background:#fff;padding:30mm 22mm;min-height:270mm;box-shadow:0 6px 30px rgba(0,0,0,.18)}.cl{font-size:30pt;font-weight:900;letter-spacing:7px}.cs{font-size:8pt;color:#4a6a8a;letter-spacing:3px;margin:2mm 0 24mm}.ct{font-size:11pt;font-weight:700;letter-spacing:2px;color:#4a6a8a}.cp{font-size:22pt;font-weight:800;margin:3mm 0 12mm;border-bottom:2pt solid #1a3a5a;padding-bottom:4mm}.ci{width:100%;border-collapse:collapse;margin-bottom:8mm}.ci td{padding:2mm 3mm;border-bottom:.5pt solid #d5deea;font-size:10pt}.ci td:first-child{font-weight:700;width:55%}.cc{font-size:10pt;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:6mm 0 2mm}.cw{font-size:9pt;color:#9a5b00}.cd{font-size:8pt;color:#667;line-height:1.5;margin-top:14mm;border-top:.5pt solid #ccc;padding-top:3mm}' +
+      '.mpage{page-break-before:always;break-before:page}@media print{.bar{display:none!important}body{background:#fff!important}.cvr{box-shadow:none!important;margin:0!important;width:auto!important;padding:18mm 8mm!important}}' + parts.map(function (p) { return p.r.css; }).join('\n');
+    var win = window.open('', '_blank', 'width=900,height=750');
+    if (!win) { toast('Popup bloqué par le navigateur.', 'Popup blocked by the browser.'); return; }
+    win.document.write('<!DOCTYPE html><html lang="' + (EN() ? 'en' : 'fr') + '"><head><meta charset="UTF-8"><title>' + ref + ' — THERMOSYS</title><style>' + css + '</style></head><body><div class="bar"><button onclick="window.print()">' + T('Imprimer / enregistrer en PDF', 'Print / save as PDF') + '</button></div>' + cover + parts.map(function (p) { return p.r.body; }).join('') + '</body></html>');
+    win.document.close();
+  };
+  function applyLang() { var root = $('pg-proj'); if (!root) { return; } root.querySelectorAll('[data-cfr]').forEach(function (el) { el.textContent = EN() ? el.getAttribute('data-cen') : el.getAttribute('data-cfr'); }); drawMods(); }
+  function install() {
+    if ($('pg-proj')) { return; }
+    var pg = document.createElement('div'); pg.className = 'page'; pg.id = 'pg-proj'; pg.innerHTML = build();
+    var ref = $('pg-normes'); if (ref && ref.parentNode) { ref.parentNode.insertBefore(pg, ref); } else { document.body.appendChild(pg); }
+    var mn = document.createElement('button'); mn.className = 'mn'; mn.id = 'mn-proj'; mn.setAttribute('onclick', "goPage('proj')");
+    mn.innerHTML = '&#128193; <span id="mn_proj">PROJET</span>';
+    var refb = $('mn-elec') || $('mn-heat'); if (refb && refb.parentNode) { refb.parentNode.insertBefore(mn, refb.nextSibling); } else { var any = document.querySelector('button.mn'); if (any) { any.parentNode.appendChild(mn); } }
+    restore(); applyLang();
+  }
+  var _og = window.goPage;
+  window.goPage = function (page) { if (_og) { _og.apply(this, arguments); } if (page === 'proj') { setTimeout(function () { applyLang(); }, 30); } };
+  var _ot = window.toggleLang;
+  window.toggleLang = function () { if (_ot) { _ot.apply(this, arguments); } setTimeout(applyLang, 140); };
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', install); } else { install(); }
+
+})();
+
+</script>
 <script id="protect-v1">
 (function(){
   document.addEventListener("contextmenu",function(e){e.preventDefault();return false;});
