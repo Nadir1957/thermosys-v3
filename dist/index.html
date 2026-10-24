@@ -2054,8 +2054,8 @@ C'est une protection de s&eacute;curit&eacute; : dans les champs texte (noms, d&
 <div style="margin-top:10px;border:1px solid var(--border);border-radius:6px;overflow:hidden">
 <div style="background:var(--bg2);padding:8px 12px;font-weight:700;font-size:11px;border-bottom:1px solid var(--border)">&#10067; Comment obtenir un seul PDF pour tout le projet ? / How to get one PDF for the whole project?</div>
 <div style="padding:10px;font-size:11px;line-height:1.8">
-Utilisez chaque module normalement (les données sont mémorisées sur votre appareil), puis ouvrez l'onglet PROJET, renseignez le projet, le client et le site, vérifiez les modules cochés et cliquez sur « PDF combiné ». Dans la fenêtre qui s'ouvre, choisissez « Imprimer / enregistrer en PDF ».<br>
-<i>Use each module as usual (data is stored on your device), then open the PROJECT tab, fill in the project, client and site, check the ticked modules and click "Combined PDF". In the window that opens, choose "Print / save as PDF".</i>
+Utilisez chaque module normalement (les données sont mémorisées sur votre appareil), puis ouvrez l'onglet PROJET, renseignez le projet, le client et le site, vérifiez les modules cochés et cliquez sur « PDF combiné ». Dans la fenêtre qui s'ouvre, choisissez « Imprimer / enregistrer en PDF ».<br>&#9679; <b>CHAMBRE FROIDE et TRAITEMENT D'AIR</b> sont aussi regroupés dans le PDF combiné, mais seulement si vous les avez utilisés pendant la session en cours : leurs données ne sont pas enregistrées dans le fichier du projet (.json).<br>
+<i>Use each module as usual (data is stored on your device), then open the PROJECT tab, fill in the project, client and site, check the ticked modules and click "Combined PDF". In the window that opens, choose "Print / save as PDF".<br>&#9679; <b>COLD ROOM and AIR TREATMENT</b> are also gathered in the combined PDF, but only if you used them during the current session: their data is not saved in the project file (.json).</i>
 </div>
 </div>
 
@@ -14864,13 +14864,24 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
     { id: 'psy', key: 'thermosys_psy_v1', fr: 'PSYCHRO — air humide', en: 'PSYCHRO — moist air', fn: 'pyPrint', page: 'psy' },
     { id: 'heat', key: 'thermosys_heat_v1', fr: 'CHAUFFAGE — déperditions EN 12831', en: 'HEATING — EN 12831 heat loss', fn: 'htPrint', page: 'heat' },
     { id: 'elec', key: 'thermosys_elec_v1', fr: 'ÉLECTRICITÉ — câbles et protections', en: 'ELECTRICAL — cables and protection', fn: 'elPrint', page: 'elec' },
-    { id: 'mecha', key: 'thermosys_mecha_v1', fr: 'MÉCATRONIQUE — signaux, moteur, vibrations, volets', en: 'MECHATRONICS — signals, motor, vibration, dampers', fn: 'mcPrint', page: 'mecha' }
+    { id: 'mecha', key: 'thermosys_mecha_v1', fr: 'MÉCATRONIQUE — signaux, moteur, vibrations, volets', en: 'MECHATRONICS — signals, motor, vibration, dampers', fn: 'mcPrint', page: 'mecha' },
+    { id: 'cold', live: 'pg-coldroom', fr: 'CHAMBRE FROIDE — bilan, cycle, charge, énergie', en: 'COLD ROOM — load, cycle, charge, energy', fn: 'crPrint', page: 'coldroom' },
+    { id: 'air', live: 'pg-airtreat', fr: 'TRAITEMENT D\'AIR — CTA, salles propres', en: 'AIR TREATMENT — AHU, clean rooms', fn: 'atPrint', page: 'airtreat' }
   ];
+  /* modules sans stockage local : utilises pendant la session en cours seulement */
+  var USED = {};
+  function track() {
+    MODS.forEach(function (m) {
+      if (!m.live) { return; }
+      var mark = function (e) { var pg = $(m.live); if (pg && e.target && pg.contains(e.target)) { USED[m.id] = true; } };
+      ['input', 'change', 'click'].forEach(function (ev) { document.addEventListener(ev, mark, true); });
+    });
+  }
   function EN() { return window.lang === 'en'; }
   function T(fr, en) { return EN() ? en : fr; }
   function $(id) { return document.getElementById(id); }
   function esc(x) { return String(x === undefined || x === null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-  function has(m) { try { return !!localStorage.getItem(m.key); } catch (e) { return false; } }
+  function has(m) { if (m.live) { return !!USED[m.id]; } try { return !!localStorage.getItem(m.key); } catch (e) { return false; } }
   function toast(fr, en) { if (typeof showToast === 'function') { showToast(T(fr, en), 'w'); } else { window.alert(T(fr, en)); } }
   /* capture du HTML qu'une fonction d'impression ecrit dans sa fenetre */
   function capture(fn) {
@@ -14924,14 +14935,14 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
       '<div class="frow"><span class="flb" data-cfr="Établi par :" data-cen="Prepared by:">Établi par :</span><input class="fi" id="pj_by" type="text" style="max-width:100%" oninput="pjSave()"></div>' +
       '<div class="ph" style="margin-top:12px" data-cfr="Modules à inclure" data-cen="Modules to include">Modules à inclure</div><div id="pj_mods"></div>' +
       '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px"><button class="btn" onclick="pjPrint()" data-cfr="PDF combiné" data-cen="Combined PDF">PDF combiné</button><button class="btn" onclick="pjExport()" data-cfr="Enregistrer le projet (.json)" data-cen="Save project (.json)">Enregistrer le projet (.json)</button><button class="btn" onclick="document.getElementById(\'pj_file\').click()" data-cfr="Ouvrir un projet" data-cen="Open a project">Ouvrir un projet</button><input type="file" id="pj_file" accept=".json,application/json" style="display:none" onchange="pjImport(this)"></div>' +
-      '<div style="font-size:10px;color:var(--ts);margin-top:8px" data-cfr="Un module apparaît « avec données » dès que vous l\'avez utilisé sur cet appareil. Ouvrir un projet remplace les données des modules de cet appareil." data-cen="A module shows as “with data” once you have used it on this device. Opening a project replaces the module data on this device."> Un module apparaît « avec données » dès que vous l\'avez utilisé sur cet appareil. Ouvrir un projet remplace les données des modules de cet appareil.</div></div>';
+      '<div style="font-size:10px;color:var(--ts);margin-top:8px" data-cfr="Un module apparaît « avec données » dès que vous l\'avez utilisé sur cet appareil. Ouvrir un projet remplace les données des modules de cet appareil. CHAMBRE FROIDE et TRAITEMENT D\'AIR ne sont pas enregistrés dans le fichier : ils sont inclus dans le PDF s\'ils ont été utilisés pendant cette session." data-cen="A module shows as “with data” once you have used it on this device. Opening a project replaces the module data on this device. COLD ROOM and AIR TREATMENT are not saved in the file: they are included in the PDF if used during this session."> Un module apparaît « avec données » dès que vous l\'avez utilisé sur cet appareil. Ouvrir un projet remplace les données des modules de cet appareil. CHAMBRE FROIDE et TRAITEMENT D\'AIR ne sont pas enregistrés dans le fichier : ils sont inclus dans le PDF s\'ils ont été utilisés pendant cette session.</div></div>';
   }
   var SEL = {};
   function drawMods() {
     var box = $('pj_mods'); if (!box) { return; }
     box.innerHTML = MODS.map(function (m) {
       var d = has(m), on = SEL[m.id] === undefined ? d : SEL[m.id];
-      return '<label style="display:flex;gap:8px;align-items:center;margin:5px 0;font-size:12px"><input type="checkbox" ' + (on ? 'checked ' : '') + 'onchange="pjSel(\'' + m.id + '\',this.checked)"><span>' + esc(T(m.fr, m.en)) + '</span><span style="font-size:10px;color:' + (d ? '#59a14f' : 'var(--ts)') + '">' + (d ? T('avec données', 'with data') : T('vide', 'empty')) + '</span></label>';
+      return '<label style="display:flex;gap:8px;align-items:center;margin:5px 0;font-size:12px"><input type="checkbox" ' + (on ? 'checked ' : '') + 'onchange="pjSel(\'' + m.id + '\',this.checked)"><span>' + esc(T(m.fr, m.en)) + '</span><span style="font-size:10px;color:' + (d ? '#59a14f' : 'var(--ts)') + '">' + (d ? (m.live ? T('utilisé dans cette session (non enregistré dans le fichier)', 'used in this session (not saved in the file)') : T('avec données', 'with data')) : T('vide', 'empty')) + '</span></label>';
     }).join('');
   }
   window.pjSel = function (id, v) { SEL[id] = v; pjSave(); };
@@ -14940,7 +14951,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
   window.pjExport = function () {
     var d = { app: 'thermosys', kind: 'project', version: 1, date: new Date().toISOString(), info: {}, data: {} };
     ['pj_proj', 'pj_cli', 'pj_site', 'pj_by'].forEach(function (i) { d.info[i] = $(i).value; });
-    MODS.forEach(function (m) { try { var v = localStorage.getItem(m.key); if (v) { d.data[m.key] = v; } } catch (e) { /* sans effet */ } });
+    MODS.forEach(function (m) { if (m.live) { return; } try { var v = localStorage.getItem(m.key); if (v) { d.data[m.key] = v; } } catch (e) { /* sans effet */ } });
     var name = ($('pj_proj').value || 'projet').replace(/[^\w\-]+/g, '_').slice(0, 40) + '.thermosys.json';
     var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(d)], { type: 'application/json' })); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   };
@@ -14952,7 +14963,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
         var d = JSON.parse(rd.result);
         if (!d || d.app !== 'thermosys' || d.kind !== 'project' || !d.data) { throw new Error('format'); }
         if (!window.confirm(T('Remplacer les données des modules de cet appareil par celles du projet ?', 'Replace the module data on this device with the project data?'))) { inp.value = ''; return; }
-        MODS.forEach(function (m) { try { if (d.data[m.key]) { localStorage.setItem(m.key, d.data[m.key]); } else { localStorage.removeItem(m.key); } } catch (e) { /* sans effet */ } });
+        MODS.forEach(function (m) { if (m.live) { return; } try { if (d.data[m.key]) { localStorage.setItem(m.key, d.data[m.key]); } else { localStorage.removeItem(m.key); } } catch (e) { /* sans effet */ } });
         try { localStorage.setItem(KEY, JSON.stringify({ sel: {}, f: d.info || {} })); } catch (e) { /* sans effet */ }
         window.location.reload();
       } catch (e) { toast('Fichier de projet non reconnu.', 'Project file not recognised.'); inp.value = ''; }
@@ -14990,7 +15001,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
     var mn = document.createElement('button'); mn.className = 'mn'; mn.id = 'mn-proj'; mn.setAttribute('onclick', "goPage('proj')");
     mn.innerHTML = '&#128193; <span id="mn_proj">PROJET</span>';
     var refb = $('mn-elec') || $('mn-heat'); if (refb && refb.parentNode) { refb.parentNode.insertBefore(mn, refb.nextSibling); } else { var any = document.querySelector('button.mn'); if (any) { any.parentNode.appendChild(mn); } }
-    restore(); applyLang();
+    restore(); applyLang(); track();
   }
   var _og = window.goPage;
   window.goPage = function (page) { if (_og) { _og.apply(this, arguments); } if (page === 'proj') { setTimeout(function () { applyLang(); }, 30); } };
@@ -15543,6 +15554,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
 </script>
 <!-- THERMOSYS-AIDE-V5 -->
 <!-- THERMOSYS-AIDE-V6 -->
+<!-- THERMOSYS-AIDE-V7 -->
 </body>
 </html>
 

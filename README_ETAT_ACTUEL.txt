@@ -1,43 +1,151 @@
 ====================================================================
 THERMOSYS v3 — ETAT DE REFERENCE OFFICIEL
 ====================================================================
-Date de cette note : 20 juillet 2026
+Date de cette note : 24 octobre 2026
 
-RÉFÉRENCE OFFICIELLE ACTUELLE :
-  dist\index.html
-  (sauvegardé également dans backups\BACKUP_20juillet2026_FIN_SESSION_PROTEGE.html)
+REFERENCE OFFICIELLE ACTUELLE :
+ index_MASTER_24octobre2026_etape27.html (copie sur PC, disque G: et dossier maitre ; sur Drive : index.html)
+ = copie exacte de dist\index.html sur le PC
+ = GitHub : github.com/Nadir1957/thermosys-v3 (commit 3ed67b9)
+ = Vercel (production) : thermosys-v3.vercel.app
+ = api/ocr.js : synchronise avec dist/api/ocr.js (a verifier a chaque modification)
 
-Ce fichier est la SEULE version fiable et à jour de l'application.
-Il contient l'intégralité des correctifs appliqués durant les sessions
-de développement de juin et juillet 2026 (plus de 90 correctifs, fix1
-à fix98), incluant :
-  - Audit complet des 22 fonctions de calcul HVAC
-  - Corrections bilingues FR/EN sur tous les modules
-  - Exports PDF professionnels (Certificat, Devis, LOTO, MAINT, SCOP,
-    Désenfumage, TEWI, RE2020) avec téléchargement automatique
-  - Correctifs de bugs critiques (sous-dimensionnement désenfumage,
-    formule Kvs, vérification RE2020, Remise/TVA Devis, etc.)
+Contenu de cette version (sessions du 19 au 23/10/2026) :
+ - Onglets OBD et BLUETOOTH masques sur le site (code conserve, non valides
+   sur materiel reel).
+ - NOUVEAU MODULE CHAMBRE FROIDE (etapes 1 a 8) : produit et conservation,
+   construction, ambiance exterieure (11 villes d'Algerie), portes et
+   infiltration, charges internes, systeme frigorifique mono ou bi-etage,
+   fluides R134a/R22/R290/R404A/R448A/R449A/R452A/R507A/R717, charge en
+   fluide et securite EN 378, energie et cout, isolation et condensation,
+   second produit, note PDF.
+ - NOUVEAU MODULE TRAITEMENT D'AIR (etapes 9 a 12) : CTA, rooftop, salles
+   propres et pharmaceutiques ; psychrometrie ASHRAE ; recuperation EN 13053 ;
+   air neuf EN 16798-1 ; filtres EN 1822 ; ISO 14644-1 et BPF Annexe 1 ;
+   cascade de pressions entre locaux et sas (etape 10) ; energie annuelle sur
+   8760 h a partir d'un fichier meteo EPW de n'importe quelle ville, avec
+   boutons d'acces a climate.onebuilding.org (etape 11) ; salles tres seches
+   avec roue dessiccante et consigne en point de rosee ; charge partielle
+   fine : profils horaires, VAV, air neuf selon occupation, COP variable
+   (etape 12). Titres de saison adaptes a la roue dessiccante (12b).
+ - ONGLET AIDE mis a jour (etape 13) : modules Chambre froide, Traitement
+   d'air, Desenfumage ; bloc Bluetooth retire ; question FAQ sur le fichier
+   meteo.
+ - NOUVEAUX MODULES DU 23/10/2026 (etapes 14 a 21) :
+   * CHARGE PRO (etape 15) : charge de refroidissement horaire avec inertie des
+     parois, vitrages, ciel clair, meteo EPW, note imprimable.
+   * PSYCHRO (etape 16) : air humide ASHRAE (verifie avec CoolProp), procedes,
+     melange, diagramme, note imprimable.
+   * CHAUFFAGE (etape 17) : deperditions EN 12831 local par local, sol ISO 13370,
+     ventilation avec recuperation, note imprimable.
+   * ELECTRICITE (etape 18) : cables et protections IEC 60364 circuit par
+     circuit (courant admissible, chute de tension, tenue thermique, court-circuit
+     minimal, PE et neutre, demarrage moteur), note imprimable.
+   * PROJET (etape 19) : dossier commun et PDF combine des notes (garde, sommaire),
+     enregistrer / ouvrir un projet (.json). MECATRONIQUE ajoute au PDF (etape 21).
+   * UNITES (etape 19b) : interrupteur SI / Imperial (double affichage, AWG).
+   * MECATRONIQUE (etape 20) : signaux 0-10 V / 4-20 mA, sondes Pt100 / Pt1000 /
+     CTN, moteur et variateur, lois des ventilateurs, vibrations ISO 10816-3,
+     couple de servomoteur de volet, logique de securite (simulation et code
+     d'exemple), depannage guide, note imprimable.
+   * ONGLET AIDE mis a jour (etape 21) : 7 nouveaux blocs et une question FAQ.
+ - Documents a jour (hors code) :
+   * Thermosys_v3_Manuel_Fonctionnel_Modules_v3 (.docx et .pdf) — manuel
+     bilingue version 3.0 (octobre 2026)
+   * THERMOSYS_v3_Annexe_technique_ONDA_octobre2026 (.docx et .pdf) — annexe au
+     dossier technique ONDA (chambre froide, traitement d'air et modules du
+     23/10/2026). Dossier ONDA n° 51004824 deja depose : l'annexe le complete.
+ - Tout le contenu anterieur reste inclus (authentification, hyd7 a hyd12,
+   refonte DEVIS, ecran de connexion anglais fixe, Refnet, auto-approbation,
+   compteur de connexions, privacy policy, page d'accueil, etc.)
 
 --------------------------------------------------------------------
-IMPORTANT — NE PAS UTILISER POUR RECONSTRUIRE L'APPLICATION :
+JALONS UTILES (copies datees conservees) :
 --------------------------------------------------------------------
-Les fichiers suivants sont OBSOLÈTES et DÉSYNCHRONISÉS par rapport
-à dist\index.html. Ils sont conservés uniquement à titre d'ARCHIVE
-HISTORIQUE (preuve de la genèse et de l'évolution du projet) :
-
-  - SOURCE_ORIGINAL.html
-  - BACKUP_27juin2026_RE2020_STABLE.html
-  - L'ancien pipeline de reconstruction en 24 étapes (patch_*.cjs,
-    obfuscate.cjs, etc.)
-
-Si reconstruction nécessaire un jour : repartir de dist\index.html
-uniquement, PAS du pipeline historique.
+ index_MASTER_09octobre2026.html        -> avant le module chambre froide
+ index_MASTER_21octobre2026_etape8.html -> chambre froide terminee
+ index_MASTER_22octobre2026_etape10.html-> traitement d'air + cascade
+ index_MASTER_23octobre2026_etape13.html-> aide + manuel v2
+ index_MASTER_23octobre2026_etape24.html-> avant visuels et unites imperiales
+ index_MASTER_24octobre2026_etape27.html-> ETAT ACTUEL (reference)
 
 --------------------------------------------------------------------
-SAUVEGARDES REDONDANTES RECOMMANDÉES :
+METHODE DE DEPLOIEMENT (rappel) :
 --------------------------------------------------------------------
-  1. Disque local D:\ (backups\)                        [FAIT]
-  2. Copie cloud (Google Drive / OneDrive)               [A FAIRE]
-  3. Copie sur support externe (clé USB / disque externe) [A FAIRE]
+ cd /d "D:\Froid et climatisation\Thermosys\Thermosys v3\files"
+ sauvegarde : copy dist\index.html "..\..\BACKUPS_SECURITE\anciens_dist\index_avant_etapeN.html"
+ node add_xxx.js dist\index.html -> controle FIN OK -> node verify_js_syntax.js
+ (76 blocs a l'etape 22) -> node protect_add.cjs -> copy dist\index.html index.html
+ -> git add index.html dist/index.html (jamais git add .) -> git commit -> git push
+ -> cd dist -> vercel --prod -> test en ligne (Ctrl+F5)
+ Une seule commande a la fois dans cmd.
 
+METHODE DE DEBOGAGE ETABLIE (code obfusque) :
+ Le fichier utilise plusieurs alias locaux pour la meme fonction de
+ decodage a0_0x264b, parfois imbriques. Un script de decodage robuste doit
+ detecter TOUS les alias recursivement.
+
+--------------------------------------------------------------------
+SAUVEGARDES REDONDANTES — ETAT ACTUEL :
+--------------------------------------------------------------------
+ 1. PC local (dist\index.html + BACKUPS_SECURITE)      [A JOUR - etape27]
+ 2. GitHub (github.com/Nadir1957/thermosys-v3)         [A JOUR - 3ed67b9]
+ 3. Google Drive - ce dossier                          [A JOUR - etape27]
+ 4. Disque externe G:\Thermosys_Backup\                [A JOUR - etape27]
+ 5. Dossier maitre D:\Thermosys_CODE_SOURCE_MASTER\    [A JOUR - etape27]
+
+ETAPE 22 - SECURITE (commit 4641410, 76 blocs) :
+ - add_secu1.js : echappe les textes saisis (DEVIS ecran+impression, reseau
+   hydraulique, resultats, journal) ; module secu1-module = garde-fou sur les
+   champs texte (< > " remplaces par ‹ › ”) + journal et toasts securises.
+ - check_rls.js : test lecture seule Supabase en visiteur anonyme (projects,
+   profiles = acces refuse 401, OK le 23/10/2026).
+ - A FAIRE avant lancement payant : tester avec 2 comptes qu'un utilisateur
+   ne lit pas les projets d'un autre ; en-tetes de securite vercel.json ;
+   remplacer les alert() par des messages internes.
+ - test: xss_test.cjs (53 -> 0 scripts executes).
+
+ETAPE 23 (commit 10b7c22) : dist\vercel.json avec en-tetes de securite
+ (nosniff, X-Frame-Options SAMEORIGIN, Referrer-Policy, Permissions-Policy
+ camera/micro/bluetooth = self). Verifie par curl -I.
+ETAPE 24 (commit 3172ab9, 76 blocs) : ELECTRICITE - schema unifilaire SVG
+ (ecran + note + PDF combine, SI/imperial) ; noms de circuits non convertis
+ en imperial (zero-width space). Mise a jour : node add_elec.js dist\index.html
+
+ETAPE 25 (commits a4fd2fd, bb7cb88) : CHAMBRE FROIDE - visuels SVG
+ (repartition des apports, coupe de la chambre + condensation), ecran et note,
+ SI/imperial. Mise a jour : node add_cr_vis.js dist\index.html (marqueur CR-VIS-2).
+
+ETAPE 26 : UNITES - controle minutieux de l'affichage imperial. Series de valeurs
+ convertir toutes (10.0 x 8.0 x 5.0 m ; 0.22 / 0.19 / 0.20 W/m2K ; -1.5/50 C), U et flux
+ (W/m2K, W/m2, W/m3, W/t), bar/psi, kg/lb, t/lb, m3/ft3, mm/in, K et C par jour en ecarts
+ (x1,8 sans +32), section d'orifice en in2 (AWG seulement en ELECTRICITE).
+ CHAMBRE FROIDE et TRAITEMENT D'AIR ajoutes au bouton SI/Imperial (ecran + saisie).
+ Mise a jour : node add_units.js dist\index.html puis node add_cr_vis.js dist\index.html
+ (marqueur CR-VIS-3).
+
+ETAPE 26b : ELECTRICITE - audit minutieux. Tables CEI 60364-5-52 verifiees. Corrections :
+ PE et neutre arrondis a la section normalisee superieure ; Icc minimale avec m = S/S_PE
+ reel (et reactance des sections >= 150 mm2) ; regroupement des cables enterres
+ (n entre deux valeurs = valeur prudente) ; mention neutre reduit (sans harmoniques).
+ Mise a jour : node add_elec.js dist\index.html (script d'audit : audit.cjs).
+
+ETAPE 26c : CHAUFFAGE audite (moteur EN 12831 / ISO 13370 correct, aucune correction).
+ UNITES : W/K (UA) et W convertis en imperial, y compris dans la fiche de chaque paroi.
+ Mise a jour : node add_units.js dist\index.html
+
+ETAPE 27 (commit 3ed67b9) : RAPPORT - lecture vocale (voiceReport) : textes FR/EN ajoutes pour CHAMBRE FROIDE,
+ TRAITEMENT D'AIR, CHARGE PRO, PSYCHRO, CHAUFFAGE, ELECTRICITE, MECATRONIQUE, PROJET ; texte de
+ presentation complete. Mise a jour : node add_audio2.js dist\index.html (marqueur THERMOSYS-AUDIO-V2).
+ A refaire a chaque nouveau module : ajouter son texte dans voiceReport.
+
+A CHAQUE MISE A JOUR IMPORTANTE :
+ - Refaire une copie datee ici
+ - Mettre a jour ce README
+ - Bien verifier la date du jour avant de nommer les fichiers
+ - Rappel : compteur de connexions et auto-approbation = cote Supabase,
+   pas dans ce fichier HTML.
+
+A FAIRE AVANT TOUTE ANNONCE PUBLIQUE : depot de la marque THERMOSYS a l'INAPI
+(classe 42).
 ====================================================================
