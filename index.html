@@ -11424,14 +11424,14 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     thin: ['Épaisseur des murs inférieure à l\'épaisseur recommandée pour cet écart de température.', 'Wall thickness below the recommended value for this temperature difference.']
   };
 
-  /* CR-VIS-1 : visuels CHAMBRE FROIDE (repartition des apports, coupe de la chambre) */
+  /* CR-VIS-2 : visuels CHAMBRE FROIDE (repartition des apports, coupe de la chambre) */
   var CRV = { scr: { ink: 'var(--tp)', mut: 'var(--ts)', bar: 'var(--ac)', trk: 'rgba(128,128,128,.16)', ok: '#3f9d55', bad: 'var(--er)', cold: '#4e79a7', hot: '#e15759', ins: 'rgba(240,190,70,.38)', hat: 'rgba(120,120,120,.6)', bg: 'rgba(78,121,167,.10)' },
     prt: { ink: '#1a3a5a', mut: '#5a6b7c', bar: '#4e79a7', trk: '#e3eaf3', ok: '#2e7d32', bad: '#c62828', cold: '#4e79a7', hot: '#c0392b', ins: '#f4d58d', hat: '#8a8a8a', bg: '#eaf2fa' } };
   function crEsc(x) { return String(x === undefined || x === null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function crLoadChart(r, pr) {
     var P = pr ? CRV.prt : CRV.scr, L = r.lines.filter(function (l) { return l.E >= 0.0005; }).sort(function (a, b) { return b.E - a.E; });
     if (!L.length) { return ''; }
-    var W = 720, rh = 25, pl = 200, prr = 130, top = 8, H = top + L.length * rh + 8, bw = W - pl - prr, mx = L[0].E, s = '';
+    var W = 780, rh = 25, pl = 196, prr = 250, top = 8, H = top + L.length * rh + 8, bw = W - pl - prr, mx = L[0].E, s = '';
     s += '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="max-width:' + W + 'px;display:block;margin:6px auto' + (pr ? ';page-break-inside:avoid' : '') + '" font-family="Arial,Helvetica,sans-serif" role="img" aria-label="' + crEsc(T('Répartition de la charge frigorifique', 'Refrigeration load breakdown')) + '">';
     L.forEach(function (l, i) {
       var y = top + i * rh, w = Math.max(2, bw * l.E / mx);
