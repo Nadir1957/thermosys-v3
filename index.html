@@ -11320,9 +11320,11 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     body += '<table class="tb"><tr><th>' + T('Poste', 'Item') + '</th><th>kWh/' + T('j', 'day') + '</th><th>kW</th><th>%</th></tr>' + r.lines.filter(function (l) { return l.E >= 0.0005; }).map(function (l) {
       return '<tr><td>' + T(LN[l.id][0], LN[l.id][1]) + '</td><td>' + f1(l.E) + '</td><td>' + f2(l.kW) + '</td><td>' + f1(l.pct) + '</td></tr>';
     }).join('') + '<tr class="tot"><td>TOTAL</td><td>' + f1(r.Etot) + '</td><td>' + f2(r.Q0) + '</td><td>100</td></tr></table>';
+    body += crLoadChart(r, 1);
     body += '<p class="n">' + T('Puissance sur temps de marche : ', 'Power over running time: ') + f1(r.Q0) + ' kW — ' + T('pointe de mise en température : ', 'pull-down peak: ') + f1(r.peak) + ' kW — ' + T('retenue : ', 'selected: ') + '<b>' + f1(r.Qsel) + ' kW</b> — ' + f0(r.perM3) + ' W/m³ — ' + f0(r.perT) + ' W/t.</p>';
     // Isolation
     body += '<p class="n">' + T('Flux thermique des murs : ', 'Wall heat flux: ') + f1(r.ins.qWall) + ' W/m² — ' + T('épaisseur recommandée : ', 'recommended thickness: ') + r.ins.dRecC + ' mm — ' + T('T° de surface extérieure ', 'outer surface temperature ') + f1(r.cond.Ts) + ' °C / ' + T('point de rosée ', 'dew point ') + f1(r.cond.Td) + ' °C.</p>';
+    body += crSection(r, p, 1);
     // Systeme
     body += h2('3. Système frigorifique et matériel', '3. Refrigeration system and equipment');
     if (o.err) {
@@ -11422,6 +11424,55 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     thin: ['Épaisseur des murs inférieure à l\'épaisseur recommandée pour cet écart de température.', 'Wall thickness below the recommended value for this temperature difference.']
   };
 
+  /* CR-VIS-1 : visuels CHAMBRE FROIDE (repartition des apports, coupe de la chambre) */
+  var CRV = { scr: { ink: 'var(--tp)', mut: 'var(--ts)', bar: 'var(--ac)', trk: 'rgba(128,128,128,.16)', ok: '#3f9d55', bad: 'var(--er)', cold: '#4e79a7', hot: '#e15759', ins: 'rgba(240,190,70,.38)', hat: 'rgba(120,120,120,.6)', bg: 'rgba(78,121,167,.10)' },
+    prt: { ink: '#1a3a5a', mut: '#5a6b7c', bar: '#4e79a7', trk: '#e3eaf3', ok: '#2e7d32', bad: '#c62828', cold: '#4e79a7', hot: '#c0392b', ins: '#f4d58d', hat: '#8a8a8a', bg: '#eaf2fa' } };
+  function crEsc(x) { return String(x === undefined || x === null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function crLoadChart(r, pr) {
+    var P = pr ? CRV.prt : CRV.scr, L = r.lines.filter(function (l) { return l.E >= 0.0005; }).sort(function (a, b) { return b.E - a.E; });
+    if (!L.length) { return ''; }
+    var W = 720, rh = 25, pl = 200, prr = 130, top = 8, H = top + L.length * rh + 8, bw = W - pl - prr, mx = L[0].E, s = '';
+    s += '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="max-width:' + W + 'px;display:block;margin:6px auto' + (pr ? ';page-break-inside:avoid' : '') + '" font-family="Arial,Helvetica,sans-serif" role="img" aria-label="' + crEsc(T('Répartition de la charge frigorifique', 'Refrigeration load breakdown')) + '">';
+    L.forEach(function (l, i) {
+      var y = top + i * rh, w = Math.max(2, bw * l.E / mx);
+      s += '<text x="' + (pl - 8) + '" y="' + (y + 16) + '" text-anchor="end" font-size="11" fill="' + P.ink + '">' + crEsc(T(LN[l.id][0], LN[l.id][1])) + '</text>' +
+        '<rect x="' + pl + '" y="' + (y + 3) + '" width="' + bw + '" height="17" rx="3" fill="' + P.trk + '"/>' +
+        '<rect x="' + pl + '" y="' + (y + 3) + '" width="' + w.toFixed(1) + '" height="17" rx="3" fill="' + P.bar + '" opacity="' + (i === 0 ? 1 : 0.8) + '"/>' +
+        '<text x="' + (pl + bw + 8) + '" y="' + (y + 16) + '" font-size="10.5" fill="' + P.ink + '"><tspan font-weight="700">' + f2(l.kW) + ' kW</tspan><tspan fill="' + P.mut + '"> · ' + f1(l.pct) + ' %</tspan></text>';
+    });
+    return s + '</svg>';
+  }
+  function crSection(r, p, pr) {
+    var P = pr ? CRV.prt : CRV.scr, W = 720, H, uid = 'crh' + Math.floor(Math.random() * 1e6);
+    var iw = 330, ih = Math.max(110, Math.min(180, iw * p.Hh / Math.max(0.5, p.Lg))), cl = function (v) { return Math.max(14, Math.min(42, v * 0.26)); };
+    var tw = cl(p.dWall), tr = cl(p.dRoof), tf = cl(p.dFloor), x0 = 78 + tw, y0 = 56 + tr, s = '';
+    H = Math.round(y0 + ih + tf + 84);
+    var Td = r.cond.Td, Ts = r.cond.Ts, cOk = Ts > Td;
+    s += '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="max-width:' + W + 'px;display:block;margin:6px auto' + (pr ? ';page-break-inside:avoid' : '') + '" font-family="Arial,Helvetica,sans-serif" role="img" aria-label="' + crEsc(T('Coupe de la chambre froide', 'Cold room section')) + '">';
+    s += '<defs><pattern id="' + uid + '" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="' + P.ins + '"/><line x1="0" y1="0" x2="0" y2="7" stroke="' + P.hat + '" stroke-width="1"/></pattern></defs>';
+    s += '<rect x="' + (x0 - tw) + '" y="' + (y0 - tr) + '" width="' + (iw + 2 * tw) + '" height="' + (ih + tr + tf) + '" fill="url(#' + uid + ')" stroke="' + P.ink + '" stroke-width="1.6"/>';
+    s += '<rect x="' + x0 + '" y="' + y0 + '" width="' + iw + '" height="' + ih + '" fill="' + P.bg + '" stroke="' + P.ink + '" stroke-width="1.6"/>';
+    s += '<text x="' + (x0 + iw / 2) + '" y="' + (y0 + ih / 2 - 4) + '" text-anchor="middle" font-size="20" font-weight="700" fill="' + P.cold + '">' + f1(p.Tr) + ' °C</text><text x="' + (x0 + iw / 2) + '" y="' + (y0 + ih / 2 + 14) + '" text-anchor="middle" font-size="11" fill="' + P.mut + '">' + f0(p.RHr) + ' % ' + T('HR', 'RH') + '</text>';
+    /* cotes interieures */
+    s += '<line x1="' + x0 + '" y1="' + (y0 + ih + tf + 16) + '" x2="' + (x0 + iw) + '" y2="' + (y0 + ih + tf + 16) + '" stroke="' + P.ink + '" stroke-width="1"/><line x1="' + x0 + '" y1="' + (y0 + ih + tf + 10) + '" x2="' + x0 + '" y2="' + (y0 + ih + tf + 22) + '" stroke="' + P.ink + '"/><line x1="' + (x0 + iw) + '" y1="' + (y0 + ih + tf + 10) + '" x2="' + (x0 + iw) + '" y2="' + (y0 + ih + tf + 22) + '" stroke="' + P.ink + '"/>';
+    s += '<text x="' + (x0 + iw / 2) + '" y="' + (y0 + ih + tf + 33) + '" text-anchor="middle" font-size="11" fill="' + P.ink + '">' + T('Longueur', 'Length') + ' ' + f1(p.Lg) + ' m (' + T('largeur', 'width') + ' ' + f1(p.Wd) + ' m)</text>';
+    s += '<line x1="' + (x0 - tw - 14) + '" y1="' + y0 + '" x2="' + (x0 - tw - 14) + '" y2="' + (y0 + ih) + '" stroke="' + P.ink + '"/><line x1="' + (x0 - tw - 20) + '" y1="' + y0 + '" x2="' + (x0 - tw - 8) + '" y2="' + y0 + '" stroke="' + P.ink + '"/><line x1="' + (x0 - tw - 20) + '" y1="' + (y0 + ih) + '" x2="' + (x0 - tw - 8) + '" y2="' + (y0 + ih) + '" stroke="' + P.ink + '"/>';
+    s += '<text x="' + (x0 - tw - 20) + '" y="' + (y0 + ih / 2) + '" text-anchor="middle" font-size="11" fill="' + P.ink + '" transform="rotate(-90 ' + (x0 - tw - 20) + ' ' + (y0 + ih / 2) + ')">' + T('Hauteur', 'Height') + ' ' + f1(p.Hh) + ' m</text>';
+    /* epaisseurs */
+    var rx = x0 + iw + tw + 14;
+    s += '<text x="' + rx + '" y="' + (y0 - tr / 2 + 4) + '" font-size="11" fill="' + P.ink + '">' + T('Toit', 'Roof') + ' ' + f0(p.dRoof) + ' mm — U ' + f2(r.U.r) + '</text>' +
+      '<text x="' + rx + '" y="' + (y0 + ih / 2 - 6) + '" font-size="11" fill="' + P.ink + '">' + T('Murs', 'Walls') + ' ' + f0(p.dWall) + ' mm — U ' + f2(r.U.w) + '</text>' +
+      '<text x="' + rx + '" y="' + (y0 + ih / 2 + 9) + '" font-size="9.5" fill="' + P.mut + '">' + T('recommandé', 'recommended') + ' ' + r.ins.dRecC + ' mm</text>' +
+      '<text x="' + rx + '" y="' + (y0 + ih + tf / 2 + 4) + '" font-size="11" fill="' + P.ink + '">' + T('Plancher', 'Floor') + ' ' + f0(p.dFloor) + ' mm — U ' + f2(r.U.f) + '</text>';
+    s += '<text x="' + rx + '" y="' + (y0 - tr - 14) + '" font-size="9.5" fill="' + P.mut + '">U ' + T('en', 'in') + ' W/m²K</text>';
+    /* exterieur */
+    s += '<text x="' + (x0 - tw - 6) + '" y="22" text-anchor="start" font-size="11" font-weight="700" fill="' + P.hot + '">' + T('Extérieur', 'Outside') + ' ' + f1(p.Text) + ' °C · ' + f0(p.RHext) + ' % ' + T('HR', 'RH') + '</text>';
+    /* condensation */
+    var cy = H - 18;
+    s += '<rect x="' + (x0 - tw) + '" y="' + (cy - 14) + '" width="' + (iw + 2 * tw) + '" height="22" rx="11" fill="' + (cOk ? P.ok : P.bad) + '"/><text x="' + (x0 + iw / 2) + '" y="' + (cy + 1) + '" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">' + (cOk ? '✓ ' + T('Pas de condensation', 'No condensation') : '✕ ' + T('Risque de condensation', 'Condensation risk')) + ' — ' + T('surface', 'surface') + ' ' + f1(Ts) + ' °C / ' + T('rosée', 'dew') + ' ' + f1(Td) + ' °C</text>';
+    return s + '</svg>';
+  }
+
   function render(r, p) {
     var o = $('cr_out'); if (!o) { return; }
     if (r.err) {
@@ -11439,6 +11490,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       h += '<tr style="border-top:1px solid var(--border)"><td>' + T(LN[l.id][0], LN[l.id][1]) + '</td><td style="text-align:right">' + f1(l.E) + '</td><td style="text-align:right">' + f2(l.kW) + '</td><td style="text-align:right">' + f1(l.pct) + '</td></tr>';
     });
     h += '<tr style="border-top:2px solid var(--border);font-weight:700"><td>TOTAL</td><td style="text-align:right">' + f1(r.Etot) + '</td><td style="text-align:right">' + f2(r.Q0) + '</td><td style="text-align:right">100</td></tr></table>';
+    h += '<div class="ph" style="margin-top:10px">' + T('RÉPARTITION DES APPORTS', 'LOAD BREAKDOWN') + '</div>' + crLoadChart(r, 0);
     h += '<div style="font-size:11px;margin-top:8px;line-height:1.6"><b>' + T('Chambre', 'Room') + '</b> : ' + f1(r.V) + ' m³ — ' + T('stock', 'stock') + ' ' + f1(p.stockT) + ' t — ' + f0(r.perM3) + ' W/m³ — ' + f0(r.perT) + ' W/t<br>' +
       '<b>' + T('Produit entrant', 'Incoming product') + '</b> : ' + f0(r.mDay) + ' kg/' + T('jour', 'day') + (r.prodSplit.lat > 0 ? ' (' + T('dont chaleur latente', 'incl. latent heat') + ' ' + f1(r.prodSplit.lat) + ' kWh)' : '') + '<br>' +
       (r.ach ? '<b>' + T('Renouvellement d\'air', 'Air changes') + '</b> : ' + f1(r.ach) + ' / 24 h<br>' : '') +
@@ -11449,6 +11501,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       T('Flux thermique murs', 'Wall heat flux') + ' : ' + f1(r.ins.qWall) + ' W/m² (' + T('cible indicative', 'indicative target') + ' ≤ ' + r.ins.qTarget + ')<br>' +
       T('Épaisseur recommandée', 'Recommended thickness') + ' : <b>' + r.ins.dRecC + ' mm</b> (' + f0(r.ins.dRec) + ' mm ' + T('calculés', 'calculated') + ')<br>' +
       T('T° de surface extérieure', 'Outer surface temperature') + ' : ' + f1(r.cond.Ts) + ' °C — ' + T('point de rosée', 'dew point') + ' ' + f1(r.cond.Td) + ' °C</div>';
+    h += crSection(r, p, 0);
     h += '<div style="font-size:10px;color:var(--ts);margin-top:10px;line-height:1.5">' + T(
       'Méthode : bilan sur 24 h ramené au temps de marche (sécurité et dégivrage inclus). Chaleurs massiques calculées par les formules de Siebel à partir de la teneur en eau. Les propriétés du produit, les coefficients de renouvellement d\'air et les taux de respiration sont des valeurs indicatives, modifiables, à confirmer par le concepteur selon la variété, le conditionnement et les normes locales. Résultat d\'aide à la décision : il ne remplace pas la note de calcul d\'un bureau d\'études.',
       'Method: 24 h load brought back to running time (safety and defrost included). Specific heats from Siebel formulas based on water content. Product properties, air-change rates and respiration rates are indicative, editable values to be confirmed by the designer according to variety, packaging and local standards. Decision-support result: it does not replace an engineering office calculation note.') + '</div>';
