@@ -139,6 +139,23 @@ ETAPE 27 (commit 3ed67b9) : RAPPORT - lecture vocale (voiceReport) : textes FR/E
  presentation complete. Mise a jour : node add_audio2.js dist\index.html (marqueur THERMOSYS-AUDIO-V2).
  A refaire a chaque nouveau module : ajouter son texte dans voiceReport.
 
+ETAPE 28 (commit 26dc408) : audit minutieux de PSYCHRO, CHARGE PRO, MECATRONIQUE, CHAMBRE FROIDE, TRAITEMENT D'AIR
+ (comparaison CoolProp, formules et normes relues) : aucune erreur de calcul. PROJET : CHAMBRE FROIDE
+ et TRAITEMENT D'AIR ajoutes au PDF combine (si utilises pendant la session ; non enregistres dans le
+ fichier .json). Mise a jour : node add_proj.js dist\index.html puis node add_aide6.js dist\index.html
+ (marqueur THERMOSYS-AIDE-V7).
+
+ETAPE 29 : controle des anciens modules (30 fonctions relues, tests CoolProp). 7 calculs corriges :
+ VASE D'EXPANSION (dilatation interpolee, reserve d'eau 0,5 % min 3 L, marge soupape, serie commerciale),
+ POMPE (arbre / electrique / moteur serie IEC, NPSH a verifier), R290 charge max (limite 0,008 kg/m3 et
+ 25 % LFL, plus de bonus ventilation), DEGRES-HEURES (puissance clim en kW coherente, EN 16798-1),
+ CHARGE rapide (majoration 20 % appliquee, latent occupants), TEWI (controles etancheite 5/50/500 tCO2e,
+ Reglement UE 2024/573), SCOP (classes UE 811/2013 a 35 et 55 C, ligne EER supprimee, CO2 par pays).
+ Page d'accueil : texte FR/EN mis a jour (nouveaux modules), compteur Sections 15 -> 28.
+ Module : bloc <script id="audit29-module"> (surcharge les fonctions globales ; 77 blocs).
+ Mise a jour : node add_audit29.js dist\index.html
+ Restent a relire (non audites) : calcRefnet, calcSegmentPDC, computeCriticalPath, fonctions conv*.
+
 A CHAQUE MISE A JOUR IMPORTANTE :
  - Refaire une copie datee ici
  - Mettre a jour ce README

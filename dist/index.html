@@ -164,7 +164,7 @@
 <!-- HOME -->
 <div class="page active" id="pg-home">
 <div class="ptitle"><span id="t_dashboard">TABLEAU DE BORD</span></div>
-<div class="g4"><div class="sc"><div class="sc-l" id="t_sc_prod">Equipements</div><div class="sc-v">80</div><div class="sc-s" id="t_sc_prod2">Multi-marques 2024-2025</div></div><div class="sc"><div class="sc-l" id="t_sc_brands">Constructeurs</div><div class="sc-v">50</div><div class="sc-s" id="t_sc_brands2">Mondiaux &amp; Regionaux</div></div><div class="sc"><div class="sc-l" id="t_sc_norms">Normes</div><div class="sc-v" id="normCount">38</div><div class="sc-s" id="t_sc_active">Actives 2024-2025</div></div><div class="sc"><div class="sc-l" id="t_sc_sections">Sections</div><div class="sc-v">15</div><div class="sc-s">Modules specialises</div></div></div>
+<div class="g4"><div class="sc"><div class="sc-l" id="t_sc_prod">Equipements</div><div class="sc-v">80</div><div class="sc-s" id="t_sc_prod2">Multi-marques 2024-2025</div></div><div class="sc"><div class="sc-l" id="t_sc_brands">Constructeurs</div><div class="sc-v">50</div><div class="sc-s" id="t_sc_brands2">Mondiaux &amp; Regionaux</div></div><div class="sc"><div class="sc-l" id="t_sc_norms">Normes</div><div class="sc-v" id="normCount">38</div><div class="sc-s" id="t_sc_active">Actives 2024-2025</div></div><div class="sc"><div class="sc-l" id="t_sc_sections">Sections</div><div class="sc-v">28</div><div class="sc-s">Modules specialises</div></div></div>
 <div class="g2" style="margin-top:10px">
 <div class="panel" style="line-height:1.75">
   <!-- FR text -->
@@ -177,12 +177,10 @@
     </p>
     <div style="font-size:10.5px;color:var(--ac);font-weight:700;margin:8px 0 4px">Ce que Thermosys vous apporte :</div>
     <p style="font-size:11px;color:var(--ts);margin:0 0 6px">
-      Accédez instantanément à une base de données de plus de 80 équipements couvrant les principales marques du marché.
-      Calculez avec précision les charges frigorifiques, les performances SCOP/COP/EER selon votre zone climatique,
-      ou dimensionnez vos réseaux hydrauliques en quelques secondes.
+      Accédez instantanément à une base de données de plus de 80 équipements couvrant les principales marques du marché. Calculez avec précision les charges thermiques (CHARGE, CHARGE PRO), l'air humide (PSYCHRO), les déperditions EN 12831 (CHAUFFAGE), les câbles et protections (ÉLECTRICITÉ), les chambres froides, le traitement d'air et les salles propres, la mécatronique (signaux, moteurs, vibrations), les performances SCOP/COP/EER selon votre zone climatique, ou dimensionnez vos réseaux hydrauliques en quelques secondes.
     </p>
     <p style="font-size:11px;color:var(--ts);margin:0 0 6px">
-      L'application intègre un module de consignation LOTO conforme aux normes EN ISO 14118:2018 et NF C18-510,
+      Chaque module produit une note de calcul PDF, et le module PROJET les regroupe dans un dossier unique (sauvegarde et rechargement du projet), au choix en unités SI ou impériales. L'application intègre un module de consignation LOTO conforme aux normes EN ISO 14118:2018 et NF C18-510,
       un générateur de devis, un lecteur de codes erreurs, et un outil de conformité RE2020 avec vérification
       des seuils 2025 applicables en France.
     </p>
@@ -205,12 +203,10 @@
     </p>
     <div style="font-size:10.5px;color:var(--ac);font-weight:700;margin:8px 0 4px">What Thermosys offers:</div>
     <p style="font-size:11px;color:var(--ts);margin:0 0 6px">
-      Instantly access a database of over 80 units covering the main market brands.
-      Accurately calculate cooling loads, evaluate SCOP/COP/EER performance across your climate zone,
-      or size hydraulic networks in seconds.
+      Instantly access a database of over 80 units covering the main market brands. Accurately calculate thermal loads (CHARGE, CHARGE PRO), moist air (PSYCHRO), EN 12831 heat losses (HEATING), cables and protection (ELECTRICAL), cold rooms, air treatment and clean rooms, mechatronics (signals, motors, vibration), evaluate SCOP/COP/EER performance across your climate zone, or size hydraulic networks in seconds.
     </p>
     <p style="font-size:11px;color:var(--ts);margin:0 0 6px">
-      The application includes a LOTO lockout module compliant with EN ISO 14118:2018 and NF C18-510,
+      Each module produces a PDF calculation note, and the PROJET module gathers them into a single project file (project save and reload), in SI or imperial units. The application includes a LOTO lockout module compliant with EN ISO 14118:2018 and NF C18-510,
       a quote generator, a fault code reader, and an RE2020 compliance tool with 2025 threshold verification.
     </p>
     <p style="font-size:11px;color:var(--ts);margin:0 0 8px">
@@ -15555,6 +15551,176 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
 <!-- THERMOSYS-AIDE-V5 -->
 <!-- THERMOSYS-AIDE-V6 -->
 <!-- THERMOSYS-AIDE-V7 -->
+<script id="audit29-module">
+/* AUDIT29 — corrections des anciens calculateurs (étape 29) */
+(function(){
+'use strict';
+if (window.__audit29) return; window.__audit29 = true;
+function $(id){ return document.getElementById(id); }
+function num(id, def){ var e=$(id); if(!e) return def; var v=parseFloat(String(e.value).replace(',','.')); return isFinite(v)?v:def; }
+function isFr(){ return (window.lang||'fr')!=='en'; }
+function L(fr,en){ return isFr()?fr:en; }
+function lerp(tbl,x){ if(x<=tbl[0][0]) return tbl[0][1]; for(var i=1;i<tbl.length;i++){ if(x<=tbl[i][0]){ var a=tbl[i-1],b=tbl[i]; return a[1]+(b[1]-a[1])*(x-a[0])/(b[0]-a[0]); } } return tbl[tbl.length-1][1]; }
+
+/* ---------- 1. POMPE ---------- */
+var MOT=[0.09,0.12,0.18,0.25,0.37,0.55,0.75,1.1,1.5,2.2,3,4,5.5,7.5,11,15,18.5,22,30,37,45,55,75,90,110,132,160,200,250,315];
+window.calcPompe=function(){
+  var Q=num('pompeQ',10), H=num('pompeHMT',15), eta=num('pompeEta',65);
+  var out=$('pompeResult'); if(!out) return;
+  if(!(Q>0)||!(H>0)||!(eta>0&&eta<=100)){ out.textContent=L('Entrées invalides : Q, HMT > 0 et 0 < η ≤ 100 %.','Invalid inputs: Q, head > 0 and 0 < η ≤ 100 %.'); return; }
+  var ph=Q*H*1000*9.81/3600/1000, ps=ph/(eta/100), pel=ps/0.90, need=ps*1.25, mot=null;
+  for(var i=0;i<MOT.length;i++){ if(MOT[i]>=need-1e-9){ mot=MOT[i]; break; } }
+  out.textContent=[
+    L('P hydraulique : ','Hydraulic power: ')+ph.toFixed(3)+' kW  (ρ = 1000 kg/m³, '+L('eau froide','cold water')+')',
+    L('P à l\'arbre (P hydr. / η pompe) : ','Shaft power (hyd. / pump η): ')+ps.toFixed(3)+' kW',
+    L('P électrique absorbée (η moteur 0,90 supposé) : ','Electric input (motor η 0.90 assumed): ')+pel.toFixed(3)+' kW',
+    L('Moteur recommandé (arbre ×1,25, série IEC) : ','Recommended motor (shaft ×1.25, IEC series): ')+(mot?mot+' kW':L('> 315 kW, voir constructeur','> 315 kW, see manufacturer')),
+    L('NPSH : à vérifier — NPSHd = (Patm − Pv)/(ρ·g) − h aspiration − pertes de charge aspiration ; il doit dépasser le NPSHr de la courbe constructeur d\'au moins 0,5 m.','NPSH: to be checked — NPSHa = (Patm − Pv)/(ρ·g) − suction lift − suction losses; it must exceed the NPSHr of the manufacturer curve by at least 0.5 m.')
+  ].join('\n');
+};
+
+/* ---------- 2. VASE D'EXPANSION ---------- */
+var RHO=[[0,999.84],[5,999.97],[10,999.70],[15,999.10],[20,998.21],[25,997.05],[30,995.65],[35,994.03],[40,992.22],[45,990.21],[50,988.04],[55,985.69],[60,983.20],[65,980.55],[70,977.76],[75,974.84],[80,971.79],[85,968.61],[90,965.31],[95,961.90],[100,958.37],[105,954.73],[110,950.98],[115,947.12],[120,943.16]];
+var VASES=[8,12,18,24,35,50,80,100,140,200,250,300,400,500,600,800,1000,1500,2000,3000,5000];
+window.calcVase=function(){
+  var V=num('vaseVol',500), T2=num('vaseT2',80), T1=num('vaseT1',10), Ps=num('vasePs',1.5), Pm=num('vasePmax',3);
+  var out=$('vaseResult'); if(!out) return;
+  if(!(V>0)||T2<=T1||T2>120||T1<0){ out.textContent=L('Entrées invalides : volume > 0 et 0 ≤ T1 < T2 ≤ 120 °C.','Invalid inputs: volume > 0 and 0 ≤ T1 < T2 ≤ 120 °C.'); return; }
+  var beta=lerp(RHO,T1)/lerp(RHO,T2)-1;
+  var Pi=Math.max(Ps+1,2);
+  var dp=Pm<=5?0.5:0.1*Pm;
+  var Pf=Pm-dp+1;
+  if(Pf<=Pi+0.2){ out.textContent=L('IMPOSSIBLE : la pression finale admissible ('+Pf.toFixed(2)+' bar abs) est trop proche de la pression de gonflage ('+Pi.toFixed(2)+' bar abs). Augmenter la pression de soupape ou réduire la hauteur statique.','IMPOSSIBLE: allowable final pressure ('+Pf.toFixed(2)+' bar abs) is too close to the pre-charge ('+Pi.toFixed(2)+' bar abs). Raise the relief valve pressure or reduce the static head.'); return; }
+  var Ve=V*beta, Vr=Math.max(3,0.005*V), Vn=(Ve+Vr)/(1-Pi/Pf);
+  var vn=null; for(var i=0;i<VASES.length;i++){ if(VASES[i]>=Vn){ vn=VASES[i]; break; } }
+  if(vn===null) vn=Math.ceil(Vn/500)*500;
+  out.textContent=[
+    L('Coefficient de dilatation β ('+T1+' → '+T2+' °C) : ','Expansion coefficient β ('+T1+' → '+T2+' °C): ')+beta.toFixed(4)+L('  (masse volumique de l\'eau interpolée)','  (interpolated water density)'),
+    L('Dilatation Ve : ','Expansion Ve: ')+Ve.toFixed(1)+' L  |  '+L('Réserve d\'eau Vr (0,5 % min 3 L) : ','Water reserve Vr (0.5 % min 3 L): ')+Vr.toFixed(1)+' L',
+    L('P gonflage : ','Pre-charge: ')+Pi.toFixed(1)+' bar abs ('+(Pi-1).toFixed(1)+' bar rel.)  |  '+L('P finale : ','Final P: ')+Pf.toFixed(2)+' bar abs  (soupape '+Pm.toFixed(1)+' bar − '+dp.toFixed(2)+' bar)',
+    L('VOLUME VASE CALCULÉ : ','CALCULATED VESSEL VOLUME: ')+Math.ceil(Vn)+' L',
+    L('Vase commercial retenu : ','Commercial vessel selected: ')+vn+' L  (Vn = (Ve + Vr) / (1 − Pi/Pf), EN 12828 / EN 13831)'
+  ].join('\n');
+};
+
+/* ---------- 3. R290 charge max ---------- */
+window.calcR290Max=function(){
+  var V=num('r290-vol',20), vent=parseInt(($('r290-vent')||{}).value)||0, out=$('r290-result'); if(!out) return;
+  if(!(V>0)){ out.textContent=L('Volume invalide.','Invalid volume.'); return; }
+  var LFL=0.038, mPrat=0.008*V*1000, m25=0.25*LFL*V*1000, mLim=Math.min(mPrat,m25);
+  out.textContent=[
+    L('Volume du local : ','Room volume: ')+V+' m³',
+    L('Ventilation : ','Ventilation: ')+(vent?L('Oui','Yes'):L('Non — espace confiné','No — confined space')),
+    '─────────────────────────────',
+    'LFL R290 (2,1 % vol.) : '+(LFL*1000).toFixed(0)+' g/m³  →  '+(LFL*V*1000).toFixed(0)+' g '+L('(limite d\'explosivité dans tout le local)','(explosive limit over the whole room)'),
+    L('25 % du LFL : ','25 % of LFL: ')+m25.toFixed(0)+' g',
+    L('Limite pratique EN 378-1 (0,008 kg/m³) : ','EN 378-1 practical limit (0.008 kg/m³): ')+mPrat.toFixed(0)+' g',
+    '─────────────────────────────',
+    '✅ '+L('Charge maximale retenue : ','Maximum charge retained: ')+mLim.toFixed(0)+' g ('+(mLim/V).toFixed(1)+' g/m³)',
+    vent?L('ℹ️ Ventilation : elle peut permettre une charge plus élevée seulement par calcul selon IEC 60335-2-40 (Annexe GG) — pas de majoration automatique ici.','ℹ️ Ventilation: a higher charge is allowed only by calculation per IEC 60335-2-40 (Annex GG) — no automatic uplift here.'):L('⚠️ Local non ventilé : ne pas dépasser cette charge ; prévoir ventilation et détection avant toute intervention.','⚠️ Unventilated room: do not exceed this charge; provide ventilation and detection before any work.'),
+    L('ℹ️ Vérifier aussi la charge maximale de l\'appareil (norme produit, notice constructeur) ; le R290 est plus lourd que l\'air et s\'accumule en partie basse.','ℹ️ Also check the appliance maximum charge (product standard, manufacturer data); R290 is heavier than air and pools at floor level.')
+  ].join('\n');
+};
+
+/* ---------- 4. Degrés-heures ---------- */
+window.calcDH=function(){
+  var Text=num('dh-text',36), Tint=num('dh-tint',28), Tlim=num('dh-tlim',26), h=num('dh-hjour',8), d=num('dh-jours',90), S=num('dh-surf',150);
+  var cat=($('dh-cat')||{}).value||'II', out=$('dh-result'), sol=$('dh-solutions'); if(!out) return;
+  var DH=Math.max(0,Tint-Tlim)*h*d, lim={'I':100,'II':300,'III':600,'IV':9999}[cat]||300, ok=DH<=lim;
+  var over=ok?0:((DH/lim-1)*100).toFixed(0);
+  var wm2=40+4*Math.max(0,Text-26), P=S*wm2, E=P*h*d/1000/3.2, DH28=Math.max(0,Tint-28)*h*d;
+  out.textContent=[
+    L('T° extérieure max : ','Max outdoor T: ')+Text+'°C',
+    L('T° intérieure : ','Indoor T: ')+Tint+'°C',
+    L('T° limite confort : ','Comfort limit T: ')+Tlim+'°C ('+h+L(' h/j × ',' h/d × ')+d+L(' jours)',' days)'),
+    '────────────────────────────',
+    L('DH calculé : ','DH calculated: ')+DH.toFixed(0)+' DH',
+    L('DH limite cat. ','DH limit cat. ')+cat+' : '+(lim<9999?lim:'∞')+' DH '+L('(seuil indicatif de l\'outil, non normatif)','(tool indicative threshold, not normative)'),
+    ok?L('✅ Inconfort limité — catégorie '+cat+' (critère indicatif, cf. EN 16798-1)','✅ Limited discomfort — category '+cat+' (indicative criterion, see EN 16798-1)'):L('❌ Critère dépassé : +'+over+' %','❌ Criterion exceeded: +'+over+' %'),
+    '────────────────────────────',
+    L('DH surchauffe sévère (>28°C) : ','Severe overheating DH (>28°C): ')+DH28.toFixed(0)+' DH',
+    L('Puissance de climatisation estimée : ','Estimated cooling power: ')+(P/1000).toFixed(1)+' kW  ('+wm2.toFixed(0)+' W/m²)',
+    L('Énergie électrique maximale/an : ','Maximum electric energy/year: ')+E.toFixed(0)+' kWh (COP=3.2, '+L('pleine charge','full load')+')',
+    L('Surface conditionnée : ','Conditioned area: ')+S+' m²',
+    L('ℹ️ Estimation grossière (±50 %) : pour dimensionner, utiliser CHARGE THERMIQUE / CHARGE PRO.','ℹ️ Rough estimate (±50 %): use COOLING LOAD / CHARGE PRO modules for sizing.')
+  ].join('\n');
+  if(sol){
+    var r=[];
+    if(!ok){
+      if(DH>lim*2) r.push('🔴 '+L('Climatisation nécessaire — puissance min : ','Air conditioning needed — min power: ')+(P/1000).toFixed(1)+' kW');
+      if(DH28>200) r.push('🔴 '+L('Surchauffe sévère — ventilation nocturne + inertie thermique','Severe overheating — night ventilation + thermal mass'));
+      r.push('🟡 '+L('Brasseurs d\'air : réduction ressentie −2 à −4°C (~25 W/pièce)','Ceiling fans: perceived reduction −2 to −4°C (~25 W/room)'));
+      r.push('🟡 '+L('Protection solaire extérieure : réduction des gains ≈ −40 % (stores/volets)','External solar shading: gains reduction ≈ −40 % (blinds/shutters)'));
+      r.push('🟡 '+L('Végétalisation de façade : réduction de T façade (valeur dépendant du site)','Green façade: lower façade temperature (site dependent)'));
+    } else {
+      r.push('✅ '+L('Confort satisfaisant sans climatisation','Comfort satisfactory without air conditioning'));
+      r.push('🟢 '+L('Ventilation naturelle traversante suffisante','Natural cross ventilation sufficient'));
+      if(DH>lim*0.7) r.push('🟡 '+L('Brasseurs d\'air recommandés en préventif','Ceiling fans recommended as precaution'));
+    }
+    sol.innerHTML=r.map(function(t){ return '<div style="padding:4px 0;border-bottom:1px solid rgba(0,229,255,.07)">'+t+'</div>'; }).join('');
+  }
+};
+
+/* ---------- 5. CHARGE rapide (wrapper) ---------- */
+var _cc=window.calcCharge;
+if(typeof _cc==='function') window.calcCharge=function(){
+  var r=_cc.apply(this,arguments);
+  try{
+    var res=$('chgResult'), reco=$('chgReco'); if(!res) return r;
+    var m=/TOTAL:\s*([\d.]+)\s*kW/.exec(res.textContent); if(!m) return r;
+    var tot=parseFloat(m[1]), pers=num('chgPers',4), lat=pers*55/1000;
+    var type=($('chgType')||{}).value||'bur', rule=({res:35,bur:50,com:70,ind:60})[type]||50, S=num('chgSurf',100);
+    var need=Math.max(Math.ceil((tot+lat)*1.2/1.5)*1.5, S*rule/1000);
+    res.textContent+='\n'+L('+ latent personnes (≈55 W/pers.) : ','+ occupants latent (≈55 W/person): ')+lat.toFixed(2)+' kW\n'+L('TOTAL avec latent personnes : ','TOTAL incl. occupant latent: ')+(tot+lat).toFixed(2)+' kW\n'+L('ℹ️ Estimation rapide, charge sensible (air neuf : latent non inclus). Bilan complet : modules CHARGE PRO / PSYCHRO.','ℹ️ Quick estimate, sensible load (fresh-air latent not included). Full load: CHARGE PRO / PSYCHRO modules.');
+    if(reco) reco.textContent=L('Puissance recommandée : ','Recommended capacity: ')+need.toFixed(1)+' kW ('+L('majoration 20 % appliquée, paliers de 1,5 kW','20 % margin applied, 1.5 kW steps')+')';
+  }catch(e){}
+  return r;
+};
+
+/* ---------- 6. TEWI (wrapper : obligations F-gas) ---------- */
+var _tw=window.calcTEWI;
+if(typeof _tw==='function') window.calcTEWI=function(){
+  var r=_tw.apply(this,arguments);
+  try{
+    var out=$('tewiResult'); if(!out) return r;
+    var gwp=num('tewi_ref',2088), ch=num('tewi_charge',5.5), teq=ch*gwp/1000, en=!isFr();
+    var old=gwp>=2500?'Phase-out F-Gas 2025+':teq>=500?(en?'Quarterly inspection (>=500 tCO2eq)':'Inspection trimestrielle (>=500 tCO2eq)'):teq>=50?(en?'Semi-annual inspection (>=50 tCO2eq)':'Inspection semestrielle (>=50 tCO2eq)'):teq>=5?(en?'Annual inspection (>=5 tCO2eq)':'Inspection annuelle (>=5 tCO2eq)'):(en?'No inspection obligation':'Pas d\'obligation d\'inspection');
+    var ins=teq>=500?L('Contrôle d\'étanchéité tous les 3 mois (≥ 500 tCO2e)','Leak check every 3 months (≥ 500 tCO2e)'):teq>=50?L('Contrôle d\'étanchéité tous les 6 mois (≥ 50 tCO2e)','Leak check every 6 months (≥ 50 tCO2e)'):teq>=5?L('Contrôle d\'étanchéité tous les 12 mois (≥ 5 tCO2e ; seuil 10 tCO2e si équipement hermétiquement scellé)','Leak check every 12 months (≥ 5 tCO2e; 10 tCO2e threshold if hermetically sealed)'):L('Pas de contrôle périodique obligatoire (< 5 tCO2e)','No mandatory periodic leak check (< 5 tCO2e)');
+    var neu=ins+(gwp>=2500?L('<br>⚠️ PRG ≥ 2500 : fluide soumis aux interdictions et à la réduction progressive du Règlement UE 2024/573 (usage/maintenance selon le cas).','<br>⚠️ GWP ≥ 2500: refrigerant subject to bans and phase-down of EU Regulation 2024/573 (use/servicing depending on case).'):'')+L('<br><i>Réf. : Règlement (UE) 2024/573.</i>','<br><i>Ref.: Regulation (EU) 2024/573.</i>');
+    var h=out.innerHTML, oe=old.replace(/>=/g,'&gt;=');
+    if(h.indexOf(oe)>=0) out.innerHTML=h.replace(oe,neu); else if(h.indexOf(old)>=0) out.innerHTML=h.replace(old,neu);
+  }catch(e){}
+  return r;
+};
+
+/* ---------- 7. SCOP (wrapper : classes ErP, CO2, EER) ---------- */
+var _sc=window.calcSCOP;
+if(typeof _sc==='function') window.calcSCOP=function(){
+  var r=_sc.apply(this,arguments);
+  try{
+    var out=$('scopResult'); if(!out) return r;
+    var txt=out.textContent, m=/SCOP[^:\n]*:\s*([\d.]+)/i.exec(txt); var s=parseFloat(m&&m[1]); if(!(s>0)) return r;
+    var lines=txt.split('\n'), head=lines.slice(0,3);
+    var etas=s/2.5*100-3;
+    function cls(e,t){ for(var i=0;i<t.length;i++){ if(e>=t[i][0]) return t[i][1]; } return 'G'; }
+    var T35=[[175,'A+++'],[150,'A++'],[123,'A+'],[115,'A'],[107,'B'],[100,'C'],[61,'D'],[59,'E'],[55,'F']];
+    var T55=[[150,'A+++'],[125,'A++'],[98,'A+'],[90,'A'],[82,'B'],[75,'C'],[36,'D'],[34,'E'],[30,'F']];
+    var cap=num('scopCap',16), cop=num('scopCOP',3.8), E=cap*2000/s;
+    var ct=($('scopCountry')||{}).value||'', gf={DZ:0.587,FR:0.084}[ct];
+    var co2=gf?(L('CO₂ : ','CO₂: ')+(E*gf).toFixed(0)+' kg ('+gf+' kg/kWh)'):L('CO₂ : voir le module TEWI (facteur réseau du pays)','CO₂: see TEWI module (country grid factor)');
+    out.textContent=head.concat([
+      L('COP nominal (A7/W35) : ','Nominal COP (A7/W35): ')+cop,
+      'SCOP '+L('estimé','estimated')+' : '+s.toFixed(2)+'   (ηs = '+etas.toFixed(0)+' %)',
+      L('Classe énergétique (UE 811/2013) : ','Energy class (EU 811/2013): ')+cls(etas,T35)+L(' à 35 °C  |  ',' at 35 °C  |  ')+cls(etas,T55)+L(' à 55 °C',' at 55 °C'),
+      L('Énergie/an (≈2000 h équivalent pleine charge) : ','Energy/year (≈2000 full-load-equivalent h): ')+E.toFixed(0)+' kWh — '+co2,
+      L('ℹ️ Estimation : SCOP = COP nominal × facteur de zone. La valeur réglementaire se calcule par la méthode des « bins » EN 14825 ; ηs = SCOP/2,5 − F(1) 3 % (pompe air ; −5 % de plus eau/eau).','ℹ️ Estimate: SCOP = nominal COP × zone factor. The regulatory value uses the EN 14825 bin method; ηs = SCOP/2.5 − F(1) 3 % (air source; a further −5 % for water/brine).')
+    ]).join('\n');
+  }catch(e){}
+  return r;
+};
+})();
+
+</script>
 </body>
 </html>
 
