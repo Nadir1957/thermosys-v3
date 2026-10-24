@@ -11009,9 +11009,9 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     var TR = function (a, b, bold) { return '<tr style="border-top:1px solid var(--border)"><td>' + a + '</td><td style="text-align:right">' + (bold ? '<b>' + b + '</b>' : b) + '</td></tr>'; };
     h += '<div style="font-size:11px;line-height:1.6"><b>' + c.fluid + '</b> — GWP ' + inf.gwp + ' — ' + T('classe', 'class') + ' ' + inf.cls + '<br>' + T(inf.fr, inf.en) + '<br>' + biDesc(c) + '</div>';
     h += '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:6px">' +
-      TR(T('T° d\'évaporation (rosée)', 'Evaporating temperature (dew)'), '<b>' + f1(c.T0) + ' °C</b> — ' + f2(o.P0) + ' bar abs (' + rel(o.P0) + ' ' + T('relatif', 'gauge') + ')') +
-      TR(T('T° intermédiaire', 'Intermediate temperature') + (o.auto ? ' (' + T('optimum automatique', 'automatic optimum') + ')' : ''), '<b>' + f1(o.Tm) + ' °C</b> — ' + f2(o.Pm) + ' bar abs (' + rel(o.Pm) + ' ' + T('relatif', 'gauge') + ')') +
-      TR(T('T° de condensation (rosée)', 'Condensing temperature (dew)'), '<b>' + f1(c.Tk) + ' °C</b> — ' + f2(o.Pk) + ' bar abs (' + rel(o.Pk) + ' ' + T('relatif', 'gauge') + ')') +
+      TR(T('T° d\'évaporation (rosée)', 'Evaporating temperature (dew)'), '<b>' + f1(c.T0) + ' °C</b> — ' + f2(o.P0) + ' bar abs (' + rel(o.P0) + ' bar ' + T('relatif', 'gauge') + ')') +
+      TR(T('T° intermédiaire', 'Intermediate temperature') + (o.auto ? ' (' + T('optimum automatique', 'automatic optimum') + ')' : ''), '<b>' + f1(o.Tm) + ' °C</b> — ' + f2(o.Pm) + ' bar abs (' + rel(o.Pm) + ' bar ' + T('relatif', 'gauge') + ')') +
+      TR(T('T° de condensation (rosée)', 'Condensing temperature (dew)'), '<b>' + f1(c.Tk) + ' °C</b> — ' + f2(o.Pk) + ' bar abs (' + rel(o.Pk) + ' bar ' + T('relatif', 'gauge') + ')') +
       TR(T('Rapport de pression BP / HP / global', 'Pressure ratio LP / HP / overall'), f1(o.PR1) + ' / ' + f1(o.PR2) + ' / ' + f1(o.Pk / o.P0)) +
       TR(T('Optimum de référence', 'Reference optimum'), T('P intermédiaire √(P0·Pk) = ', 'Intermediate P √(P0·Pk) = ') + f2(o.PmGeo) + ' bar ; ' + T('optimum de puissance minimale : ', 'minimum-power optimum: ') + f1(o.TmOpt) + ' °C') +
       TR(T('Effet frigorifique évaporateur', 'Evaporator refrigerating effect'), f1(o.q0) + ' kJ/kg') +
@@ -11234,8 +11234,8 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     var rel = function (x) { return f1(x - 1.013); };
     h += '<div style="font-size:11px;line-height:1.6"><b>' + c.fluid + '</b> — GWP ' + inf.gwp + ' — ' + T('classe', 'class') + ' ' + inf.cls + '<br>' + T(inf.fr, inf.en) + '</div>';
     h += '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:6px">' +
-      '<tr><td>' + T('T° d\'évaporation (point de rosée)', 'Evaporating temperature (dew point)') + '</td><td style="text-align:right"><b>' + f1(c.T0) + ' °C</b> — ' + f2(o.P0) + ' bar abs (' + rel(o.P0) + ' ' + T('relatif', 'gauge') + ')</td></tr>' +
-      '<tr style="border-top:1px solid var(--border)"><td>' + T('T° de condensation (point de rosée)', 'Condensing temperature (dew point)') + '</td><td style="text-align:right"><b>' + f1(c.Tk) + ' °C</b> — ' + f2(o.Pk) + ' bar abs (' + rel(o.Pk) + ' ' + T('relatif', 'gauge') + ')</td></tr>' +
+      '<tr><td>' + T('T° d\'évaporation (point de rosée)', 'Evaporating temperature (dew point)') + '</td><td style="text-align:right"><b>' + f1(c.T0) + ' °C</b> — ' + f2(o.P0) + ' bar abs (' + rel(o.P0) + ' bar ' + T('relatif', 'gauge') + ')</td></tr>' +
+      '<tr style="border-top:1px solid var(--border)"><td>' + T('T° de condensation (point de rosée)', 'Condensing temperature (dew point)') + '</td><td style="text-align:right"><b>' + f1(c.Tk) + ' °C</b> — ' + f2(o.Pk) + ' bar abs (' + rel(o.Pk) + ' bar ' + T('relatif', 'gauge') + ')</td></tr>' +
       '<tr style="border-top:1px solid var(--border)"><td>' + T('Rapport de pression', 'Pressure ratio') + '</td><td style="text-align:right">' + f1(o.PR) + '</td></tr>' +
       '<tr style="border-top:1px solid var(--border)"><td>' + T('Effet frigorifique / débit de fluide', 'Refrigerating effect / mass flow') + '</td><td style="text-align:right">' + f1(o.q0) + ' kJ/kg — ' + f1(o.m * 3600) + ' kg/h</td></tr>' +
       '<tr style="border-top:1px solid var(--border)"><td>' + T('Vapeur instantanée à l\'entrée évaporateur', 'Flash gas at evaporator inlet') + '</td><td style="text-align:right">' + f1(o.flash * 100) + ' %</td></tr></table>';
@@ -11424,7 +11424,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     thin: ['Épaisseur des murs inférieure à l\'épaisseur recommandée pour cet écart de température.', 'Wall thickness below the recommended value for this temperature difference.']
   };
 
-  /* CR-VIS-2 : visuels CHAMBRE FROIDE (repartition des apports, coupe de la chambre) */
+  /* CR-VIS-3 : visuels CHAMBRE FROIDE (repartition des apports, coupe de la chambre) */
   var CRV = { scr: { ink: 'var(--tp)', mut: 'var(--ts)', bar: 'var(--ac)', trk: 'rgba(128,128,128,.16)', ok: '#3f9d55', bad: 'var(--er)', cold: '#4e79a7', hot: '#e15759', ins: 'rgba(240,190,70,.38)', hat: 'rgba(120,120,120,.6)', bg: 'rgba(78,121,167,.10)' },
     prt: { ink: '#1a3a5a', mut: '#5a6b7c', bar: '#4e79a7', trk: '#e3eaf3', ok: '#2e7d32', bad: '#c62828', cold: '#4e79a7', hot: '#c0392b', ins: '#f4d58d', hat: '#8a8a8a', bg: '#eaf2fa' } };
   function crEsc(x) { return String(x === undefined || x === null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -11443,7 +11443,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     return s + '</svg>';
   }
   function crSection(r, p, pr) {
-    var P = pr ? CRV.prt : CRV.scr, W = 720, H, uid = 'crh' + Math.floor(Math.random() * 1e6);
+    var P = pr ? CRV.prt : CRV.scr, W = 720, H, IMP = !!(window.UNITS && window.UNITS.isImp && window.UNITS.isImp()), fu = function (u) { return IMP ? (u * 0.17611).toFixed(3) : f2(u); }, uid = 'crh' + Math.floor(Math.random() * 1e6);
     var iw = 330, ih = Math.max(110, Math.min(180, iw * p.Hh / Math.max(0.5, p.Lg))), cl = function (v) { return Math.max(14, Math.min(42, v * 0.26)); };
     var tw = cl(p.dWall), tr = cl(p.dRoof), tf = cl(p.dFloor), x0 = 78 + tw, y0 = 56 + tr, s = '';
     H = Math.round(y0 + ih + tf + 84);
@@ -11455,16 +11455,16 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     s += '<text x="' + (x0 + iw / 2) + '" y="' + (y0 + ih / 2 - 4) + '" text-anchor="middle" font-size="20" font-weight="700" fill="' + P.cold + '">' + f1(p.Tr) + ' °C</text><text x="' + (x0 + iw / 2) + '" y="' + (y0 + ih / 2 + 14) + '" text-anchor="middle" font-size="11" fill="' + P.mut + '">' + f0(p.RHr) + ' % ' + T('HR', 'RH') + '</text>';
     /* cotes interieures */
     s += '<line x1="' + x0 + '" y1="' + (y0 + ih + tf + 16) + '" x2="' + (x0 + iw) + '" y2="' + (y0 + ih + tf + 16) + '" stroke="' + P.ink + '" stroke-width="1"/><line x1="' + x0 + '" y1="' + (y0 + ih + tf + 10) + '" x2="' + x0 + '" y2="' + (y0 + ih + tf + 22) + '" stroke="' + P.ink + '"/><line x1="' + (x0 + iw) + '" y1="' + (y0 + ih + tf + 10) + '" x2="' + (x0 + iw) + '" y2="' + (y0 + ih + tf + 22) + '" stroke="' + P.ink + '"/>';
-    s += '<text x="' + (x0 + iw / 2) + '" y="' + (y0 + ih + tf + 33) + '" text-anchor="middle" font-size="11" fill="' + P.ink + '">' + T('Longueur', 'Length') + ' ' + f1(p.Lg) + ' m (' + T('largeur', 'width') + ' ' + f1(p.Wd) + ' m)</text>';
+    s += '<text x="' + (x0 + iw / 2) + '" y="' + (y0 + ih + tf + 33) + '" text-anchor="middle" font-size="11" fill="' + P.ink + '">' + T('Longueur', 'Length') + ' ' + f1(p.Lg) + ' m · ' + T('largeur', 'width') + ' ' + f1(p.Wd) + ' m</text>';
     s += '<line x1="' + (x0 - tw - 14) + '" y1="' + y0 + '" x2="' + (x0 - tw - 14) + '" y2="' + (y0 + ih) + '" stroke="' + P.ink + '"/><line x1="' + (x0 - tw - 20) + '" y1="' + y0 + '" x2="' + (x0 - tw - 8) + '" y2="' + y0 + '" stroke="' + P.ink + '"/><line x1="' + (x0 - tw - 20) + '" y1="' + (y0 + ih) + '" x2="' + (x0 - tw - 8) + '" y2="' + (y0 + ih) + '" stroke="' + P.ink + '"/>';
     s += '<text x="' + (x0 - tw - 20) + '" y="' + (y0 + ih / 2) + '" text-anchor="middle" font-size="11" fill="' + P.ink + '" transform="rotate(-90 ' + (x0 - tw - 20) + ' ' + (y0 + ih / 2) + ')">' + T('Hauteur', 'Height') + ' ' + f1(p.Hh) + ' m</text>';
     /* epaisseurs */
     var rx = x0 + iw + tw + 14;
-    s += '<text x="' + rx + '" y="' + (y0 - tr / 2 + 4) + '" font-size="11" fill="' + P.ink + '">' + T('Toit', 'Roof') + ' ' + f0(p.dRoof) + ' mm — U ' + f2(r.U.r) + '</text>' +
-      '<text x="' + rx + '" y="' + (y0 + ih / 2 - 6) + '" font-size="11" fill="' + P.ink + '">' + T('Murs', 'Walls') + ' ' + f0(p.dWall) + ' mm — U ' + f2(r.U.w) + '</text>' +
+    s += '<text x="' + rx + '" y="' + (y0 - tr / 2 + 4) + '" font-size="11" fill="' + P.ink + '">' + T('Toit', 'Roof') + ' ' + f0(p.dRoof) + ' mm — U ' + fu(r.U.r) + '</text>' +
+      '<text x="' + rx + '" y="' + (y0 + ih / 2 - 6) + '" font-size="11" fill="' + P.ink + '">' + T('Murs', 'Walls') + ' ' + f0(p.dWall) + ' mm — U ' + fu(r.U.w) + '</text>' +
       '<text x="' + rx + '" y="' + (y0 + ih / 2 + 9) + '" font-size="9.5" fill="' + P.mut + '">' + T('recommandé', 'recommended') + ' ' + r.ins.dRecC + ' mm</text>' +
-      '<text x="' + rx + '" y="' + (y0 + ih + tf / 2 + 4) + '" font-size="11" fill="' + P.ink + '">' + T('Plancher', 'Floor') + ' ' + f0(p.dFloor) + ' mm — U ' + f2(r.U.f) + '</text>';
-    s += '<text x="' + rx + '" y="' + (y0 - tr - 14) + '" font-size="9.5" fill="' + P.mut + '">U ' + T('en', 'in') + ' W/m²K</text>';
+      '<text x="' + rx + '" y="' + (y0 + ih + tf / 2 + 4) + '" font-size="11" fill="' + P.ink + '">' + T('Plancher', 'Floor') + ' ' + f0(p.dFloor) + ' mm — U ' + fu(r.U.f) + '</text>';
+    s += '<text x="' + rx + '" y="' + (y0 - tr - 14) + '" font-size="9.5" fill="' + P.mut + '">U ' + T('en', 'in') + (IMP ? ' Btu/(h·ft²·°F)' : ' W/m²K') + '</text>';
     /* exterieur */
     s += '<text x="' + (x0 - tw - 6) + '" y="22" text-anchor="start" font-size="11" font-weight="700" fill="' + P.hot + '">' + T('Extérieur', 'Outside') + ' ' + f1(p.Text) + ' °C · ' + f0(p.RHext) + ' % ' + T('HR', 'RH') + '</text>';
     /* condensation */
@@ -11497,7 +11497,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
       (r.door ? '<b>' + T('Porte ouverte', 'Open door') + '</b> : ' + f1(r.door.q) + ' kW — ' + T('fraction d\'ouverture', 'open fraction') + ' ' + f1(r.door.Dt * 100) + ' %<br>' : '') +
       '</div>';
     h += '<div class="ph" style="margin-top:10px">' + T('ISOLATION ET CONDENSATION', 'INSULATION AND CONDENSATION') + '</div>';
-    h += '<div style="font-size:11px;line-height:1.6">U ' + T('murs', 'walls') + ' ' + f2(r.U.w) + ' · ' + T('toit', 'roof') + ' ' + f2(r.U.r) + ' · ' + T('plancher', 'floor') + ' ' + f2(r.U.f) + ' W/m²K<br>' +
+    h += '<div style="font-size:11px;line-height:1.6">U ' + T('murs / toit / plancher', 'walls / roof / floor') + ' ' + f2(r.U.w) + ' / ' + f2(r.U.r) + ' / ' + f2(r.U.f) + ' W/m²K<br>' +
       T('Flux thermique murs', 'Wall heat flux') + ' : ' + f1(r.ins.qWall) + ' W/m² (' + T('cible indicative', 'indicative target') + ' ≤ ' + r.ins.qTarget + ')<br>' +
       T('Épaisseur recommandée', 'Recommended thickness') + ' : <b>' + r.ins.dRecC + ' mm</b> (' + f0(r.ins.dRec) + ' mm ' + T('calculés', 'calculated') + ')<br>' +
       T('T° de surface extérieure', 'Outer surface temperature') + ' : ' + f1(r.cond.Ts) + ' °C — ' + T('point de rosée', 'dew point') + ' ' + f1(r.cond.Td) + ' °C</div>';
@@ -14983,7 +14983,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
   window.__unitsMod = true;
   if (typeof document === 'undefined') { return; }
   /* ============ UNITES IMPERIALES : affichage double, calculs inchanges (SI) ============ */
-  var KEY = 'thermosys_units_v1', MARK = '​', PAGES = ['pg-chargepro', 'pg-heat', 'pg-elec', 'pg-mecha'], ALLP = ['pg-chargepro', 'pg-psy', 'pg-heat', 'pg-elec', 'pg-mecha'];
+  var KEY = 'thermosys_units_v1', MARK = '​', PAGES = ['pg-chargepro', 'pg-heat', 'pg-elec', 'pg-mecha', 'pg-coldroom', 'pg-airtreat'], ALLP = ['pg-chargepro', 'pg-psy', 'pg-heat', 'pg-elec', 'pg-mecha', 'pg-coldroom', 'pg-airtreat'];
   var imp = false, busy = false;
   function EN() { return window.lang === 'en'; }
   function T(fr, en) { return EN() ? en : fr; }
@@ -14999,26 +14999,65 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
     'm³/h': function (v) { return grp(v * 0.588578, Math.abs(v) < 100 ? 1 : 0) + ' CFM'; },
     'm²': function (v) { return grp(v * 10.7639, 1) + ' ft²'; },
     'm': function (v) { return grp(v * 3.28084, 1) + ' ft'; },
-    'mm²': function (v) { return awg(v); },
+    'mm²': function (v) { return grp(v * 0.00155, 4) + ' in²'; },
     'm/s': function (v) { return grp(v * 196.85, 0) + ' fpm'; },
     'Pa': function (v) { return grp(v * 0.00401463, 3) + ' in.wg'; },
-    'kg/h': function (v) { return grp(v * 2.20462, 0) + ' lb/h'; },
+    'kg/h': function (v) { return grp(v * 2.20462, Math.abs(v) < 10 ? 1 : 0) + ' lb/h'; },
     'kJ/kg': function (v) { return grp(v * 0.429923, 1) + ' Btu/lb'; },
-    'W/(m²·K)': function (v) { return grp(v * 0.17611, 3) + ' Btu/(h·ft²·°F)'; }
+    'W/(m²·K)': function (v) { return grp(v * 0.17611, 3) + ' Btu/(h·ft²·°F)'; },
+    'W/m²K': function (v) { return grp(v * 0.17611, 3) + ' Btu/(h·ft²·°F)'; },
+    'W/m²': function (v) { return grp(v * 0.31700, 1) + ' Btu/(h·ft²)'; },
+    'W/m³': function (v) { return grp(v * 0.096658, 2) + ' Btu/(h·ft³)'; },
+    'W/(m·K)': function (v) { return grp(v * 6.93347, 3) + ' Btu·in/(h·ft²·°F)'; },
+    'mm': function (v) { return grp(v * 0.0393701, Math.abs(v) < 10 ? 2 : 1) + ' in'; },
+    'm³': function (v) { return grp(v * 35.3147, Math.abs(v) < 100 ? 1 : 0) + ' ft³'; },
+    'm³/s': function (v) { return grp(v * 2118.88, 0) + ' CFM'; },
+    'kg': function (v) { return grp(v * 2.20462, Math.abs(v) < 1000 ? 1 : 0) + ' lb'; },
+    't': function (v) { return grp(v * 2204.62, 0) + ' lb'; },
+    'tonnes': function (v) { return grp(v * 2204.62, 0) + ' lb'; },
+    'bar': function (v) { return grp(v * 14.5038, 1) + ' psi'; },
+    'bar relatif': function (v) { return grp(v * 14.5038, 1) + ' psig'; },
+    'bar gauge': function (v) { return grp(v * 14.5038, 1) + ' psig'; },
+    'kg/jour': function (v) { return grp(v * 2.20462, 0) + ' lb/day'; },
+    'kg/day': function (v) { return grp(v * 2.20462, 0) + ' lb/day'; },
+    'W/t': function (v) { return grp(v * 3.09560, 0) + ' Btu/(h·ton)'; },
+    'bar abs': function (v) { return grp(v * 14.5038, 1) + ' psia'; },
+    'kg/m³': function (v) { return grp(v * 0.062428, 4) + ' lb/ft³'; },
+    'kJ/kg·K': function (v) { return grp(v * 0.238846, 3) + ' Btu/(lb·°F)'; },
+    'K': function (v) { return grp(v * 1.8, 1) + ' °F'; }
   };
-  var RE = /([−-]?\d+(?:[.,]\d+)?)([  ]?)(W\/\(m²·K\)|m³\/h|mm²|m²|kW|°C|kg\/h|kJ\/kg|m\/s|Pa|m)(?![\w²³\/·\-]|\s?\()/g;
+
+  /* nombre (avec separateur de milliers), serie de valeurs « a / b / c », « a × b × c », « a–b » : l'unite finale s'applique a TOUTES les valeurs */
+  var NUM = '[−-]?(?:\\d{1,3}(?:[ \\u00a0\\u202f]\\d{3})+(?:[.,]\\d+)?|\\d+(?:[.,]\\d+)?)';
+  var SEP = '(?:\\s?\\/\\s?|\\s?[×x]\\s?|\\s?[–—]\\s?|-|\\s(?:à|to)\\s)';
+  var UNI = 'W\\/\\(m²·K\\)|W\\/\\(m·K\\)|W\\/m²K|W\\/m²|W\\/m³|kJ\\/kg·K|kJ\\/kg|kg\\/m³|kg\\/jour|kg\\/day|kg\\/h|W\\/t|m³\\/h|m³\\/s|bar relatif|bar gauge|bar abs|bar|mm²|mm|m²|m³|kW|°C|m\\/s|Pa|kg|t|K|m';
+  var RE = new RegExp('(' + NUM + '(?:' + SEP + NUM + ')*)([ \u00a0\u202f]?)(' + UNI + ')(?![\\w²³\\/·\\-]|\\s?\\([^()]*?(?:°F|\\bft\\b|ft[²³]|Btu|CFM|\\blb\\b|psi|AWG|\\bhp\\b|fpm|in\\.wg|\\d\\s?in\\b))', 'g');
+  function pnum(x) { return parseFloat(x.replace('−', '-').replace(/[ \u00a0\u202f]/g, '').replace(',', '.')); }
   function convText(t, mode) {
     if (!imp || t.indexOf(MARK) >= 0) { return t; }
-    return t.replace(RE, function (all, num, sp, unit, off) {
-      var before = t.slice(Math.max(0, off - 12), off);
-      if (unit === '°C' && /(Δ|±|amplitude|écart|swing|range)\s*[=:]?\s*$/i.test(before)) { return all; }
+    return t.replace(RE, function (all, ser, sp, unit, off) {
+      var before = t.slice(Math.max(0, off - 12), off), after = t.slice(off + all.length, off + all.length + 12);
+      var delta = (unit === '°C' && (/(Δ|±|amplitude|écart|swing|range)\s*[=:]?\s*$/i.test(before) || /^\s*(par|per|\/)\s*(jour|day|h\b|heure|hour|min)/i.test(after)));
       if (unit === 'm' && /\d$/.test(before)) { return all; }
-      var v = parseFloat(num.replace('−', '-').replace(',', '.')); if (!isFinite(v)) { return all; }
-      var f = (mode === 'el' && unit === 'kW') ? function (x) { return grp(x * 1.34102, 1) + ' hp'; } : CONV[unit]; if (!f) { return all; }
-      return all + ' (' + f(v) + ')' + MARK;
+      if ((unit === 'mm' || unit === 'm³/s') && /\($/.test(before)) { return all; }
+      var f = (mode === 'el' && unit === 'kW') ? function (x) { return grp(x * 1.34102, 1) + ' hp'; } : (mode === 'el' && unit === 'mm²') ? awg : CONV[unit]; if (!f) { return all; }
+      if (delta && unit === '°C') { f = function (x) { return grp(x * 1.8, 1) + ' °F'; }; }
+      /* decoupe de la serie en valeurs et separateurs */
+      var vals = [], seps = [], ok = true;
+      var parts = [], rx = new RegExp(NUM, 'g'), last = 0, mm;
+      while ((mm = rx.exec(ser))) { parts.push({ v: mm[0], s: ser.slice(last, mm.index) }); last = mm.index + mm[0].length; }
+      parts.forEach(function (q, i) { var v = pnum(q.v); if (!isFinite(v)) { ok = false; } vals.push(v); if (i > 0) { seps.push(q.s); } });
+      if (!ok || !vals.length) { return all; }
+      var outs = vals.map(function (v) { return f(v); });
+      var uni = outs.map(function (o) { var k = o.lastIndexOf(' '); return k > 0 && !/^\d/.test(o.slice(k + 1)) ? [o.slice(0, k), o.slice(k + 1)] : [o, '']; });
+      var same = uni.every(function (u) { return u[1] === uni[0][1]; }) && uni[0][1] !== '';
+      var txt = '';
+      if (same) { uni.forEach(function (u, i) { txt += (i ? seps[i - 1] : '') + u[0]; }); txt += ' ' + uni[0][1]; }
+      else { outs.forEach(function (o, i) { txt += (i ? seps[i - 1] : '') + o; }); }
+      return all + ' (' + txt + ')' + MARK;
     });
   }
-  function strip(t) { return t.replace(/ \([^()]*\)​/g, ''); }
+  function strip(t) { return t.replace(/ \((?:[^()]|\([^()]*\))*\)​/g, ''); }
   function convHTML(html, mode) {
     if (!imp) { return html; }
     return html.split(/(<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>)/i).map(function (part, i) {
@@ -15040,7 +15079,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
       var m = LAB.exec((lb.textContent || '').trim()), u = m && m[1].trim(), h = row.querySelector('.un-hint');
       if (!imp || !u || !CONV[u]) { if (h) { h.remove(); } return; }
       if (!h) { h = document.createElement('span'); h.className = 'un-hint'; h.style.cssText = 'font-size:10px;color:var(--ts);margin-left:6px;white-space:nowrap'; inp.insertAdjacentElement('afterend', h); }
-      var v = parseFloat(String(inp.value).replace(',', '.')); h.textContent = isFinite(v) ? '= ' + ((mode === 'el' && u === 'kW') ? grp(v * 1.34102, 1) + ' hp' : CONV[u](v)) : '';
+      var v = parseFloat(String(inp.value).replace(',', '.')); h.textContent = isFinite(v) ? '= ' + ((mode === 'el' && u === 'kW') ? grp(v * 1.34102, 1) + ' hp' : (mode === 'el' && u === 'mm²') ? awg(v) : CONV[u](v)) : '';
     });
   }
   function refresh() {
@@ -15058,7 +15097,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
   window.unSet = function (v) {
     imp = !!v; try { localStorage.setItem(KEY, imp ? 'imp' : 'si'); } catch (e) { /* sans effet */ }
     var pi = $('py_imp'); if (pi) { pi.value = imp ? '1' : '0'; if (typeof window.pyCalc === 'function') { try { window.pyCalc(); } catch (e) { /* sans effet */ } } }
-    ['cpCalc', 'htCalc', 'elCalc'].forEach(function (f) { if (typeof window[f] === 'function' && $({ cpCalc: 'cp_out', htCalc: 'ht_out', elCalc: 'el_out' }[f])) { try { window[f](); } catch (e) { /* sans effet */ } } });
+    ['cpCalc', 'htCalc', 'elCalc', 'crCalc'].forEach(function (f) { if (typeof window[f] === 'function' && $({ cpCalc: 'cp_out', htCalc: 'ht_out', elCalc: 'el_out', crCalc: 'cr_out' }[f])) { try { window[f](); } catch (e) { /* sans effet */ } } });
     paintBtns(); setTimeout(refresh, 80);
   };
   window.UNITS = { isImp: function () { return imp; }, html: convHTML, text: convText };
@@ -15077,7 +15116,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
   function install() {
     ALLP.forEach(function (id) {
       var pg = $(id); if (!pg || pg.querySelector('.un-tg')) { return; }
-      var ph = pg.querySelector('.ph'), host = ph && ph.querySelector('span'); if (!host) { return; }
+      var ph = pg.querySelector('.ph'), host = (ph && ph.querySelector('span')) || pg.querySelector('.ptitle span'); if (!host) { return; }
       host.insertAdjacentHTML('beforeend', btnHtml());
       pg.addEventListener('input', later, true); pg.addEventListener('change', later, true);
       new MutationObserver(function () { if (!busy) { later(); } }).observe(pg, { childList: true, subtree: true, characterData: true });
