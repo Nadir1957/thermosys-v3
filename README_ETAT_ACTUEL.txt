@@ -154,7 +154,10 @@ ETAPE 29 : controle des anciens modules (30 fonctions relues, tests CoolProp). 7
  Page d'accueil : texte FR/EN mis a jour (nouveaux modules), compteur Sections 15 -> 28.
  Module : bloc <script id="audit29-module"> (surcharge les fonctions globales ; 77 blocs).
  Mise a jour : node add_audit29.js dist\index.html
- Restent a relire (non audites) : calcRefnet, calcSegmentPDC, computeCriticalPath, fonctions conv*.
+ ETAPE 29b : onglet protocoles R290 : texte "charge max legale 500 g" remplace (selon le local, ~8 g/m3,
+ EN 378-1) ; "selon F-Gas" retire du test d'etancheite. Mise a jour : node add_audit29b.js dist\index.html
+ Relus sans correction : calcRefnet (references constructeur = donnees catalogue, non verifiables),
+ calcSegmentPDC (viscosite fixee a 20 C), computeCriticalPath, fonctions conv* (cos phi 0,85 fixe).
 
 A CHAQUE MISE A JOUR IMPORTANTE :
  - Refaire une copie datee ici
