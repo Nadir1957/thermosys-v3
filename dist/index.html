@@ -3517,7 +3517,10 @@ var _THERMO_PRES_FR = "Thermosys, version 3. "
   + "et les données de référence, "
   + "indispensables à l'activité quotidienne "
   + "des techniciens, ingénieurs, "
-  + "et bureaux d'études H.V.A.C.";
+  + "et bureaux d'études H.V.A.C. "
+  + "Elle comprend aussi : chambre froide, traitement d air, charge de refroidissement horaire, psychrométrie, chauffage, électricité avec schéma unifilaire, mécatronique, "
+  + "et un dossier projet avec document P.D.F. combiné. "
+  + "L affichage peut basculer entre unités S.I. et impériales.";
 
 var _THERMO_PRES_EN = "Thermosis, version 3. "
   + "Professional H.V.A.C. Workstation. "
@@ -3528,7 +3531,10 @@ var _THERMO_PRES_EN = "Thermosis, version 3. "
   + "and reference data, "
   + "essential to the daily work "
   + "of technicians, engineers, "
-  + "and H.V.A.C. consulting firms.";
+  + "and H.V.A.C. consulting firms. "
+  + "It also includes: cold room, air treatment, hourly cooling load, psychrometrics, heating, electrical with single line diagram, mechatronics, "
+  + "and a project file with a combined P.D.F. "
+  + "The display can switch between S.I. and imperial units.";
 
 function rptPlayPresentation() {
   if (!window.speechSynthesis){ alert(lang==='fr'?'Synthèse vocale non disponible.':'Speech not available.'); return; }
@@ -4434,6 +4440,15 @@ function voiceReport() {
       desenfumage: 'Module désenfumage. Calcul des débits d extraction de fumée selon les méthodes I.T. 246, E.N. 12101 et N.F.P.A. 92, pour les zones de mise en sécurité incendie.',
       aide:        'Section aide. Consultez la documentation et les guides d utilisation de Thermosys.',
       contact:     'Section contact. Retrouvez les coordonnées et informations de support Thermosys.',
+      /* THERMOSYS-AUDIO-V2 */
+      coldroom:    'Module chambre froide. Dimensionnement complet d une chambre froide positive ou négative : bilan frigorifique, système mono ou bi étagé, fluides frigorigènes, charge en fluide selon la norme E.N. 378, énergie annuelle et coût d exploitation, isolation et risque de condensation, avec schémas et note de dimensionnement imprimable.',
+      airtreat:    'Module traitement d air. Centrales de traitement d air, rooftops et salles propres : psychrométrie, récupération d énergie selon E.N. 13053, air neuf selon E.N. 16798 tiret 1, filtration E.N. 1822, classes I.S.O. 14644 tiret 1, cascade de pressions entre locaux, et énergie annuelle sur 8760 heures à partir d un fichier météo.',
+      chargepro:   'Module charge pro. Charge de refroidissement heure par heure d un local, avec inertie des parois, rayonnement solaire, vitrages et protections, apports internes, air neuf et fichier météo, et note imprimable.',
+      psy:         'Module psychrométrie. Propriétés de l air humide selon A.S.H.R.A.E. et procédés : chauffage, humidification, batterie froide avec facteur de contact et mélange d air, avec diagramme psychrométrique.',
+      heat:        'Module chauffage. Déperditions de base local par local selon la norme E.N. 12831 : transmission, sol selon I.S.O. 13370, ventilation avec récupération, relance et puissance à installer, avec note imprimable.',
+      elec:        'Module électricité. Dimensionnement des câbles et des protections circuit par circuit selon la norme C.E.I. 60364 : courant admissible, chute de tension, tenue thermique, court-circuit minimal, conducteurs de protection et neutre, démarrage moteur, avec schéma unifilaire et note imprimable.',
+      mecha:       'Module mécatronique. Signaux zéro à dix volts et quatre à vingt milliampères, sondes Pt100, Pt1000 et C.T.N., moteurs et variateurs, lois des ventilateurs, vibrations I.S.O. 10816, couple de servomoteur de volet, logique de sécurité et dépannage guidé.',
+      proj:        'Module projet. Dossier commun et document P.D.F. unique regroupant les notes de calcul de tous les modules, avec enregistrement et ouverture d un projet.',
       def:         'Thermosys version 3, station de travail HVAC professionnelle.'
     },
     en: {
@@ -4458,6 +4473,14 @@ function voiceReport() {
       desenfumage: 'Smoke extraction module. Extraction flow rate calculations per I.T. 246, E.N. 12101 and N.F.P.A. 92 methods, for fire safety zones.',
       aide:        'Help section. Browse Thermosys documentation and user guides.',
       contact:     'Contact section. Find Thermosys support contact information.',
+      coldroom:    'Cold room module. Complete sizing of a positive or negative temperature cold room: refrigeration load, single or two stage system, refrigerants, refrigerant charge per E.N. 378, annual energy and operating cost, insulation and condensation risk, with diagrams and a printable sizing note.',
+      airtreat:    'Air treatment module. Air handling units, rooftops and clean rooms: psychrometrics, energy recovery per E.N. 13053, outdoor air per E.N. 16798 dash 1, E.N. 1822 filtration, I.S.O. 14644 dash 1 classes, pressure cascade between rooms, and annual energy over 8760 hours from a weather file.',
+      chargepro:   'Cooling load pro module. Hour by hour cooling load of a room, with wall thermal inertia, solar radiation, glazing and shading, internal gains, outdoor air and weather file, and a printable note.',
+      psy:         'Psychrometrics module. Moist air properties per A.S.H.R.A.E. and processes: heating, humidification, cooling coil with contact factor and air mixing, with a psychrometric chart.',
+      heat:        'Heating module. Design heat loss room by room per E.N. 12831: transmission, ground per I.S.O. 13370, ventilation with heat recovery, reheat and installed capacity, with a printable note.',
+      elec:        'Electrical module. Cable and protection sizing circuit by circuit per I.E.C. 60364: current capacity, voltage drop, thermal withstand, minimum short circuit current, protective and neutral conductors, motor starting, with a single line diagram and a printable note.',
+      mecha:       'Mechatronics module. Zero to ten volt and four to twenty milliamp signals, Pt100, Pt1000 and N.T.C. sensors, motors and drives, fan laws, I.S.O. 10816 vibration, damper actuator torque, safety logic and guided troubleshooting.',
+      proj:        'Project module. Shared project file and a single P.D.F. gathering the calculation notes of all modules, with saving and opening of a project.',
       def:         'Thermosys version 3, professional HVAC workstation.'
     }
   };
@@ -15020,6 +15043,8 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
     't': function (v) { return grp(v * 2204.62, 0) + ' lb'; },
     'tonnes': function (v) { return grp(v * 2204.62, 0) + ' lb'; },
     'bar': function (v) { return grp(v * 14.5038, 1) + ' psi'; },
+    'W/K': function (v) { return grp(v * 1.89563, 1) + ' Btu/(h·°F)'; },
+    'W': function (v) { return grp(v * 3.41214, 0) + ' Btu/h'; },
     'bar relatif': function (v) { return grp(v * 14.5038, 1) + ' psig'; },
     'bar gauge': function (v) { return grp(v * 14.5038, 1) + ' psig'; },
     'kg/jour': function (v) { return grp(v * 2.20462, 0) + ' lb/day'; },
@@ -15034,7 +15059,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
   /* nombre (avec separateur de milliers), serie de valeurs « a / b / c », « a × b × c », « a–b » : l'unite finale s'applique a TOUTES les valeurs */
   var NUM = '[−-]?(?:\\d{1,3}(?:[ \\u00a0\\u202f]\\d{3})+(?:[.,]\\d+)?|\\d+(?:[.,]\\d+)?)';
   var SEP = '(?:\\s?\\/\\s?|\\s?[×x]\\s?|\\s?[–—]\\s?|-|\\s(?:à|to)\\s)';
-  var UNI = 'W\\/\\(m²·K\\)|W\\/\\(m·K\\)|W\\/m²K|W\\/m²|W\\/m³|kJ\\/kg·K|kJ\\/kg|kg\\/m³|kg\\/jour|kg\\/day|kg\\/h|W\\/t|m³\\/h|m³\\/s|bar relatif|bar gauge|bar abs|bar|mm²|mm|m²|m³|kW|°C|m\\/s|Pa|kg|t|K|m';
+  var UNI = 'W\\/\\(m²·K\\)|W\\/\\(m·K\\)|W\\/m²K|W\\/m²|W\\/m³|kJ\\/kg·K|kJ\\/kg|kg\\/m³|kg\\/jour|kg\\/day|kg\\/h|W\\/t|W\\/K|m³\\/h|m³\\/s|bar relatif|bar gauge|bar abs|bar|mm²|mm|m²|m³|kW|W|°C|m\\/s|Pa|kg|t|K|m';
   var RE = new RegExp('(' + NUM + '(?:' + SEP + NUM + ')*)([ \u00a0\u202f]?)(' + UNI + ')(?![\\w²³\\/·\\-]|\\s?\\([^()]*?(?:°F|\\bft\\b|ft[²³]|Btu|CFM|\\blb\\b|psi|AWG|\\bhp\\b|fpm|in\\.wg|\\d\\s?in\\b))', 'g');
   function pnum(x) { return parseFloat(x.replace('−', '-').replace(/[ \u00a0\u202f]/g, '').replace(',', '.')); }
   function convText(t, mode) {
@@ -15071,7 +15096,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
   }
   /* ---- ecran : conversion des textes de resultats ---- */
   function walkOut(root, mode) {
-    var tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: function (n) { var p = n.parentNode; if (!p || /^(SCRIPT|STYLE|TEXTAREA|OPTION|BUTTON)$/.test(p.nodeName) || (p.closest && p.closest('.un-hint,.un-tg,.cpmain > .cpin,#cp_in,#ht_in,.cpin'))) { return NodeFilter.FILTER_REJECT; } return NodeFilter.FILTER_ACCEPT; } }), nodes = [], n;
+    var tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: function (n) { var p = n.parentNode; if (!p || /^(SCRIPT|STYLE|TEXTAREA|OPTION|BUTTON)$/.test(p.nodeName) || (p.closest && p.closest('.un-hint,.un-tg,.cpmain > .cpin,#cp_in,#ht_in,.cpin') && !(/UA = .*W\/K/.test(n.nodeValue) && p.closest('#ht_roomform')))) { return NodeFilter.FILTER_REJECT; } return NodeFilter.FILTER_ACCEPT; } }), nodes = [], n;
     while ((n = tw.nextNode())) { nodes.push(n); }
     nodes.forEach(function (x) { var s = x.nodeValue, r = imp ? convText(s, mode) : (s.indexOf(MARK) >= 0 ? strip(s) : s); if (r !== s) { x.nodeValue = r; } });
   }
