@@ -1928,12 +1928,12 @@
 &#9679; <b>Sections :</b> produit et conditions de conservation (avec compatibilité entre produits), chambre et construction (panneaux PUR, PIR, EPS, laine de roche, mousse projetée), ambiance extérieure (villes d'Algérie ou saisie libre), portes, infiltration et air neuf, charges internes, système frigorifique.<br>
 &#9679; <b>Fluides :</b> R134a, R22, R290, R404A, R448A, R449A, R452A, R507A, R717 (cycle calculé avec les propriétés du fluide). Compression mono-étagée ou bi-étagée avec température intermédiaire.<br>
 &#9679; <b>Résultats :</b> bilan frigorifique, évaporateur, compresseur et condenseur, tuyauteries, détendeurs, charge en fluide et vérification EN 378, énergie et coût d'exploitation, isolation et condensation.<br>
-&#9679; Second produit en stockage commun possible. Bouton d'impression de la note de dimensionnement (PDF).<br><br>
+&#9679; Second produit en stockage commun possible. Bouton d'impression de la note de dimensionnement (PDF).<br>&#9679; <b>Visuels :</b> répartition des apports par poste et coupe de la chambre (épaisseurs d'isolant, coefficients U, contrôle de condensation), repris dans la note imprimable.<br><br>
 <i>&#9679; Sizes a positive or negative temperature cold room (commercial, agricultural or industrial): refrigeration load, system selection, printed note.<br>
 &#9679; <b>Sections:</b> product and storage conditions (with product compatibility), room and construction (PUR, PIR, EPS panels, rock wool, sprayed foam), outside conditions (Algerian cities or free entry), doors, infiltration and fresh air, internal loads, refrigeration system.<br>
 &#9679; <b>Refrigerants:</b> R134a, R22, R290, R404A, R448A, R449A, R452A, R507A, R717 (cycle calculated with the fluid properties). Single-stage or two-stage compression with intermediate temperature.<br>
 &#9679; <b>Results:</b> refrigeration load, evaporator, compressor and condenser, piping, expansion valves, refrigerant charge and EN 378 check, energy and operating cost, insulation and condensation.<br>
-&#9679; A second product in shared storage is possible. Button to print the sizing note (PDF).</i>
+&#9679; A second product in shared storage is possible. Button to print the sizing note (PDF).<br>&#9679; <b>Visuals:</b> load breakdown by item and room section (insulation thickness, U-values, condensation check), included in the printable note.</i>
 </div>
 </div>
 
@@ -14430,7 +14430,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
   function nIdx(n) { n = Math.max(1, Math.round(n)); return n <= 9 ? n - 1 : n <= 12 ? 9 : n <= 16 ? 10 : 11; }
   function kGroup(meth, grp, n, gsp) {
     n = Math.max(1, Math.round(n));
-    if (meth === 'D1' || meth === 'D2') { if (n === 1) { return 1; } var keys = [2, 3, 4, 5, 6, 7, 8, 9, 12, 16, 20], kk = keys[0], j; for (j = 0; j < keys.length; j++) { if (n >= keys[j]) { kk = keys[j]; } } return GGND[kk][Math.max(0, Math.min(4, gsp | 0))]; }
+    if (meth === 'D1' || meth === 'D2') { if (n === 1) { return 1; } var keys = [2, 3, 4, 5, 6, 7, 8, 9, 12, 16, 20], kk = keys[keys.length - 1], j; for (j = keys.length - 1; j >= 0; j--) { if (n <= keys[j]) { kk = keys[j]; } } return GGND[kk][Math.max(0, Math.min(4, gsp | 0))]; }
     return (GRP[grp] || GRP.bunch)[nIdx(n)];
   }
   /* courant admissible de base (A) d'une section, avant correction */
@@ -14449,10 +14449,14 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
     var th = INS[c.ins].th, R = rhoHot(c.mat, th) * c.L / S, X = XL * c.L, sin = Math.sqrt(Math.max(0, 1 - cos * cos)), f = c.ph === 3 ? Math.sqrt(3) : 2;
     return f * I * (R * cos + X * sin);
   }
-  function peSize(S) { return S <= 16 ? S : S <= 35 ? 16 : S / 2; }
+  function stdUp(x) { for (var i = 0; i < SIZES.length; i++) { if (SIZES[i] >= x - 1e-9) { return SIZES[i]; } } return x; }
+  /* conducteur de protection : IEC 60364-5-54 tableau 54.2 ; section normalisee immediatement superieure si S/2 n'existe pas */
+  function peSize(S) { return S <= 16 ? S : S <= 35 ? 16 : stdUp(S / 2); }
+  /* majoration de la resistance des fortes sections (reactance, UTE C 15-105) */
+  function kReact(S) { return S >= 300 ? 1.30 : S >= 240 ? 1.25 : S >= 185 ? 1.20 : S >= 150 ? 1.15 : 1; }
   function iscMin(c, S) {     // methode conventionnelle (TN), courant de court-circuit minimal en bout de ligne (A)
-    var U0 = c.ph === 3 ? c.U / Math.sqrt(3) : c.U, m = c.mPE > 0 ? c.mPE : 1;
-    return 0.8 * U0 * S / (1.5 * RHO20[c.mat] * (1 + m) * c.L);
+    var U0 = c.ph === 3 ? c.U / Math.sqrt(3) : c.U, m = c.mPE > 0 ? c.mPE : S / peSize(S);   // m = S / S_PE (par defaut PE normalise de la meme gaine)
+    return 0.8 * U0 * S / (1.5 * RHO20[c.mat] * kReact(S) * (1 + m) * c.L);
   }
   function size(c) {
     var out = { c: c, warn: [], cand: {} }, cos = Math.max(0.05, Math.min(1, c.cos || 1)), eta = Math.max(0.05, Math.min(1, c.eta || 1)), Ib;
@@ -14491,7 +14495,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
     out.dV = dropV(c, S1, Ib, cos); out.dPct = out.dV / c.U * 100;
     out.IscMin = iscMin(c, S1); out.Imag = Mu * In;
     out.sTherm = Iscmax * Math.sqrt(Math.max(c.t, 0.001)) / kSc;
-    out.Spe = peSize(S1); var nmin = c.mat === 'Cu' ? 16 : 25; out.Sn = c.ph === 1 ? S1 : (S1 <= nmin ? S1 : Math.max(S1 / 2, nmin));
+    out.Spe = peSize(S1); var nmin = c.mat === 'Cu' ? 16 : 25; out.Sn = c.ph === 1 ? S1 : (S1 <= nmin ? S1 : Math.max(stdUp(S1 / 2), nmin));
     out.checks = {
       amp: out.Iz != null && Ib <= In && In <= out.Iz, drop: out.dPct <= dUlim + 1e-9, sc: S1 >= out.sTherm - 1e-9, mag: out.IscMin >= out.Imag - 1e-9, icu: !(c.Icu > 0) || c.Icu >= c.Isc - 1e-9
     };
@@ -14537,7 +14541,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
   }
   function toEng(c) {
     var m = METH.filter(function (x) { return x.id === c.meth; })[0] || METH[4];
-    return { ph: +c.ph, U: c.U, mode: c.mode, P: c.P, I: c.I, cos: c.cos, eta: c.load === 'motor' ? c.eta : 1, mat: c.mat, ins: c.ins, meth: m.m, grp: m.g, nc: c.nc, gsp: c.gsp, Ta: c.Ta, rs: c.rs, L: Math.max(0.1, c.L), dU: c.dU, dUpre: c.dUpre, Isc: c.Isc, t: c.tcl, curve: c.curve, mu: c.mu, Icu: c.Icu, In: c.In, S: c.S, mPE: c.mPE, load: c.load, Id: c.load === 'motor' ? c.Id : 0 };
+    return { ph: +c.ph, U: c.U, mode: c.mode, P: c.P, I: c.I, cos: c.cos, eta: c.load === 'motor' ? c.eta : 1, mat: c.mat, ins: c.ins, meth: m.m, grp: m.g, nc: c.nc, gsp: c.gsp, Ta: c.Ta, rs: c.rs, L: Math.max(0.1, c.L), dU: c.dU, dUpre: c.dUpre, Isc: c.Isc, t: c.tcl, curve: c.curve, mu: c.mu, Icu: c.Icu, In: c.In, S: c.S, mPE: 0, load: c.load, Id: c.load === 'motor' ? c.Id : 0 };
   }
   /* ---------- liste et formulaire ---------- */
   function listHtml() { return EC.map(function (c, i) { return '<button class="btn" style="margin:2px;' + (i === CUR ? 'outline:2px solid var(--ac)' : '') + '" onclick="elSel(' + i + ')">' + esc(c.name || ('C' + (i + 1))) + '</button>'; }).join('') + '<button class="btn" style="margin:2px" onclick="elAdd()">' + T('+ Circuit', '+ Circuit') + '</button>'; }
@@ -14718,7 +14722,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
       card(T('Section du câble', 'Cable cross-section'), f0(o.S * 10) / 10 + ' mm²', (c.mat === 'Cu' ? T('Cuivre', 'Copper') : T('Aluminium', 'Aluminium')) + ' · ' + c.ins + (o.Sauto && o.bind ? ' · ' + T('imposée par : ', 'set by: ') + T(CRIT[o.bind][0], CRIT[o.bind][1]).toLowerCase() : '')) +
       card(T('Protection', 'Protection'), 'In = ' + f0(o.In) + ' A', T('courbe ', 'curve ') + (c.curve === 'adj' ? T('réglable ×', 'adjustable ×') + c.mu : c.curve) + ' · Ib = ' + fx(o.Ib, 1) + ' A') +
       card(T('Chute de tension', 'Voltage drop'), fx(o.dPct, 2) + ' %', fx(o.dV, 1) + ' V · ' + T('admise', 'allowed') + ' ' + fx(o.dUlim, 1) + ' %') +
-      card(T('Conducteur de protection', 'Protective conductor'), f0(o.Spe * 10) / 10 + ' mm²', T('neutre ', 'neutral ') + f0(o.Sn * 10) / 10 + ' mm²') + '</div>';
+      card(T('Conducteur de protection', 'Protective conductor'), f0(o.Spe * 10) / 10 + ' mm²', T('neutre ', 'neutral ') + f0(o.Sn * 10) / 10 + ' mm²' + (o.Sn < o.S ? T(' (réduit : charge équilibrée, sans harmoniques)', ' (reduced: balanced load, no harmonics)') : '')) + '</div>';
     html += '<div class="cph">' + T('Vérifications', 'Checks') + '</div><table class="cptb"><thead><tr><th>' + T('Critère', 'Criterion') + '</th><th>' + T('Valeur', 'Value') + '</th><th>' + T('Exigence', 'Requirement') + '</th><th></th></tr></thead><tbody>' +
       '<tr><td>' + T('Surcharge : Ib ≤ In ≤ Iz', 'Overload: Ib ≤ In ≤ Iz') + '</td><td>' + fx(o.Ib, 1) + ' ≤ ' + f0(o.In) + ' ≤ ' + (o.Iz != null ? fx(o.Iz, 1) : '—') + ' A</td><td>Iz = I<sub>table</sub> ' + fx(o.IzBase, 0) + ' × ' + fx(o.kTot, 2) + '</td><td>' + ok(o.checks.amp) + '</td></tr>' +
       '<tr><td>' + T('Chute de tension', 'Voltage drop') + '</td><td>' + fx(o.dPct, 2) + ' %</td><td>≤ ' + fx(o.dUlim, 1) + ' %</td><td>' + ok(o.checks.drop) + '</td></tr>' +
@@ -15513,6 +15517,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
 })();
 </script>
 <!-- THERMOSYS-AIDE-V5 -->
+<!-- THERMOSYS-AIDE-V6 -->
 </body>
 </html>
 
