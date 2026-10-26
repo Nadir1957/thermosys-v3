@@ -159,6 +159,13 @@ ETAPE 29 : controle des anciens modules (30 fonctions relues, tests CoolProp). 7
  Relus sans correction : calcRefnet (references constructeur = donnees catalogue, non verifiables),
  calcSegmentPDC (viscosite fixee a 20 C), computeCriticalPath, fonctions conv* (cos phi 0,85 fixe).
 
+ETAPE 30 : PROJET - CHAMBRE FROIDE (108 champs) et TRAITEMENT D'AIR (186 champs) enregistres dans le fichier
+ projet .json (instantane des champs par identifiant) et restaures a l'ouverture (apres rechargement, via
+ cle temporaire thermosys_pjpend_*). Seul le fichier meteo EPW n'est pas enregistre. Test aller-retour :
+ 293 champs et resultats identiques. Mise a jour : node add_proj.js dist\index.html puis
+ node add_aide8.js dist\index.html (marqueur THERMOSYS-AIDE-V9).
+ A FAIRE ENSUITE : remplacer les alert() restants.
+
 A CHAQUE MISE A JOUR IMPORTANTE :
  - Refaire une copie datee ici
  - Mettre a jour ce README
