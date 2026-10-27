@@ -184,6 +184,9 @@ ETAPE 32 : TRAITEMENT D'AIR - complements (guide Word) : type de flux simple/dou
  acoustique non calculee), free-cooling modulant (air neuf min a 100 %, enthalpie ou temperature, 8760 h).
  Defauts inchanges (resultats identiques). Module <script id="airtreat-module"> remplace en place (78 blocs).
  Mise a jour : node add_airtreat32.js dist\index.html puis node add_aide32.js dist\index.html
+ ETAPE 32b : note annuelle - free-cooling indique 'desactive (salle pharmaceutique / point de rosee / sans recyclage)' au lieu de 0 h ;
+ reserve ajoutee : rechauffage d'ete compte avec le COP de la PAC (en realite recuperation condenseur) -> chaud annuel optimiste.
+ Test Alger TMYx (confort) : free-cooling 5 337 h, -22 %. Mise a jour : node add_airtreat32b.js dist\index.html
  A FAIRE ENSUITE : remplacer les alert() restants (etape 33).
 
 A CHAQUE MISE A JOUR IMPORTANTE :
