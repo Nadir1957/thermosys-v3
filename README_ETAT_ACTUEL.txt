@@ -167,13 +167,15 @@ ETAPE 30 : PROJET - CHAMBRE FROIDE (108 champs) et TRAITEMENT D'AIR (186 champs)
  A FAIRE ENSUITE : remplacer les alert() restants (etape 32).
 
 ETAPE 31 : SITES INTERNATIONAUX - CHAMBRE FROIDE (T° moyennes mensuelles) et CHARGE PRO (latitude, altitude) :
- choix du PAYS puis de la VILLE (182 pays, 1 240 villes ; 1 236 avec 12 temperatures). Donnees : normales
+ choix du PAYS puis de la VILLE (181 pays, 1 237 villes ; 1 233 avec 12 temperatures ; Israel retire a la demande, etape 31b). Donnees : normales
  1991-2020 calculees par build_cities.js (fichier lance sur le PC) depuis NOAA GHCN-Monthly v4 (domaine public),
  station la plus proche (rayon 25 km, 20 annees minimum par mois), station et distance affichees. Valeurs
  algeriennes deja verifiees conservees. Pays sans station fiable : saisie manuelle des 12 valeurs.
  Module : bloc <script id="cities31-module"> (+144 Ko ; surcharge crCityChange et cpCity ; 78 blocs).
  Textes mis a jour (accueil, aide, note imprimable) ; compteur Sections 28 -> 26.
  Mise a jour : node add_cities31.js dist\index.html (le catalogue est inclus dans l'installateur).
+ ETAPE 31b : Israel retire du catalogue ; compteurs mis a jour. Mise a jour : node add_cities31b.js dist\index.html
+ (add_cities31.js corrige integre deja ce retrait pour une installation neuve).
  Sources du catalogue : cities_data.json produit par node build_cities.js.
 
 A CHAQUE MISE A JOUR IMPORTANTE :
