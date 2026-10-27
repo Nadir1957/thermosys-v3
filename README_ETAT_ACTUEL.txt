@@ -164,8 +164,7 @@ ETAPE 30 : PROJET - CHAMBRE FROIDE (108 champs) et TRAITEMENT D'AIR (186 champs)
  cle temporaire thermosys_pjpend_*). Seul le fichier meteo EPW n'est pas enregistre. Test aller-retour :
  293 champs et resultats identiques. Mise a jour : node add_proj.js dist\index.html puis
  node add_aide8.js dist\index.html (marqueur THERMOSYS-AIDE-V9).
- A FAIRE ENSUITE : remplacer les alert() restants (etape 32).
-
+ 
 ETAPE 31 : SITES INTERNATIONAUX - CHAMBRE FROIDE (T° moyennes mensuelles) et CHARGE PRO (latitude, altitude) :
  choix du PAYS puis de la VILLE (181 pays, 1 237 villes ; 1 233 avec 12 temperatures ; Israel retire a la demande, etape 31b). Donnees : normales
  1991-2020 calculees par build_cities.js (fichier lance sur le PC) depuis NOAA GHCN-Monthly v4 (domaine public),
@@ -177,6 +176,15 @@ ETAPE 31 : SITES INTERNATIONAUX - CHAMBRE FROIDE (T° moyennes mensuelles) et CH
  ETAPE 31b : Israel retire du catalogue ; compteurs mis a jour. Mise a jour : node add_cities31b.js dist\index.html
  (add_cities31.js corrige integre deja ce retrait pour une installation neuve).
  Sources du catalogue : cities_data.json produit par node build_cities.js.
+
+ETAPE 32 : TRAITEMENT D'AIR - complements (guide Word) : type de flux simple/double (simple flux : pas de
+ recuperation), pompe a chaleur reversible rooftop (COP = COP nominal x (1+0,025(T-7)), borne 0,4-1,5, min 1 ;
+ degivrage NON modelise), humidification adiabatique (enthalpie constante, rendement requis, alerte hygiene
+ salle propre), filtres G4-F9 (100/120/140/180/210/240 Pa indicatifs), silencieux (perte de charge SEULE,
+ acoustique non calculee), free-cooling modulant (air neuf min a 100 %, enthalpie ou temperature, 8760 h).
+ Defauts inchanges (resultats identiques). Module <script id="airtreat-module"> remplace en place (78 blocs).
+ Mise a jour : node add_airtreat32.js dist\index.html puis node add_aide32.js dist\index.html
+ A FAIRE ENSUITE : remplacer les alert() restants (etape 33).
 
 A CHAQUE MISE A JOUR IMPORTANTE :
  - Refaire une copie datee ici
