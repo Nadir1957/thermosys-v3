@@ -14,7 +14,7 @@ Contenu de cette version (sessions du 19 au 23/10/2026) :
  - Onglets OBD et BLUETOOTH masques sur le site (code conserve, non valides
    sur materiel reel).
  - NOUVEAU MODULE CHAMBRE FROIDE (etapes 1 a 8) : produit et conservation,
-   construction, ambiance exterieure (11 villes d'Algerie), portes et
+   construction, ambiance exterieure (pays puis ville, etape 31), portes et
    infiltration, charges internes, systeme frigorifique mono ou bi-etage,
    fluides R134a/R22/R290/R404A/R448A/R449A/R452A/R507A/R717, charge en
    fluide et securite EN 378, energie et cout, isolation et condensation,
@@ -164,7 +164,17 @@ ETAPE 30 : PROJET - CHAMBRE FROIDE (108 champs) et TRAITEMENT D'AIR (186 champs)
  cle temporaire thermosys_pjpend_*). Seul le fichier meteo EPW n'est pas enregistre. Test aller-retour :
  293 champs et resultats identiques. Mise a jour : node add_proj.js dist\index.html puis
  node add_aide8.js dist\index.html (marqueur THERMOSYS-AIDE-V9).
- A FAIRE ENSUITE : remplacer les alert() restants.
+ A FAIRE ENSUITE : remplacer les alert() restants (etape 32).
+
+ETAPE 31 : SITES INTERNATIONAUX - CHAMBRE FROIDE (T° moyennes mensuelles) et CHARGE PRO (latitude, altitude) :
+ choix du PAYS puis de la VILLE (182 pays, 1 240 villes ; 1 236 avec 12 temperatures). Donnees : normales
+ 1991-2020 calculees par build_cities.js (fichier lance sur le PC) depuis NOAA GHCN-Monthly v4 (domaine public),
+ station la plus proche (rayon 25 km, 20 annees minimum par mois), station et distance affichees. Valeurs
+ algeriennes deja verifiees conservees. Pays sans station fiable : saisie manuelle des 12 valeurs.
+ Module : bloc <script id="cities31-module"> (+144 Ko ; surcharge crCityChange et cpCity ; 78 blocs).
+ Textes mis a jour (accueil, aide, note imprimable) ; compteur Sections 28 -> 26.
+ Mise a jour : node add_cities31.js dist\index.html (le catalogue est inclus dans l'installateur).
+ Sources du catalogue : cities_data.json produit par node build_cities.js.
 
 A CHAQUE MISE A JOUR IMPORTANTE :
  - Refaire une copie datee ici
