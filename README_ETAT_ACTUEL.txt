@@ -187,7 +187,12 @@ ETAPE 32 : TRAITEMENT D'AIR - complements (guide Word) : type de flux simple/dou
  ETAPE 32b : note annuelle - free-cooling indique 'desactive (salle pharmaceutique / point de rosee / sans recyclage)' au lieu de 0 h ;
  reserve ajoutee : rechauffage d'ete compte avec le COP de la PAC (en realite recuperation condenseur) -> chaud annuel optimiste.
  Test Alger TMYx (confort) : free-cooling 5 337 h, -22 %. Mise a jour : node add_airtreat32b.js dist\index.html
- A FAIRE ENSUITE : remplacer les alert() restants (etape 33).
+
+ETAPE 33 : MESSAGES INTEGRES - 17 alert() et 7 confirm() du navigateur remplaces par des messages/confirmations
+ integres (module <script id="dialogs33-module">, 79 blocs ; alert surchargee globalement ; confirm remplace dans
+ cpGen, cpReset, pyReset, htReset, elReset, mcReset, pjImport). Echap = annuler. Aucun prompt() reel (faux positif :
+ deferredPrompt.prompt() du bouton d'installation PWA). Mise a jour : node add_dialogs33.js dist\index.html
+ A FAIRE ENSUITE : securite (2 comptes de test + test_rls2.js, plafond Gemini api\ocr.js), puis amelioration de l'interface.
 
 A CHAQUE MISE A JOUR IMPORTANTE :
  - Refaire une copie datee ici

@@ -13315,7 +13315,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
   }
   window.cpGen = function () {
     var Lx = Math.max(1, num('cp_g_L', 5)), Wx = Math.max(1, num('cp_g_W', 4)), H = Math.max(2, num('cp_g_H', 2.7)), az0 = num('cp_g_az', 180);
-    if (SF.length && !window.confirm(T('Remplacer les parois et vitrages actuels ?', 'Replace the current surfaces and windows?'))) { return; }
+    if (SF.length && !window.__thOk) { return window.thAsk(T('Remplacer les parois et vitrages actuels ?', 'Replace the current surfaces and windows?'), function () { window.__thOk = true; try { window.cpGen(); } finally { window.__thOk = false; } }); }
     SF = []; WN = [];
     var dims = [Lx, Wx, Lx, Wx], az = [0, 90, 180, 270].map(function (d) { return (az0 + d) % 360; });
     for (var k = 0; k < 4; k++) {
@@ -13605,7 +13605,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
     window.cpSch(); drawLists(); window.cpCalc();
   };
   window.cpReset = function () {
-    if (!window.confirm(T('Effacer toutes les données de CHARGE PRO ?', 'Clear all CHARGE PRO data?'))) { return; }
+    if (!window.__thOk) { return window.thAsk(T('Effacer toutes les données de CHARGE PRO ?', 'Clear all CHARGE PRO data?'), function () { window.__thOk = true; try { window.cpReset(); } finally { window.__thOk = false; } }); }
     SF = []; WN = []; _wx = null; _mon = null; _wxErr = '';
     try { localStorage.removeItem(KEY); } catch (e) { /* sans effet */ }
     var root = $('pg-chargepro'); root.innerHTML = buildPage(); drawLists(); applyLang(); window.cpCalc();
@@ -13991,7 +13991,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
     showProc(); window.pyCalc();
   };
   window.pyReset = function () {
-    if (!window.confirm(T('Effacer toutes les données de PSYCHRO ?', 'Clear all PSYCHRO data?'))) { return; }
+    if (!window.__thOk) { return window.thAsk(T('Effacer toutes les données de PSYCHRO ?', 'Clear all PSYCHRO data?'), function () { window.__thOk = true; try { window.pyReset(); } finally { window.__thOk = false; } }); }
     try { localStorage.removeItem(KEY); } catch (e) { /* sans effet */ }
     $('pg-psy').innerHTML = buildPage(); showProc(); applyLang(); window.pyCalc();
   };
@@ -14387,7 +14387,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
     CUR = 0; drawRooms(); window.htCalc();
   };
   window.htReset = function () {
-    if (!window.confirm(T('Effacer toutes les données de CHAUFFAGE ?', 'Clear all HEATING data?'))) { return; }
+    if (!window.__thOk) { return window.thAsk(T('Effacer toutes les données de CHAUFFAGE ?', 'Clear all HEATING data?'), function () { window.__thOk = true; try { window.htReset(); } finally { window.__thOk = false; } }); }
     try { localStorage.removeItem(KEY); } catch (e) { /* sans effet */ }
     RM = [newRoom('living')]; CUR = 0; _wx = null; _wxErr = ''; $('pg-heat').innerHTML = buildPage(); drawRooms(); applyLang(); window.htCalc();
   };
@@ -14839,7 +14839,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
     var c = newC(3); c.name = T('Éclairage bureaux', 'Office lighting'); c.ph = 1; c.U = 230; c.P = 1.8; c.cos = 0.95; c.L = 35; c.meth = 'B1'; c.curve = 'B'; c.dU = 3; c.Isc = 6; c.Icu = 6;
     EC = [a, b, c]; CUR = 0; draw(); window.elCalc();
   };
-  window.elReset = function () { if (!window.confirm(T('Effacer toutes les données d\'ÉLECTRICITÉ ?', 'Clear all ELECTRICAL data?'))) { return; } try { localStorage.removeItem(KEY); } catch (e) { /* sans effet */ } EC = [newC(1)]; CUR = 0; $('pg-elec').innerHTML = buildPage(); draw(); applyLang(); window.elCalc(); };
+  window.elReset = function () { if (!window.__thOk) { return window.thAsk(T('Effacer toutes les données d\'ÉLECTRICITÉ ?', 'Clear all ELECTRICAL data?'), function () { window.__thOk = true; try { window.elReset(); } finally { window.__thOk = false; } }); } try { localStorage.removeItem(KEY); } catch (e) { /* sans effet */ } EC = [newC(1)]; CUR = 0; $('pg-elec').innerHTML = buildPage(); draw(); applyLang(); window.elCalc(); };
   /* ---------- note imprimable ---------- */
   var SRC = [
     [['IEC 60364-5-52', 'IEC 60364-5-52'], ['Courants admissibles (tables B.52.2 et B.52.4, modes de pose A1 à D2), facteurs de température B.52.14 et B.52.15, de regroupement B.52.17 et B.52.18, de résistivité du sol', 'Current-carrying capacities (tables B.52.2 and B.52.4, installation methods A1 to D2), temperature factors B.52.14 and B.52.15, grouping factors B.52.17 and B.52.18, soil resistivity'], ['Élevée pour le PVC ; PR/EPR dérivé (prudent)', 'High for PVC; XLPE/EPR derived (conservative)']],
@@ -15058,10 +15058,11 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
       try {
         var d = JSON.parse(rd.result);
         if (!d || d.app !== 'thermosys' || d.kind !== 'project' || !d.data) { throw new Error('format'); }
-        if (!window.confirm(T('Remplacer les données des modules de cet appareil par celles du projet ?', 'Replace the module data on this device with the project data?'))) { inp.value = ''; return; }
+        window.thAsk(T('Remplacer les données des modules de cet appareil par celles du projet ?', 'Replace the module data on this device with the project data?'), function () { pjGo33(); }, function () { inp.value = ''; }); return;
+        function pjGo33() {
         MODS.forEach(function (m) { try { if (m.live) { if (d.data[m.key]) { localStorage.setItem(PEND + m.id, d.data[m.key]); } else { localStorage.removeItem(PEND + m.id); } return; } if (d.data[m.key]) { localStorage.setItem(m.key, d.data[m.key]); } else { localStorage.removeItem(m.key); } } catch (e) { /* sans effet */ } });
         try { localStorage.setItem(KEY, JSON.stringify({ sel: {}, f: d.info || {} })); } catch (e) { /* sans effet */ }
-        window.location.reload();
+        window.location.reload(); }
       } catch (e) { toast('Fichier de projet non reconnu.', 'Project file not recognised.'); inp.value = ''; }
     };
     rd.readAsText(f);
@@ -15548,7 +15549,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
     var set = { mc_stype: '4-20', mc_slo: 0, mc_shi: 100, mc_sun: '°C', mc_sval: 12, mc_sphys: 50, mc_rtype: '100', mc_rR: 119.4, mc_rT: 50, mc_mph: '3', mc_mU: 400, mc_mP: 7.5, mc_mcos: 0.85, mc_meta: 0.9, mc_mpol: '4', mc_mf: '50', mc_mn: 1450, mc_mfs: 40, mc_mduty: 'var', mc_malt: 500, mc_fn1: 1450, mc_fn2: 1160, mc_fQ: 10000, mc_fdp: 500, mc_fP: 5, mc_fh: 4000, mc_cin: 14.5, mc_ia: 13.8, mc_ib: 14.1, mc_ic: 13.9, mc_vg: 'g2r', mc_vv: 3.2, mc_vf: 24.2, mc_vd: 60, mc_va: 0.5, mc_dw: 1.2, mc_dh: 0.8, mc_dn: 1, mc_dt: 'opp', mc_ds: '0', mc_dv: 6, mc_dsf: 1.25, mc_ethr: 4.5, mc_edel: 5, mc_edt: 1, mc_eser: '2.1 2.2 2.4 3.1 4.2 4.8 5.1 5.3 5.2 5.4 5.6 5.9 6.2 3.0' };
     Object.keys(set).forEach(function (id) { var e = $(id); if (e) { e.value = set[id]; } }); calc(); document.querySelectorAll('#pg-mecha details').forEach(function (d) { d.open = true; });
   };
-  window.mcReset = function () { if (!window.confirm(T('Effacer toutes les données de MÉCATRONIQUE ?', 'Clear all MECHATRONICS data?'))) { return; } try { localStorage.removeItem(KEY); } catch (e) { /* sans effet */ } $('pg-mecha').innerHTML = build(); TS = { tree: 'start', node: 'a', path: [] }; applyLang(); calc(); };
+  window.mcReset = function () { if (!window.__thOk) { return window.thAsk(T('Effacer toutes les données de MÉCATRONIQUE ?', 'Clear all MECHATRONICS data?'), function () { window.__thOk = true; try { window.mcReset(); } finally { window.__thOk = false; } }); } try { localStorage.removeItem(KEY); } catch (e) { /* sans effet */ } $('pg-mecha').innerHTML = build(); TS = { tree: 'start', node: 'a', path: [] }; applyLang(); calc(); };
   /* ---------- note imprimable ---------- */
   var SRC = [
     ['NAMUR NE43', 'Niveaux de signal 4-20 mA en défaut (sous 3,6 mA, au-dessus de 21 mA)', 'Signal levels of 4-20 mA in fault (below 3.6 mA, above 21 mA)', 'Élevée', 'High'],
@@ -15954,6 +15955,74 @@ if(typeof _sc==='function') window.calcSCOP=function(){
   if (typeof oTL === 'function') {
     window.toggleLang = function () { var r = oTL.apply(this, arguments); setTimeout(function () { crInfo(); cpInfo(); var l = $('cr_country'); if (l) { /* libelles deja traduits par data-cfr / data-cen */ } }, 700); return r; };
   }
+})();
+
+</script>
+<script id="dialogs33-module">
+/* THERMOSYS - Module DIALOGUES (etape 33) : remplace alert() et confirm() du navigateur par des messages integres.
+   thUI.notice(msg, kind) : message non bloquant ; thAsk(msg, onOk, onCancel) : demande de confirmation integree. */
+(function () {
+  'use strict';
+  if (window.__th33) { return; }
+  window.__th33 = true;
+  var css = document.createElement('style');
+  css.textContent =
+    '#thNotices{position:fixed;top:calc(var(--hh,56px) + 8px);left:50%;transform:translateX(-50%);z-index:9000;display:flex;flex-direction:column;gap:8px;width:min(560px,calc(100vw - 24px));pointer-events:none}' +
+    '.thn{pointer-events:auto;display:flex;gap:10px;align-items:flex-start;background:var(--bgc,#0a1520);color:var(--tp,#e8f8ff);border:1px solid var(--brb,#1a3a55);border-left:4px solid var(--ac,#00e5ff);border-radius:var(--r,6px);padding:10px 12px;font-size:13px;line-height:1.45;box-shadow:0 6px 24px rgba(0,0,0,.45)}' +
+    '.thn.er{border-left-color:var(--er,#ff1744)}.thn.wn{border-left-color:var(--wn,#ff8c00)}.thn.ok{border-left-color:var(--ok,#00ff88)}' +
+    '.thn .thm{flex:1;white-space:pre-line;word-break:break-word}.thn button{background:none;border:0;color:var(--ts,#7ab8d4);font-size:18px;line-height:1;cursor:pointer;padding:0 2px}' +
+    '#thAskBg{position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}' +
+    '#thAsk{background:var(--bgc,#0a1520);color:var(--tp,#e8f8ff);border:1px solid var(--brb,#1a3a55);border-radius:var(--r,6px);padding:16px;width:min(440px,100%);box-shadow:0 10px 40px rgba(0,0,0,.6)}' +
+    '#thAsk p{font-size:14px;line-height:1.5;margin-bottom:14px;white-space:pre-line}#thAsk .thb{display:flex;gap:8px;justify-content:flex-end}' +
+    '#thAsk button{padding:8px 16px;border-radius:var(--r,6px);border:1px solid var(--brb,#1a3a55);background:var(--bgh,#0f1e2e);color:var(--tp,#e8f8ff);font-size:13px;cursor:pointer}#thAsk button.thy{background:var(--ac2,#0090c8);border-color:var(--ac,#00e5ff);font-weight:700}';
+  document.head.appendChild(css);
+  function isEn() { try { return window.lang === 'en'; } catch (e) { return false; } }
+  function box() {
+    var b = document.getElementById('thNotices');
+    if (!b) { b = document.createElement('div'); b.id = 'thNotices'; b.setAttribute('role', 'status'); b.setAttribute('aria-live', 'polite'); document.body.appendChild(b); }
+    return b;
+  }
+  function notice(msg, kind) {
+    var t = String(msg == null ? '' : msg);
+    if (!t) { return; }
+    var k = kind || (/erreur|error|echec|échec|failed|non disponible|not available|impossible/i.test(t) ? 'er' : (/veuillez|please|calculez|calculate|générez|generate|d.abord|first/i.test(t) ? 'wn' : 'ok'));
+    var b = box(), d = document.createElement('div');
+    d.className = 'thn ' + k;
+    var m = document.createElement('div'); m.className = 'thm'; m.textContent = t;
+    var x = document.createElement('button'); x.type = 'button'; x.textContent = '×'; x.setAttribute('aria-label', isEn() ? 'Close' : 'Fermer');
+    function close() { if (d.parentNode) { d.parentNode.removeChild(d); } }
+    x.onclick = close; d.appendChild(m); d.appendChild(x); b.appendChild(d);
+    while (b.children.length > 4) { b.removeChild(b.firstChild); }
+    setTimeout(close, Math.min(15000, 5000 + t.length * 60));
+  }
+  function ask(msg, onOk, onCancel) {
+    var old = document.getElementById('thAskBg'); if (old) { old.parentNode.removeChild(old); }
+    var bg = document.createElement('div'); bg.id = 'thAskBg';
+    var dlg = document.createElement('div'); dlg.id = 'thAsk'; dlg.setAttribute('role', 'alertdialog'); dlg.setAttribute('aria-modal', 'true');
+    var p = document.createElement('p'); p.textContent = String(msg);
+    var row = document.createElement('div'); row.className = 'thb';
+    var no = document.createElement('button'); no.type = 'button'; no.textContent = isEn() ? 'Cancel' : 'Annuler';
+    var yes = document.createElement('button'); yes.type = 'button'; yes.className = 'thy'; yes.textContent = isEn() ? 'Confirm' : 'Confirmer';
+    var prev = document.activeElement;
+    function end(ok) {
+      document.removeEventListener('keydown', key, true);
+      if (bg.parentNode) { bg.parentNode.removeChild(bg); }
+      try { if (prev && prev.focus) { prev.focus(); } } catch (e) { /* sans effet */ }
+      if (ok) { if (onOk) { onOk(); } } else if (onCancel) { onCancel(); }
+    }
+    function key(e) {
+      if (e.key === 'Escape') { e.preventDefault(); end(false); }
+      else if (e.key === 'Tab') { e.preventDefault(); (document.activeElement === no ? yes : no).focus(); }
+    }
+    no.onclick = function () { end(false); }; yes.onclick = function () { end(true); };
+    bg.onclick = function (e) { if (e.target === bg) { end(false); } };
+    row.appendChild(no); row.appendChild(yes); dlg.appendChild(p); dlg.appendChild(row); bg.appendChild(dlg); document.body.appendChild(bg);
+    document.addEventListener('keydown', key, true);
+    no.focus();
+  }
+  window.thUI = { notice: notice, ask: ask };
+  window.thAsk = ask;
+  window.alert = function (msg) { notice(msg); };
 })();
 
 </script>
