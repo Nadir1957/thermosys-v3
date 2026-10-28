@@ -213,6 +213,16 @@ ETAPE 35 : DESENFUMAGE - audit des 3 modes (IT 246, EN 12101, NFPA 92). Formules
  la puissance saisie est la puissance TOTALE (70 % convectif applique ensuite). A CONFIRMER dans les textes en
  vigueur : fraction convective 70 %, formule du balcon (Q total ou convectif), regles IT 246 / DTR C3-41 (N, K, Cd).
  Module : bloc <script id="desen35-module"> (80 blocs). Mise a jour : node add_desen35.js dist\index.html
+
+ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/m3) CORRECT ; autorite
+ a = dPv / (dPv + dPreseau) CORRECTE. CORRECTIONS : (1) calcKvs : marge forfaitaire +30 % supprimee (un
+ surdimensionnement degrade l'autorite) ; affichage du Kvs normalise superieur (serie R5), de la dP pleine ouverture
+ et du rappel a >= 0,3 (0,5 recommande) ; (2) onglet PICV : "Conforme EN 215" retire (EN 215 = robinets thermostatiques
+ de radiateurs, ne definit pas l'autorite), "PICV obligatoire RE2020" -> "recommande (equilibrage hydraulique)",
+ "COP chute de 20-30 %" -> "le COP peut se degrader", "RT2025" retire des titres de l'onglet (cette appellation
+ n'existe pas ; reste a nettoyer ailleurs dans l'application : autres occurrences, a verifier). Catalogue de vannes (Kvs, DN, PN)
+ = donnees constructeur NON verifiables ici. Module : bloc <script id="vannes36-module"> (81 blocs).
+ Mise a jour : node add_vannes36.js dist\index.html
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 

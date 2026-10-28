@@ -16051,6 +16051,77 @@ if(typeof _sc==='function') window.calcSCOP=function(){
   };
 })();
 </script>
+<script id="vannes36-module">
+(function () {
+  'use strict';
+  if (window.__vn36) { return; }
+  window.__vn36 = true;
+  function en() { return window.lang === 'en'; }
+  /* --- Calcul Kv : Kv = Q * racine(rho / (10 * dp)), Q en m3/h, dp en kPa, rho en kg/m3 (equivalent a Q * racine(rho/1000 / dp[bar])) --- */
+  var KVS = [0.16, 0.25, 0.4, 0.63, 1, 1.6, 2.5, 4, 6.3, 10, 16, 25, 40, 63, 100, 160, 250, 400, 630, 1000];
+  function f(x, d) { return (en() ? x.toFixed(d) : x.toFixed(d).replace('.', ',')); }
+  window.calcKvs = function () {
+    var q = parseFloat((document.getElementById('kvsQ') || {}).value) || 2.5;
+    var dp = parseFloat((document.getElementById('kvsDp') || {}).value) || 20;
+    var rho = parseFloat((document.getElementById('kvsRho') || {}).value) || 1000;
+    var kv = q * Math.sqrt(rho / (10 * dp));
+    var nx = null, i;
+    for (i = 0; i < KVS.length; i++) { if (KVS[i] >= kv * 0.999) { nx = KVS[i]; break; } }
+    var el = document.getElementById('kvsResult');
+    if (!el) { return; }
+    var t;
+    if (en()) {
+      t = 'Kv at design flow: ' + f(kv, 3) + ' m³/h\n';
+      if (nx) { t += 'Next standard Kvs above (R5 series): ' + f(nx, 2) + ' m³/h\nValve ΔP when fully open at this flow: ' + f(dp * Math.pow(kv / nx, 2), 1) + ' kPa\n'; }
+      else { t += 'Kv above the standard series: choose a larger valve or split the flow.\n'; }
+      t += 'Design ΔP: ' + dp + ' kPa | Density: ' + rho + ' kg/m³\n\nDo not oversize: a valve that is too large lowers its authority (a = ΔPvalve / (ΔPvalve + ΔPcircuit), at least 0.3, 0.5 recommended). Manufacturer ranges differ: check the real Kvs of the chosen model.';
+    } else {
+      t = 'Kv au débit de calcul : ' + f(kv, 3) + ' m³/h\n';
+      if (nx) { t += 'Kvs normalisé immédiatement supérieur (série R5) : ' + f(nx, 2) + ' m³/h\nΔP de la vanne pleine ouverture à ce débit : ' + f(dp * Math.pow(kv / nx, 2), 1) + ' kPa\n'; }
+      else { t += 'Kv supérieur à la série normalisée : choisir une vanne plus grande ou répartir le débit.\n'; }
+      t += 'ΔP de calcul : ' + dp + ' kPa | Masse volumique : ' + rho + ' kg/m³\n\nNe pas surdimensionner : une vanne trop grande réduit son autorité (a = ΔPvanne / (ΔPvanne + ΔPcircuit), au moins 0,3 ; 0,5 recommandé). Les gammes des constructeurs diffèrent : vérifier le Kvs réel du modèle choisi.';
+    }
+    el.textContent = t;
+  };
+  /* --- corrections de texte de l'onglet PICV (references et affirmations non fondees) --- */
+  var PAIRS = [
+    ['Diagnostic & Audit RT2025', 'Diagnostic & Audit'], ['Diagnostics & RT2025 Audit', 'Diagnostics & Audit'],
+    ['Audit PICV — Conformité RT2025 / RE2020', 'Audit PICV — Équilibrage hydraulique'], ['PICV Audit — RT2025 / RE2020 Compliance', 'PICV Audit — Hydraulic balancing'],
+    ['Pourquoi le PICV est obligatoire RE2020 ?', 'Pourquoi le PICV est recommandé (équilibrage hydraulique) ?'], ['Why is PICV mandatory under RE2020?', 'Why is PICV recommended (hydraulic balancing)?'],
+    ['la PAC module excessivement → COP chute de 20–30%.', 'la PAC module excessivement → le COP peut se dégrader.'], ['heat pump over-modulates → COP drops 20–30%.', 'heat pump over-modulates → COP can degrade.'],
+    ['Critères RT2025', 'Critères indicatifs'], ['RT2025 Criteria', 'Indicative criteria'],
+    ['PICV RT2025', 'PICV'],
+    ['Conforme EN 215', 'Critère d’autorité atteint'], ['Compliant EN 215', 'Authority criterion met']
+  ];
+  var busy = false;
+  function fixText(s) {
+    var o = s, i;
+    for (i = 0; i < PAIRS.length; i++) { if (o.indexOf(PAIRS[i][0]) >= 0) { o = o.split(PAIRS[i][0]).join(PAIRS[i][1]); } }
+    if (o.indexOf('EN 215 :') >= 0) { o = o.split('EN 215 :').join(en() ? 'Definition:' : 'Définition :'); }
+    if (/EN\s*215/.test(o)) { o = o.replace(/EN\s*215/g, en() ? 'authority criterion' : 'critère d’autorité'); }
+    return o;
+  }
+  function fixAll() {
+    if (busy) { return; }
+    var root = document.getElementById('vmc-diag');
+    if (!root) { return; }
+    busy = true;
+    try {
+      var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), n, ch = [];
+      while ((n = w.nextNode())) { var v = n.nodeValue; if (v && /RT2025|EN\s*215|20–30|obligatoire RE2020|mandatory under RE2020/.test(v)) { ch.push(n); } }
+      ch.forEach(function (x) { var nv = fixText(x.nodeValue); if (nv !== x.nodeValue) { x.nodeValue = nv; } });
+      root.querySelectorAll('[data-fr],[data-en]').forEach(function (e) {
+        ['data-fr', 'data-en'].forEach(function (a) { var v = e.getAttribute(a); if (v && /RT2025|EN\s*215/.test(v)) { e.setAttribute(a, fixText(v)); } });
+      });
+    } catch (e) { /* sans effet */ }
+    busy = false;
+  }
+  var root0 = document.getElementById('vmc-diag');
+  if (root0 && window.MutationObserver) { new MutationObserver(function () { fixAll(); }).observe(root0, { childList: true, subtree: true, characterData: true }); }
+  fixAll();
+})();
+
+</script>
 </body>
 </html>
 
