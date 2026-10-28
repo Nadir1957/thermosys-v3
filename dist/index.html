@@ -2218,7 +2218,7 @@ Le désenfumage est une mesure de <b style="color:var(--ac)">sécurité incendie
 <!-- CHAMPS MODE 2 : EN 12101 -->
 <div id="dsfFields2" style="display:none;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px">
   <div>
-    <div style="font-size:10.5px;color:var(--ts);margin-bottom:4px">Puissance feu de calcul Q<sub>c</sub> (kW) / Design fire HRR</div>
+    <div style="font-size:10.5px;color:var(--ts);margin-bottom:4px">Puissance totale du feu Q (kW) / Total fire HRR (70 % convectif appliqué)</div>
     <select id="dsf2_qc" class="fsel" style="width:100%">
       <option value="150">150 kW — Petit bureau sprinklé / Small sprinklered office</option>
       <option value="250">250 kW — Bureau / Office</option>
@@ -2236,7 +2236,7 @@ Le désenfumage est une mesure de <b style="color:var(--ac)">sécurité incendie
     </select>
   </div>
   <div>
-    <div style="font-size:10.5px;color:var(--ts);margin-bottom:4px">Q<sub>c</sub> personnalisé (kW) / Custom HRR</div>
+    <div style="font-size:10.5px;color:var(--ts);margin-bottom:4px">Q personnalisé (kW) / Custom HRR</div>
     <input type="number" id="dsf2_qc_custom" class="fi" placeholder="ex: 3000" min="1">
   </div>
   <div>
@@ -2259,6 +2259,14 @@ Le désenfumage est une mesure de <b style="color:var(--ac)">sécurité incendie
   <div>
     <div style="font-size:10.5px;color:var(--ts);margin-bottom:4px">Débit ventilateur unitaire (m³/h) / Fan unit flow</div>
     <input type="number" id="dsf2_fan" class="fi" placeholder="ex: 20000 (optionnel)" min="0">
+  </div>
+  <div>
+    <div style="font-size:10.5px;color:var(--ts);margin-bottom:4px">Balcon seulement : largeur du débordement W (m) / Spill width</div>
+    <input type="number" id="dsf2_balW" class="fi" placeholder="panache de balcon" step="0.1" min="0">
+  </div>
+  <div>
+    <div style="font-size:10.5px;color:var(--ts);margin-bottom:4px">Balcon seulement : hauteur du balcon au-dessus du foyer H (m) / Balcony height</div>
+    <input type="number" id="dsf2_balH" class="fi" placeholder="H &lt; z" step="0.1" min="0">
   </div>
 </div>
 
@@ -2306,6 +2314,14 @@ Le désenfumage est une mesure de <b style="color:var(--ac)">sécurité incendie
   <div>
     <div style="font-size:10.5px;color:var(--ts);margin-bottom:4px">Fan unit flow (m³/h) / Débit ventilateur unitaire</div>
     <input type="number" id="dsf3_fan" class="fi" placeholder="ex: 20000 (optional)" min="0">
+  </div>
+  <div>
+    <div style="font-size:10.5px;color:var(--ts);margin-bottom:4px">Balcon seulement : largeur du débordement W (m) / Spill width</div>
+    <input type="number" id="dsf3_balW" class="fi" placeholder="panache de balcon" step="0.1" min="0">
+  </div>
+  <div>
+    <div style="font-size:10.5px;color:var(--ts);margin-bottom:4px">Balcon seulement : hauteur du balcon au-dessus du foyer H (m) / Balcony height</div>
+    <input type="number" id="dsf3_balH" class="fi" placeholder="H &lt; z" step="0.1" min="0">
   </div>
 </div>
 
@@ -2778,19 +2794,18 @@ function _calcEN12101(s, h) {
   } else if (plume === 'wall') {
     plumeLabel = (window.lang==='en') ? 'Wall plume' : 'Panache de paroi';
     // Feu contre une paroi — débit massique ×2 (symétrie)
-    Mp = 0.071 * Math.pow(Qconv/2, 1/3) * Math.pow(z, 5/3) + 0.0018 * (Qconv/2);
-    Mp = Mp * 2;
+    Mp = 0.5 * _dsfPlume(2 * Qconv, z);   // methode des images : demi-panache de 2Q
   } else if (plume === 'corner') {
     plumeLabel = (window.lang==='en') ? 'Corner plume' : 'Panache de coin';
     // Feu dans un coin — ×4
-    Mp = 0.071 * Math.pow(Qconv/4, 1/3) * Math.pow(z, 5/3) + 0.0018 * (Qconv/4);
-    Mp = Mp * 4;
+    Mp = 0.25 * _dsfPlume(4 * Qconv, z);  // methode des images : quart de panache de 4Q
   } else {
     plumeLabel = (window.lang==='en') ? 'Balcony spill plume' : 'Panache de balcon';
     // Balcony spill plume — EN 12101 §C.3
     // Mp = 0.36 × (Q × W²)^(1/3) × (z + 0.25H)
-    var W = Math.sqrt(s); // largeur estimée
-    Mp = 0.36 * Math.pow(Qconv * W * W, 1/3) * (z + 0.25 * h);
+    var Wb = parseFloat(document.getElementById('dsf2_balW').value) || 0, Hb = parseFloat(document.getElementById('dsf2_balH').value) || 0;
+    if (Wb <= 0 || Hb <= 0 || z <= Hb) { alert('Panache de balcon : saisissez la largeur du débordement W et la hauteur du balcon H (H < z) / Balcony plume: enter spill width W and balcony height H (H < z)'); return; }
+    Mp = 0.36 * Math.pow(Qconv * Wb * Wb, 1/3) * ((z - Hb) + 0.25 * Hb);   // zb = z - H
   }
 
   /* Température des fumées */
@@ -2818,7 +2833,7 @@ function _calcEN12101(s, h) {
     '&#127466;&#127482;',
     [
       {l_fr:'Volume local', l_en:'Room volume', v: (s*h).toFixed(1)+' m³', c:'ac'},
-      {l_fr:'Puissance feu Qc', l_en:'Fire HRR', v: Qc+' kW', sub:'Qconv = '+Qconv.toFixed(0)+' kW (70%)', c:'ac'},
+      {l_fr:'Puissance totale du feu Q', l_en:'Total fire HRR', v: Qc+' kW', sub:'Qconv = '+Qconv.toFixed(0)+' kW (70%)', c:'ac'},
       {l_fr:'Type de panache', l_en:'Plume type', v: plumeLabel, c:'ts'},
       {l_fr:'Hauteur libre z', l_en:'Clear height', v: z+' m', sub:'z_lim = '+zl.toFixed(2)+' m', c:'ts'},
       {l_fr:'Débit massique Mp', l_en:'Mass flow', v: Mp.toFixed(2)+' kg/s', c:'ac'},
@@ -2873,18 +2888,17 @@ function _calcNFPA92(s, h) {
   } else if (plume === 'wall') {
     plumeLabel = (window.lang==='en') ? 'Wall plume' : 'Panache de paroi';
     plumeNote  = 'NFPA 92 §5.5.4';
-    var Qc_w = Qc / 2;
-    Mp = (0.071 * Math.pow(Qc_w, 1/3) * Math.pow(z, 5/3) + 0.0018 * Qc_w) * 2;
+    Mp = 0.5 * _dsfPlume(2 * Qc, z);   // methode des images : demi-panache de 2Q
   } else if (plume === 'corner') {
     plumeLabel = (window.lang==='en') ? 'Corner plume' : 'Panache de coin';
     plumeNote  = 'NFPA 92 §5.5.5';
-    var Qc_c = Qc / 4;
-    Mp = (0.071 * Math.pow(Qc_c, 1/3) * Math.pow(z, 5/3) + 0.0018 * Qc_c) * 4;
+    Mp = 0.25 * _dsfPlume(4 * Qc, z);  // methode des images : quart de panache de 4Q
   } else {
     plumeLabel = (window.lang==='en') ? 'Balcony spill plume' : 'Panache de balcon';
     plumeNote  = 'NFPA 92 §5.5.6';
-    var W_b = Math.sqrt(s);
-    Mp = 0.36 * Math.pow(Qc * W_b * W_b, 1/3) * (z + 0.25 * h);
+    var Wb = parseFloat(document.getElementById('dsf3_balW').value) || 0, Hb = parseFloat(document.getElementById('dsf3_balH').value) || 0;
+    if (Wb <= 0 || Hb <= 0 || z <= Hb) { alert('Panache de balcon : saisissez la largeur du débordement W et la hauteur du balcon H (H < z) / Balcony plume: enter spill width W and balcony height H (H < z)'); return; }
+    Mp = 0.36 * Math.pow(Qc * Wb * Wb, 1/3) * ((z - Hb) + 0.25 * Hb);   // zb = z - H
   }
 
   /* Température des fumées */
@@ -16025,6 +16039,17 @@ if(typeof _sc==='function') window.calcSCOP=function(){
   window.alert = function (msg) { notice(msg); };
 })();
 
+</script>
+<script id="desen35-module">
+(function () {
+  'use strict';
+  if (window._dsfPlume) { return; }
+  /* Debit massique du panache axisymetrique libre (NFPA 92 / Thomas-Hinkley), Qc convectif en kW, z en m. */
+  window._dsfPlume = function (Qc, z) {
+    var zl = 0.166 * Math.pow(Qc, 0.4);
+    return z > zl ? 0.071 * Math.pow(Qc, 1 / 3) * Math.pow(z, 5 / 3) + 0.0018 * Qc : 0.032 * Math.pow(Qc, 0.6) * z;
+  };
+})();
 </script>
 </body>
 </html>

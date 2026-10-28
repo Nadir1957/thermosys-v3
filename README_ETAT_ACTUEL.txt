@@ -203,6 +203,16 @@ ETAPE 33 : MESSAGES INTEGRES - 17 alert() et 7 confirm() du navigateur remplaces
  - A NOTER : l'inscription est OUVERTE (tout nouveau compte est 'approved' automatiquement, approved_at vide).
    A revoir au lancement de l'offre payante. Mention a prevoir dans la politique de confidentialite : forfait
    gratuit Gemini = images possiblement utilisees par Google pour ameliorer ses services.
+
+ETAPE 35 : DESENFUMAGE - audit des 3 modes (IT 246, EN 12101, NFPA 92). Formules du panache libre CORRECTES (debit
+ massique 0,071 Qc^1/3 z^5/3 + 0,0018 Qc, hauteur de flamme 0,166 Qc^0,4, zone flamme 0,032 Qc^0,6 z, T, rho = 353/T).
+ CORRECTIONS : (1) panache de paroi et de coin etaient calcules A L'ENVERS (debit superieur au panache libre : 31,3
+ contre 22,1 kg/s pour Q = 5 MW, z = 5 m) ; methode des images : paroi = 1/2 x panache libre de 2Qc, coin = 1/4 x
+ panache libre de 4Qc (resultats 16,2 et 12,3 kg/s) ; (2) panache de balcon : W et H sont maintenant SAISIS
+ (avant : W = racine(S), H = hauteur du local), formule 0,36 (Q W^2)^1/3 (zb + 0,25 H), zb = z - H ; (3) libelle :
+ la puissance saisie est la puissance TOTALE (70 % convectif applique ensuite). A CONFIRMER dans les textes en
+ vigueur : fraction convective 70 %, formule du balcon (Q total ou convectif), regles IT 246 / DTR C3-41 (N, K, Cd).
+ Module : bloc <script id="desen35-module"> (80 blocs). Mise a jour : node add_desen35.js dist\index.html
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
