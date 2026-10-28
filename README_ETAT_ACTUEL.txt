@@ -310,6 +310,12 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  Mise a jour : node add_catalogue45.js dist\index.html
  RESTE A TRAITER (Catalogue) : valeurs des 12 produits Condor (co01-co12) a verifier avec les fiches techniques d'usine ; mentions
  "Fabrique en Algerie / IANOR / MCRE / SAV 48 wilayas" a confirmer ; donnees des autres marques a verifier avec les catalogues officiels.
+ ETAPE 46 (28/10/2026) - DEVIS (audit) : (1) montants arrondis a l'entier pour toutes les devises : faux pour EUR/USD... (centimes) et
+ KWD/BHD/OMR (3 decimales) ; decimales selon la devise (0 : DA, JPY, KRW ; 3 : KWD, BHD, OMR ; 2 : autres), arrondis coherents
+ (HT, remise, TVA, TTC) a l'ecran et dans le PDF ; format de nombre FR/EN, espace avant le symbole (89,50 EUR). (2) remise et TVA bornees
+ 0-100, quantite >= 1, prix >= 0. (3) PDF : un devis de plus de ~25 lignes etait tronque (une seule page) -> PDF multi-pages, coupures
+ entre les lignes. (4) nom du client/projet/site/reference echappes dans le PDF ; date affichee jj/mm/aaaa en FR.
+ Bloc <script id="devis-46-module"> (91 blocs). Mise a jour : node add_devis46.js dist\index.html
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 

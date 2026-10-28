@@ -16999,6 +16999,84 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 })();
 
 </script>
+<script id="devis-46-module">
+/* Thermosys etape 46 - DEVIS : decimales par devise, arrondis coherents, PDF multi-pages, saisies echappees (idempotent) */
+(function(){
+'use strict';
+if(window.__dv46)return; window.__dv46=1;
+function isFr(){var l=(typeof lang!=='undefined')?lang:window.lang;return (l||'fr')==='fr';}
+var D0={DA:1,DZD:1,JPY:1,KRW:1}, D3={KWD:1,BHD:1,OMR:1};
+function dec(cur){return D0[cur]?0:(D3[cur]?3:2);}
+var _round=Math.round;
+function rd(x,d){var f=Math.pow(10,d);return _round((x*f)+(x<0?-1e-9:1e-9))/f;}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function money(n,cur){
+ if(typeof deviseSymbols!=='undefined'){['EUR','MAD','TND','CHF','SAR','AED','QAR','KWD','BHD','OMR','SEK','NOK','DKK','DA','DZD','RUB'].forEach(function(c){var x=deviseSymbols[c];if(x&&x.after&&x.sep==='')x.sep=' ';});}
+ cur=cur||getCurrency(); var d=(typeof deviseSymbols!=='undefined'&&deviseSymbols[cur])||deviseSymbols['DA']; var k=dec(cur);
+ var s=Number(rd(Number(n)||0,k)).toLocaleString(isFr()?'fr-FR':'en-US',{minimumFractionDigits:k,maximumFractionDigits:k});
+ return d.after?s+d.sep+d.sym:d.sym+d.sep+s;
+}
+window.fmtMoney=function(n){return money(n);};
+function num(id,def,lo,hi){var v=parseFloat((document.getElementById(id)||{value:''}).value);if(isNaN(v))v=def;return Math.min(hi,Math.max(lo,v));}
+function calc(){
+ var k=dec(getCurrency());
+ devisLines.forEach(function(l){l.qty=Math.max(1,parseInt(l.qty)||1);l.prix=Math.max(0,parseFloat(l.prix)||0);l.tot=rd(l.qty*l.prix,k);});
+ var ht=rd(devisLines.reduce(function(s,l){return s+l.tot;},0),k);
+ var rem=num('dvRemise',0,0,100), tva=num('dvTVA',0,0,100);
+ var htR=rd(ht*(1-rem/100),k), tvaM=rd(htR*tva/100,k);
+ return {k:k,ht:ht,rem:rem,tva:tva,htR:htR,tvaM:tvaM,ttc:rd(htR+tvaM,k)};
+}
+window.renderDevis=function(){
+ var body=document.getElementById('dvBody'); if(!body)return;
+ var c=calc();
+ body.innerHTML=devisLines.map(function(l){
+  return '<tr><td class="k">'+__sx(l.ref)+'</td><td style="font-size:11px">'+__sx(l.brand)+' — '+__sx(l.des)+'</td>'
+   +'<td class="v">'+l.qty+'</td><td class="v">'+money(l.prix)+'</td>'
+   +'<td class="v" style="color:var(--ac);font-family:var(--fmo)">'+money(l.tot)+'</td>'
+   +'<td><button class="btn bd" style="padding:4px 9px;min-height:34px;font-size:11px" data-lid="'+l.id+'" onclick="rmDvLine(parseInt(this.getAttribute(\'data-lid\')))">×</button></td></tr>';
+ }).join('');
+ var tot=document.getElementById('dvTotal'); if(!tot)return;
+ var fr=isFr(), a=fr?'HT':'Excl. VAT', b=fr?'TVA':'VAT', t=fr?'TTC':'Incl. VAT';
+ tot.textContent=(c.rem>0?money(c.ht)+' (-'+c.rem+'%) '+a+': ':' '+a+': ')+money(c.htR)+' | '+b+' '+c.tva+'%: '+money(c.tvaM)+' | '+t+': '+money(c.ttc);
+};
+var PATCH=function(){
+ window._dvpdfDownload=function(){var el=document.querySelector('.page');if(!el||!window.html2canvas){_dvpdfPrint();return;}
+  html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#ffffff'}).then(function(c){
+   var J=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;if(!J){_dvpdfPrint();return;}
+   var doc=new J({orientation:'portrait',unit:'mm',format:'a4'});
+   var M=10, usable=297-2*M, sh=Math.floor(c.width*usable/210), f=c.width/el.offsetWidth, er=el.getBoundingClientRect().top;
+   var cuts=[];Array.prototype.forEach.call(el.querySelectorAll('tbody tr,tfoot tr,.info-grid'),function(r){cuts.push((r.getBoundingClientRect().bottom-er)*f);});
+   var start=0,pages=[];
+   while(c.height-start>sh){var lim=start+sh,best=0;cuts.forEach(function(y){if(y<=lim&&y>start+sh*0.3&&y>best)best=y;});var end=best||lim;pages.push([start,end]);start=end;}
+   pages.push([start,c.height]);
+   pages.forEach(function(pg,i){var h=Math.round(pg[1]-pg[0]);var s=document.createElement('canvas');s.width=c.width;s.height=h;var x=s.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,s.width,h);x.drawImage(c,0,Math.round(pg[0]),c.width,h,0,0,c.width,h);if(i)doc.addPage();doc.addImage(s.toDataURL('image/jpeg',0.95),'JPEG',0,M,210,h*210/c.width);});
+   var ref=(document.title||'Devis').split(' ')[0]||'Devis';doc.save(ref+'.pdf');
+  }).catch(function(e){_dvpdfPrint();});};
+};
+var orig=window.exportDv;
+window.exportDv=function(){
+ if(!devisLines.length){return orig.apply(this,arguments);}
+ var ids=['dvClient','dvProjet','dvSite','dvRef'], saved={}, c;
+ ids.forEach(function(id){var e=document.getElementById(id);if(e){saved[id]=e.value;e.value=esc(e.value);}});
+ var k=dec(getCurrency()), oo=window.open, w=null;
+ devisLines.forEach(function(l){l.qty=Math.max(1,parseInt(l.qty)||1);l.prix=Math.max(0,parseFloat(l.prix)||0);l.tot=rd(l.qty*l.prix,k);});
+ Math.round=function(x){return rd(x,k);};
+ window.open=function(){w=oo.apply(window,arguments);return w;};
+ try{ orig.apply(this,arguments); }
+ finally{ Math.round=_round; window.open=oo; ids.forEach(function(id){var e=document.getElementById(id);if(e)e.value=saved[id];}); }
+ if(w&&w.document){
+  try{
+   var v=w.document.querySelectorAll('.info-val')[3];
+   if(v&&/^\d{4}-\d{2}-\d{2}$/.test(v.textContent)){var p=v.textContent.split('-');v.textContent=isFr()?p[2]+'/'+p[1]+'/'+p[0]:p[0]+'-'+p[1]+'-'+p[2];}
+   var s=w.document.createElement('script');s.textContent='('+PATCH.toString()+')();';w.document.body.appendChild(s);
+  }catch(e){}
+ }
+};
+function start(){ try{renderDevis();}catch(e){} }
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
+})();
+
+</script>
 </body>
 </html>
 
