@@ -263,6 +263,18 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  NON VERIFIE : millesime "EN 378:2021" (utilise dans toute l'application, a verifier), texte integral de NF C18-510 (norme payante).
  La procedure est une AIDE : elle ne remplace pas les procedures de l'exploitant ni l'habilitation electrique du personnel.
  Bloc <script id="loto41-module"> (86 blocs). Mise a jour : node add_loto41.js dist\index.html
+ ETAPE 42 : MAINTENANCE - audit des 7 listes de controle (split, VRF, chiller, rooftop, PAC, CTA, mise en service).
+ CORRECTIONS : (1) "filtres EU4" (classe de l'ancienne EN 779, retiree) -> "G4 / ISO Coarse ou classe prevue" ; (2) CTA "remplacer
+ filtres si dP>100 Pa" (seuil unique faux) -> perte de charge finale du fabricant (souvent 150-250 Pa en G4, 300-450 Pa en F7-F9) ;
+ (3) "serpentin condenseur HP eau" (risque de coucher les ailettes) -> eau basse pression, sans plier les ailettes, hors tension ;
+ (4) pressions seules -> pression + surchauffe + sous-refroidissement ; charge : pas d'appoint sans recherche de fuite ; mise en
+ service : charge pesee puis surchauffe/sous-refroidissement ; (5) test d'etancheite : inscription au registre de l'equipement ;
+ AJOUTS : section SECURITE (consignation LOTO + VAT) en tete des 6 listes de maintenance ; essai azote sec + tirage au vide en mise
+ en service ; protection antigel (glycol, controleur de debit) sur chiller et PAC. DEFAUT CORRIGE : apres un changement de langue,
+ le menu "Systeme" perdait l'option "Mise en service" (fonction de langue reconstruisant 6 systemes sur 7) - option restauree.
+ Les listes sont des modeles generiques : les intervalles et valeurs limites du constructeur priment. Les textes de la liste
+ restent sans accents dans les anciennes lignes (donnees d'origine). Bloc <script id="maint42-module"> (87 blocs).
+ Mise a jour : node add_maint42.js dist\index.html
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 

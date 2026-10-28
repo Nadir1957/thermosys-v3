@@ -16441,6 +16441,59 @@ if(typeof _sc==='function') window.calcSCOP=function(){
 })();
 
 </script>
+<script id="maint42-module">
+(function () {
+  'use strict';
+  if (window.__mt42) { return; }
+  window.__mt42 = true;
+  if (typeof MAINT_LISTS === 'undefined') { return; }
+  /* [FR d'origine, FR corrige, EN d'origine, EN corrige] */
+  var R = [
+    ['Nettoyer serpentin condenseur (HP eau)', 'Nettoyer le serpentin condenseur (eau basse pression, sans plier les ailettes ; équipement hors tension)', 'Clean condenser coil (high-pressure water)', 'Clean the condenser coil (low-pressure water, without bending the fins; equipment de-energized)'],
+    ['Nettoyage condenseur HP eau', 'Nettoyage du condenseur (eau basse pression, sans plier les ailettes ; équipement hors tension)', 'Clean condenser (high-pressure water)', 'Clean the condenser (low-pressure water, without bending the fins; equipment de-energized)'],
+    ['Remplacement filtres EU4', 'Remplacement des filtres (classe G4 / ISO Coarse ou classe prévue)', 'Replace EU4 filters', 'Replace the filters (G4 / ISO Coarse or specified class)'],
+    ['Remplacement filtres si dP>100Pa', 'Remplacer les filtres à la perte de charge finale du fabricant (souvent 150–250 Pa en G4, 300–450 Pa en F7–F9)', 'Replace filters if dP>100Pa', 'Replace filters at the manufacturer’s final pressure drop (often 150–250 Pa for G4, 300–450 Pa for F7–F9)'],
+    ['Mesurer pressions HP/BP', 'Mesurer les pressions HP/BP, la surchauffe et le sous-refroidissement', 'Measure HP/LP pressures', 'Measure HP/LP pressures, superheat and subcooling'],
+    ['Controle pressions HP/BP', 'Contrôle des pressions HP/BP, de la surchauffe et du sous-refroidissement', 'Check HP/LP pressures', 'Check HP/LP pressures, superheat and subcooling'],
+    ['Verification charge refrigerant', 'Vérification de la charge (surchauffe, sous-refroidissement) ; pas d’appoint sans recherche de fuite', 'Check refrigerant charge', 'Check the charge (superheat, subcooling); no top-up without a leak search'],
+    ['Test etancheite', 'Test d’étanchéité (détecteur de fuites) et inscription au registre de l’équipement', 'Leak test', 'Leak test (leak detector) and entry in the equipment logbook'],
+    ['Test etancheite (detecteur electronique)', 'Test d’étanchéité (détecteur électronique) et inscription au registre de l’équipement', 'Leak test (electronic detector)', 'Leak test (electronic detector) and entry in the equipment logbook'],
+    ['Vérifier charge réfrigérant (poids/pression)', 'Vérifier la charge de réfrigérant (poids pesé, puis surchauffe / sous-refroidissement)', 'Verify refrigerant charge (weight/pressure)', 'Verify the refrigerant charge (weighed amount, then superheat / subcooling)']
+  ];
+  var SAFE = [{ s: 'SÉCURITÉ', i: ['Avant toute intervention mécanique ou électrique : consignation (LOTO) et vérification d’absence de tension (voir le module LOTO)'] },
+              { s: 'SAFETY', i: ['Before any mechanical or electrical work: lockout (LOTO) and verification of absence of voltage (see the LOTO module)'] }];
+  var stat = { rep: 0, add: 0 };
+  Object.keys(MAINT_LISTS).forEach(function (sys) {
+    ['fr', 'en'].forEach(function (lg, li) {
+      var secs = MAINT_LISTS[sys][lg]; if (!secs) { return; }
+      secs.forEach(function (sec) {
+        sec.i = sec.i.map(function (t) {
+          for (var k = 0; k < R.length; k++) { if (t === R[k][li * 2]) { stat.rep++; return R[k][li * 2 + 1]; } }
+          return t;
+        });
+      });
+      if (sys !== 'commissioning') { secs.unshift({ s: SAFE[li].s, i: SAFE[li].i.slice() }); stat.add++; }
+      if (sys === 'commissioning' && secs[0]) { secs[0].i.push(li === 0 ? 'Essai de pression à l’azote sec et tirage au vide validés (valeurs relevées)' : 'Dry-nitrogen pressure test and evacuation validated (values recorded)'); stat.add++; }
+      if (sys === 'chiller' || sys === 'pac') {
+        secs.forEach(function (sec) { if (/HYDRAUL/i.test(sec.s)) { sec.i.push(li === 0 ? 'Vérifier la protection antigel (concentration de glycol, contrôleur de débit)' : 'Check freeze protection (glycol concentration, flow switch)'); stat.add++; } });
+      }
+    });
+  });
+  /* Le changement de langue reconstruit le menu avec 6 systemes et supprime « Mise en service » : on la remet. */
+  function ensureCommissioning() {
+    var sel = document.getElementById('mntSys');
+    if (!sel) { return; }
+    var label = window.lang === 'en' ? 'Commissioning' : 'Mise en service', has = false, i;
+    for (i = 0; i < sel.options.length; i++) { if (sel.options[i].value === 'commissioning') { has = true; if (sel.options[i].text !== label) { sel.options[i].text = label; } } }
+    if (!has) { var o = document.createElement('option'); o.value = 'commissioning'; o.text = label; sel.appendChild(o); }
+  }
+  var selEl = document.getElementById('mntSys');
+  if (selEl && window.MutationObserver) { new MutationObserver(function () { setTimeout(ensureCommissioning, 0); }).observe(selEl, { childList: true }); }
+  ensureCommissioning();
+  window.__mt42stat = stat;
+})();
+
+</script>
 </body>
 </html>
 
