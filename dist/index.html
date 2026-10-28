@@ -16899,6 +16899,106 @@ window.__nor44clean=clean;
 })();
 
 </script>
+<script id="catalogue-45-module">
+/* Thermosys etape 45 - CATALOGUE : contradictions fiche/details supprimees, allegations RE2020 retirees, mention "indicatif" (idempotent) */
+(function(){
+'use strict';
+if(window.__cat45)return; window.__cat45=1;
+function isFr(){var l=(typeof lang!=='undefined')?lang:window.lang;return (l||'fr')==='fr';}
+function nk(s){return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,'');}
+function nums(s){var m=String(s).match(/-?\d+(?:[.,]\d+)?/g)||[];return m.map(function(x){return parseFloat(x.replace(',','.'));});}
+function differs(a,b,numeric){
+ if(numeric){ var x=nums(a), y=nums(b); if(!x.length||!y.length) return false; var n=Math.min(x.length,y.length,3);
+  for(var i=0;i<n;i++){ var d=Math.abs(x[i]-y[i]); if(d>0.03*Math.max(Math.abs(x[i]),1e-9)&&d>1e-9) return true; } return false; }
+ return nk(a)!==nk(b);
+}
+/* concepts : [regex sur la cle normalisee, numerique ?] ; une ligne du resume est retiree si le detail a le meme concept avec une valeur differente */
+var CONCEPTS=[
+ [/^poids/,true],[/sonore|niveausonore|soundlevel/,true],[/^dim|^dimension/,true],
+ [/^charge/,true],[/^refrigerant$|^reacutefrigeacuterant|^refrigerant/,false],
+ [/^eer/,true],[/^cop/,true],[/^scop/,true],[/^seer/,true],
+ [/courantnominal|^courant/,true],[/^nbui|uimax|nbunit/,true],[/^long/,true],[/^deniv|^den|^hauteur/,true],
+ [/^debitair/,true],[/^filtre|^filter/,false],[/^alimentation$/,false],[/^teaumax|^teaumin|teauma|teaumi/,true],[/ambiantemin|ambiantemax|textmin|textmax|text/,true]
+];
+function findDetail(detail,key,conceptRe,numeric){
+ var k=nk(key), found=null;
+ Object.keys(detail).forEach(function(dk){
+  if(found)return;
+  var d=nk(dk);
+  if(d===k){found=dk;return;}
+  if(conceptRe.test(k)&&conceptRe.test(d)){
+   /* meme concept : conditions identiques (ex. a7w35) sinon on ne compare pas */
+   var ck=(k.match(/a-?7w\d+|a\d+w\d+/)||[''])[0], cd=(d.match(/a-?7w\d+|a\d+w\d+/)||[''])[0];
+   var mk=(k.match(/min|max/)||[''])[0], md=(d.match(/min|max/)||[''])[0];
+   if(ck===cd&&mk===md) found=dk;
+  }
+ });
+ return found;
+}
+var stats={removed:0,products:0};
+function cleanProduct(p){
+ var spec=p.spec||{}, det=p.detail||{}, det_en=p.detail_en||{}, n=0;
+ Object.keys(spec).slice().forEach(function(k){
+  for(var i=0;i<CONCEPTS.length;i++){
+   var re=CONCEPTS[i][0], num=CONCEPTS[i][1], kk=nk(k);
+   if(!re.test(kk))continue;
+   var dk=findDetail(det,k,re,num);
+   if(dk&&differs(spec[k],det[dk],num)){ delete spec[k]; n++; }
+   break;
+  }
+ });
+ /* meme libelle dans resume et details avec des nombres differents : le resume est retire */
+ Object.keys(spec).slice().forEach(function(k){
+  var kk=nk(k); Object.keys(det).forEach(function(dk){
+   if(nk(dk)===kk&&spec[k]!==undefined&&nums(spec[k]).length&&nums(det[dk]).length&&differs(spec[k],det[dk],true)){ delete spec[k]; n++; }
+  });
+ });
+ /* la ligne "Charge Rxxx" du resume est retiree si le fluide du detail est different */
+ var dref=null; Object.keys(det).forEach(function(k){ if(/^r.?frig.?rant$/i.test(k)||nk(k)==='refrigerant') dref=det[k]; });
+ var m=dref&&String(dref).match(/R-?\s?\d{2,4}[A-Za-z]?(?:\([A-Z]\))?/);
+ var fluid=m?m[0].replace(/[\s-]/g,'').toUpperCase():null;
+ if(fluid){
+  Object.keys(spec).slice().forEach(function(k){ var mm=k.match(/^Charge\s+(R\S+)/i); if(mm&&mm[1].replace(/[\s-]/g,'').toUpperCase()!==fluid){ delete spec[k]; n++; } });
+  if(p.tags){ p.tags=p.tags.map(function(t){ return /^R-?\d{2,4}[A-Za-z]?$/.test(t)&&t.replace(/-/g,'').toUpperCase()!==fluid&&p.tags.indexOf(fluid)<0?fluid:t; }); }
+ }
+ /* allegations RE2020 et classes de filtre obsoletes */
+ var EU={EU3:'G3',EU4:'G4',EU5:'M5',EU6:'M6',EU7:'F7',EU8:'F8',EU9:'F9'};
+ function strip(s){ if(typeof s!=='string')return s;
+  s=s.replace(/\s*[—-]\s*(?:conforme\s+|compatible\s+|compliant\s+)?RE2020\s+(?:Seuil|Threshold)\s+2025(?:\s+(?:compatible|compliant))?/gi,'').replace(/\s*[—-]\s*SCOP\s+H1\s+≥\s*4\.0\s*✓/gi,'');
+  s=s.replace(/RE2020\s+(?:Seuil|Threshold)\s+2025/gi,'RE2020');
+  s=s.replace(/\bEU([3-9])\s*\(EN 779\)/g,function(m,d){return EU['EU'+d]+(d<5?' (ISO Coarse)':'');}).replace(/\bG4 EN 779\b/g,'G4 (ISO Coarse)').replace(/\bEU([3-9])\b/g,function(m,d){return EU['EU'+d];});
+  return s; }
+ function deep(o){ if(typeof o==='string')return strip(o); if(Array.isArray(o))return o.map(deep); if(o&&typeof o==='object'){ Object.keys(o).forEach(function(k){o[k]=deep(o[k]);}); } return o; }
+ ['sub','n','ser','app','app_en','feat','feat_en','spec','detail','detail_en'].forEach(function(f){ if(p[f]!==undefined) p[f]=deep(p[f]); });
+ ['feat','feat_en'].forEach(function(f){ if(p[f]) p[f]=p[f].filter(function(x){return !/MaPrimeR/i.test(x)&&!/^(?:compatible\s+RE2020|RE2020\s+compliant)$/i.test(String(x).trim());}); });
+ if(p.tags) p.tags=p.tags.filter(function(t){return t!=='RE2020';});
+ [det,det_en].forEach(function(o){ Object.keys(o).forEach(function(k){ if(/^(certification|certifications)$/i.test(k)&&/RE2020/i.test(o[k])) delete o[k]; }); });
+ if(n){ stats.removed+=n; stats.products++; }
+}
+function run(){
+ if(typeof PRODS==='undefined'||!PRODS||!PRODS.length)return false;
+ PRODS.forEach(cleanProduct);
+ window.__cat45stats=stats;
+ return true;
+}
+/* bandeau "donnees indicatives" dans la fiche produit */
+function note(){
+ var c=document.getElementById('detContent'); if(!c||!c.firstChild)return;
+ var n=c.querySelector('.cat45-note');
+ var t=isFr()?'⚠ Données indicatives — à confirmer avec la fiche technique officielle du constructeur avant tout dimensionnement ou commande.':'⚠ Indicative data — confirm with the manufacturer\'s official datasheet before any sizing or order.';
+ if(!n){ n=document.createElement('div'); n.className='cat45-note'; n.style.cssText='font-size:10.5px;color:var(--wn);border:1px solid var(--wn);border-radius:6px;padding:6px 8px;margin:8px 0'; c.insertBefore(n,c.firstChild); }
+ if(n.textContent!==t) n.textContent=t;
+}
+function start(){
+ run();
+ try{ if(typeof renderProds==='function') renderProds(); }catch(e){}
+ var c=document.getElementById('detContent');
+ if(c) new MutationObserver(function(){ if(!c.__busy){ c.__busy=1; note(); setTimeout(function(){c.__busy=0;},0);} }).observe(c,{childList:true});
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
+})();
+
+</script>
 </body>
 </html>
 

@@ -302,6 +302,14 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  RESTE A TRAITER : mentions "RT2025" (identifiant de page, commentaire), textes "RE2020 Seuil 2025" des fiches du CATALOGUE (a traiter dans
  l'audit Catalogue), audits Catalogue et Devis, codes defaut Condor (72) a comparer aux manuels d'usine, confirmation F-Gas sur EUR-Lex,
  villes (Nigeria, Irak, Afghanistan, Yemen).
+ ETAPE 45 (27/10/2026) - CATALOGUE (audit) : 70 produits sur 80 avaient, dans le resume "Specifications techniques", des valeurs qui
+ contredisaient le tableau "Donnees etendues" (poids, niveau sonore, dimensions, fluide/charge, EER/COP/SCOP, T° ambiante...). 227 lignes
+ contradictoires du resume sont retirees (le detail est conserve). Allegations retirees : "RE2020 Seuil 2025 compatible", "MaPrimeRenov",
+ etiquette RE2020 ; classes de filtre EU4/EN 779 converties en G4 (ISO Coarse)/M5/F7. Chaque fiche produit affiche un bandeau FR/EN
+ "Donnees indicatives - a confirmer avec la fiche technique officielle du constructeur". Bloc <script id="catalogue-45-module"> (90 blocs).
+ Mise a jour : node add_catalogue45.js dist\index.html
+ RESTE A TRAITER (Catalogue) : valeurs des 12 produits Condor (co01-co12) a verifier avec les fiches techniques d'usine ; mentions
+ "Fabrique en Algerie / IANOR / MCRE / SAV 48 wilayas" a confirmer ; donnees des autres marques a verifier avec les catalogues officiels.
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
