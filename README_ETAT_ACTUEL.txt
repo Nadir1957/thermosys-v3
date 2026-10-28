@@ -223,6 +223,18 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  n'existe pas ; reste a nettoyer ailleurs dans l'application : autres occurrences, a verifier). Catalogue de vannes (Kvs, DN, PN)
  = donnees constructeur NON verifiables ici. Module : bloc <script id="vannes36-module"> (81 blocs).
  Mise a jour : node add_vannes36.js dist\index.html
+ ETAPE 37 : VANNES - "RT2025" retire du titre, du sous-titre et du bouton PICV du module (le correctif de l'etape 36 ne
+ couvrait que l'onglet Diagnostic). Bloc <script id="vannes37-module"> (82 blocs). Mise a jour : node add_vannes37.js dist\index.html
+ ETAPE 38 : FLUIDES - audit. (1) colonne "T crit." contenait en fait les temperatures d'ebullition : corrigee (R32 78,1 C ;
+ R134a 101,1 C ; R290 96,7 C ; R717 132,4 C ; R744 31,0 C) + colonne "T eb. 1 atm" ajoutee ; Pcrit des corps purs deja exactes ;
+ (2) melanges (R410A, R407C, R404A, R454B, R448A) recalcules avec CoolProp, marques "~" (R454B reprenait les valeurs du R32) ;
+ (3) statuts F-Gas et onglet F-Gas 2025 reecrits d'apres l'annexe IV du reglement UE 2024/573 (dates 2025 a 2035, 2050) :
+ anciennes dates fausses retirees (R22 "2025", "2032 R32 seul autorise", "quotas -85 %", "R134a interdit neuf 2022") ;
+ source = deux sites de synthese concordants, texte EUR-Lex NON consulte -> A CONFIRMER sur le texte officiel ;
+ (4) huiles : Suniso 3GS = huile minerale naphtenique ISO 32 (pas alkylbenzene, pas pour les HFC) ; "SHR 46 BITZER" retire
+ (inexistant au catalogue BITZER) ; colonne "T max" retiree (non verifiable) ; (5) GWP = valeurs AR4 (note ajoutee).
+ Non verifie : compatibilites huile/fluide exactes (voir fiche du constructeur). Bloc <script id="fluides38-module"> (83 blocs).
+ Mise a jour : node add_fluides38.js dist\index.html
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
