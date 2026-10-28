@@ -192,7 +192,19 @@ ETAPE 33 : MESSAGES INTEGRES - 17 alert() et 7 confirm() du navigateur remplaces
  integres (module <script id="dialogs33-module">, 79 blocs ; alert surchargee globalement ; confirm remplace dans
  cpGen, cpReset, pyReset, htReset, elReset, mcReset, pjImport). Echap = annuler. Aucun prompt() reel (faux positif :
  deferredPrompt.prompt() du bouton d'installation PWA). Mise a jour : node add_dialogs33.js dist\index.html
- A FAIRE ENSUITE : securite (2 comptes de test + test_rls2.js, plafond Gemini api\ocr.js), puis amelioration de l'interface.
+ ETAPE 34 (securite, 28/10/2026) : AUCUNE modification du code, verifications seulement.
+ - check_rls.js (visiteur non connecte) : projects et profiles refuses (401). BON.
+ - test_rls2.js (2 comptes de test, supprimes ensuite) : 10 controles sur 10 reussis (isolation des lignes, pas de
+   lecture/modification/suppression/usurpation, pas de profils etrangers, pas d'auto-promotion admin, statut propre
+   non modifiable). Tables couvertes : projects, profiles (a retester si une table est ajoutee).
+ - api/ocr.js : connexion Supabase requise + statut approved/admin, origine thermosys-v3*.vercel.app, 40 demandes
+   par 10 min et par utilisateur (compteur en memoire, indicatif), image max 8 Mo. Cle Gemini en forfait GRATUIT :
+   pas de facture possible (a revoir si une carte bancaire est liee).
+ - A NOTER : l'inscription est OUVERTE (tout nouveau compte est 'approved' automatiquement, approved_at vide).
+   A revoir au lancement de l'offre payante. Mention a prevoir dans la politique de confidentialite : forfait
+   gratuit Gemini = images possiblement utilisees par Google pour ameliorer ses services.
+ A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
+ puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
 A CHAQUE MISE A JOUR IMPORTANTE :
  - Refaire une copie datee ici
