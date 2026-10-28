@@ -16733,6 +16733,172 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 })();
 
 </script>
+<script id="normes-44-module">
+/* Thermosys etape 44 - NORMES : references corrigees + libelles sans valeur reglementaire (idempotent) */
+(function(){
+'use strict';
+if(window.__nor44)return; window.__nor44=1;
+function isFr(){var l=(typeof lang!=='undefined')?lang:window.lang;return (l||'fr')==='fr';}
+function $(id){return document.getElementById(id);}
+
+/* [code actuel, correctifs] */
+var P=[
+['EN 378-1:2016+A1:2020',{
+ desc_fr:'Référence européenne de sécurité des systèmes frigorifiques et pompes à chaleur : définitions, classification des fluides (toxicité, inflammabilité), catégories d\'occupation et d\'emplacement, règles de calcul de la charge maximale par local (annexes).',
+ desc_en:'European safety reference for refrigerating systems and heat pumps: definitions, refrigerant classification (toxicity, flammability), occupancy and location categories, rules for the maximum charge per room (annexes).',
+ tags:['Réfrigération','Sécurité','Base','Charge max']}],
+['EN 378-2:2016+A1:2020',{code:'EN 378-2:2016',
+ desc_fr:'Conception, construction, essais, marquage et documentation des systèmes frigorifiques : matériaux, composants sous pression, essais de résistance et d\'étanchéité (azote, hélium), lien avec la directive PED.',
+ desc_en:'Design, construction, testing, marking and documentation of refrigerating systems: materials, pressure components, strength and tightness tests (nitrogen, helium), link with the PED directive.',
+ tags:['Conception','Construction','Essais','PED']}],
+['EN 378-3:2016+A1:2020',{code:'EN 378-3:2016+A1:2021',
+ desc_fr:'Installation et protection des personnes : local technique (ventilation, détection de fuite, alarmes), signalisation, emplacement des équipements selon la classe d\'accès et le fluide.',
+ desc_en:'Installation and protection of persons: machinery room (ventilation, leak detection, alarms), signage, equipment location according to access category and refrigerant.',
+ tags:['Installation','Local technique','Ventilation','Détection']}],
+['EN 378-4:2016+A1:2020',{code:'EN 378-4:2016+A1:2019',
+ desc_fr:'Exploitation, maintenance, réparation et récupération des fluides : dossier et registre de l\'installation, essais après intervention, mise hors service. Complète les obligations F-Gas (registres conservés 5 ans).',
+ desc_en:'Operation, maintenance, repair and refrigerant recovery: installation file and logbook, tests after work, decommissioning. Complements the F-Gas obligations (records kept 5 years).',
+ tags:['Maintenance','Récupération','Registre','5 ans']}],
+['EN 14511-1/2/3/4:2022',{
+ desc_fr:'Méthodes d\'essai pour mesurer puissance, COP et EER des climatiseurs, pompes à chaleur et groupes d\'eau glacée aux conditions normalisées (ex. air 7 °C / eau 35 °C). Les valeurs saisonnières SEER et SCOP en découlent via l\'EN 14825 ; ESEER et IPLV relèvent d\'Eurovent et d\'AHRI.',
+ desc_en:'Test methods to measure capacity, COP and EER of air conditioners, heat pumps and chillers at standard rating conditions (e.g. air 7 °C / water 35 °C). Seasonal SEER and SCOP values derive from EN 14825; ESEER and IPLV come from Eurovent and AHRI.',
+ tags:['COP','EER','Conditions d\'essai','Puissance']}],
+['EN 14825:2023',{code:'EN 14825:2022',
+ title_fr:'PAC et climatiseurs — Essais à charge partielle, SEER et SCOP',title_en:'Heat pumps and air conditioners — Part-load testing, SEER and SCOP',
+ desc_fr:'Essais à charge partielle et calcul des performances saisonnières SEER et SCOP. Pour le chauffage, trois climats de référence : moyen (Strasbourg), froid (Helsinki), chaud (Athènes). Sert à l\'étiquette énergie et à l\'écoconception.',
+ desc_en:'Part-load testing and calculation of seasonal performance SEER and SCOP. For heating, three reference climates: average (Strasbourg), colder (Helsinki), warmer (Athens). Used for energy labelling and ecodesign.',
+ tags:['SCOP','SEER','Climats de référence','Étiquette énergie']}],
+['ISO 5149-1:2014',{
+ desc_fr:'Norme internationale de sécurité des systèmes frigorifiques (série ISO 5149), parallèle à l\'EN 378. Utilisée comme référence hors Union européenne (Moyen-Orient, Afrique, Asie).',
+ desc_en:'International safety standard for refrigerating systems (ISO 5149 series), parallel to EN 378. Used as a reference outside the European Union (Middle East, Africa, Asia).',
+ tags:['ISO','Sécurité','International']}],
+['ISO 9001:2015',{
+ desc_fr:'Exigences d\'un système de management de la qualité. C\'est une certification d\'organisme, pas de produit : de nombreux fabricants CVC sont certifiés, mais cela ne prouve pas la conformité d\'un produit.',
+ desc_en:'Requirements for a quality management system. It certifies an organisation, not a product: many HVAC manufacturers are certified, but this does not prove the conformity of a product.'}],
+['ASHRAE 15:2022',{
+ desc_fr:'Référence américaine de sécurité des systèmes frigorifiques (charges, locaux, détection), comparable à l\'EN 378. Certains cahiers des charges de projets internationaux peuvent l\'exiger.',
+ desc_en:'American safety reference for refrigerating systems (charges, rooms, detection), comparable to EN 378. Some international project specifications may require it.'}],
+['ASHRAE 90.1:2022',{
+ desc_fr:'Standard américain d\'efficacité énergétique des bâtiments non résidentiels : performances minimales des équipements CVC (EER, COP, IEER). Rendu obligatoire par les réglementations locales aux États-Unis ; référence de certains projets internationaux.',
+ desc_en:'American energy efficiency standard for non-residential buildings: minimum HVAC equipment performance (EER, COP, IEER). Made mandatory by local regulations in the United States; reference for some international projects.'}],
+['NF EN 15623:2020',{code:'EN 13306:2017',
+ title_fr:'Maintenance — Terminologie de la maintenance',title_en:'Maintenance — Maintenance terminology',
+ desc_fr:'Définitions normalisées : maintenance préventive (systématique, conditionnelle, prévisionnelle) et corrective, disponibilité, fiabilité. Base de rédaction des plans et contrats de maintenance CVC.',
+ desc_en:'Standardised definitions: preventive maintenance (time-based, condition-based, predictive) and corrective maintenance, availability, reliability. Basis for writing HVAC maintenance plans and contracts.',
+ tags:['Maintenance','Terminologie','Contrats']}],
+['NF EN 15232-1:2017',{code:'EN ISO 52120-1:2022',
+ title_fr:'Performance énergétique des bâtiments — Contribution de l\'automatisation et de la GTB',title_en:'Energy performance of buildings — Contribution of building automation and control',
+ desc_fr:'Remplace l\'EN 15232-1. Classes d\'efficacité de la GTB, de A (haute performance) à D (non efficace) ; l\'économie d\'énergie de chaque classe dépend du type de bâtiment. La directive EPBD 2024/1275 prévoit des systèmes d\'automatisation dans les bâtiments tertiaires de plus de 70 kW de puissance CVC d\'ici 2029 (à confirmer selon la transposition nationale).',
+ desc_en:'Replaces EN 15232-1. Building automation efficiency classes from A (high performance) to D (not efficient); the energy saving of each class depends on the building type. The EPBD 2024/1275 requires automation systems in non-residential buildings above 70 kW of HVAC capacity by 2029 (to be confirmed per national transposition).',
+ tags:['GTB','BMS','Classes A-D','EPBD']}],
+['EN 60335-2-40:2022',{code:'IEC / EN 60335-2-40 (éd. 2022)',
+ title_fr:'Sécurité des PAC, climatiseurs et déshumidificateurs',title_en:'Safety of heat pumps, air conditioners and dehumidifiers',
+ desc_fr:'Exigences de sécurité (électrique, thermique, mécanique) des appareils, avec exigences supplémentaires pour les fluides inflammables A2L et A3 (R32, R454B, R290) : charge maximale, ventilation, détection. L\'édition 2022 révise les règles de charge.',
+ desc_en:'Safety requirements (electrical, thermal, mechanical) for the appliances, with additional requirements for flammable A2L and A3 refrigerants (R32, R454B, R290): maximum charge, ventilation, detection. The 2022 edition revises the charge rules.'}],
+['IEC 60364 / NF C 15-100:2008',{code:'IEC 60364 / NF C 15-100'}],
+['EN 12263:1998+A1:2018',{code:'EN 12263:1998',
+ title_fr:'Dispositifs de sécurité à commutation pour limiter la pression',title_en:'Safety switching devices for limiting the pressure',
+ desc_fr:'Exigences et essais des pressostats de sécurité (limiteurs de pression HP/BP) des systèmes frigorifiques. Le tarage dépend de la pression maximale admissible PS du système et de la soupape de sécurité (voir EN 378-2 et EN 13136).',
+ desc_en:'Requirements and tests for safety pressure switches (HP/LP pressure limiters) of refrigerating systems. The setting depends on the maximum allowable pressure PS of the system and on the relief valve (see EN 378-2 and EN 13136).',
+ tags:['Sécurité','Pression','Pressostats','HP/LP']}],
+['ISO 14118:2000',{code:'EN ISO 14118:2018',
+ title_fr:'Sécurité des machines — Prévention de la mise en marche inattendue',title_en:'Safety of machinery — Prevention of unexpected start-up',
+ desc_fr:'Principes de conception pour éviter une mise en marche inattendue et permettre l\'isolement et la dissipation de l\'énergie. Remplace l\'EN 1037. La procédure de consignation (identifier, arrêter, isoler, cadenasser, dissiper, vérifier l\'absence d\'énergie) relève des procédures d\'exploitation de l\'entreprise.',
+ desc_en:'Design principles to prevent unexpected start-up and to allow energy isolation and dissipation. Replaces EN 1037. The lockout procedure (identify, stop, isolate, lock, dissipate, verify absence of energy) belongs to the company operating procedures.',
+ tags:['LOTO','Consignation','Maintenance']}],
+['EN 1037:1995+A1:2008',{code:'EN 1037:1995+A1:2008 (remplacée)',
+ title_fr:'Prévention de la mise en marche inattendue (norme remplacée)',title_en:'Prevention of unexpected start-up (superseded standard)',
+ desc_fr:'Remplacée par l\'EN ISO 14118:2018. Conservée pour mémoire : d\'anciens dossiers machines peuvent encore s\'y référer.',
+ desc_en:'Superseded by EN ISO 14118:2018. Kept for reference: older machinery files may still refer to it.',
+ tags:['LOTO','Machines','Remplacée']}],
+['NF DTU 65.11:2018',{code:'NF DTU 65.11',
+ desc_fr:'Dispositifs de sécurité des installations de chauffage central à eau : soupape de sécurité, vase d\'expansion, limitation de température. Les vases d\'expansion se dimensionnent selon l\'EN 12828 et les règles du fabricant.',
+ desc_en:'Safety devices for central water heating installations: safety valve, expansion vessel, temperature limitation. Expansion vessels are sized per EN 12828 and the manufacturer rules.',
+ tags:['NF DTU','Chauffage','Soupapes','Vase']}],
+['Règl. UE 2024/573 (F-Gas révisé)',{
+ title_fr:'Gaz à effet de serre fluorés — remplace le règlement 517/2014',title_en:'Fluorinated greenhouse gases — replaces Regulation 517/2014',
+ desc_fr:'En vigueur depuis le 11/03/2024. Sortie progressive des HFC (élimination en 2050). Interdictions de mise sur le marché par type d\'appareil (annexe IV), par exemple : 2025 split mono <3 kg PRG ≥750 ; 2027 split air-eau ≤12 kW et monoblocs ≤50 kW PRG ≥150 ; 2029 split air-air ≤12 kW PRG ≥150. Depuis 2026, interdiction d\'utiliser pour l\'entretien des fluides PRG ≥2500 (sauf régénérés ou recyclés, jusqu\'en 2032). Dates à confirmer sur le texte officiel.',
+ desc_en:'In force since 11/03/2024. HFC phase-out by 2050. Placing-on-the-market bans per appliance type (Annex IV), for example: 2025 single split <3 kg GWP ≥750; 2027 air-to-water split ≤12 kW and monobloc ≤50 kW GWP ≥150; 2029 air-to-air split ≤12 kW GWP ≥150. Since 2026, using GWP ≥2500 fluids for servicing is prohibited (except reclaimed or recycled, until 2032). Dates to be confirmed on the official text.',
+ tags:['F-Gas','2024','Annexe IV','2050']}],
+['Règl. UE 517/2014 F-Gas',{code:'Règl. UE 517/2014 (abrogé)',
+ title_fr:'Ancien règlement gaz fluorés — remplacé par le 2024/573',title_en:'Former F-Gas Regulation — replaced by 2024/573',
+ desc_fr:'Abrogé et remplacé par le règlement 2024/573 depuis le 11/03/2024. Pour mémoire, il fixait les contrôles d\'étanchéité selon la charge en équivalent CO₂ (≥5 t, ≥50 t, ≥500 t) et la tenue de registres pendant 5 ans ; ces principes sont repris par le nouveau texte (seuils et périodicités à vérifier dans le texte en vigueur).',
+ desc_en:'Repealed and replaced by Regulation 2024/573 since 11/03/2024. For reference, it set leak checks according to the CO₂-equivalent charge (≥5 t, ≥50 t, ≥500 t) and 5-year record keeping; these principles are carried over in the new text (thresholds and frequencies to be checked in the text in force).',
+ tags:['F-Gas','Abrogé','Étanchéité']}],
+['Directive PED 2014/68/UE',{
+ desc_fr:'Équipements sous pression (PS > 0,5 bar). Catégories I à IV selon la pression maximale PS, le volume ou le diamètre nominal et le groupe de fluide. Catégorie I : auto-déclaration ; II à IV : organisme notifié ; en dessous : bonne pratique d\'ingénierie (art. 4.3). Concerne compresseurs, échangeurs, réservoirs et tuyauteries.',
+ desc_en:'Pressure equipment (PS > 0.5 bar). Categories I to IV according to maximum pressure PS, volume or nominal size and fluid group. Category I: self-declaration; II to IV: notified body; below that: sound engineering practice (art. 4.3). Covers compressors, heat exchangers, vessels and piping.'}],
+['Règl. UE 2016/2281 ErP',{code:'Règl. UE 2016/2281 (Écoconception)',
+ desc_fr:'Écoconception des produits de chauffage de l\'air, de refroidissement, des refroidisseurs de process haute température et des ventilo-convecteurs : rendements saisonniers minimaux (SEER, SCOP). Les climatiseurs ≤12 kW relèvent du règlement 206/2012 et les pompes à chaleur de chauffage des locaux du règlement 813/2013. L\'étiquette énergie relève d\'autres règlements.',
+ desc_en:'Ecodesign for air heating products, cooling products, high-temperature process chillers and fan coil units: minimum seasonal efficiencies (SEER, SCOP). Air conditioners ≤12 kW fall under Regulation 206/2012 and space-heating heat pumps under Regulation 813/2013. Energy labelling is covered by other regulations.',
+ tags:['Écoconception','ErP','SEER min','SCOP min']}],
+['RE2020 — Seuil 2025',{code:'RE2020 — Jalon 2025',
+ title_fr:'Réglementation environnementale RE2020 — étape 2025',title_en:'RE2020 Environmental Regulation — 2025 step',
+ desc_fr:'Permis déposés depuis le 01/01/2025 : Ic construction moyen ≤530 (maison), ≤650 (collectif), ≤810 (bureaux), ≤770 (enseignement) kgCO₂éq/m², puis étapes 2028 et 2031. Cep,nr moyen : maison 55, collectif 70, bureaux 75, enseignement 65 kWhEP/m²/an. Confort d\'été : DH ≤ 1250 °C.h. Aucun COP/SCOP minimum n\'est fixé. Valeurs moyennes, modulées selon le projet.',
+ desc_en:'Permits filed since 01/01/2025: average construction Ic ≤530 (house), ≤650 (collective), ≤810 (offices), ≤770 (education) kgCO₂eq/m², then steps in 2028 and 2031. Average Cep,nr: house 55, collective 70, offices 75, education 65 kWhEP/m²/yr. Summer comfort: DH ≤ 1250 °C.h. No minimum COP/SCOP is set. Average values, modulated per project.',
+ tags:['RE2020','Ic construction','Cep,nr','Confort d\'été']}],
+['EPBD 2024/1275/UE',{
+ desc_fr:'Directive (UE) 2024/1275 (transposition avant le 29/05/2026). Bâtiments neufs à émission nulle : bâtiments publics dès 2028, tous les neufs dès 2030. Normes minimales de performance pour les bâtiments non résidentiels existants les moins performants, objectifs de réduction pour le résidentiel. Automatisation et régulation (BACS) dans les bâtiments tertiaires de plus de 70 kW d\'ici 2029. Passeport de rénovation prévu.',
+ desc_en:'Directive (EU) 2024/1275 (transposition by 29/05/2026). Zero-emission new buildings: public buildings from 2028, all new buildings from 2030. Minimum performance standards for the worst-performing existing non-residential buildings, reduction targets for residential. Automation and control (BACS) in non-residential buildings above 70 kW by 2029. Renovation passport foreseen.',
+ tags:['EPBD','ZEB','Rénovation','GTB']}],
+['Directive 2006/42/CE Machines',{code:'Directive 2006/42/CE (remplacée par le règl. UE 2023/1230)',
+ desc_fr:'Exigences essentielles de sécurité des machines : analyse des risques, dossier technique, déclaration CE. Le règlement (UE) 2023/1230 la remplace à partir du 20/01/2027.',
+ desc_en:'Essential safety requirements for machinery: risk analysis, technical file, CE declaration. Regulation (EU) 2023/1230 replaces it from 20/01/2027.'}]
+];
+
+function patchNorms(){
+ if(typeof NORMS==='undefined'||!NORMS||!NORMS.length) return false;
+ var n=0;
+ P.forEach(function(p){
+  for(var i=0;i<NORMS.length;i++){
+   if(NORMS[i].code===p[0]){ for(var k in p[1]) NORMS[i][k]=p[1][k]; n++; break; }
+  }
+ });
+ return n;
+}
+
+/* Libelles sans valeur reglementaire : texte exact uniquement (ne touche pas le catalogue) */
+var EXACT={'RE2020 S.2025':'RE2020','RE2020 T.2025':'RE2020','RE2020 Seuil 2025':'RE2020','RE2020 Threshold 2025':'RE2020','F-Gas 2025':'F-Gas'};
+var SUBS=[['EN 378:2021','EN 378'],[' · RE2020 Seuil 2025',' · RE2020'],[' · RE2020 Threshold 2025',' · RE2020']];
+
+var CODE_EN=[['Règl. UE ','EU Reg. '],['(F-Gas révisé)','(revised F-Gas)'],['(abrogé)','(repealed)'],['(remplacée par le règl. UE 2023/1230)','(replaced by Reg. (EU) 2023/1230)'],['(remplacée)','(superseded)'],['(Écoconception)','(Ecodesign)'],['— Jalon 2025','— 2025 step'],['(éd. 2022)','(2022 ed.)'],['Directive PED','PED Directive'],['Directive LVD','LVD Directive'],['Directive 2006/42/CE','Directive 2006/42/EC'],['/UE','/EU']];
+function codesLang(){
+ if(isFr())return;
+ var l=document.querySelectorAll('#pg-normes .nc');
+ for(var i=0;i<l.length;i++){ var t=l[i].textContent, c=t; CODE_EN.forEach(function(r){ c=c.split(r[0]).join(r[1]); }); if(c!==t) l[i].textContent=c; }
+}
+var busy=false;
+function clean(){
+ if(busy)return; busy=true;
+ try{
+  var t=$('t_nor_title'); if(t){ var w=isFr()?'NORMES & RÉGLEMENTATIONS HVAC':'HVAC STANDARDS & REGULATIONS'; if(t.textContent!==w) t.textContent=w; }
+  var tw=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,{acceptNode:function(n){var p=n.parentNode&&n.parentNode.nodeName; return (p==='SCRIPT'||p==='STYLE')?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT;}},false), n;
+  while((n=tw.nextNode())){
+   var v=n.nodeValue; if(!v||v.length<6)continue;
+   var s=v.trim();
+   if(EXACT.hasOwnProperty(s)){ n.nodeValue=v.replace(s,EXACT[s]); continue; }
+   var c=v; for(var i=0;i<SUBS.length;i++){ if(c.indexOf(SUBS[i][0])>=0) c=c.split(SUBS[i][0]).join(SUBS[i][1]); }
+   if(c!==v) n.nodeValue=c;
+  }
+  codesLang();
+  var els=document.querySelectorAll('[data-fr*="EN 378:2021"],[data-en*="EN 378:2021"]');
+  for(var j=0;j<els.length;j++){ ['data-fr','data-en'].forEach(function(a){ var x=els[j].getAttribute(a); if(x&&x.indexOf('EN 378:2021')>=0) els[j].setAttribute(a,x.split('EN 378:2021').join('EN 378')); }); }
+ }catch(e){ if(window.console)console.warn('nor44',e); }
+ busy=false;
+}
+var tm=null;
+function later(){ if(tm)return; tm=setTimeout(function(){tm=null;clean();},150); }
+function start(){
+ var done=patchNorms();
+ if(done&&typeof fillNormes==='function'){ try{fillNormes();}catch(e){} }
+ clean();
+ new MutationObserver(function(){ if(!busy) later(); }).observe(document.body,{childList:true,subtree:true,characterData:true});
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
+window.__nor44clean=clean;
+})();
+
+</script>
 </body>
 </html>
 

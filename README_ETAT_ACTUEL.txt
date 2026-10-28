@@ -288,6 +288,20 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  Fiches Carrier / CCN / IPM : bandeau "indicatif, a confirmer avec la notice du constructeur" (alarmes, points CCN, sondes NTC,
  pressostat non verifiables). Seuils RE2020 = valeurs moyennes (le seuil reel du projet est module). Bloc <script id="re2020-43-module">
  (88 blocs). Mise a jour : node add_re2020_43.js dist\index.html
+ ETAPE 44 : NORMES - audit des 29 fiches. CORRECTIONS : editions (EN 14825:2023 -> 2022 ; EN 378-3 -> A1:2021 ; EN 378-4 -> A1:2019 ;
+ ISO 14118:2000 -> EN ISO 14118:2018 ; EN 12263:1998 sans A1:2018 ; NF C 15-100 sans millesime) ; EN 15232-1 -> EN ISO 52120-1:2022 ;
+ EN 1037 signalee remplacee ; "NF EN 15623:2020" (inexistante, niveaux P1-P4 inventes) -> EN 13306:2017 ; F-Gas 517/2014 signale abroge,
+ 2024/573 avec echeances annexe IV (source : sites secondaires + EUR-Lex pour l'entree en vigueur 11/03/2024 ; A CONFIRMER sur EUR-Lex) ;
+ machines 2006/42/CE -> reglement 2023/1230 (20/01/2027) ; ErP 2016/2281 reformule (206/2012 et 813/2013 pour les petits appareils) ;
+ RE2020 : seuils etape 43. AFFIRMATIONS RETIREES : zones climatiques A-D (EN 14825 : moyen/froid/chaud), etiquette 2015/1095 (reference
+ professionnelle), recuperation obligatoire >80 g, tarage HP 90 % PS, "8 etapes obligatoires" ISO 14118, ISO 9001 "certifie par les
+ fabricants", GTB classe B >1000 m2 (EPBD : 70 kW en 2029), DTR C3-4 hors sujet, SONAHESS. LIBELLES sans valeur reglementaire simplifies :
+ "RE2020 S.2025", "RE2020 Seuil 2025" (barre d'etat, pied de page, bouton d'accueil), "F-Gas 2025" (pastille et onglet FLUIDES),
+ "EN 378:2021" -> "EN 378" (partout, y compris LOTO). Codes de normes traduits en anglais. Bloc <script id="normes-44-module"> (89 blocs).
+ Mise a jour : node add_normes44.js dist\index.html
+ RESTE A TRAITER : mentions "RT2025" (identifiant de page, commentaire), textes "RE2020 Seuil 2025" des fiches du CATALOGUE (a traiter dans
+ l'audit Catalogue), audits Catalogue et Devis, codes defaut Condor (72) a comparer aux manuels d'usine, confirmation F-Gas sur EUR-Lex,
+ villes (Nigeria, Irak, Afghanistan, Yemen).
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
