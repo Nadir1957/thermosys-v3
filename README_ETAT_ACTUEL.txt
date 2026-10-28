@@ -275,6 +275,19 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  Les listes sont des modeles generiques : les intervalles et valeurs limites du constructeur priment. Les textes de la liste
  restent sans accents dans les anciennes lignes (donnees d'origine). Bloc <script id="maint42-module"> (87 blocs).
  Mise a jour : node add_maint42.js dist\index.html
+ ETAPE 43 : RE2020 - audit du module (9 onglets). CORRECTIONS : (1) seuils Ic construction 2025-2027 : collectif 490 -> 650,
+ enseignement 560 -> 770 (maison 530 et bureaux 810 exacts), + paliers 2028 (475/580/710/680) et 2031 (415/490/600/590) ;
+ Cep,nr moyen maison 55 / collectif 70 / bureaux 75 / enseignement 65 (63 secondaire) ; (2) colonnes "COP min PAC" et "SCOP min H1"
+ et lignes "SCOP >= 4,0 / 3,8" retirees : la RE2020 ne fixe aucun SCOP/COP minimum ; "GWP < 750" retire (pas de limite de PRG dans
+ la RE2020, voir F-Gas 2024/573) ; (3) type "Sante / Hopital" : pas de seuil moyen publie -> pas de verdict ; (4) "Verifier RE2020"
+ et "Rapport audit" recalcules sur Ic et Cep,nr seulement (SCOP et GWP en information) ; (5) CALCULATEUR DEBIT CARRIER faux d'un
+ facteur 3,6 : Q(m3/h) = P x 3,6 / (4,186 x dT) (100 kW, dT 5 K = 17,2 m3/h, et non 4,78) ; (6) CCN : terminaison 120 ohm selon la
+ position physique sur le bus, pas selon l'adresse ; (7) test IPM/IGBT : diodes hautes (U/V/W vers P) et basses (N vers U/V/W),
+ sens inverse en OL ; seuils UV/OT/PFC renvoyes a la fiche du module ; (8) normes : EN 15232 -> EN ISO 52120-1, ISO 10816 ->
+ ISO 20816-3, "EN 14336:2019" et "EN 378:2021" sans millesime ; (9) listes d'audit reformulees (F-Gas, terre, variateur, Fernox).
+ Fiches Carrier / CCN / IPM : bandeau "indicatif, a confirmer avec la notice du constructeur" (alarmes, points CCN, sondes NTC,
+ pressostat non verifiables). Seuils RE2020 = valeurs moyennes (le seuil reel du projet est module). Bloc <script id="re2020-43-module">
+ (88 blocs). Mise a jour : node add_re2020_43.js dist\index.html
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 

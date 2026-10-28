@@ -16494,6 +16494,245 @@ if(typeof _sc==='function') window.calcSCOP=function(){
 })();
 
 </script>
+<script id="re2020-43-module">
+/* Thermosys etape 43 - RE2020 : seuils corriges, verification, rapport, calculateurs et textes (idempotent) */
+(function(){
+'use strict';
+if(window.__re43)return; window.__re43=1;
+function isFr(){var l=(typeof lang!=='undefined')?lang:window.lang;return (l||'fr')==='fr';}
+function T(a,b){return isFr()?a:b;}
+function $(id){return document.getElementById(id);}
+
+/* ---- Donnees RE2020 (valeurs moyennes, permis deposes 2025-2027 ; paliers 2028 et 2031) ---- */
+var KEYS=['indiv','collec','tertio','enseig','sante'];
+var DATA={
+ indiv:{ic:530,cep:55,ic28:475,ic31:415,fr:'Résidentiel individuel',en:'Individual residential'},
+ collec:{ic:650,cep:70,ic28:580,ic31:490,fr:'Résidentiel collectif',en:'Collective residential'},
+ tertio:{ic:810,cep:75,ic28:710,ic31:600,fr:'Tertiaire bureaux',en:'Commercial offices'},
+ enseig:{ic:770,cep:65,cepTxt:{fr:'≤65 (primaire) · ≤63 (second.)',en:'≤65 (primary) · ≤63 (secondary)'},ic28:680,ic31:590,fr:'Enseignement',en:'Education'},
+ sante:{ic:0,cep:0,ic28:0,ic31:0,fr:'Santé / Hôpital',en:'Health / Hospital'}
+};
+function patchGlobal(){
+ try{ if(typeof RE2025!=='undefined'){ KEYS.forEach(function(k){ var o=RE2025[k]||(RE2025[k]={}); o.ic=DATA[k].ic; o.cep=DATA[k].cep; delete o.cop; delete o.scop; }); } }catch(e){}
+}
+patchGlobal();
+function label(k){return isFr()?DATA[k].fr:DATA[k].en;}
+
+function tableHTML(){
+ return KEYS.map(function(k){
+  var d=DATA[k];
+  if(!d.ic) return '<tr><td class="v">'+label(k)+'</td><td class="neon" colspan="4">'+T('Pas de seuil moyen publié pour ce type','No published average threshold for this type')+'</td></tr>';
+  var cepT=d.cepTxt?d.cepTxt[isFr()?'fr':'en']:('≤'+d.cep+' kWhEP');
+  return '<tr><td class="v">'+label(k)+'</td><td class="neon">≤'+d.ic+'</td><td class="neon">'+cepT+'</td><td class="neon">≤'+d.ic28+'</td><td class="neon">≤'+d.ic31+'</td></tr>';
+ }).join('');
+}
+window.fillRE2025=function(){ patchGlobal(); var tb=$('re2025Table'); if(!tb)return; var h=tableHTML(); if(tb.innerHTML!==h) tb.innerHTML=h; };
+
+function infoHTML(){
+ if(isFr()) return ''+
+ '<b style="color:var(--ac)">Application :</b> permis de construire déposés à partir du 01/01/2025 (paliers suivants : 2028 et 2031)<br>'+
+ '<b style="color:var(--wn)">Ic construction (kgCO₂éq/m²) :</b> maison 530 · collectif 650 · bureaux 810 · enseignement 770 (valeurs moyennes 2025-2027)<br>'+
+ '<b style="color:var(--ac)">Cep,nr max (kWhEP/m²/an) :</b> maison 55 · collectif 70 · bureaux 75 · enseignement 65 (primaire) / 63 (secondaire)<br>'+
+ '<b style="color:var(--ok)">Pompes à chaleur :</b> la RE2020 ne fixe aucun SCOP/COP minimum ; la performance de la PAC intervient dans le calcul de Cep,nr. Exigences produit : Écoconception / EN 14825.<br>'+
+ '<b style="color:var(--pu)">Frigorigènes :</b> la RE2020 ne fixe pas de limite de PRG ; les restrictions viennent du règlement F-Gas (UE) 2024/573.<br>'+
+ '<b style="color:var(--ts)">Important :</b> ce sont des valeurs moyennes ; le seuil réel d\'un projet est modulé (surface, zone climatique, altitude…). Vérifier l\'arrêté en vigueur.';
+ return ''+
+ '<b style="color:var(--ac)">Scope:</b> building permits filed from 01/01/2025 (next steps: 2028 and 2031)<br>'+
+ '<b style="color:var(--wn)">Construction Ic (kgCO₂eq/m²):</b> house 530 · collective 650 · offices 810 · education 770 (average values 2025-2027)<br>'+
+ '<b style="color:var(--ac)">Max Cep,nr (kWhEP/m²/yr):</b> house 55 · collective 70 · offices 75 · education 65 (primary) / 63 (secondary)<br>'+
+ '<b style="color:var(--ok)">Heat pumps:</b> RE2020 sets no minimum SCOP/COP; the heat pump performance enters the Cep,nr calculation. Product requirements: Ecodesign / EN 14825.<br>'+
+ '<b style="color:var(--pu)">Refrigerants:</b> RE2020 sets no GWP limit; restrictions come from the F-Gas Regulation (EU) 2024/573.<br>'+
+ '<b style="color:var(--ts)">Important:</b> these are average values; the real threshold of a project is modulated (floor area, climate zone, altitude…). Check the regulation in force.';
+}
+
+/* ---- Verification projet ---- */
+function gv(id){return parseFloat(($(id)||{}).value)||0;}
+window.calcRE2020Verify=function(){
+ var fr=isFr(), k=($('reType2')||{}).value||'indiv', d=DATA[k]||DATA.indiv;
+ var ic=gv('reIc2'), cep=gv('reCep2'), scop=gv('reScop2');
+ var ok=T('CONFORME ✓','COMPLIANT ✓'), nk=T('DÉPASSÉ ✗','EXCEEDED ✗'), nr=T('non renseigné','not provided');
+ var L=['── RE2020 (2025-2027) — '+label(k)+' ──'];
+ if(!d.ic){
+  L.push(T('Aucun seuil moyen Ic / Cep,nr publié pour ce type de bâtiment.','No average Ic / Cep,nr threshold published for this building type.'));
+  L.push(T('Se référer à l\'arrêté applicable et au cahier des charges du projet.','Refer to the applicable regulation and the project specification.'));
+ } else {
+  var okIc=ic>0&&ic<=d.ic, okCep=cep>0&&cep<=d.cep;
+  L.push('Ic: '+ic+' kg CO₂éq/m²  →  '+T('seuil','limit')+' ≤'+d.ic+'  →  '+(ic>0?(okIc?ok:nk):nr));
+  L.push('      '+T('paliers : 2028 ≤','steps: 2028 ≤')+d.ic28+' · 2031 ≤'+d.ic31);
+  L.push('Cep,nr: '+cep+' kWhEP/m²/'+T('an','yr')+'  →  '+T('seuil','limit')+' ≤'+d.cep+'  →  '+(cep>0?(okCep?ok:nk):nr));
+  L.push(T('SCOP PAC: ','HP SCOP: ')+scop+'  →  '+T('information : la RE2020 ne fixe pas de SCOP minimum (voir EN 14825)','information: RE2020 sets no minimum SCOP (see EN 14825)'));
+  L.push('────────────────────────────────');
+  L.push(okIc&&okCep?T('Résultat : sous les seuils moyens (Ic et Cep,nr) ✓','Result: below the average limits (Ic and Cep,nr) ✓'):T('Résultat : au moins un seuil moyen est dépassé ou non renseigné','Result: at least one average limit exceeded or not provided'));
+  L.push(T('Seuils moyens : le seuil réel du projet est modulé.','Average limits: the real project limit is modulated.'));
+ }
+ var el=$('depResult2'); if(el) el.textContent=L.join('\n');
+ if(typeof logHist==='function') logHist(T('Vérification RE2020 : ','RE2020 check: ')+label(k));
+};
+
+/* ---- Rapport d'audit ---- */
+window.genRapportAudit=function(){
+ var fr=isFr(), v=function(id,df){return ($(id)||{}).value||df;};
+ var ref=v('rpt-ref','N/A'), site=v('rpt-site','N/A'), aud=v('rpt-aud','N/A');
+ var date=v('rpt-date',new Date().toISOString().slice(0,10)), type=v('rpt-type','indiv'), surf=v('rpt-surf','?');
+ var ic=gv('rpt-ic'), cep=gv('rpt-cep'), scop=gv('rpt-scop'), gwp=gv('rpt-gwp'), gtb=v('rpt-gtb','B'), obs=v('rpt-obs','—');
+ var d=DATA[type]||DATA.indiv;
+ var ok=T('CONFORME ✓','COMPLIANT ✓'), nk=T('DÉPASSÉ ✗','EXCEEDED ✗'), nr=T('Non renseigné','Not provided');
+ var sep='═'.repeat(36);
+ var L=[sep,T("RAPPORT D'AUDIT DE CONFORMITÉ RE2020 (2025-2027)",'RE2020 COMPLIANCE AUDIT REPORT (2025-2027)'),sep,
+  T('Réf          : ','Reference    : ')+ref, T('Site         : ','Site         : ')+site,
+  T('Auditeur     : ','Auditor      : ')+aud, T('Date         : ','Date         : ')+date,
+  T('Type bâtiment: ','Building type: ')+label(type), T('Surface      : ','Area         : ')+surf+' m²',
+  sep,T('RÉSULTATS MESURÉS :','MEASUREMENT RESULTS:')];
+ var all=false;
+ if(d.ic){
+  var a=ic>0&&ic<=d.ic, b=cep>0&&cep<=d.cep; all=a&&b;
+  L.push('Ic         : '+(ic||'—')+' kgCO₂éq/m²  →  ≤'+d.ic+'  →  '+(ic>0?(a?ok:nk):nr));
+  L.push('Cep,nr     : '+(cep||'—')+' kWhEP/m²/'+T('an','yr')+'  →  ≤'+d.cep+'  →  '+(cep>0?(b?ok:nk):nr));
+ } else {
+  L.push('Ic         : '+(ic||'—')+'  →  '+T('pas de seuil moyen publié pour ce type','no published average limit for this type'));
+  L.push('Cep,nr     : '+(cep||'—')+'  →  '+T('pas de seuil moyen publié pour ce type','no published average limit for this type'));
+ }
+ L.push('SCOP       : '+(scop||'—')+'  →  '+T('information (aucun minimum RE2020)','information (no RE2020 minimum)'));
+ L.push('GWP        : '+(gwp||'—')+'  →  '+T('information (hors RE2020 ; restrictions selon règlement F-Gas 2024/573)','information (outside RE2020; restrictions per F-Gas Regulation 2024/573)'));
+ L.push('GTB        : '+gtb+' (EN ISO 52120-1)');
+ L.push(sep,T('OBSERVATIONS : ','OBSERVATIONS : ')+obs,sep);
+ if(d.ic) L.push(all?T('✅ SOUS LES SEUILS MOYENS RE2020 (Ic et Cep,nr)','✅ BELOW RE2020 AVERAGE LIMITS (Ic and Cep,nr)'):T('⚠️ SEUIL DÉPASSÉ OU DONNÉE MANQUANTE — VOIR DÉTAILS CI-DESSUS','⚠️ LIMIT EXCEEDED OR MISSING DATA — SEE DETAILS ABOVE'));
+ else L.push(T('ℹ️ Aucun seuil moyen publié pour ce type : verdict non applicable','ℹ️ No published average limit for this type: verdict not applicable'));
+ L.push(T('Seuils moyens : le seuil réel du projet est modulé (arrêté en vigueur).','Average limits: the real project limit is modulated (regulation in force).'),sep);
+ var el=$('rpt-result'); if(el) el.textContent=L.join('\n');
+ var ap=$('rpt-audio-panel');
+ if(ap){ ap.style.display='block'; try{rptLoadVoices();rptAudioStop();}catch(e){} }
+ if(typeof logHist==='function') logHist(T('Rapport audit : ','Audit report: ')+ref);
+};
+
+/* ---- Debit Carrier (kW, dT) : Q(m3/h) = P x 3,6 / (4,186 x dT) ---- */
+window.calcCarrierFlow=function(){
+ var P=parseFloat(($('carr-kw')||{}).value)||100, dt=parseFloat(($('carr-dt')||{}).value)||5, out=$('carrier-result'); if(!out)return;
+ if(dt<=0){ out.textContent=T('ΔT invalide : doit être > 0.','Invalid ΔT: must be > 0.'); return; }
+ var q=P*3.6/(4.186*dt);
+ out.textContent=[
+  T('Débit nominal    : ','Nominal flow    : ')+q.toFixed(2)+' m³/h  ('+(q*1000/60).toFixed(0)+' L/min)',
+  T('Formule          : Q = P × 3,6 / (4,186 × ΔT)  (eau pure, ρ = 1 kg/L)','Formula          : Q = P × 3.6 / (4.186 × ΔT)  (pure water, ρ = 1 kg/L)'),
+  T('ΔT circuit       : ','Circuit ΔT      : ')+dt+' K',
+  T('Débit minimum    : voir la notice de l\'unité (valeur constructeur).','Minimum flow    : see the unit manual (manufacturer value).'),
+  T('Avec glycol, le débit à ΔT égal est plus élevé (cp plus faible).','With glycol, the flow at equal ΔT is higher (lower cp).')
+ ].join('\n');
+};
+
+/* ---- Adresse CCN : la terminaison depend de la position physique, pas de l'adresse ---- */
+window.calcCCN=function(){
+ var a=parseInt(($('ccn-addr')||{}).value)||1, out=$('ccn-result'); if(!out)return;
+ if(a<1||a>239){ out.textContent=T('Adresse invalide (1-239)','Invalid address (1-239)'); return; }
+ out.textContent=[
+  T('Adresse CCN      : ','CCN address      : ')+a+T(' (déc) = 0x',' (dec) = 0x')+a.toString(16).toUpperCase().padStart(2,'0')+' (hex) = '+a.toString(2).padStart(8,'0')+' (bin)',
+  T('Câblage bus      : Borne A+ et B-  ·  Shield → masse','Bus wiring       : Terminal A+ and B-  ·  Shield → ground'),
+  T('Terminaison 120Ω : à placer aux deux extrémités physiques du bus, quelle que soit l\'adresse.','120Ω termination: fit at both physical ends of the bus, whatever the address.'),
+  T('Unicité          : chaque appareil du bus doit avoir une adresse différente.','Uniqueness       : each device on the bus must have a different address.')
+ ].join('\n');
+};
+
+/* ---- Textes : [FR actuel, EN actuel, FR nouveau, EN nouveau] ---- */
+var MAP=[
+ ['RE2020 — SEUIL 2025 — VÉRIFICATION CONFORMITÉ','RE2020 — THRESHOLD 2025 — COMPLIANCE CHECK','RE2020 — VÉRIFICATION DE CONFORMITÉ (2025-2027)','RE2020 — COMPLIANCE CHECK (2025-2027)'],
+ ['Fluide frigorigène certifié F-Gas 2025 (GWP ≤ 750)','F-Gas 2025 certified refrigerant (GWP ≤ 750)','Frigorigène autorisé pour ce type d\'équipement (Règl. UE 2024/573, annexe IV)','Refrigerant permitted for this equipment type (EU Reg. 2024/573, Annex IV)'],
+ ['Étanchéité testée : ≤ 5 g/an selon F-Gas','Tightness tested: ≤ 5 g/yr per F-Gas','Contrôle d\'étanchéité réalisé (détecteur de sensibilité ≤ 5 g/an, EN 14624)','Leak check carried out (detector sensitivity ≤ 5 g/yr, EN 14624)'],
+ ['Certificat technicien CAT I/II visible','CAT I/II technician certificate visible','Certificat du technicien frigoriste visible (catégorie adaptée à l\'intervention)','Refrigeration technician certificate visible (category suited to the work)'],
+ ['Mise à la terre : ≤ 1Ω (NF C18-510)','Earth bonding: ≤ 1Ω (NF C18-510)','Mise à la terre mesurée et conforme à la norme électrique applicable (ex. NF C 15-100)','Earthing measured and compliant with the applicable electrical standard (e.g. NF C 15-100)'],
+ ['Variateur paramétré (ramp-up ≥ 10s)','Drive configured (ramp-up ≥ 10s)','Variateur paramétré selon la notice du constructeur (rampes, limites)','Drive configured per the manufacturer manual (ramps, limits)'],
+ ['D — REFRIGERANTS & F-GAS 2025','D — REFRIGERANTS & F-GAS 2025','D — FRIGORIGÈNES & F-GAS','D — REFRIGERANTS & F-GAS'],
+ ['Réfrigérant R32/R290/R454B (GWP < 750) — RE2020 S.2025','Refrigerant R32/R290/R454B (GWP < 750) — RE2020 T.2025','Frigorigène adapté à l\'application (inflammabilité A2L/A3 : exigences EN 378 et IEC 60335-2-40)','Refrigerant suited to the application (A2L/A3 flammability: EN 378 and IEC 60335-2-40 requirements)'],
+ ['Quota F-Gas disponible pour l\'entreprise','F-Gas quota available for the company','Frigorigène acheté auprès d\'un fournisseur déclaré (traçabilité)','Refrigerant bought from a registered supplier (traceability)'],
+ ['Déclaration F-Gas annuelle à jour','Annual F-Gas declaration up to date','Registre d\'équipement et contrôles d\'étanchéité à jour (périodicité selon la charge — Règl. UE 2024/573)','Equipment record and leak checks up to date (frequency depends on charge — EU Reg. 2024/573)'],
+ ['Inhibiteur corrosion dosé selon notice (ex: 2% Fernox F1)','Corrosion inhibitor dosed per instructions (e.g. 2% Fernox F1)','Inhibiteur de corrosion dosé selon la notice du fabricant','Corrosion inhibitor dosed per the manufacturer instructions'],
+ /* IPM / IGBT */
+ ['Température jonction >150°C — refroidissement insuffisant','Junction temperature >150°C — insufficient cooling','Surtempérature détectée par le module (seuil selon la fiche du module) — refroidissement insuffisant','Over-temperature detected by the module (threshold per module datasheet) — insufficient cooling'],
+ ['Bus DC <350V — réseau instable ou condensateur défaillant','DC bus <350V — unstable network or faulty capacitor','Sous-tension de l\'alimentation de commande (≈15 V) ou bus DC trop bas — réseau instable ou condensateur défaillant','Control-supply undervoltage (≈15 V) or DC bus too low — unstable network or faulty capacitor'],
+ ['Bus DC multimètre','DC bus multimeter','Alim. commande 15 V et bus DC (multimètre)','15 V control supply and DC bus (multimeter)'],
+ ['Courant PFC >15A','PFC current >15A','Courant PFC (pince) comparé au seuil constructeur','PFC current (clamp) compared with manufacturer limit'],
+ ['Bus DC >420V — condensateur défaillant ou charge légère','DC bus >420V — faulty capacitor or light load','Bus DC au-dessus du seuil du constructeur — condensateur défaillant ou charge légère','DC bus above the manufacturer limit — faulty capacitor or light load'],
+ ['Bus DC >420V','DC bus >420V','Bus DC (multimètre)','DC bus (multimeter)'],
+ ['ÉTAPE 2 — Test transistor IGBT (polarisation directe) :','STEP 2 — IGBT transistor test (forward bias):','ÉTAPE 2 — Diodes hautes (sorties U/V/W vers P) :','STEP 2 — Upper diodes (outputs U/V/W to P):'],
+ ['• Rouge sur Gate/Collecteur → Noir sur Émetteur','• Red on Gate/Collector → Black on Emitter','• Rouge sur U (puis V, puis W) → Noir sur P (+ bus DC)','• Red on U (then V, then W) → Black on P (DC bus +)'],
+ ['0.400 to 0.700V','0.400 to 0.700V','≈ 0,35 à 0,70 V','≈ 0.35 to 0.70 V'],
+ ['• Valeur <0.1V =','• Value <0.1V =','• Valeur <0,05 V =','• Value <0.05 V ='],
+ ['• OL (out of range) =','• OL (out of range) =','• OL en sens direct =','• OL in forward direction ='],
+ ['ÉTAPE 3 — Test diode de roue libre :','STEP 3 — Freewheeling diode test:','ÉTAPE 3 — Diodes basses (N vers sorties U/V/W) :','STEP 3 — Lower diodes (N to outputs U/V/W):'],
+ ['• Rouge sur Anode (Émetteur) → Noir sur Cathode (Collecteur)','• Red on Anode (Emitter) → Black on Cathode (Collector)','• Rouge sur N (− bus DC) → Noir sur U (puis V, puis W)','• Red on N (DC bus −) → Black on U (then V, then W)'],
+ ['0.350 to 0.600V','0.350 to 0.600V','≈ 0,35 à 0,70 V','≈ 0.35 to 0.70 V'],
+ ['• Même procédure pour les 6 diodes (3 phases × 2)','• Same procedure for all 6 diodes (3 phases × 2)','• Sens inverse : OL attendu sur les 6 jonctions. Le multimètre ne teste que les diodes, pas l\'IGBT en conduction.','• Reverse direction: OL expected on all 6 junctions. The multimeter only tests the diodes, not the IGBT in conduction.'],
+ /* Carrier */
+ ['⚙ Calculer débit min','Calculate min flow','⚙ Calculer le débit','Calculate flow'],
+ ['30 à 500 kW · R-410A / R-32 (2025+)','30 to 500 kW · R-410A / R-32 (2025+)','env. 40 à 160 kW (30RB 040R–160R, R-32) · versions antérieures en R-410A','approx. 40 to 160 kW (30RB 040R–160R, R-32) · earlier versions use R-410A'],
+ ['Carrier CCN (Comfort Régulation Network)','Carrier CCN (Comfort Control Network)','SmartVu™ (gamme R-32) ou Pro-Dialog (versions antérieures) · bus CCN selon option','SmartVu™ (R-32 range) or Pro-Dialog (earlier versions) · CCN bus depending on option'],
+ ['Évaporateur à plaques brasées · débit min 20% nominal','Brazed plate evaporator · min flow 20% nominal','Évaporateur à plaques brasées · débit minimum : voir la notice de l\'unité','Brazed plate evaporator · minimum flow: see the unit manual'],
+ ['Alerte 30 — PERTE DÉBIT EAU / Perte de débit','Alert 30 — WATER FLOW LOSS / Loss of Flow','Perte de débit d\'eau (Loss of flow) — n° d\'alarme selon la notice de l\'unité','Water flow loss (Loss of flow) — alarm number per the unit manual'],
+ ['0.8 to 1.5 bar','0.8 to 1.5 bar','voir la fiche technique de l\'unité','see the unit datasheet'],
+ ['• Débit min = Q = Puissance / (4,186 × ΔT × 1000) m³/h','• Min flow = Q = Power / (4.186 × ΔT × 1000) m³/h','• Débit nominal : Q (m³/h) = P (kW) × 3,6 / (4,186 × ΔT). Débit minimum : notice constructeur.','• Nominal flow: Q (m³/h) = P (kW) × 3.6 / (4.186 × ΔT). Minimum flow: manufacturer manual.'],
+ ['• Réglage nominal : 0,15 à 0,20 bar différentiel','• Nominal setting: 0.15 to 0.20 bar differential','• Réglage du contacteur de débit : selon la notice constructeur','• Flow switch setting: per the manufacturer manual'],
+ ['(défaut = 5 sec)','(default = 5 sec)','(valeur selon la notice)','(value per the manual)'],
+ ['• T=5°C → R=16,3kΩ · T=20°C → R=6,8kΩ · T=40°C → R=2,4kΩ','• T=5°C → R=16,3kΩ · T=20°C → R=6,8kΩ · T=40°C → R=2,4kΩ','• Comparer la résistance mesurée à la table CTN de la notice (elle dépend du type de sonde, ex. 5 kΩ ou 10 kΩ à 25 °C)','• Compare the measured resistance with the NTC table in the manual (it depends on the sensor type, e.g. 5 kΩ or 10 kΩ at 25 °C)'],
+ ['• Hors plage : remplacer sonde (réf. Carrier : SK-NTC-2.5)','• Out of range: replace sensor (ref. Carrier: SK-NTC-2.5)','• Hors tolérance : remplacer la sonde par la référence de la nomenclature de l\'unité','• Out of tolerance: replace the sensor with the part listed in the unit parts list']
+];
+var SUB=[['EN 15232-1','EN ISO 52120-1'],['EN 15232','EN ISO 52120-1'],['EN 14336:2019','EN 14336'],['EN 378:2021','EN 378'],['ISO 10816','ISO 20816-3']];
+var IDX=null;
+function buildIdx(){ IDX={}; MAP.forEach(function(e){ IDX[e[0]]=e; IDX[e[1]]=e; IDX[e[2]]=e; IDX[e[3]]=e; }); }
+
+var NOTES={
+ 'rec-ipm':['⚠ Seuils, codes et noms de défauts variables selon le fabricant du module (Mitsubishi, Fuji, Infineon…) : confirmer avec la fiche technique du module et la notice de l\'appareil.','⚠ Thresholds, codes and fault names vary by module manufacturer (Mitsubishi, Fuji, Infineon…): confirm with the module datasheet and the appliance manual.'],
+ 'rec-carrier':['⚠ Fiche indicative : numéros d\'alarme, réglages et valeurs de sonde sont à confirmer avec la notice Carrier de l\'unité (IOM / guide de service).','⚠ Indicative sheet: alarm numbers, settings and sensor values must be confirmed with the Carrier manual of the unit (IOM / service guide).'],
+ 'rec-ccn':['⚠ Fiche indicative : noms de points CCN, valeurs usine et procédure d\'adressage sont à confirmer avec la documentation Carrier de l\'unité.','⚠ Indicative sheet: CCN point names, factory values and addressing procedure must be confirmed with the Carrier documentation of the unit.']
+};
+
+var busy=false;
+function ids(){
+ var set=function(id,fr,en){var e=$(id); if(!e)return; var t=isFr()?fr:en; if(e.textContent!==t) e.textContent=t;};
+ set('t_rt_title','RE2020 — VÉRIFICATION DE CONFORMITÉ (2025-2027)','RE2020 — COMPLIANCE CHECK (2025-2027)');
+ set('t_re_ic_h','SEUILS RE2020 — VALEURS MOYENNES (Ic, Cep,nr)','RE2020 THRESHOLDS — AVERAGE VALUES (Ic, Cep,nr)');
+ set('t_re_th_ic','Ic max 2025-27 (kgCO₂éq/m²)','Max Ic 2025-27 (kgCO₂eq/m²)');
+ set('t_re_th_cep','Cep,nr max moyen (kWhEP/m²/an)','Average max Cep,nr (kWhEP/m²/yr)');
+ set('t_re_th_cop','Ic max 2028','Max Ic 2028');
+ set('t_re_th_scop','Ic max 2031','Max Ic 2031');
+ set('t_re_cep','Cep,nr (kWhEP/m²/an) :','Cep,nr (kWhEP/m²/yr):');
+ set('t_re_scop','SCOP PAC (info, non réglementaire) :','HP SCOP (info, not regulatory):');
+ set('t_re_calc_h','SEUILS RE2020 — INFORMATIONS','RE2020 THRESHOLDS — INFORMATION');
+ var inf=$('re-calc-info-text'); if(inf){ var kk=isFr()?'fr':'en'; if(inf.__k!==kk||inf.innerHTML!==inf.__last){ inf.innerHTML=infoHTML(); inf.__k=kk; inf.__last=inf.innerHTML; } }
+ var tb=$('re2025Table'); if(tb){ var th=tableHTML(); if(tb.innerHTML!==th) tb.innerHTML=th; }
+ Object.keys(NOTES).forEach(function(tab){
+  var c=$(tab); if(!c)return; var n=c.querySelector('.re43-note');
+  if(!n){ n=document.createElement('div'); n.className='re43-note'; n.style.cssText='font-size:10.5px;color:var(--wn);border:1px solid var(--wn);border-radius:6px;padding:6px 8px;margin-bottom:8px'; c.insertBefore(n,c.firstChild); }
+  var t=isFr()?NOTES[tab][0]:NOTES[tab][1]; if(n.textContent!==t) n.textContent=t;
+ });
+}
+function fix(){
+ if(busy)return; busy=true;
+ try{
+  patchGlobal(); if(!IDX)buildIdx();
+  ids();
+  var root=$('pg-rt2025'); if(!root)return;
+  var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null,false), n, fr=isFr();
+  while((n=w.nextNode())){
+   var v=n.nodeValue; if(!v||!v.trim())continue;
+   var t=v.trim(), e=IDX[t];
+   if(e){ var nt=fr?e[2]:e[3]; if(t!==nt) n.nodeValue=v.replace(t,nt); continue; }
+   var changed=v;
+   for(var i=0;i<SUB.length;i++){ if(changed.indexOf(SUB[i][0])>=0) changed=changed.split(SUB[i][0]).join(SUB[i][1]); }
+   if(changed!==v) n.nodeValue=changed;
+  }
+ }catch(err){ if(window.console)console.warn('re43',err); }
+ busy=false;
+}
+function start(){
+ var root=$('pg-rt2025'); if(!root){ setTimeout(start,300); return; }
+ new MutationObserver(function(){ if(!busy) setTimeout(fix,0); }).observe(root,{childList:true,subtree:true,characterData:true});
+ root.addEventListener('rt2025-retranslate',function(){setTimeout(fix,0);});
+ window.fillRE2025();
+ fix();
+}
+window.__re43fix=fix;
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
+})();
+
+</script>
 </body>
 </html>
 
