@@ -16163,6 +16163,98 @@ if(typeof _sc==='function') window.calcSCOP=function(){
 })();
 
 </script>
+<script id="fluides38-module">
+(function () {
+  'use strict';
+  if (window.__fl38) { return; }
+  window.__fl38 = true;
+  function en() { return window.lang === 'en'; }
+  function L(fr, e) { return en() ? e : fr; }
+  function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  /* Proprietes calculees avec CoolProp (equations d'etat de reference). Tc, Pc : point critique ; Teb : ebullition a 1,013 bar (melanges : point de bulle). */
+  var G = { hi: ['GWP ≥ 2 500 : gaz vierge interdit pour l’entretien des AC/PAC (dès 2026) ; exclu des équipements neufs', 'GWP ≥ 2,500: virgin gas banned for AC/heat-pump servicing (from 2026); excluded from new equipment'],
+            mid: ['GWP ≥ 750 : exclu des équipements AC/PAC neufs selon le calendrier de l’annexe IV (2025 à 2029)', 'GWP ≥ 750: excluded from new AC/heat-pump equipment per the Annex IV schedule (2025 to 2029)'],
+            low: ['GWP 150–750 : exclu des AC/PAC neufs entre 2027 et 2033 selon le type (sauf exigence de sécurité) — voir onglet F-Gas', 'GWP 150–750: excluded from new AC/heat-pump units between 2027 and 2033 depending on type (unless safety requires) — see F-Gas tab'],
+            ok: ['GWP < 150 : non concerné par les interdictions AC/PAC de l’annexe IV', 'GWP < 150: not affected by the Annex IV AC/heat-pump bans'] };
+  var REF = [
+    ['R410A', 2088, '≈71,3', '≈49,0', '≈−51,4', 'A1', G.mid, ['VRF, splits, chillers scroll', 'VRF, splits, scroll chillers']],
+    ['R32', 675, '78,1', '57,8', '−51,7', 'A2L', G.low, ['Splits résidentiels, PAC', 'Residential splits, heat pumps']],
+    ['R134a', 1430, '101,1', '40,6', '−26,1', 'A1', G.mid, ['Chillers centrifuges (parc existant)', 'Centrifugal chillers (existing fleet)']],
+    ['R1234ze(E)', 7, '109,4', '36,3', '−19,0', 'A2L', G.ok, ['Chillers, PAC industrielle', 'Chillers, industrial heat pumps']],
+    ['R1234yf', 4, '94,7', '33,8', '−29,5', 'A2L', G.ok, ['Automobile, PAC résidentielle', 'Automotive, residential heat pumps']],
+    ['R290', 3, '96,7', '42,5', '−42,1', 'A3', G.ok, ['PAC résidentielle, chambre froide', 'Residential heat pumps, cold rooms']],
+    ['R717 (NH3)', 0, '132,4', '113,6', '−33,3', 'B2L', [G.ok[0] + ' — toxique', G.ok[1] + ' — toxic'], ['Industrie, agroalimentaire', 'Industry, food processing']],
+    ['R744 (CO2)', 1, '31,0', '73,8', '−78,4 (sublim.)', 'A1', G.ok, ['Transcritique, cascade', 'Transcritical, cascade']],
+    ['R454B', 466, '≈78,3', '≈53,0', '≈−50,7', 'A2L', G.low, ['Substitut du R410A, VRF nouvelle génération', 'R410A replacement, new-generation VRF']],
+    ['R407C', 1774, '86,1', '46,4', '≈−43,6', 'A1', G.mid, ['Rétrofit R22 (parc existant)', 'R22 retrofit (existing fleet)']],
+    ['R404A', 3922, '72,1', '37,3', '≈−46,2', 'A1', G.hi, ['Froid commercial (parc existant)', 'Commercial refrigeration (existing fleet)']],
+    ['R448A', 1387, '≈82,8', '≈46,1', '≈−46,2', 'A1', G.mid, ['Rétrofit R404A/R507A, froid commercial', 'R404A/R507A retrofit, commercial refrigeration']]
+  ];
+  var OIL = [
+    ['POE Emkarate RL32H', 'POE', '32', 'R410A, R32, R134a, R454B', ['VRF, splits, compresseurs scroll', 'VRF, splits, scroll compressors']],
+    ['POE Emkarate RL46H', 'POE', '46', 'R134a, R407C, R448A', ['Chillers à vis, semi-hermétiques', 'Screw chillers, semi-hermetic']],
+    ['BITZER BSE32', 'POE', '32', 'R410A, R32, R454B', ['Compresseurs BITZER scroll/vis', 'BITZER scroll/screw compressors']],
+    ['POE ISO VG 68 (générique)', 'POE', '68', 'R134a, R407C', ['Compresseurs exigeant une viscosité élevée (voir constructeur)', 'Compressors requiring a high viscosity (see manufacturer)']],
+    ['Suniso 3GS', ['Minérale naphténique', 'Naphthenic mineral'], '32', ['R22 (ancien parc) — pas pour les HFC', 'R22 (existing fleet) — not for HFCs'], ['Compresseurs semi-hermétiques R22 (parc existant)', 'Semi-hermetic R22 compressors (existing fleet)']]
+  ];
+  var FG = [
+    ['1 Jan 2025', 'Splits « single split » < 3 kg : GWP ≥ 750 interdit', 'R410A (2088) exclu ; R32 (675) autorisé', 'Single splits < 3 kg: GWP ≥ 750 banned', 'R410A (2088) excluded; R32 (675) allowed'],
+    ['1 Jan 2026', 'Entretien des AC/PAC : gaz vierge GWP ≥ 2 500 interdit (régénéré/recyclé toléré jusqu’en 2032)', 'R404A (3922) : plus de gaz vierge pour l’entretien', 'AC/heat-pump servicing: virgin gas GWP ≥ 2,500 banned (reclaimed/recycled tolerated until 2032)', 'R404A (3922): no virgin gas for servicing'],
+    ['1 Jan 2027', 'Monoblocs/PAC ≤ 50 kW et splits air/eau ≤ 12 kW : GWP ≥ 150 interdit (750 si la sécurité l’exige)', 'R32/R454B seulement si exigence de sécurité ; R290, R1234yf OK', 'Self-contained/heat pumps ≤ 50 kW and air-to-water splits ≤ 12 kW: GWP ≥ 150 banned (750 if safety requires)', 'R32/R454B only if safety requires; R290, R1234yf OK'],
+    ['1 Jan 2029', 'Splits air/air ≤ 12 kW : GWP ≥ 150 interdit ; splits > 12 kW : GWP ≥ 750 interdit', 'R32 exclu des splits air/air ≤ 12 kW', 'Air-to-air splits ≤ 12 kW: GWP ≥ 150 banned; splits > 12 kW: GWP ≥ 750 banned', 'R32 excluded from air-to-air splits ≤ 12 kW'],
+    ['1 Jan 2030', 'Autres équipements monoblocs/PAC (> 50 kW) : GWP ≥ 150 interdit', 'Réfrigérants à GWP < 150 (naturels, HFO)', 'Other self-contained/heat-pump equipment (> 50 kW): GWP ≥ 150 banned', 'Refrigerants with GWP < 150 (natural, HFO)'],
+    ['1 Jan 2032', 'Monoblocs ≤ 12 kW : tout gaz fluoré interdit', 'Naturels (R290, R744) uniquement', 'Self-contained ≤ 12 kW: any fluorinated gas banned', 'Natural refrigerants (R290, R744) only'],
+    ['1 Jan 2033', 'Splits > 12 kW : GWP ≥ 150 interdit', 'R32/R454B exclus', 'Splits > 12 kW: GWP ≥ 150 banned', 'R32/R454B excluded'],
+    ['1 Jan 2035', 'Splits ≤ 12 kW : tout gaz fluoré interdit', 'Naturels uniquement', 'Splits ≤ 12 kW: any fluorinated gas banned', 'Natural refrigerants only'],
+    ['2050', 'Quotas de mise sur le marché des HFC réduits progressivement jusqu’à zéro', 'Élimination totale des HFC dans l’UE', 'HFC placing-on-the-market quotas phased down to zero', 'Complete HFC phase-out in the EU']
+  ];
+  function T(x) { return Array.isArray(x) ? L(x[0], x[1]) : x; }
+  function tdr(a) { return '<tr>' + a.map(function (c) { return '<td>' + esc(c) + '</td>'; }).join('') + '</tr>'; }
+  function thr(a) { return '<tr>' + a.map(function (c) { return '<th>' + esc(c) + '</th>'; }).join('') + '</tr>'; }
+  var NOTE_REF = ['GWP à 100 ans, valeurs AR4 (Règl. UE 517/2014) ; les valeurs AR5/AR6 diffèrent (ex. R32 : 771 en AR6). Propriétés calculées avec CoolProp ; « ≈ » = mélange (point critique approché, point de bulle ; le mélange a un glissement de température). Les statuts F-Gas sont indicatifs (réglementation UE) : voir l’onglet F-Gas.',
+    'GWP over 100 years, AR4 values (EU Reg. 517/2014); AR5/AR6 values differ (e.g. R32: 771 in AR6). Properties computed with CoolProp; "≈" = blend (approximate critical point, bubble point; blends have temperature glide). F-Gas statuses are indicative (EU regulation): see the F-Gas tab.'];
+  var NOTE_FG = ['Dates de mise sur le marché dans l’UE (Règlement (UE) 2024/573, annexe IV). Les équipements déjà mis sur le marché avant la date peuvent être installés et entretenus. Ces règles ne s’appliquent pas directement hors UE (indicatif pour l’Algérie). À confirmer sur le texte officiel avant toute décision réglementaire.',
+    'Placing-on-the-market dates in the EU (Regulation (EU) 2024/573, Annex IV). Equipment placed on the market before the date may still be installed and serviced. These rules do not apply directly outside the EU (indicative for Algeria). Confirm against the official text before any regulatory decision.'];
+  function content() {
+    var h = {};
+    h.ref = '<tr>' + [L('Réfrigérant', 'Refrigerant'), 'GWP (AR4)', L('T crit. (°C)', 'T crit. (°C)'), L('P crit. (bar)', 'P crit. (bar)'), L('T éb. 1 atm (°C)', 'T boil. 1 atm (°C)'), L('Classification', 'Safety class'), L('Statut F-Gas (UE)', 'F-Gas status (EU)'), 'Usage'].map(function (c) { return '<th>' + esc(c) + '</th>'; }).join('') + '</tr>';
+    h.refB = REF.map(function (r) { return tdr([r[0], r[1], r[2], r[3], r[4], r[5], T(r[6]), T(r[7])]); }).join('');
+    h.oil = thr([L('Huile', 'Oil'), 'Type', L('Viscosité ISO VG', 'ISO VG viscosity'), L('Réfrigérants compatibles (voir fiche du compresseur)', 'Compatible refrigerants (see compressor datasheet)'), L('Applications', 'Applications')]);
+    h.oilB = OIL.map(function (r) { return tdr([r[0], T(r[1]), r[2], T(r[3]), T(r[4])]); }).join('');
+    h.fg = '<table class="tbl"><thead>' + thr([L('Échéance', 'Date'), L('Mesure', 'Measure'), L('Impact', 'Impact')]) + '</thead><tbody>' + FG.map(function (r) { return tdr([r[0], r[en() ? 3 : 1], r[en() ? 4 : 2]]); }).join('') + '</tbody></table><div style="font-size:10px;opacity:.8;margin-top:8px">' + esc(T(NOTE_FG)) + '</div>';
+    return h;
+  }
+  var busy = false;
+  function put(el, html) { if (el && el.__f38 !== html || (el && el.__f38s !== el.innerHTML)) { el.innerHTML = html; el.__f38 = html; el.__f38s = el.innerHTML; } }
+  function fix() {
+    if (busy) { return; }
+    var rt = document.getElementById('refTable');
+    if (!rt) { return; }
+    busy = true;
+    try {
+      var h = content();
+      var tbl = rt.parentNode;
+      if (tbl && tbl.tHead) { put(tbl.tHead, h.ref); }
+      put(rt, h.refB);
+      var wrap = tbl && tbl.parentNode;
+      if (wrap) {
+        var nt = document.getElementById('fl38note');
+        if (!nt) { nt = document.createElement('div'); nt.id = 'fl38note'; nt.style.cssText = 'font-size:10px;opacity:.8;margin-top:8px'; wrap.parentNode.insertBefore(nt, wrap.nextSibling); }
+        var t = T(NOTE_REF); if (nt.textContent !== t) { nt.textContent = t; }
+      }
+      var ot = document.getElementById('oilTable');
+      if (ot) { if (ot.parentNode.tHead) { put(ot.parentNode.tHead, h.oil); } put(ot, h.oilB); }
+      put(document.getElementById('fgasContent'), h.fg);
+    } catch (e) { /* sans effet */ }
+    busy = false;
+  }
+  var root = document.getElementById('pg-fluides');
+  if (root && window.MutationObserver) { new MutationObserver(function () { setTimeout(fix, 0); }).observe(root, { childList: true, subtree: true, characterData: true }); }
+  fix();
+  setTimeout(fix, 600);
+})();
+
+</script>
 </body>
 </html>
 
