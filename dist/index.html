@@ -16122,6 +16122,47 @@ if(typeof _sc==='function') window.calcSCOP=function(){
 })();
 
 </script>
+<script id="vannes37-module">
+(function () {
+  'use strict';
+  if (window.__vn37) { return; }
+  window.__vn37 = true;
+  /* RT2025 n'est pas une reglementation en vigueur : references retirees de toute la page VANNES */
+  var PAIRS = [
+    [' (RT2025 / EN 15232)', ' (valeur recommandée)'],
+    [' · RT2025 Art. 40', ''],
+    [' — RT2025 / EN 15232', ''],
+    ['Diagnostics & RT2025 Audit', 'Diagnostics & Audit'],
+    ['Diagnostic & Audit RT2025', 'Diagnostic & Audit'],
+    ['PICV RT2025', 'PICV']
+  ];
+  function fixText(t) {
+    var o = t, i;
+    for (i = 0; i < PAIRS.length; i++) { if (o.indexOf(PAIRS[i][0]) >= 0) { o = o.split(PAIRS[i][0]).join(PAIRS[i][1]); } }
+    return o.replace(/\s*RT\s?2025/g, '');
+  }
+  var busy = false;
+  function fixAll() {
+    if (busy) { return; }
+    var root = document.getElementById('pg-vannes');
+    if (!root) { return; }
+    busy = true;
+    try {
+      var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), n, ch = [];
+      while ((n = w.nextNode())) { if (n.nodeValue && /RT\s?2025/.test(n.nodeValue)) { ch.push(n); } }
+      ch.forEach(function (x) { x.nodeValue = fixText(x.nodeValue); });
+      root.querySelectorAll('[data-fr],[data-en]').forEach(function (e) {
+        ['data-fr', 'data-en'].forEach(function (a) { var v = e.getAttribute(a); if (v && /RT\s?2025/.test(v)) { e.setAttribute(a, fixText(v)); } });
+      });
+    } catch (e) { /* sans effet */ }
+    busy = false;
+  }
+  var r = document.getElementById('pg-vannes');
+  if (r && window.MutationObserver) { new MutationObserver(function () { fixAll(); }).observe(r, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['data-fr', 'data-en'] }); }
+  fixAll();
+})();
+
+</script>
 </body>
 </html>
 
