@@ -235,6 +235,14 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  (inexistant au catalogue BITZER) ; colonne "T max" retiree (non verifiable) ; (5) GWP = valeurs AR4 (note ajoutee).
  Non verifie : compatibilites huile/fluide exactes (voir fiche du constructeur). Bloc <script id="fluides38-module"> (83 blocs).
  Mise a jour : node add_fluides38.js dist\index.html
+ ETAPE 39 : CODES DEFAUT - audit partiel (845 codes, 37 marques). Entrees FAUSSES corrigees : Daikin A5, C9 (sonde air de
+ reprise), L3 (echauffement coffret electrique, et non phase manquante) ; Mitsubishi E3/E4 (telecommande), P4 (sonde de condensats),
+ U1/U2/U3 (haute pression, T refoulement, sonde refoulement : pas des defauts d'alimentation) ; LG CH03, CH04, CH05, CH06, CH07,
+ CH10 (ventilateur interieur bloque), CH21 (DC peak/IPM), CH53, CH67 (ventilateur exterieur bloque) ; Panasonic H15, H16, H33, H38,
+ F11, F17, F90. Sources : liste LG officielle (lg.com), listes Daikin/Mitsubishi de pickhvac.com (recoupees avec le manuel de
+ service connu) ; Panasonic corrige d'apres les connaissances du manuel de service, NON recoupe en ligne. Bandeau de prudence
+ ajoute sur la page. NON VERIFIE : toutes les autres marques (dont Condor, 72 codes, a faire verifier par M. Mouissat avec les
+ manuels d'usine) et les series numeriques. Bloc <script id="codes39-module"> (84 blocs). Mise a jour : node add_codes39.js dist\index.html
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 

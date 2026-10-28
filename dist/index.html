@@ -16255,6 +16255,80 @@ if(typeof _sc==='function') window.calcSCOP=function(){
 })();
 
 </script>
+<script id="codes39-module">
+(function () {
+  'use strict';
+  if (window.__cd39) { return; }
+  window.__cd39 = true;
+  function en() { return window.lang === 'en'; }
+  /* Corrections d'entrees dont le sens etait faux. Cle = Marque|Code ; valeur = [description FR, description EN, cause / action] */
+  var FIX = {
+    'Daikin|A5': ['Contrôle haute pression (chauffage) ou protection antigel — UI', 'High-pressure control (heating) or freeze-up protection — indoor unit', 'Filtre ou échangeur intérieur encrassé, débit d’air insuffisant, sonde d’échangeur défaillante.'],
+    'Daikin|C9': ['Sonde d’air de reprise (unité intérieure)', 'Indoor suction (return) air thermistor failure', 'Sonde coupée, en court-circuit ou débranchée : vérifier le connecteur et la résistance de la sonde.'],
+    'Daikin|L3': ['Échauffement des composants électriques (coffret)', 'Electrical parts overheating (electrical box)', 'Ventilation ou refroidissement du coffret insuffisant, carte ou réacteur défaillant.'],
+    'Mitsubishi|E3': ['Erreur de transmission de la télécommande', 'Remote controller transmission error', 'Câblage ou adresse de la télécommande, parasites sur la liaison.'],
+    'Mitsubishi|E4': ['Erreur de réception de la télécommande', 'Remote controller signal receiving error', 'Câblage ou adresse de la télécommande, parasites sur la liaison.'],
+    'Mitsubishi|P4': ['Sonde de condensats (bac)', 'Drain sensor error', 'Sonde du bac à condensats débranchée ou défaillante ; vérifier aussi la pompe de relevage et l’évacuation.'],
+    'Mitsubishi|U1': ['Haute pression anormale (déclenchement)', 'High pressure trip', 'Condenseur encrassé ou obstrué, ventilateur extérieur en défaut, surcharge de fluide.'],
+    'Mitsubishi|U2': ['Température de refoulement trop haute / protection compresseur', 'High discharge temperature / compressor protection', 'Manque de fluide, détendeur défaillant, surchauffe de l’unité extérieure.'],
+    'Mitsubishi|U3': ['Sonde de température de refoulement (ouverte ou en court-circuit)', 'Discharge temperature thermistor fault (open/short)', 'Sonde débranchée ou défaillante ; vérifier le connecteur et la résistance.'],
+    'LG|CH03': ['Erreur de communication avec la télécommande filaire', 'Wired remote controller communication error', 'Câble ou connecteur de la télécommande, alimentation de la télécommande.'],
+    'LG|CH04': ['Défaut pompe de relevage / niveau de condensats élevé', 'Drain pump / high condensate level error', 'Pompe de relevage, flotteur ou évacuation bouchés.'],
+    'LG|CH05': ['Erreur de communication unité intérieure vers unité extérieure', 'Communication failure from indoor unit to outdoor unit', 'Câble de liaison UI/UE coupé ou desserré, carte défaillante.'],
+    'LG|CH06': ['Sonde de sortie d’échangeur intérieur (ouverte ou en court-circuit)', 'Indoor outlet pipe thermistor disconnected or shorted', 'Sonde débranchée ou défaillante ; vérifier le connecteur et la résistance.'],
+    'LG|CH07': ['Modes de fonctionnement UI/UE incompatibles', 'Indoor/outdoor operation mode conflict', 'Unités intérieures demandant des modes différents (froid/chaud) sur un multi-split.'],
+    'LG|CH10': ['Ventilateur intérieur bloqué (défaut moteur)', 'Indoor fan locked (fan motor operation failure)', 'Moteur ou condensateur défaillant, hélice bloquée, connecteur débranché.'],
+    'LG|CH21': ['Crête de tension DC / défaut IPM (compresseur)', 'DC peak error / IPM fault', 'Module de puissance ou compresseur défaillant, court-circuit sur le compresseur.'],
+    'LG|CH53': ['Erreur de communication unité extérieure vers unité intérieure', 'Communication failure from outdoor unit to indoor unit', 'Câble de liaison UI/UE, carte extérieure ou intérieure défaillante.'],
+    'LG|CH67': ['Ventilateur extérieur bloqué (moteur BLDC)', 'Outdoor BLDC fan motor lock error', 'Moteur ou carte du ventilateur défaillant, hélice bloquée, connecteur débranché.'],
+    'Panasonic|H15': ['Sonde de température du compresseur', 'Compressor temperature sensor abnormality', 'Sonde débranchée ou défaillante ; vérifier le connecteur et la résistance.'],
+    'Panasonic|H16': ['Anomalie du transformateur de courant (CT) extérieur', 'Outdoor current transformer (CT) abnormality', 'Capteur de courant ou carte extérieure défaillants ; vérifier les connecteurs.'],
+    'Panasonic|H33': ['Raccordement incorrect unité intérieure / extérieure', 'Unmatched indoor/outdoor connection', 'Erreur de câblage ou de combinaison UI/UE.'],
+    'Panasonic|H38': ['Code marque UI/UE incompatible', 'Indoor/outdoor brand code mismatch', 'Combinaison UI/UE non prévue ; vérifier les références des unités.'],
+    'Panasonic|F11': ['Anomalie de commutation de la vanne 4 voies', 'Cooling/heating cycle changeover abnormality (4-way valve)', 'Vanne 4 voies ou sa bobine défaillante, sonde d’échangeur défaillante.'],
+    'Panasonic|F17': ['Gel de l’unité intérieure à l’arrêt (protection)', 'Indoor standby units freezing abnormality', 'Fuite de vanne ou de circuit vers une unité intérieure à l’arrêt, sonde défaillante.'],
+    'Panasonic|F90': ['Protection du circuit PFC', 'PFC circuit protection', 'Carte de puissance extérieure défaillante, tension d’alimentation anormale.']
+  };
+  var NOTE = ['Base indicative : les codes varient selon la marque, le modèle et la génération. Vérifiez toujours dans le manuel de service du constructeur avant d’intervenir. Marques revues à ce jour (entrées erronées corrigées en octobre 2026) : Daikin, Mitsubishi, LG, Panasonic ; les autres marques n’ont pas encore été vérifiées.',
+    'Indicative database: codes vary by brand, model and generation. Always check the manufacturer’s service manual before working on the unit. Brands reviewed so far (incorrect entries corrected in October 2026): Daikin, Mitsubishi, LG, Panasonic; the other brands have not been verified yet.'];
+  var busy = false;
+  function fix() {
+    if (busy) { return; }
+    var body = document.getElementById('errBody');
+    if (!body) { return; }
+    busy = true;
+    try {
+      var rows = body.rows, i;
+      for (i = 0; i < rows.length; i++) {
+        var c = rows[i].cells;
+        if (c.length < 5) { continue; }
+        var k = c[0].textContent.trim() + '|' + c[1].textContent.trim();
+        var v = FIX[k];
+        if (v) {
+          if (c[2].textContent !== v[0]) { c[2].textContent = v[0]; }
+          if (c[3].textContent !== v[1]) { c[3].textContent = v[1]; }
+          if (c[4].textContent !== v[2]) { c[4].textContent = v[2]; }
+        }
+      }
+      var box = document.getElementById('cd39note');
+      if (!box) {
+        var tw = body.parentNode.parentNode;
+        box = document.createElement('div'); box.id = 'cd39note';
+        box.style.cssText = 'font-size:10.5px;margin:0 0 8px 0;padding:6px 10px;border-left:3px solid #d98a00;background:rgba(217,138,0,.10)';
+        tw.parentNode.insertBefore(box, tw);
+      }
+      var t = en() ? NOTE[1] : NOTE[0];
+      if (box.textContent !== t) { box.textContent = t; }
+    } catch (e) { /* sans effet */ }
+    busy = false;
+  }
+  var root = document.getElementById('pg-codes');
+  if (root && window.MutationObserver) { new MutationObserver(function () { setTimeout(fix, 0); }).observe(root, { childList: true, subtree: true, characterData: true }); }
+  fix();
+  setTimeout(fix, 600);
+})();
+
+</script>
 </body>
 </html>
 
