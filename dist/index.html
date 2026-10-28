@@ -16406,6 +16406,41 @@ if(typeof _sc==='function') window.calcSCOP=function(){
 })();
 
 </script>
+<script id="loto41-module">
+(function () {
+  'use strict';
+  if (window.__lt41) { return; }
+  window.__lt41 = true;
+  function en() { return window.lang === 'en'; }
+  /* Corrections de la procedure LOTO : [variantes d'origine et de remplacement, texte FR, texte EN] */
+  var MAP = [[["ISO 14118:2018 §4.1"], "ISO 14118:2018", "ISO 14118:2018"], [["ISO 14118:2018 §5 — EN 60204-1 §5.3"], "ISO 14118:2018 — EN 60204-1 §5.3", "ISO 14118:2018 — EN 60204-1 §5.3"], [["ISO 14118:2018 §5.2"], "ISO 14118:2018", "ISO 14118:2018"], [["NF C18-510 §B.5 — EN 60204-1 §5.3.3"], "NF C18-510 — EN 50110-1", "NF C18-510 — EN 50110-1"], [["PROTOCOLE VAT COMPLET — OUTIL HOMOLOGUE CAT III 1000V", "COMPLETE VAT PROTOCOL — CAT III 1000V APPROVED TOOL", "FULL VAT PROTOCOL — CAT III 1000V APPROVED INSTRUMENT"], "PROTOCOLE VAT COMPLET — APPAREIL ADAPTÉ AU RÉSEAU", "FULL VAT PROTOCOL — INSTRUMENT RATED FOR THE NETWORK"], [["Utiliser multimetre homologue CAT III min. 1000V (ex: Fluke 115, Hioki)", "Use CAT III approved multimeter min. 1000V (e.g. Fluke 115, Hioki)"], "Utiliser un vérificateur d’absence de tension (EN 61243-3) ou un multimètre de catégorie adaptée (CAT III 600 V minimum en 400 V ; CAT IV à l’origine de l’installation). Tester l’appareil sur une source connue AVANT et APRÈS la mesure. Contrôler aussi L1-L2, L2-L3 et L1-L3.", "Use a voltage detector (EN 61243-3) or a multimeter of suitable category (CAT III 600 V minimum on 400 V; CAT IV at the origin of the installation). Test the instrument on a known source BEFORE and AFTER the measurement. Also check L1-L2, L2-L3 and L1-L3."], [["EN 60204-1 §5.3.4"], "NF C18-510 — EN 50110-1", "NF C18-510 — EN 50110-1"], [["ISO 14118:2018 §5.3 — Énergie emmagasinée", "ISO 14118:2018 §5.3 — Stored energy"], "ISO 14118:2018 — énergie emmagasinée", "ISO 14118:2018 — stored energy"], [["Attendre decharge condensateurs variateur ≥5 min (bus DC residuel possible)", "Wait for drive capacitor discharge ≥5 min (residual DC bus possible)", "Wait for VFD capacitor discharge ≥5 min (residual DC bus possible)"], "Attendre la décharge des condensateurs du variateur (délai indiqué sur le variateur, souvent 5 à 15 min ; bus DC résiduel possible)", "Wait for the drive capacitors to discharge (delay shown on the drive, often 5 to 15 min; residual DC bus possible)"], [["EN 378:2021 §7"], "EN 378-4 (maintenance et récupération)", "EN 378-4 (servicing and recovery)"], [["Porter EPI: lunettes chimiques + gants EN ISO 11612", "Wear PPE: chemical goggles + EN ISO 11612 gloves"], "Porter EPI : lunettes de protection + gants contre le froid (EN 511) — le fluide liquide provoque des brûlures par le froid", "Wear PPE: safety goggles + cold-protection gloves (EN 511) — liquid refrigerant causes cold burns"], [["ISO 14118:2018 §6"], "ISO 14118:2018", "ISO 14118:2018"], [["Duree de validite: max 8h (renouveler si depasse)", "Validity period: max 8h (renew if exceeded)", "Validity: max 8h (renew if exceeded)"], "Durée de validité fixée par le permis de travail (par exemple un poste de travail) ; renouveler si dépassée", "Validity set by the work permit (for example one work shift); renew if exceeded"], [["Connecter groupe de recuperation certifie EN 378", "Connect EN 378 certified recovery unit"], "Connecter un groupe de récupération certifié EN 378 — fluide inflammable (A2L/A3 : R32, R290…) : supprimer toute source d’ignition, ventiler, utiliser un matériel adapté", "Connect a certified recovery unit (EN 378) — flammable refrigerant (A2L/A3: R32, R290…): remove all ignition sources, ventilate, use suitable equipment"], [["Minimum legal: <0.1 bar residuel avant ouverture", "Legal minimum: <0.1 bar residual before opening"], "Objectif : pression résiduelle ≤ 0,1 bar (relative) avant ouverture, ou valeur de la procédure du constructeur (EN 378-4)", "Target: residual pressure ≤ 0.1 bar (gauge) before opening, or the manufacturer’s procedure value (EN 378-4)"], [["DÉCONSIGNATION — EN 60204-1 §5.3.3 + ISO 14118:2018 §7", "DE-ENERGIZATION REMOVAL — EN 60204-1 §5.3.3"], "DÉCONSIGNATION — NF C18-510 — EN 50110-1", "LOCKOUT REMOVAL — NF C18-510 — EN 50110-1"], [["Test etancheite: azote + detecteur electronique", "Tightness test: nitrogen + electronic detector"], "Essai d’étanchéité à l’azote sec (jamais d’oxygène ni d’air comprimé) + détecteur de fuites", "Leak test with dry nitrogen (never oxygen or compressed air) + leak detector"], [["Vide pousse si circuit ouvert (<200 um pendant ≥30 min)", "Deep vacuum if circuit was opened (<200 μm for ≥30 min)", "Deep vacuum if circuit was opened (<200 um for ≥30 min)"], "Tirage au vide si le circuit a été ouvert (valeur du constructeur, typiquement 250 à 500 µm Hg soit 0,33 à 0,67 mbar ; maintien ≥ 30 min)", "Evacuation if the circuit was opened (manufacturer value, typically 250 to 500 µm Hg, i.e. 0.33 to 0.67 mbar; hold ≥ 30 min)"], [["Verifier tensions: L1-N, L2-N, L3-N (380-415V ±5%)", "Verify voltages: L1-N, L2-N, L3-N (380-415V ±5%)"], "Vérifier les tensions : L1-L2, L2-L3, L1-L3 (400 V ±10 %) et phase-neutre (230 V ±10 %)", "Check voltages: L1-L2, L2-L3, L1-L3 (400 V ±10 %) and phase-neutral (230 V ±10 %)"]];
+  var IDX = {};
+  MAP.forEach(function (m) { m[0].concat([m[1], m[2]]).forEach(function (k) { IDX[k] = m; }); });
+  var busy = false;
+  function fix() {
+    if (busy) { return; }
+    var root = document.getElementById('pg-consignation');
+    if (!root) { return; }
+    busy = true;
+    try {
+      var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), n, list = [];
+      while ((n = w.nextNode())) { list.push(n); }
+      list.forEach(function (x) {
+        var v = x.nodeValue; if (!v || v.length < 8) { return; }
+        var mm = /^(\s*•\s*)?([\s\S]*?)(\s*)$/.exec(v);
+        var e = IDX[mm[2].replace(/\s+/g, ' ')];
+        if (e) { var t = (mm[1] || '') + (en() ? e[2] : e[1]) + mm[3]; if (t !== v) { x.nodeValue = t; } }
+      });
+    } catch (err) { /* sans effet */ }
+    busy = false;
+  }
+  var root0 = document.getElementById('pg-consignation');
+  if (root0 && window.MutationObserver) { new MutationObserver(function () { setTimeout(fix, 0); }).observe(root0, { childList: true, subtree: true, characterData: true }); }
+  var tg = window.toggleLang;
+  fix(); setTimeout(fix, 600);
+})();
+
+</script>
 </body>
 </html>
 

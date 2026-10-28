@@ -250,6 +250,19 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  valeur invalide ignoree) + notes de definition des unites sous les panneaux (cos phi, HP mecanique, TR, GPM/CFM, PSI rel/abs).
  Intensite = puissance / (racine(3) x 400 V x cos phi) en triphase, puissance / (230 V x cos phi) en monophase, sans rendement.
  Bloc <script id="convert40-module"> (85 blocs). Mise a jour : node add_convert40.js dist\index.html
+ ETAPE 41 : LOTO (consignation) - audit du contenu technique. CORRECTIONS : (1) etape D4 : "L1-N, L2-N, L3-N (380-415 V)" etait faux
+ (phase-neutre = 230 V) -> tensions entre phases 400 V +/-10 % et phase-neutre 230 V +/-10 % ; (2) VAT : "multimetre CAT III 1000 V
+ (ex. Fluke 115)" faux (le Fluke 115 est CAT III 600 V) -> verificateur d'absence de tension (EN 61243-3) ou multimetre de
+ categorie adaptee, test de l'appareil AVANT et APRES, mesure aussi entre phases ; (3) EPI froid : "gants EN ISO 11612" (chaleur/
+ flamme) -> gants contre le froid EN 511 ; (4) "Minimum legal < 0,1 bar" et "duree de validite max 8 h" (non fondes) -> formules
+ neutres (procedure du constructeur EN 378-4 ; duree fixee par le permis de travail) ; (5) essai d'etancheite : azote sec,
+ jamais d'oxygene ni d'air comprime ; tirage au vide : valeur du constructeur (250 a 500 micron Hg typiquement) ; (6) fluides
+ inflammables A2L/A3 (R32, R290) : consigne d'ignition/ventilation ajoutee a la recuperation ; (7) decharge variateur : delai
+ indique sur l'appareil (5 a 15 min) ; (8) numeros de paragraphes de normes non verifiables retires (EN 60204-1 5.3.3/5.3.4,
+ ISO 14118 5.2/5.3/6/7, NF C18-510 B.5) ; references EN 50110-1 / NF C18-510 ajoutees pour VAT, MALT/CC et deconsignation.
+ NON VERIFIE : millesime "EN 378:2021" (utilise dans toute l'application, a verifier), texte integral de NF C18-510 (norme payante).
+ La procedure est une AIDE : elle ne remplace pas les procedures de l'exploitant ni l'habilitation electrique du personnel.
+ Bloc <script id="loto41-module"> (86 blocs). Mise a jour : node add_loto41.js dist\index.html
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
