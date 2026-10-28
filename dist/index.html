@@ -16329,6 +16329,83 @@ if(typeof _sc==='function') window.calcSCOP=function(){
 })();
 
 </script>
+<script id="convert40-module">
+(function () {
+  'use strict';
+  if (window.__cv40) { return; }
+  window.__cv40 = true;
+  function en() { return window.lang === 'en'; }
+  function L(a, b) { return en() ? b : a; }
+  function el(id) { return document.getElementById(id); }
+  function num(id) { var e = el(id); if (!e || e.value === '') { return null; } var v = parseFloat(e.value); return isFinite(v) ? v : null; }
+  function set(id, v, d) { var e = el(id); if (e) { e.value = (v === null ? '' : v.toFixed(d)); } }
+  function clear(ids) { ids.forEach(function (i) { var e = el(i); if (e) { e.value = ''; } }); }
+  /* --- Debit : facteurs exacts (gallon US = 3,785411784 L ; pied cube = 0,028316846592 m3) --- */
+  var GAL = 3.785411784e-3, FT3 = 0.028316846592;
+  var FLOW = ['flM3h', 'flLs', 'flGpm', 'flCfm'];
+  function flowAll(q, src) {
+    if (q === null) { clear(FLOW.filter(function (i) { return i !== src; })); return; }
+    if (src !== 'flM3h') { set('flM3h', q, 4); }
+    if (src !== 'flLs') { set('flLs', q / 3.6, 4); }
+    if (src !== 'flGpm') { set('flGpm', q / (GAL * 60), 2); }
+    if (src !== 'flCfm') { set('flCfm', q / (FT3 * 60), 3); }
+  }
+  window.convFlow = function () { flowAll(num('flM3h'), 'flM3h'); };
+  window.convLs2M3h = function () { var v = num('flLs'); flowAll(v === null ? null : v * 3.6, 'flLs'); };
+  window.convGpm2M3h = function () { var v = num('flGpm'); flowAll(v === null ? null : v * GAL * 60, 'flGpm'); };
+  window.convCfm2M3h = function () { var v = num('flCfm'); flowAll(v === null ? null : v * FT3 * 60, 'flCfm'); };
+  /* --- Electrique : cos phi modifiable (defaut 0,85) ; triphase P = racine(3) U I cos phi ; monophase P = U I cos phi --- */
+  var EL = ['elKw', 'elKva', 'elA400', 'elA230'], S3 = Math.sqrt(3), last = 'elKw';
+  function cosphi() {
+    var c = num('elCos'), box = el('elCos');
+    var ok = c !== null && c > 0 && c <= 1;
+    if (box) { box.style.outline = ok ? '' : '2px solid #d33'; }
+    return ok ? c : 0.85;
+  }
+  function elecAll(kw, src) {
+    last = src;
+    if (kw === null) { clear(EL.filter(function (i) { return i !== src; })); return; }
+    var c = cosphi();
+    if (src !== 'elKw') { set('elKw', kw, 3); }
+    if (src !== 'elKva') { set('elKva', kw / c, 3); }
+    if (src !== 'elA400') { set('elA400', kw * 1000 / (S3 * 400 * c), 2); }
+    if (src !== 'elA230') { set('elA230', kw * 1000 / (230 * c), 2); }
+  }
+  window.convElec = function () { elecAll(num('elKw'), 'elKw'); };
+  window.convKva2Kw = function () { var v = num('elKva'); elecAll(v === null ? null : v * cosphi(), 'elKva'); };
+  window.convA4002Kw = function () { var v = num('elA400'); elecAll(v === null ? null : S3 * 400 * v * cosphi() / 1000, 'elA400'); };
+  window.convA2302Kw = function () { var v = num('elA230'); elecAll(v === null ? null : 230 * v * cosphi() / 1000, 'elA230'); };
+  function recompute() { var f = { elKw: window.convElec, elKva: window.convKva2Kw, elA400: window.convA4002Kw, elA230: window.convA2302Kw }[last]; if (f) { f(); } }
+  var NOTES = {
+    elec: ['Intensité calculée avec le cos φ saisi (défaut 0,85), sans rendement : triphasé P = √3 × 400 V × I × cos φ ; monophasé P = 230 V × I × cos φ. Pour un moteur, utilisez la plaque signalétique.', 'Current computed with the entered power factor (default 0.85), efficiency not included: three-phase P = √3 × 400 V × I × cos φ; single-phase P = 230 V × I × cos φ. For a motor, use the nameplate.'],
+    pow: ['kBTU/h = 1 000 BTU(IT)/h (1 kW = 3,412 kBTU/h) ; TR = 12 kBTU/h = 3,517 kW ; HP = cheval-vapeur mécanique (745,7 W).', 'kBTU/h = 1,000 BTU(IT)/h (1 kW = 3.412 kBTU/h); TR = 12 kBTU/h = 3.517 kW; HP = mechanical horsepower (745.7 W).'],
+    flow: ['GPM = gallon US par minute (3,785 L) ; CFM = pied cube par minute (0,02832 m³).', 'GPM = US gallon per minute (3.785 L); CFM = cubic foot per minute (0.02832 m³).'],
+    press: ['PSI = livre par pouce carré (relative ou absolue selon le manomètre : ce convertisseur ne change pas la référence). 1 bar = 100 kPa.', 'PSI = pound per square inch (gauge or absolute depending on the gauge: this converter does not change the reference). 1 bar = 100 kPa.']
+  };
+  function panelOf(id) { var e = el(id); while (e && !(e.classList && e.classList.contains('panel'))) { e = e.parentNode; } return e; }
+  function addNote(key, anchorId) {
+    var p = panelOf(anchorId); if (!p) { return; }
+    var n = el('cv40-' + key);
+    if (!n) { n = document.createElement('div'); n.id = 'cv40-' + key; n.style.cssText = 'font-size:9.5px;opacity:.75;margin-top:6px;line-height:1.4'; p.appendChild(n); }
+    var t = en() ? NOTES[key][1] : NOTES[key][0]; if (n.textContent !== t) { n.textContent = t; }
+  }
+  function ui() {
+    if (!el('elKw')) { return; }
+    if (!el('elCos')) {
+      var p = panelOf('elKw'), row = document.createElement('div');
+      row.className = 'frow'; row.id = 'elCosRow';
+      row.innerHTML = '<span class="flb">cos φ :</span><input class="fi" id="elCos" type="number" step="0.01" min="0.1" max="1" value="0.85" style="max-width:90px">';
+      var first = p.querySelector('.frow'); p.insertBefore(row, first);
+      el('elCos').addEventListener('input', recompute);
+    }
+    addNote('elec', 'elKw'); addNote('pow', 'pKw'); addNote('flow', 'flM3h'); addNote('press', 'prBar');
+  }
+  var root = el('pg-convert');
+  if (root && window.MutationObserver) { new MutationObserver(function () { setTimeout(ui, 0); }).observe(root, { childList: true, subtree: true, characterData: true }); }
+  ui();
+})();
+
+</script>
 </body>
 </html>
 

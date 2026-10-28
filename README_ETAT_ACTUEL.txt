@@ -243,6 +243,13 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  service connu) ; Panasonic corrige d'apres les connaissances du manuel de service, NON recoupe en ligne. Bandeau de prudence
  ajoute sur la page. NON VERIFIE : toutes les autres marques (dont Condor, 72 codes, a faire verifier par M. Mouissat avec les
  manuels d'usine) et les series numeriques. Bloc <script id="codes39-module"> (84 blocs). Mise a jour : node add_codes39.js dist\index.html
+ ETAPE 40 : CONVERTISSEUR - controle complet des 24 champs (temperature, puissance, pression, debit, electrique, dimensions) :
+ TOUTES les conversions etaient exactes (1 kW = 3,412 kBTU/h ; 1 TR = 3,517 kW = 12 kBTU/h ; 1 HP = 745,7 W ; 1 bar = 14,5038 PSI ;
+ GPM = gallon US). Ecart mineur corrige : facteurs de debit GPM/CFM rendus exacts (3,785411784 L ; 0,028316846592 m3).
+ Point faible corrige : la section ELECTRIQUE supposait un cos phi de 0,85 sans le dire ; champ "cos phi" ajoute (defaut 0,85,
+ valeur invalide ignoree) + notes de definition des unites sous les panneaux (cos phi, HP mecanique, TR, GPM/CFM, PSI rel/abs).
+ Intensite = puissance / (racine(3) x 400 V x cos phi) en triphase, puissance / (230 V x cos phi) en monophase, sans rendement.
+ Bloc <script id="convert40-module"> (85 blocs). Mise a jour : node add_convert40.js dist\index.html
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
