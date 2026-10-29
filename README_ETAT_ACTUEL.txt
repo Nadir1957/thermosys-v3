@@ -316,6 +316,16 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  0-100, quantite >= 1, prix >= 0. (3) PDF : un devis de plus de ~25 lignes etait tronque (une seule page) -> PDF multi-pages, coupures
  entre les lignes. (4) nom du client/projet/site/reference echappes dans le PDF ; date affichee jj/mm/aaaa en FR.
  Bloc <script id="devis-46-module"> (91 blocs). Mise a jour : node add_devis46.js dist\index.html
+ ETAPE 47 (29/10/2026) - SCOP / ENERGIE (audit). (1) TARIFS ALGERIE FAUX : "5,25 DA/kWh - tranche 0-125 kWh" ; le tarif CREG (decision
+ D/22-15/CD, tarif 54 M, HT) est 1,78 / 4,18 / 4,81 / 5,48 DA/kWh ; defaut = tranche 3 (4,81). Prix du gaz de la rentabilite PAC/chaudiere : 2,2
+ DA/kWh etait 6 fois trop eleve ; CREG 0,4025 DA/thermie (tranche 3) = 0,35 DA/kWh. (2) SCOP : le facteur de climat etait INVERSE (climat froid =
+ SCOP plus eleve : 0,83 a Dubai, 0,99 a Reykjavik) ; corrige : facteur = 1 - 0,10 x (HDD-2900)/1000 (borne 0,80-1,25), estimation +-15 %,
+ champ optionnel "SCOP fiche (EN 14825)" ajoute. (3) classe energetique : plus de classe a 55 C (calculee avec le SCOP a 35 C) ; classe a 35 C seule.
+ (4) ROI PAC/gaz : un gain annuel negatif donnait "investissement rentable" ; corrige (message, devise du pays, prix du gaz et couts d'installation a
+ saisir hors Algerie). (5) entrees controlees (COP 1,5-8, capacite > 0, EER 1-12, heures 1-8760). Bloc <script id="scop-47-module"> (92 blocs).
+ Mise a jour : node add_scop47.js dist\index.html
+ RESTE A TRAITER (SCOP) : facteurs CO2 (Algerie 0,587 et France 0,084 kg/kWh) a sourcer ; tarifs de ~190 pays a verifier (une soixantaine sont
+ une moyenne internationale 0,15 USD) ; methode des bins EN 14825 complete a envisager.
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 

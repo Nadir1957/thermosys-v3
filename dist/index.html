@@ -17077,6 +17077,160 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 })();
 
 </script>
+<script id="scop-47-module">
+/* Thermosys etape 47 - SCOP / ENERGIE : tarifs Algerie (CREG), tendance du SCOP selon le climat, classe a 35 C, ROI PAC/gaz, validations (idempotent) */
+(function(){
+'use strict';
+if(window.__sc47)return; window.__sc47=1;
+function $(id){return document.getElementById(id);}
+function isFr(){var l=(typeof lang!=='undefined')?lang:window.lang;return (l||'fr')!=='en';}
+function L(fr,en){return isFr()?fr:en;}
+function val(id){var e=$(id);if(!e||String(e.value).trim()==='')return NaN;return parseFloat(String(e.value).replace(',','.'));}
+function fmt(n,d){return Number(n).toLocaleString(isFr()?'fr-FR':'en-US',{minimumFractionDigits:d||0,maximumFractionDigits:d||0});}
+var DZ_ELEC=4.81, DZ_GAZ=0.35;
+
+/* 1. Tarifs Algerie : CREG, decision D/22-15/CD du 29/12/2015 (tarif 54 M, HT hors taxes, par trimestre) */
+function patchTariffs(){
+ try{
+  if(typeof countryElec!=='undefined'&&countryElec.DZ){
+   countryElec.DZ.tarif=DZ_ELEC;
+   countryElec.DZ.note='CREG D/22-15/CD (tarif 54 M, HT hors taxes) — tranche 3 : >250–1 000 kWh/trimestre. Tranches : 1,78 / 4,18 / 4,81 / 5,48 DA/kWh';
+  }
+ }catch(e){}
+}
+function currentSym(){
+ try{var c=($('scopCountry')||{}).value||'DZ';var d=getCountryElec(c);return d.sym||'';}catch(e){return 'DA';}
+}
+function syncRoiFields(force){
+ var c=($('scopCountry')||{}).value||'DZ', sym=currentSym(), dz=(c==='DZ');
+ var e=$('roiPrixElec'),g=$('roiPrixGaz'),p=$('roiInstPAC'),ch=$('roiInstChaud');
+ var tar=1; try{tar=getCountryElec(c).tarif;}catch(x){}
+ if(e&&(force||!e.__user)) e.value=tar;
+ if(dz){ if(g&&(force||!g.__user)) g.value=DZ_GAZ; if(p&&(force||!p.__user)) p.value=350000; if(ch&&(force||!ch.__user)) ch.value=180000; }
+ else { [g,p,ch].forEach(function(x){ if(x&&(force||!x.__user)){ x.value=''; x.placeholder=L('à saisir','to enter'); } }); }
+ var le=$('t_roi_elec'),lg=$('t_roi_gaz'),lp=$('t_roi_pac'),lc=$('t_roi_chaud');
+ if(le) le.textContent=L('Prix kWh élec. ('+sym+') :','Elec. price per kWh ('+sym+'):');
+ if(lg) lg.textContent=L('Prix kWh gaz ('+sym+') :','Gas price per kWh ('+sym+'):');
+ if(lp) lp.textContent=L('Installation PAC ('+sym+') :','HP installation ('+sym+'):');
+ if(lc) lc.textContent=L('Installation chaudière ('+sym+') :','Boiler installation ('+sym+'):');
+ var cu=$('costKWh'); if(cu&&(force||!cu.__user)&&tar) cu.value=tar;
+}
+
+/* 2. SCOP : le facteur de climat etait inverse (climat froid -> SCOP plus eleve). */
+var CC=2.5;
+function cityOf(){
+ try{var ct=($('scopCountry')||{}).value||'DZ',z=($('scopZone')||{}).value;var a=(scopClimates[ct]||{cities:[]}).cities;
+  for(var i=0;i<a.length;i++){ if(a[i].v===z) return a[i]; } }catch(e){}
+ return null;
+}
+function factor(hdd){ var f=1.00-0.10*((hdd-2900)/1000); return Math.max(0.80,Math.min(1.25,f)); }
+function cls(e,t){for(var i=0;i<t.length;i++){if(e>=t[i][0])return t[i][1];}return 'G';}
+var T35=[[175,'A+++'],[150,'A++'],[123,'A+'],[115,'A'],[107,'B'],[100,'C'],[61,'D'],[59,'E'],[55,'F']];
+function ensureFicheField(){
+ if($('scopFiche'))return;
+ var row=$('scopCOP')&&$('scopCOP').parentNode; if(!row)return;
+ var d=document.createElement('div');d.className='frow';
+ d.innerHTML='<span class="flb" id="t_scop_fiche"></span><input class="fi" id="scopFiche" type="number" step="0.01" min="0" style="max-width:90px">';
+ row.parentNode.insertBefore(d,row.nextSibling);
+ labelFiche();
+}
+function labelFiche(){
+ var l=$('t_scop_fiche'); if(l) l.textContent=L('SCOP fiche (EN 14825, option) :','Datasheet SCOP (EN 14825, optional):');
+ var f=$('scopFiche'); if(f) f.placeholder=L('si connu','if known');
+}
+window.calcSCOP=function(){
+ var out=$('scopResult'); if(!out)return;
+ var cap=val('scopCap'), cop=val('scopCOP'), fiche=val('scopFiche');
+ var err=[];
+ if(!(cap>0)) err.push(L('Capacité : saisir une valeur > 0 kW.','Capacity: enter a value > 0 kW.'));
+ if(!(cop>=1.5&&cop<=8)) err.push(L('COP A7/W35 : saisir une valeur entre 1,5 et 8 (fiche technique).','COP A7/W35: enter a value between 1.5 and 8 (datasheet).'));
+ if(!isNaN(fiche)&&!(fiche>=1.5&&fiche<=9)) err.push(L('SCOP de la fiche : valeur entre 1,5 et 9, ou champ vide.','Datasheet SCOP: value between 1.5 and 9, or leave empty.'));
+ if(err.length){ out.textContent='⚠ '+err.join('\n⚠ '); return; }
+ var c=cityOf()||{l:'?',hdd:2900,cdd:0,T_ext:0}, f=factor(c.hdd), est=cop*f, used=(fiche>0)?fiche:est;
+ var etas=used/CC*100-3;
+ var ct=($('scopCountry')||{}).value||'', gf={DZ:0.587,FR:0.084}[ct], E=cap*2000/used;
+ var co2=gf?(L('CO₂ : ','CO₂: ')+fmt(E*gf)+' kg ('+gf+' kg/kWh)'):L('CO₂ : voir le module TEWI (facteur réseau du pays)','CO₂: see TEWI module (country grid factor)');
+ var lines=[
+  L('Zone : ','Zone: ')+c.l+'  |  '+L('Facteur climat (estimé) : ','Climate factor (estimated): ')+f.toFixed(2),
+  'HDD: '+c.hdd+'  ·  CDD: '+c.cdd+'  ·  T_ext_base: '+c.T_ext+'°C',
+  '─────────────────────────────',
+  L('COP nominal (A7/W35) : ','Nominal COP (A7/W35): ')+cop,
+  (fiche>0?L('SCOP (fiche constructeur) : ','SCOP (manufacturer datasheet): '):L('SCOP estimé : ','Estimated SCOP: '))+used.toFixed(2)+'   (ηs = '+etas.toFixed(0)+' %)',
+  L('Classe énergétique à 35 °C (UE 811/2013) : ','Energy class at 35 °C (EU 811/2013): ')+cls(etas,T35),
+  L('Énergie/an (≈2000 h équivalent pleine charge) : ','Energy/year (≈2000 full-load-equivalent h): ')+fmt(E)+' kWh — '+co2
+ ];
+ if(c.hdd<300) lines.push(L('ℹ️ Climat sans besoin de chauffage significatif : le SCOP a peu de sens ici ; voir plutôt EER/SEER (mode froid).','ℹ️ Climate with little heating demand: SCOP is of limited use here; see EER/SEER (cooling).'));
+ if(!(fiche>0)) lines.push(L('ℹ️ Estimation à ±15 % : SCOP ≈ COP × facteur de climat (plus le climat est froid, plus le SCOP baisse ; EN 14825 : climats plus chaud / moyen / plus froid). La valeur réglementaire se calcule par la méthode des « bins » EN 14825 : saisir le SCOP de la fiche si connu.','ℹ️ Estimate ±15 %: SCOP ≈ COP × climate factor (the colder the climate, the lower the SCOP; EN 14825: warmer / average / colder). The regulatory value uses the EN 14825 bin method: enter the datasheet SCOP if known.'));
+ lines.push(L('ℹ️ ηs = SCOP/2,5 − F(1) 3 % (pompe air ; −5 % de plus eau/eau). La classe à 55 °C exige le COP à W55 (non calculée ici).','ℹ️ ηs = SCOP/2.5 − F(1) 3 % (air source; a further −5 % for water/brine). The class at 55 °C needs the COP at W55 (not calculated here).'));
+ out.textContent=lines.join('\n');
+ try{ if(typeof logHist==='function') logHist(L('SCOP : ','SCOP: ')+used.toFixed(2)); }catch(e){}
+};
+
+/* 3. Cout energetique : entrees controlees */
+var _cc=window.calcCost;
+if(typeof _cc==='function') window.calcCost=function(){
+ var cap=val('costCap'), eer=val('costEER'), h=val('costH'), kw=val('costKWh'), out=$('costResult'), err=[];
+ if(!(cap>0)) err.push(L('Capacité : > 0 kW.','Capacity: > 0 kW.'));
+ if(!(eer>=1&&eer<=12)) err.push(L('EER/COP : entre 1 et 12.','EER/COP: between 1 and 12.'));
+ if(!(h>0&&h<=8760)) err.push(L('Heures/an : entre 1 et 8 760.','Hours/year: between 1 and 8,760.'));
+ if(!(kw>=0)) err.push(L('Prix kWh : valeur ≥ 0.','kWh price: value ≥ 0.'));
+ if(err.length&&out){ out.textContent='⚠ '+err.join('\n⚠ '); return; }
+ return _cc.apply(this,arguments);
+};
+
+/* 4. Rentabilite PAC / chaudiere gaz : un gain annuel negatif donnait « rentable » */
+var lastRoi=null;
+function renderRoi(){
+ var out=$('roiResult'); if(!out||!lastRoi)return; var r=lastRoi, sym=r.sym;
+ var cop=r.kwh/r.scop*r.pe, gaz=r.kwh/r.rend*r.pg, eco=gaz-cop, extra=r.ip-r.ic, pb=(eco>0&&extra>0)?extra/eco:null, net=eco*10-extra;
+ var verdict;
+ if(eco<=0) verdict=L('✗ Pas de retour sur investissement : avec ces prix, l\'énergie de la PAC coûte autant ou plus que celle de la chaudière.','✗ No payback: with these prices the heat pump energy costs as much as or more than the boiler energy.');
+ else if(extra<=0) verdict=L('OK PAC moins chère à l\'installation et en énergie.','OK Heat pump cheaper to install and to run.');
+ else if(pb<7) verdict=L('OK Investissement rentable','OK Profitable investment');
+ else if(pb<=20) verdict=L('Long amortissement > 7 ans','Long payback > 7 years');
+ else verdict=L('✗ Amortissement supérieur à 20 ans : investissement peu rentable.','✗ Payback above 20 years: poor investment.');
+ out.textContent=[
+  L('RENTABILITE PAC','HEAT PUMP ROI'),
+  L('Cout energie PAC/an:    ','HP energy cost/year:   ')+fmt(cop)+' '+sym,
+  L('Cout energie gaz/an:    ','Gas energy cost/year:  ')+fmt(gaz)+' '+sym,
+  L('Economie annuelle:      ','Annual savings:        ')+fmt(eco)+' '+sym,
+  '──────────────────────────────────',
+  L('Surcout installation:   ','Extra install cost:    ')+fmt(extra)+' '+sym,
+  L('Retour investissement:  ','Payback period:        ')+(pb===null?'—':pb.toFixed(1)+L(' ans',' years')),
+  L('Gain net 10 ans:        ','Net gain 10 years:     ')+fmt(net)+' '+sym,
+  '',verdict,
+  L('Hors maintenance, hors évolution des tarifs, sans actualisation.','Excluding maintenance, tariff changes and discounting.')
+ ].join('\n');
+}
+window.calcROI=function(){
+ var out=$('roiResult'); if(!out)return;
+ var r={ip:val('roiInstPAC'),ic:val('roiInstChaud'),kwh:val('roiKwh'),scop:val('roiScop'),rend:val('roiCopChaud'),pe:val('roiPrixElec'),pg:val('roiPrixGaz'),sym:currentSym()};
+ var err=[];
+ if(!(r.ip>=0)) err.push(L('Installation PAC : valeur ≥ 0.','HP installation: value ≥ 0.'));
+ if(!(r.ic>=0)) err.push(L('Installation chaudière : valeur ≥ 0.','Boiler installation: value ≥ 0.'));
+ if(!(r.kwh>0)) err.push(L('Besoins thermiques : > 0 kWh/an.','Thermal needs: > 0 kWh/year.'));
+ if(!(r.scop>=1.5&&r.scop<=9)) err.push(L('SCOP PAC : entre 1,5 et 9.','HP SCOP: between 1.5 and 9.'));
+ if(!(r.rend>0.3&&r.rend<=1.1)) err.push(L('Rendement chaudière : entre 0,30 et 1,10.','Boiler efficiency: between 0.30 and 1.10.'));
+ if(!(r.pe>0)) err.push(L('Prix kWh électricité : > 0.','Electricity price per kWh: > 0.'));
+ if(!(r.pg>0)) err.push(L('Prix kWh gaz : à saisir (> 0).','Gas price per kWh: to enter (> 0).'));
+ if(err.length){ lastRoi=null; out.textContent='⚠ '+err.join('\n⚠ '); return; }
+ lastRoi=r; renderRoi();
+ try{ if(typeof logHist==='function') logHist(L('ROI PAC : ','HP ROI: ')+((r.kwh/r.rend*r.pg)-(r.kwh/r.scop*r.pe)>0?'ok':'non')); }catch(e){}
+};
+
+function start(){
+ patchTariffs();
+ ['roiPrixElec','roiPrixGaz','roiInstPAC','roiInstChaud','costKWh'].forEach(function(id){var e=$(id);if(e)e.addEventListener('input',function(){e.__user=1;});});
+ var sel=$('scopCountry'); if(sel) sel.addEventListener('change',function(){setTimeout(function(){syncRoiFields(true);},50);});
+ ensureFicheField();
+ setTimeout(function(){patchTariffs();syncRoiFields(true);labelFiche();},900);
+ var last=(isFr()?'fr':'en');
+ setInterval(function(){var n=isFr()?'fr':'en';if(n!==last){last=n;syncRoiFields(false);labelFiche();if(lastRoi)renderRoi();}},400);
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
+})();
+
+</script>
 </body>
 </html>
 
