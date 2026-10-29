@@ -17231,6 +17231,110 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 })();
 
 </script>
+<script id="hydraulique-48-module">
+/* Thermosys etape 48 - HYDRAULIQUE (audit) : separateur, collecteur, debit, pertes de charge, gaines, frigo, point de rosee (idempotent) */
+(function(){
+'use strict';
+if(window.__hy48)return; window.__hy48=1;
+function $(id){return document.getElementById(id);}
+function isFr(){var l=(typeof lang!=='undefined')?lang:window.lang;return (l||'fr')!=='en';}
+function L(fr,en){return isFr()?fr:en;}
+function val(id){var e=$(id);if(!e||String(e.value).trim()==='')return NaN;return parseFloat(String(e.value).replace(',','.'));}
+function bad(out,msg){out.textContent='⚠ '+msg;}
+var DN=[15,20,25,32,40,50,65,80,100,125,150,200,250,300,350,400,450,500,600,700,800,900,1000];
+
+/* 1. Debit / diametre : DN > 200 gere, entrees controlees, hypothese eau */
+window.calcDebit=function(){
+ var out=$('hydFlowResult'); if(!out)return;
+ var P=val('hCap'),dT=val('hDt'),v=val('hV');
+ if(!(P>0)||!(dT>0)||!(v>0)){ bad(out,L('Puissance, ΔT et vitesse doivent être > 0.','Power, ΔT and velocity must be > 0.')); return; }
+ var qs=P*1000/(4186*dT), qh=qs*3.6, d=Math.sqrt(4*(qs/1000)/(Math.PI*v))*1000;
+ var dn=null; for(var i=0;i<DN.length;i++){ if(DN[i]>=d){dn=DN[i];break;} }
+ var head='Q = '+qs.toFixed(3)+' L/s = '+qh.toFixed(3)+' m³/h\n'+L('Ø théorique: ','Theoretical Ø: ')+d.toFixed(1)+' mm';
+ if(dn===null){ out.textContent=head+L('\n⚠ Au-delà de DN1000 : étude spécifique.','\n⚠ Above DN1000: specific study required.'); return; }
+ var vr=qh/3600/(Math.PI*Math.pow(dn/2000,2));
+ out.textContent=head+' → DN'+dn+L('\nVitesse réelle DN','\nActual velocity DN')+dn+': '+vr.toFixed(2)+' m/s'+(vr>2?L(' ⚠️ Trop élevé',' ⚠️ Too high'):vr<0.3?L(' ⚠️ Trop faible',' ⚠️ Too low'):' ✓ OK')+L('\nHypothèse : eau (cp 4,186 kJ/kg·K), Ø intérieur ≈ DN.','\nAssumption: water (cp 4.186 kJ/kg·K), inner Ø ≈ DN.');
+};
+
+/* 2. Pertes de charge (Swamee-Jain, eau a 20 C) : regime transitoire correctement libelle */
+window.calcPDC=function(){
+ var out=$('pdcResult'); if(!out)return;
+ var Q=val('pdcQ'),dn=val('pdcDN'),Lg=val('pdcL'),rho=val('pdcFluid');
+ if(!(Q>0)||!(dn>0)||!(Lg>0)||!(rho>0)){ bad(out,L('Débit, DN et longueur doivent être > 0.','Flow, DN and length must be > 0.')); return; }
+ var D=dn/1000, A=Math.PI*D*D/4, v=Q/(3600*A), mu=rho===1000?0.001:(rho===1040?0.0028:0.0038);
+ var Re=v*D*rho/mu, lam=Re<2300?64/Re:0.25/Math.pow(Math.log10(0.000046/(3.7*D)+5.74/Math.pow(Re,0.9)),2);
+ var dp=lam*(Lg/D)*(rho*v*v/2);
+ var reg=Re>4000?L(' (turbulent)',' (turbulent)'):(Re>=2300?L(' (transitoire — incertain)',' (transitional — uncertain)'):L(' (laminaire)',' (laminar)'));
+ out.textContent='v = '+v.toFixed(3)+' m/s | Re = '+Math.round(Re)+reg+'\nλ = '+lam.toFixed(4)+'\ndP = '+dp.toFixed(0)+' Pa = '+(dp/100).toFixed(2)+' mbar\nR = '+(dp/Lg).toFixed(1)+' Pa/m'
+  +(v>2.5?L('\n⚠️ Vitesse élevée (> 2,5 m/s) : bruit et érosion à vérifier.','\n⚠️ High velocity (> 2.5 m/s): check noise and erosion.'):'')
+  +L('\nHypothèses : tube acier lisse (ε = 0,046 mm), fluide à 20 °C, longueur droite sans singularités (coudes, vannes à ajouter), Ø intérieur ≈ DN.','\nAssumptions: smooth steel pipe (ε = 0.046 mm), fluid at 20 °C, straight length without fittings (add elbows, valves), inner Ø ≈ DN.');
+};
+
+/* 3. Separateur : volume reel du corps et temps de sejour (le « 3 s » affiche etait faux) */
+window.calcSep=function(){
+ var out=$('sepResult'); if(!out)return;
+ var Q=val('sepQ'),v=val('sepV');
+ if(!(Q>0)||!(v>0)){ bad(out,L('Débit et vitesse doivent être > 0.','Flow and velocity must be > 0.')); return; }
+ var d=Math.sqrt(4*(Q/3600)/(Math.PI*v))*1000, dn=null;
+ for(var i=0;i<DN.length;i++){ if(DN[i]>=d&&DN[i]>=50){dn=DN[i];break;} }
+ if(dn===null){ bad(out,L('Ø > DN1000 : étude spécifique.','Ø > DN1000: specific study required.')); return; }
+ var H=3*dn/1000, V=Math.PI*Math.pow(dn/2000,2)*H*1000, t=V/(Q/3.6);
+ out.textContent='Ø min: '+d.toFixed(0)+' mm\n'+L('DN sélectionné: DN','Selected DN: DN')+dn+'\n'+L('H min = 3×Ø: ','H min = 3×Ø: ')+(dn*3)+' mm\n'+L('Volume du corps (Ø × 3Ø) : ','Body volume (Ø × 3Ø): ')+Math.round(V)+' L → '+L('temps de séjour ','residence time ')+t.toFixed(1)+' s\n'+L('Dimensionnement indicatif : se référer aux données du constructeur du séparateur.','Indicative sizing: refer to the separator manufacturer data.');
+};
+
+/* 4. Collecteur : DN normalises */
+window.calcCol=function(){
+ var out=$('colResult'); if(!out)return;
+ var N=parseInt(String(($('colN')||{}).value)),Q=val('colQ'),v=val('colV');
+ if(!(N>=1)||!(Q>0)||!(v>0)){ bad(out,L('Nombre de circuits ≥ 1, débit et vitesse > 0.','Circuits ≥ 1, flow and velocity > 0.')); return; }
+ var d=Math.sqrt(4*(Q/3600)/(Math.PI*v))*1000, dn=null;
+ for(var i=0;i<DN.length;i++){ if(DN[i]>=d){dn=DN[i];break;} }
+ out.textContent=L('Débit/circuit: ','Flow/circuit: ')+(Q/N).toFixed(2)+' m³/h\nØ '+L('corps: ','body: ')+d.toFixed(0)+' mm → '+(dn?'DN'+dn:L('> DN1000','> DN1000'))+'\n'+L('Longueur min: ','Min length: ')+(N*150+200)+' mm\n'+L('Espacement piquages: 150 mm min','Branch spacing: 150 mm min');
+};
+
+/* 5. Gaines : la vitesse reelle (Ø normalise) est comparee a la plage, pas la vitesse saisie */
+var _g=window.calcGaine;
+if(typeof _g==='function') window.calcGaine=function(){
+ var r=_g.apply(this,arguments);
+ try{
+  var el=$('gaineResult'); if(!el||($('gaineForme')||{}).value!=='circ') return r;
+  var rows=[].slice.call(el.querySelectorAll('.frow')), get=function(re){for(var i=0;i<rows.length;i++){if(re.test(rows[i].textContent))return rows[i];}return null;};
+  var rReel=get(/Vitesse réelle|Actual velocity/), rSel=get(/Vitesse retenue|Selected velocity/), rRange=get(/Plage recommandée|Recommended range/);
+  if(!rReel||!rSel||!rRange) return r;
+  var vr=parseFloat(rReel.textContent.split(':').pop()), m=/(\d+(?:\.\d+)?)\s*–\s*(\d+(?:\.\d+)?)/.exec(rRange.textContent);
+  if(!(vr>0)||!m) return r;
+  var ok=(vr>=parseFloat(m[1])&&vr<=parseFloat(m[2]));
+  var b=rSel.querySelector('b'); if(b) b.textContent=b.textContent.replace(/\s*[✅⚠️]+\s*$/,'');
+  var l=rSel.querySelector('.flb'); if(l) l.textContent=L('Vitesse de calcul :','Design velocity:');
+  var br=rReel.querySelector('b'); if(br&&!/[✅⚠]/.test(br.textContent)) br.textContent=br.textContent+(ok?' ✅':' ⚠️');
+  var old=el.querySelector('.hy48w'); if(old) old.remove();
+  if(!ok){ var w=document.createElement('div'); w.className='hy48w'; w.style.cssText='margin-top:6px;color:var(--wn);font-size:11px';
+   w.textContent=L('⚠️ La vitesse réelle avec le diamètre normalisé est hors de la plage recommandée : essayer le diamètre voisin.','⚠️ The actual velocity with the standard diameter is outside the recommended range: try the adjacent diameter.'); el.appendChild(w); }
+ }catch(e){}
+ return r;
+};
+
+/* 6. Tuyauterie frigorifique : hypothese de sous-refroidissement explicite */
+var _f=window.calcRefrigPipe;
+if(typeof _f==='function') window.calcRefrigPipe=function(){
+ var r=_f.apply(this,arguments);
+ try{ var el=$('frigoResult'); if(el){ [].slice.call(el.querySelectorAll('b')).forEach(function(b){
+   if(/T évap\. 5 °C \/ T cond\. 45 °C$/.test(b.textContent)) b.textContent=b.textContent+', '+'liquide sous-refroidi 5–8 K';
+   else if(/Evap\. 5 °C \/ cond\. 45 °C$/.test(b.textContent)) b.textContent=b.textContent+', liquid subcooled 5–8 K'; }); } }catch(e){}
+ return r;
+};
+
+/* 7. Point de rosee : rappel de la marge de securite */
+var _d=window.calcDewPoint;
+if(typeof _d==='function') window.calcDewPoint=function(){
+ var r=_d.apply(this,arguments);
+ try{ var el=$('diResult'); if(el&&el.querySelector('.frow')&&!el.querySelector('.hy48m')){ var n=document.createElement('div'); n.className='hy48m'; n.style.cssText='font-size:9.5px;color:var(--ts);margin-top:6px';
+  n.textContent=L('La température de surface calculée est égale au point de rosée : prévoir une marge de sécurité (par ex. +1 à 2 K), donc une épaisseur supérieure.','The calculated surface temperature equals the dew point: allow a safety margin (e.g. +1 to 2 K), hence a thicker insulation.'); el.appendChild(n); } }catch(e){}
+ return r;
+};
+})();
+
+</script>
 </body>
 </html>
 

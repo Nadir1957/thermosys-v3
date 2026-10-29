@@ -326,6 +326,18 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  Mise a jour : node add_scop47.js dist\index.html
  RESTE A TRAITER (SCOP) : facteurs CO2 (Algerie 0,587 et France 0,084 kg/kWh) a sourcer ; tarifs de ~190 pays a verifier (une soixantaine sont
  une moyenne internationale 0,15 USD) ; methode des bins EN 14825 complete a envisager.
+ ETAPE 48 (29/10/2026) - HYDRAULIQUE (audit partiel). VERIFIE JUSTE : debit/diametre (Q = P/(4186 dT)), pertes de charge (Swamee-Jain, 64/Re),
+ collecteur, acoustique (Lp = Lw - 20 log r - 11 ou - 8), point de rosee (recalcule independamment : 6,3 mm), diametre equivalent des gaines
+ rectangulaires, proprietes des 5 fluides frigorigenes (comparees a CoolProp : masses volumiques de vapeur, viscosites et pentes de saturation
+ exactes ; chaleur massique utile et masse volumique liquide correspondent a un liquide sous-refroidi de 5 a 8 K). CORRIGE : (1) SEPARATEUR : le
+ "volume min (temps de sejour >= 3 s)" etait faux (60 L = 10,8 s a 20 m3/h) ; maintenant volume reel du corps (diametre x 3 diametres) et temps de
+ sejour, DN normalises ; (2) GAINES : la plage de vitesse etait testee sur la vitesse saisie, pas sur la vitesse reelle avec le diametre
+ normalise ; (3) PERTES DE CHARGE : regime 2300-4000 etiquete "laminaire" -> "transitoire" ; hypotheses affichees (acier lisse, 20 C, sans singularites) ;
+ (4) DEBIT / SEPARATEUR / COLLECTEUR : DN normalises (le collecteur arrondissait par 25 mm), au-dela de DN1000 message ; (5) frigo : sous-refroidissement
+ indique ; (6) point de rosee : rappel de la marge de securite. Bloc <script id="hydraulique-48-module"> (93 blocs).
+ Mise a jour : node add_hydraulique48.js dist\index.html
+ RESTE A TRAITER (HYDRAULIQUE) : Refnet (distribution Daikin/..), Calcul reseau (cloud, SVG), Guide de prereglage (deja audite etape 36), tubes ACR
+ hors dimensions (DN > 104,78 mm), singularites dans les pertes de charge.
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
