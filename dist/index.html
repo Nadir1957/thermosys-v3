@@ -18095,7 +18095,8 @@ window.calcAirNeuf=function(){
 };
 window.REF66={get:function(){return mode;},set:setMode};
 var tm=null; function later(){ clearTimeout(tm); tm=setTimeout(paint,80); }
-var _t=window.toggleLang; if(_t) window.toggleLang=function(){ var r=_t.apply(this,arguments); setTimeout(paint,300); setTimeout(paint,1100); return r; };
+function relang(){ var e=$('anResult'); if(!e) return; var x=e.textContent||''; var fr=/^RESULTATS AIR NEUF/.test(x), ee=/^FRESH AIR RESULTS/.test(x); if((fr&&en())||(ee&&!en())){ try{ window.calcAirNeuf(); }catch(err){} } } /* ref66_relang */
+var _t=window.toggleLang; if(_t) window.toggleLang=function(){ var r=_t.apply(this,arguments); setTimeout(function(){paint();relang();},300); setTimeout(function(){paint();relang();},1100); return r; };
 var _g=window.goPage; if(_g) window.goPage=function(){ var r=_g.apply(this,arguments); setTimeout(paint,200); return r; };
 setTimeout(paint,500);
 })();

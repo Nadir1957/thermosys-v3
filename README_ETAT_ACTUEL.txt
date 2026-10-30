@@ -434,6 +434,7 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  8 types de locaux (bureaux 2,5+0,3 ; commerce 3,8+0,6 ; residentiel 2,5+0,3 ; restaurant 3,8+0,9 ; reunion 2,5+0,3 ; hopital 5,0+0,6 ; hotel 2,5+0,3 ; sport 10+0,9).
  Valeurs Rp/Ra a confirmer sur le texte officiel ASHRAE 62.1 (indique dans le resultat). Charges sensible/latente recalculees sur le debit ASHRAE; CFM en imperial.
  Aucune autre formule modifiee (pas de selecteur de facade). Bloc <script id="ref-66-module"> (104 blocs). Mise a jour : node add_ref66.js dist\index.html (verify_js_syntax : 104 blocs).
+ ETAPE 66b (30/10/2026) - correctif : le resultat AIR NEUF est recalcule quand on change de langue (il restait en francais). Bloc ref-66-module mis a jour (104 blocs). node add_ref66b.js dist\index.html.
  PROCHAINES ETAPES : referentiel selectionnable pour CHAUFFAGE (EN 12831 / ASHRAE) et SCOP ; langues es/ar/pt.
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
