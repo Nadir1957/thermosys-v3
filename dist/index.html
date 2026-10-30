@@ -15136,7 +15136,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
   window.__unitsMod = true;
   if (typeof document === 'undefined') { return; }
   /* ============ UNITES IMPERIALES : affichage double, calculs inchanges (SI) ============ */
-  var KEY = 'thermosys_units_v1', MARK = '​', PAGES = ['pg-chargepro', 'pg-heat', 'pg-elec', 'pg-mecha', 'pg-coldroom', 'pg-airtreat', 'pg-fluides', 'pg-charge'], ALLP = ['pg-chargepro', 'pg-psy', 'pg-heat', 'pg-elec', 'pg-mecha', 'pg-coldroom', 'pg-airtreat', 'pg-fluides', 'pg-charge', 'pg-hydraulique'];
+  var KEY = 'thermosys_units_v1', MARK = '​', PAGES = ['pg-chargepro', 'pg-heat', 'pg-elec', 'pg-mecha', 'pg-coldroom', 'pg-airtreat', 'pg-fluides', 'pg-charge'], ALLP = ['pg-chargepro', 'pg-psy', 'pg-heat', 'pg-elec', 'pg-mecha', 'pg-coldroom', 'pg-airtreat', 'pg-fluides', 'pg-charge', 'pg-hydraulique', 'pg-scop', 'pg-vannes'];
   var imp = false, busy = false;
   function EN() { return window.lang === 'en'; }
   function T(fr, en) { return EN() ? en : fr; }
@@ -15234,7 +15234,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
       var m = LAB.exec((lb.textContent || '').trim()), u = m && m[1].trim(), h = row.querySelector('.un-hint');
       if (!imp || !u || !CONV[u]) { if (h) { h.remove(); } return; }
       if (!h) { h = document.createElement('span'); h.className = 'un-hint'; h.style.cssText = 'font-size:10px;color:var(--ts);margin-left:6px;white-space:nowrap'; inp.insertAdjacentElement('afterend', h); }
-      var v = parseFloat(String(inp.value).replace(',', '.')); h.textContent = isFinite(v) ? '= ' + ((mode === 'el' && u === 'kW') ? grp(v * 1.34102, 1) + ' hp' : (mode === 'el' && u === 'mm²') ? awg(v) : CONV[u](v)) : '';
+      var v = parseFloat(String(inp.value).replace(',', '.')); var _t65 = isFinite(v) ? '= ' + ((mode === 'el' && u === 'kW') ? grp(v * 1.34102, 1) + ' hp' : (mode === 'el' && u === 'mm²') ? awg(v) : CONV[u](v)) : ''; if (h.textContent !== _t65) { h.textContent = _t65; }
     });
   }
   function refresh() {
@@ -17930,6 +17930,109 @@ var _u=window.unSet; window.unSet=function(){ var r=_u&&_u.apply(this,arguments)
 var _g=window.goPage; if(_g) window.goPage=function(){ var r=_g.apply(this,arguments); setTimeout(all,200); return r; };
 setTimeout(all,500);
 })();
+
+</script>
+<script id="units-65-module">
+(function(){
+'use strict';
+var MARK='​';
+function $(id){return document.getElementById(id);}
+function imp(){return !!(window.UNITS&&window.UNITS.isImp&&window.UNITS.isImp());}
+function en(){return window.lang==='en';}
+function grp(n,d){var s=n.toFixed(d),p=s.split('.');p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,' ');return p.join('.');}
+function num(x){return parseFloat(String(x).replace('−','-').replace(/[\s  ]/g,'').replace(',','.'));}
+function pv(id){var e=$(id);return e?num(e.value):NaN;}
+function btu(kw){return grp(kw*3412.14,0)+' Btu/h ('+grp(kw/3.51685,1)+' TR)';}
+function eer(cop){return grp(cop*3.41214,2)+' Btu/Wh';}
+var DN={6:'⅛',8:'¼',10:'⅜',15:'½',20:'¾',25:'1',32:'1¼',40:'1½',50:'2',65:'2½',80:'3',100:'4',125:'5',150:'6',200:'8',250:'10',300:'12',350:'14',400:'16',450:'18',500:'20',600:'24'};
+function cv(v){return 'Cv '+grp(v*1.1561,v<1?3:2);}
+function nps(d){var k=DN[d];return k?'NPS '+k+' in':grp(d*0.0393701,2)+' in';}
+function F(c){return grp(c*9/5+32,1)+' °F';}
+/* ---------- bulles de saisie ---------- */
+var H={
+ scopCap:btu,costCap:btu,
+ scopCOP:function(v){return 'EER '+eer(v);},costEER:function(v){return 'EER '+eer(v);},roiScop:function(v){return 'EER ≈ '+eer(v);},
+ scopFiche:function(v){return 'EER ≈ '+eer(v);},
+ kvsQ:function(v){return grp(v*4.40287,Math.abs(v)<100?1:0)+' gpm';},
+ kvsDp:function(v){return grp(v*0.145038,Math.abs(v)<10?2:1)+' psi';},
+ kvsRho:function(v){return grp(v*0.062428,2)+' lb/ft³';}
+};
+function hints(){
+  Object.keys(H).forEach(function(id){
+    var inp=$(id); if(!inp) return;
+    var h=inp.parentElement.querySelector('.un65-hint');
+    if(!imp()){ if(h) h.remove(); return; }
+    if(!h){ h=document.createElement('span'); h.className='un65-hint'; h.style.cssText='font-size:10px;color:var(--ts);margin-left:6px;white-space:nowrap'; inp.insertAdjacentElement('afterend',h); }
+    var v=parseFloat(String(inp.value).replace(',','.')); var t=isFinite(v)?'= '+H[id](v):'';
+    if(h.textContent!==t) h.textContent=t;
+  });
+}
+/* ---------- SCOP : ligne d'equivalents americains ---------- */
+function scopLine(){
+  var r=$('scopResult'); if(!r) return;
+  var L=$('un65_scop');
+  if(!imp()||!r.innerText.trim()){ if(L) L.remove(); return; }
+  var txt=r.innerText, cop=pv('scopCOP'), cap=pv('scopCap');
+  var ms=/SCOP[^:\n]*:\s*([\d]+(?:[.,]\d+)?)/.exec(txt), scop=ms?num(ms[1]):NaN;
+  var mt=/T_ext_base:\s*([−-]?\d+(?:[.,]\d+)?)\s?°C/.exec(txt);
+  var p=[];
+  if(isFinite(cop)) p.push('COP '+grp(cop,2)+' = EER '+eer(cop));
+  if(isFinite(scop)) p.push('SCOP '+grp(scop,2)+' ≈ '+eer(scop));
+  if(isFinite(cap)) p.push((en()?'Capacity ':'Capacité ')+btu(cap));
+  if(mt) p.push('T_ext_base '+F(num(mt[1])));
+  if(!p.length){ if(L) L.remove(); return; }
+  var t=(en()?'US equivalents (unit conversion): ':'Équivalents US (conversion d’unités) : ')+p.join(' · ')+(en()?'. Not a certified SEER2 / HSPF2 (AHRI 210/240 use other test conditions).':'. Ce n’est pas un SEER2 / HSPF2 certifié (AHRI 210/240 utilise d’autres conditions d’essai).');
+  if(!L){ L=document.createElement('div'); L.id='un65_scop'; L.style.cssText='margin-top:8px;padding:8px 12px;border:1px solid rgba(0,229,255,.3);border-radius:4px;font-size:11px;color:var(--ts)'; r.insertAdjacentElement('afterend',L); }
+  if(L.textContent!==t) L.textContent=t;
+}
+/* ---------- VANNES : Cv, NPS, psi, °F, lb, lbf·in ---------- */
+function conv(t,key){
+  if(t.indexOf(MARK)>=0) return t;
+  var o=t;
+  if(/^(Kvs)$/i.test(key||'')) o=o.replace(/([\d]+(?:[.,]\d+)?) m³\/h/,function(a,n){return a+' ('+cv(num(n))+')'+MARK;});
+  else if(/^Plage d[ée]bit/i.test(key||'')) o=o.replace(/([\d]+(?:[.,]\d+)?) (à|to) ([\d]+(?:[.,]\d+)?) m³\/h/,function(a,x,s,y){return a+' ('+cv(num(x))+' '+s+' '+grp(num(y)*1.1561,3)+')'+MARK;});
+  else if(/^DN\/PN$/i.test(key||'')) o=o.replace(/DN\s?(\d+)\s?\/\s?PN\s?(\d+)/,function(a,d,p){return a+' ('+nps(+d)+' / '+grp(+p*14.5038,0)+' psi)'+MARK;});
+  else o=o.replace(/(^|[^\w])Kvs ([\d]+(?:[.,]\d+)?)(?! m³)/g,function(a,b,n){return b+'Kvs '+n+' ('+cv(num(n))+')'+MARK;});
+  o=o.replace(/([−-]?\d+(?:[.,]\d+)?) ?°C(?!\w)/g,function(a,n){return a+' ('+F(num(n))+')'+MARK;});
+  o=o.replace(/(\d+(?:[.,]\d+)?) kg(?![\w\/])/g,function(a,n){return a+' ('+grp(num(n)*2.20462,2)+' lb)'+MARK;});
+  o=o.replace(/(\d+(?:[.,]\d+)?) Nm(?![\w])/g,function(a,n){return a+' ('+grp(num(n)*8.85075,1)+' lbf·in)'+MARK;});
+  return o;
+}
+function strip(t){return t.indexOf(MARK)<0?t:t.replace(/ \([^()]*\)​/g,'').replace(/​/g,'');}
+function sweep(root){
+  if(!root) return;
+  var tw=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null),n,nodes=[];
+  while((n=tw.nextNode())) nodes.push(n);
+  nodes.forEach(function(x){
+    var s=x.nodeValue, r=s;
+    if(/Nm Nm/.test(r)) r=r.replace(/Nm Nm/g,'Nm');
+    if(imp()){ var td=x.parentElement&&x.parentElement.closest&&x.parentElement.closest('td.v'); var key=td&&td.previousElementSibling?td.previousElementSibling.textContent.trim():''; r=conv(r,key); }
+    else r=strip(r);
+    if(r!==s) x.nodeValue=r;
+  });
+}
+function kvsRes(){
+  var e=$('kvsResult'); if(!e||!window.UN64) return;
+  var tw=document.createTreeWalker(e,NodeFilter.SHOW_TEXT,null),n,nodes=[];
+  while((n=tw.nextNode())) nodes.push(n);
+  nodes.forEach(function(x){ var s=x.nodeValue,r=imp()?window.UN64.text(s,'w'):window.UN64.strip(s); if(r!==s) x.nodeValue=r; });
+}
+var busy=false,tm=null;
+function all(){ if(busy) return; busy=true;
+  try{ hints(); scopLine(); ['vanGrid','actGrid','valveBody','actuatorBody'].forEach(function(i){sweep($(i));}); kvsRes(); }catch(e){}
+  busy=false; }
+function later(){ clearTimeout(tm); tm=setTimeout(all,90); }
+['pg-scop','pg-vannes'].forEach(function(id){
+  var pg=$(id); if(!pg) return;
+  pg.addEventListener('input',later,true); pg.addEventListener('change',later,true);
+  if(window.MutationObserver) new MutationObserver(function(){ if(!busy) later(); }).observe(pg,{childList:true,subtree:true,characterData:true});
+});
+var _u=window.unSet; window.unSet=function(){ var r=_u&&_u.apply(this,arguments); setTimeout(all,150); setTimeout(all,500); return r; };
+var _g=window.goPage; if(_g) window.goPage=function(){ var r=_g.apply(this,arguments); setTimeout(all,200); return r; };
+var _t=window.toggleLang; if(_t) window.toggleLang=function(){ var r=_t.apply(this,arguments); setTimeout(all,300); setTimeout(all,1100); return r; };
+setTimeout(all,500);
+})();
+
 
 </script>
 </body>

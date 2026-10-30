@@ -421,7 +421,14 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  Bulles de conversion a cote des champs de saisie et resultats de tous les onglets (debit, pertes de charge, pompe, vase, separateur, collecteur, prereglage,
  gaines, tuyauterie frigo, calcul reseau, acoustique, point de rosee). Bloc <script id="units-64-module"> (102 blocs).
  Mise a jour : node add_units64.js dist\index.html (verify_js_syntax : 102 blocs).
- PROCHAINES ETAPES : unites imperiales dans SCOP/COP et VANNES ; referentiel de calcul selectionnable (Europe / ASHRAE) ; langues es/ar/pt.
+ ETAPE 65 (30/10/2026) - OUVERTURE INTERNATIONALE (3/3, partie 3) : UNITES IMPERIALES dans SCOP/COP et VANNES (bouton SI / Imperial, calculs inchanges en SI).
+ SCOP/COP : capacite en Btu/h et TR, COP -> EER en Btu/Wh (COP x 3,412), ligne d'equivalents US sous le resultat (EER, SCOP en Btu/Wh, capacite, T_ext_base en degF).
+ Precision affichee : conversion d'unites uniquement, ce n'est pas un SEER2 / HSPF2 certifie (AHRI 210/240 utilise d'autres conditions d'essai).
+ VANNES : Kvs -> Cv (x 1,156) sur les cartes, fiches de vannes et calculateur Kvs/deltaP (gpm, psi, lb/ft3); DN -> NPS, PN -> psi, degC -> degF, kg -> lb;
+ couples des actionneurs en lbf.in (Nm x 8,851). Correctif : doublon 'Nm Nm' des actionneurs.
+ Correctif : boucle de rafraichissement cachee du module d'unites (bulles recreees en continu sur les pages masquees en imperial) supprimee.
+ Bloc <script id="units-65-module"> (103 blocs). Mise a jour : node add_units65.js dist\index.html (verify_js_syntax : 103 blocs).
+ PROCHAINES ETAPES : referentiel de calcul selectionnable (Europe / ASHRAE) ; langues es/ar/pt.
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
