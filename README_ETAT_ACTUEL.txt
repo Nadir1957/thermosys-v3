@@ -413,6 +413,8 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  FLUIDES : capacite (Btu/h et TR), charge (lb), tableau des refrigerants avec T crit. et T eb. en degF et P crit. en psia. Les masses de CO2eq du TEWI restent en kg/t (usage international).
  Correctif : boucle de rafraichissement infinie du tableau des refrigerants (ancienne etape 38, ~1500 mises a jour/s) supprimee; en-tete 'Use' en anglais.
  Bloc <script id="units-62-module"> (101 blocs). Mise a jour : node add_units62.js dist\index.html (verify_js_syntax : 101 blocs).
+ ETAPE 63 (30/10/2026) - FLUIDES (correctif de l'etape 62) : le tableau des refrigerants ne defile plus en interne en imperial (premiere ligne R410A cachee sous l'en-tete),
+ valeurs converties sur une seule ligne ; l'onglet F-GAS n'est plus converti en imperial (ses textes etaient reecrits en continu). Pas de nouveau bloc (101 blocs). Mise a jour : node add_units63.js dist\index.html.
  PROCHAINES ETAPES : unites imperiales dans RESEAUX (debits d'eau en gpm, pertes de charge en ft.wg/psi), SCOP/COP, VANNES ; referentiel de calcul selectionnable (Europe / ASHRAE) ; langues es/ar/pt.
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.

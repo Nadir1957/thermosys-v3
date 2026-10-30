@@ -15222,7 +15222,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
   }
   /* ---- ecran : conversion des textes de resultats ---- */
   function walkOut(root, mode) {
-    var tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: function (n) { var p = n.parentNode; if (!p || /^(SCRIPT|STYLE|TEXTAREA|OPTION|BUTTON)$/.test(p.nodeName) || (p.closest && p.closest('.un-hint,.un-tg,.cpmain > .cpin,#cp_in,#ht_in,.cpin') && !(/UA = .*W\/K/.test(n.nodeValue) && p.closest('#ht_roomform')))) { return NodeFilter.FILTER_REJECT; } return NodeFilter.FILTER_ACCEPT; } }), nodes = [], n;
+    var tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: function (n) { var p = n.parentNode; if (!p || /^(SCRIPT|STYLE|TEXTAREA|OPTION|BUTTON)$/.test(p.nodeName) || (p.closest && p.closest('.un-hint,.un-tg,.cpmain > .cpin,#cp_in,#ht_in,.cpin,#fgasContent') && !(/UA = .*W\/K/.test(n.nodeValue) && p.closest('#ht_roomform')))) { return NodeFilter.FILTER_REJECT; } return NodeFilter.FILTER_ACCEPT; } }), nodes = [], n;
     while ((n = tw.nextNode())) { nodes.push(n); }
     nodes.forEach(function (x) { var s = x.nodeValue, r = imp ? convText(s, mode) : (s.indexOf(MARK) >= 0 ? strip(s) : s); if (r !== s) { x.nodeValue = r; } });
   }
@@ -17764,6 +17764,9 @@ function grp(n,d){var s=n.toFixed(d),p=s.split('.');p[0]=p[0].replace(/\B(?=(\d{
 function pnum(x){return parseFloat(String(x).replace('−','-').replace(/[\s\u00a0\u202f]/g,'').replace(',','.'));}
 var busy=false,tm=null;
 
+/* UN62_WRAP : le tableau des refrigerants ne defile plus en interne et garde les valeurs converties sur une ligne */
+function wrap(){ var rt=$('refTable'); if(!rt) return; var w=rt.closest?rt.closest('.tw'):null; if(w&&w.style.maxHeight!=='none'){ w.style.maxHeight='none'; w.style.overflowY='visible'; }
+  if(!$('un62-css')){ var st=document.createElement('style'); st.id='un62-css'; st.textContent='#refTable td:nth-child(3),#refTable td:nth-child(4),#refTable td:nth-child(5){white-space:nowrap}'; document.head.appendChild(st); } }
 /* 1. FLUIDES : bulles de conversion pour Capacite (kW) et Charge (kg) */
 function hint(id,fn){
   var inp=$(id); if(!inp) return;
@@ -17784,7 +17787,7 @@ var _cc=window.calcCharge;
 if(typeof _cc==='function'){ window.calcCharge=function(){ var r=_cc.apply(this,arguments); try{ var e=$('chgResult'); if(e&&imp()){ var t=e.textContent; if(/\|\s*\d+\s*BTU\/h/i.test(t)) e.textContent=t.replace(/\s*\|\s*\d+\s*BTU\/h/gi,''); } }catch(x){} return r; }; }
 var _ca=window.calcAirNeuf;
 if(typeof _ca==='function'){ window.calcAirNeuf=function(){ var r=_ca.apply(this,arguments); try{ var e=$('anResult'); if(e&&imp()){ var t=e.textContent; t=t.replace(/\bm3\/h\b/g,'m³/h').replace(/(\d\s*W)\s*\|\s*\d+(?:\.\d+)?\s*kW/,'$1'); if(t!==e.textContent) e.textContent=t; } }catch(x){} return r; }; }
-function all(){ if(busy) return; busy=true; try{ hints(); }catch(e){} busy=false; }
+function all(){ if(busy) return; busy=true; try{ hints(); wrap(); }catch(e){} busy=false; }
 function later(){ clearTimeout(tm); tm=setTimeout(all,90); }
 ['pg-fluides','pg-charge'].forEach(function(id){ var pg=$(id); if(!pg) return;
   pg.addEventListener('input',later,true); pg.addEventListener('change',later,true);
