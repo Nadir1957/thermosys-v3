@@ -18035,6 +18035,72 @@ setTimeout(all,500);
 
 
 </script>
+<script id="ref-66-module">
+(function(){
+'use strict';
+var KEY='thermosys_ref_v1';
+function $(id){return document.getElementById(id);}
+function imp(){return !!(window.UNITS&&window.UNITS.isImp&&window.UNITS.isImp());}
+function en(){return window.lang==='en';}
+function T(f,e){return en()?e:f;}
+var mode='EU';
+try{ if(localStorage.getItem(KEY)==='ASH') mode='ASH'; }catch(e){}
+/* ASHRAE 62.1 - Table 6-1 (Rp en L/s par personne, Ra en L/s par m2) : memes categories que la liste de locaux */
+var ASH=[[2.5,0.3],[3.8,0.6],[2.5,0.3],[3.8,0.9],[2.5,0.3],[5.0,0.6],[2.5,0.3],[10,0.9]];
+var ASHNAME=[['Bureaux','Offices'],['Commerce','Retail'],['Résidentiel','Residential'],['Restaurant','Restaurant'],['Salle réunion','Meeting room'],['Hôpital (chambre)','Hospital (patient room)'],['Hôtel','Hotel'],['Salle sport (aire de jeu)','Sports hall (play area)']];
+function f1(x){return (Math.round(x*10)/10).toFixed(1);}
+function setMode(m){ mode=m; try{ localStorage.setItem(KEY,m); }catch(e){} paint(); try{ if($('anResult')&&/[A-Z]/.test($('anResult').textContent||'')&&$('anResult').textContent.length>5&&$('anResult').textContent!=='-') window.calcAirNeuf(); }catch(e){} }
+function build(){
+  var p=$('panelAirNeuf'); if(!p||$('ref66_row')) return;
+  var first=p.querySelector('.frow');
+  var row=document.createElement('div'); row.className='frow'; row.id='ref66_row';
+  row.innerHTML='<span class="flb" id="ref66_lbl"></span><select class="fsel" id="ref66_sel"><option value="EU"></option><option value="ASH"></option></select>';
+  first.insertAdjacentElement('beforebegin',row);
+  var ar=document.createElement('div'); ar.className='frow'; ar.id='ref66_area_row';
+  ar.innerHTML='<span class="flb" id="ref66_area_lbl"></span><input class="fi" id="anArea" type="number" min="0" value="50" style="max-width:80px">';
+  var ty=$('anType'); ty.parentElement.insertAdjacentElement('afterend',ar);
+  $('ref66_sel').addEventListener('change',function(){ setMode(this.value); });
+  var inp=$('anArea'); inp.addEventListener('input',function(){ if(mode==='ASH'){ try{ window.calcAirNeuf(); }catch(e){} } });
+  var opts=ty.options; for(var i=0;i<opts.length;i++){ opts[i].setAttribute('data-o66',opts[i].textContent); }
+}
+function paint(){
+  build(); var sel=$('ref66_sel'); if(!sel) return;
+  var l=$('ref66_lbl'), t;
+  t=T('Référentiel :','Standard:'); if(l.textContent!==t) l.textContent=t;
+  var o=sel.options; var a=T('Europe (EN 16798-1)','Europe (EN 16798-1)'), b=T('ASHRAE 62.1 (US)','ASHRAE 62.1 (US)');
+  if(o[0].textContent!==a) o[0].textContent=a; if(o[1].textContent!==b) o[1].textContent=b;
+  if(sel.value!==mode) sel.value=mode;
+  var ar=$('ref66_area_row'); if(ar){ ar.style.display=mode==='ASH'?'':'none'; var al=$('ref66_area_lbl'); t=T('Surface du local (m²) :','Floor area (m²):'); if(al.textContent!==t) al.textContent=t; }
+  var ty=$('anType'); if(ty){ for(var i=0;i<ty.options.length;i++){ var op=ty.options[i], orig=op.getAttribute('data-o66'); if(orig===null){ op.setAttribute('data-o66',op.textContent); orig=op.textContent; }
+      var nt=(mode==='ASH'&&ASH[i])?ASHNAME[i][en()?1:0]+' ('+ASH[i][0]+' L/s·pers + '+ASH[i][1]+' L/s·m²)':orig; if(op.textContent!==nt) op.textContent=nt; } }
+}
+var _c=window.calcAirNeuf;
+window.calcAirNeuf=function(){
+  if(mode!=='ASH'||!_c){ return _c&&_c.apply(this,arguments); }
+  var ty=$('anType'), idx=ty.selectedIndex, A=ASH[idx]; if(!A){ return _c.apply(this,arguments); }
+  var P=parseFloat($('anPersons').value); if(!isFinite(P)) P=4; var S=parseFloat($('anArea').value); if(!isFinite(S)) S=0;
+  var Vbz=A[0]*P+A[1]*S, m3h=Vbz*3.6, perP=P>0?m3h/P:0;
+  var tmp=document.createElement('option'); tmp.value=String(+perP.toFixed(6)); tmp.textContent='tmp66'; ty.appendChild(tmp); var old=ty.selectedIndex; ty.selectedIndex=ty.options.length-1;
+  var r; try{ r=_c.apply(this,arguments); } finally { ty.removeChild(tmp); ty.selectedIndex=old; }
+  var e=$('anResult'); if(e){
+    var t=e.textContent.split('\n');
+    t=t.map(function(ln){
+      if(/^(Debit\/personne|Flow\/person)/.test(ln)) return ln.replace(/:.*$/,': '+f1(perP)+(imp()?' m\u00b3/h':' m3/h'));
+      if(/^Reference/.test(ln)) return T('Reference          : ASHRAE 62.1 (procédure de débit de ventilation) : Vbz = Rp·Pz + Ra·Az ; Ez = 1,0','Reference          : ASHRAE 62.1 (ventilation rate procedure): Vbz = Rp·Pz + Ra·Az; Ez = 1.0');
+      if(/^ASHRAE 62\.1/.test(ln)) return T('Vbz                : ','Vbz                : ')+f1(A[0])+' × '+P+' + '+A[1]+' × '+S+' = '+f1(Vbz)+' L/s ('+f1(m3h)+' m3/h'+(imp()?'; '+f1(Vbz*2.11888)+' CFM':'')+') — '+T('Rp, Ra à confirmer sur le texte officiel','Rp, Ra to be confirmed on the official text');
+      return ln; });
+    e.textContent=t.join('\n');
+  }
+  return r;
+};
+window.REF66={get:function(){return mode;},set:setMode};
+var tm=null; function later(){ clearTimeout(tm); tm=setTimeout(paint,80); }
+var _t=window.toggleLang; if(_t) window.toggleLang=function(){ var r=_t.apply(this,arguments); setTimeout(paint,300); setTimeout(paint,1100); return r; };
+var _g=window.goPage; if(_g) window.goPage=function(){ var r=_g.apply(this,arguments); setTimeout(paint,200); return r; };
+setTimeout(paint,500);
+})();
+
+</script>
 </body>
 </html>
 

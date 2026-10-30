@@ -428,7 +428,13 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  couples des actionneurs en lbf.in (Nm x 8,851). Correctif : doublon 'Nm Nm' des actionneurs.
  Correctif : boucle de rafraichissement cachee du module d'unites (bulles recreees en continu sur les pages masquees en imperial) supprimee.
  Bloc <script id="units-65-module"> (103 blocs). Mise a jour : node add_units65.js dist\index.html (verify_js_syntax : 103 blocs).
- PROCHAINES ETAPES : referentiel de calcul selectionnable (Europe / ASHRAE) ; langues es/ar/pt.
+ ETAPE 66 (30/10/2026) - OUVERTURE INTERNATIONALE (referentiel de calcul, partie 1) : AIR NEUF selectionnable Europe / ASHRAE 62.1.
+ Selecteur 'Referentiel' dans le panneau AIR NEUF (memorise dans le navigateur : thermosys_ref_v1). Mode Europe : calcul inchange (EN 16798-1).
+ Mode ASHRAE 62.1 : procedure de debit de ventilation Vbz = Rp x Pz + Ra x Az (Rp en L/s par personne, Ra en L/s par m2, Ez = 1,0), champ 'Surface du local',
+ 8 types de locaux (bureaux 2,5+0,3 ; commerce 3,8+0,6 ; residentiel 2,5+0,3 ; restaurant 3,8+0,9 ; reunion 2,5+0,3 ; hopital 5,0+0,6 ; hotel 2,5+0,3 ; sport 10+0,9).
+ Valeurs Rp/Ra a confirmer sur le texte officiel ASHRAE 62.1 (indique dans le resultat). Charges sensible/latente recalculees sur le debit ASHRAE; CFM en imperial.
+ Aucune autre formule modifiee (pas de selecteur de facade). Bloc <script id="ref-66-module"> (104 blocs). Mise a jour : node add_ref66.js dist\index.html (verify_js_syntax : 104 blocs).
+ PROCHAINES ETAPES : referentiel selectionnable pour CHAUFFAGE (EN 12831 / ASHRAE) et SCOP ; langues es/ar/pt.
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
