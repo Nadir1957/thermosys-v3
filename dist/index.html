@@ -15136,7 +15136,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
   window.__unitsMod = true;
   if (typeof document === 'undefined') { return; }
   /* ============ UNITES IMPERIALES : affichage double, calculs inchanges (SI) ============ */
-  var KEY = 'thermosys_units_v1', MARK = '​', PAGES = ['pg-chargepro', 'pg-heat', 'pg-elec', 'pg-mecha', 'pg-coldroom', 'pg-airtreat', 'pg-fluides', 'pg-charge'], ALLP = ['pg-chargepro', 'pg-psy', 'pg-heat', 'pg-elec', 'pg-mecha', 'pg-coldroom', 'pg-airtreat', 'pg-fluides', 'pg-charge'];
+  var KEY = 'thermosys_units_v1', MARK = '​', PAGES = ['pg-chargepro', 'pg-heat', 'pg-elec', 'pg-mecha', 'pg-coldroom', 'pg-airtreat', 'pg-fluides', 'pg-charge'], ALLP = ['pg-chargepro', 'pg-psy', 'pg-heat', 'pg-elec', 'pg-mecha', 'pg-coldroom', 'pg-airtreat', 'pg-fluides', 'pg-charge', 'pg-hydraulique'];
   var imp = false, busy = false;
   function EN() { return window.lang === 'en'; }
   function T(fr, en) { return EN() ? en : fr; }
@@ -17799,6 +17799,135 @@ window.unSet=function(v){ var r=_u&&_u.apply(this,arguments);
   setTimeout(all,150); return r; };
 var _g=window.goPage; if(_g) window.goPage=function(){ var r=_g.apply(this,arguments); setTimeout(all,150); return r; };
 var _t=window.toggleLang; if(_t) window.toggleLang=function(){ var r=_t.apply(this,arguments); setTimeout(all,300); return r; };
+setTimeout(all,500);
+})();
+
+</script>
+<script id="units-64-module">
+(function(){
+'use strict';
+var MARK='​';
+function $(id){return document.getElementById(id);}
+function imp(){return !!(window.UNITS&&window.UNITS.isImp&&window.UNITS.isImp());}
+function grp(n,d){var s=n.toFixed(d),p=s.split('.');p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,' ');return p.join('.');}
+function pnum(x){return parseFloat(String(x).replace('−','-').replace(/[\s  ]/g,'').replace(',','.'));}
+function dec(v,a,b,t){return Math.abs(v)<t?a:b;}
+/* ---- tables de conversion (hydraulique : eau en gpm / ft / psi, air en CFM / fpm) ---- */
+var DN={15:'½',20:'¾',25:'1',32:'1¼',40:'1½',50:'2',65:'2½',80:'3',100:'4',125:'5',150:'6',200:'8',250:'10',300:'12',350:'14',400:'16',450:'18',500:'20',600:'24'};
+var W={ /* eau et fluides frigoporteurs */
+ 'm³/h':function(v){return grp(v*4.40287,dec(v,1,0,100))+' gpm';},
+ 'm3/h':function(v){return grp(v*4.40287,dec(v,1,0,100))+' gpm';},
+ 'L/s':function(v){return grp(v*15.8503,dec(v,1,0,100))+' gpm';},
+ 'm/s':function(v){return grp(v*3.28084,2)+' ft/s';},
+ 'Pa':function(v){return grp(v*0.000145038,3)+' psi';},
+ 'mbar':function(v){return grp(v*0.0145038,2)+' psi';},
+ 'kPa':function(v){return grp(v*0.145038,dec(v,2,1,10))+' psi';},
+ 'kPa/m':function(v){return grp(v*0.0442075,3)+' psi/ft';},
+ 'Pa/m':function(v){return grp(v*0.0000442075,4)+' psi/ft';},
+ 'bar':function(v){return grp(v*14.5038,1)+' psi';},
+ 'bar abs':function(v){return grp(v*14.5038,1)+' psia';},
+ 'bar rel.':function(v){return grp(v*14.5038,1)+' psig';},
+ 'L':function(v){return grp(v*0.264172,dec(v,2,1,10))+' gal';},
+ 'mCE':function(v){return grp(v*3.28084,1)+' ft.wg';},
+ 'm.c.e.':function(v){return grp(v*3.28084,1)+' ft.wg';}
+};
+var A={ /* air */
+ 'm³/h':function(v){return grp(v*0.588578,dec(v,1,0,100))+' CFM';},
+ 'm3/h':function(v){return grp(v*0.588578,dec(v,1,0,100))+' CFM';},
+ 'm/s':function(v){return grp(v*196.85,0)+' fpm';},
+ 'Pa':function(v){return grp(v*0.00401463,3)+' in.wg';}
+};
+var G={ /* commun */
+ '°C':function(v){return grp(v*9/5+32,1)+' °F';},
+ 'K':function(v){return grp(v*1.8,1)+' °F';},
+ 'kW':function(v){return grp(v*3412.14,0)+' Btu/h';},
+ 'W':function(v){return grp(v*3.41214,0)+' Btu/h';},
+ 'mm':function(v){return grp(v*0.0393701,Math.abs(v)<0.5?4:dec(v,2,1,10))+' in';},
+ 'm':function(v){return grp(v*3.28084,1)+' ft';},
+ 'kg/h':function(v){return grp(v*2.20462,dec(v,1,0,10))+' lb/h';},
+ 'kg/m³':function(v){return grp(v*0.062428,2)+' lb/ft³';},
+ 'kJ/kg·K':function(v){return grp(v*0.238846,3)+' Btu/(lb·°F)';}
+};
+function table(ctx,u){ if(ctx==='air'&&A[u]) return A[u]; if(ctx!=='air'&&W[u]) return W[u]; return G[u]; }
+var NUM='[−-]?(?:\\d{1,3}(?:[ \\u00a0]\\d{3})+(?:[.,]\\d+)?|\\d+(?:[.,]\\d+)?)';
+var SEP='(?:\\s?\\/\\s?|\\s?[–—→]\\s?|\\s(?:à|to)\\s)';
+var UNI='mCE|m\\.c\\.e\\.|kPa\\/m|Pa\\/m|m³\\/h|m3\\/h|L\\/s|kJ\\/kg·K|kg\\/m³|kg\\/h|bar abs|bar rel\\.|bar|mbar|kPa|Pa|kW|mm|°C|K|W|L|m\\/s|m';
+var RE=new RegExp('('+NUM+'(?:'+SEP+NUM+')*)([ \\u00a0]?)('+UNI+')(?![\\w²³\\/·\\-]|(?:\\.[A-Za-zé])|\\s?\\([^()]*?(?:°F|\\bft\\b|ft\\/s|gpm|psi|in\\.wg|CFM|Btu|\\blb\\b|\\bgal\\b|fpm|\\bin\\b|Cv\\b)[^()]*\\))','g');
+function convText(t,ctx){
+  if(!imp()||t.indexOf(MARK)>=0) return t;
+  return t.replace(RE,function(all,ser,sp,unit,off){
+    var before=t.slice(Math.max(0,off-14),off), lineStart=t.lastIndexOf('\n',off)+1, line=t.slice(lineStart,off);
+    var f=table(ctx,unit); if(!f) return all;
+    var isKv=(unit==='m³/h'||unit==='m3/h')&&/\bKvs?\b[^\n]*[:=]?\s*$/i.test(line);
+    var isDelta=(unit==='°C'&&/(Δ|±|écart|ΔT|deltaT|swing)\s*[=:]?\s*$/i.test(before));
+    if(ctx==='pump'&&unit==='kW') f=function(v){return grp(v*1.34102,2)+' hp';};
+    if(isKv) f=function(v){return 'Cv '+grp(v*1.1561,2);};
+    if(isDelta) f=function(v){return grp(v*1.8,1)+' °F';};
+    if(unit==='m'&&/\d$/.test(before)) return all;
+    var vals=[],seps=[],rx=new RegExp(NUM,'g'),last=0,m,ok=true,parts=[];
+    while((m=rx.exec(ser))){ parts.push({v:m[0],s:ser.slice(last,m.index)}); last=m.index+m[0].length; }
+    parts.forEach(function(q,i){ var v=pnum(q.v); if(!isFinite(v)) ok=false; vals.push(v); if(i>0) seps.push(q.s); });
+    if(!ok||!vals.length) return all;
+    var outs=vals.map(function(v){return f(v);});
+    var uni=outs.map(function(o){var k=o.lastIndexOf(' ');return k>0&&!/^\d/.test(o.slice(k+1))?[o.slice(0,k),o.slice(k+1)]:[o,''];});
+    var same=uni.every(function(u){return u[1]===uni[0][1];})&&uni[0][1]!=='';
+    var txt='';
+    if(same){ uni.forEach(function(u,i){txt+=(i?seps[i-1]:'')+u[0];}); txt+=' '+uni[0][1]; } else { outs.forEach(function(o,i){txt+=(i?seps[i-1]:'')+o;}); }
+    return all+' ('+txt+')'+MARK;
+  });
+}
+function strip(t){ return t.replace(/ \((?:[^()]|\([^()]*\))*\)​/g,''); }
+/* ---- resultats : elements concernes et contexte ---- */
+var OUT={hydFlowResult:'w',pdcResult:'w',pompeResult:'pump',vaseResult:'w',sepResult:'w',colResult:'w','preregl-result':'w','palier-result':'w',rsResult:'w',frigoResult:'f',gaineResult:'air',diResult:'w',acResult:'w','dh-result':'w'};
+function walk(root,ctx){
+  var tw=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null),n,nodes=[];
+  while((n=tw.nextNode())){ nodes.push(n); }
+  nodes.forEach(function(x){ var s=x.nodeValue,r=imp()?convText(s,ctx):(s.indexOf(MARK)>=0?strip(s):s); if(r!==s) x.nodeValue=r; });
+}
+/* ---- champs de saisie : bulles ---- */
+function f1(fn){return fn;}
+var Hn={
+ hCap:function(v){return grp(v*3412.14,0)+' Btu/h ('+grp(v/3.51685,1)+' TR)';},
+ hDt:function(v){return grp(v*1.8,1)+' °F (ΔT)';},
+ hV:function(v){return grp(v*3.28084,2)+' ft/s';},
+ pdcQ:W['m³/h'],pompeQ:W['m³/h'],sepQ:W['m³/h'],colQ:W['m³/h'],rsQ:W['m³/h'],'pal-q':W['m³/h'],
+ pdcDN:function(v){var d=DN[Math.round(v)];return d?'NPS '+d+' in':grp(v*0.0393701,2)+' in';},
+ rsD:G['mm'],
+ pdcL:G['m'],'pr-l':G['m'],rsL:G['m'],frigoLeq:G['m'],acDist:G['m'],
+ pompeHMT:function(v){return grp(v*3.28084,1)+' ft.wg';},
+ vaseVol:W['L'],vaseT1:G['°C'],vaseT2:G['°C'],vasePs:W['bar'],vasePmax:W['bar'],
+ sepV:W['m/s'],colV:W['m/s'],
+ 'pr-kw':G['kW'],'pr-dt':function(v){return grp(v*1.8,1)+' °F (ΔT)';},
+ 'pr-kvs':function(v){return 'Cv '+grp(v*1.1561,2);},'pal-kvs':function(v){return 'Cv '+grp(v*1.1561,2);},
+ 'pal-dp':W['kPa'],
+ 'dh-text':G['°C'],'dh-tint':G['°C'],'dh-tlim':G['°C'],'dh-surf':function(v){return grp(v*10.7639,1)+' ft²';},
+ gaineQ:A['m³/h'],gaineH:G['mm'],gaineVmax:A['m/s'],
+ frigoCap:function(v){return grp(v*3412.14,0)+' Btu/h ('+grp(v/3.51685,1)+' TR)';},
+ diD1:G['mm'],diTf:G['°C'],diTa:G['°C'],
+ diLambda:function(v){return grp(v*6.93347,3)+' Btu·in/(h·ft²·°F)';},
+ diHconv:function(v){return grp(v*0.17611,3)+' Btu/(h·ft²·°F)';}
+};
+function hints(){
+  Object.keys(Hn).forEach(function(id){
+    var inp=$(id); if(!inp) return;
+    var h=inp.parentElement.querySelector('.un64-hint');
+    if(!imp()){ if(h) h.remove(); return; }
+    if(!h){ h=document.createElement('span'); h.className='un64-hint'; h.style.cssText='font-size:10px;color:var(--ts);margin-left:6px;white-space:nowrap'; inp.insertAdjacentElement('afterend',h); }
+    var v=parseFloat(String(inp.value).replace(',','.')); var t=isFinite(v)?'= '+Hn[id](v):'';
+    if(h.textContent!==t) h.textContent=t;
+  });
+}
+var busy=false,tm=null;
+function all(){ if(busy) return; busy=true;
+  try{ hints(); Object.keys(OUT).forEach(function(id){ var e=$(id); if(e) walk(e,OUT[id]); }); }catch(e){}
+  busy=false; }
+function later(){ clearTimeout(tm); tm=setTimeout(all,90); }
+var pg=$('pg-hydraulique');
+if(pg){ pg.addEventListener('input',later,true); pg.addEventListener('change',later,true);
+  if(window.MutationObserver) new MutationObserver(function(){ if(!busy) later(); }).observe(pg,{childList:true,subtree:true,characterData:true}); }
+window.UN64={text:convText,strip:strip};
+var _u=window.unSet; window.unSet=function(){ var r=_u&&_u.apply(this,arguments); setTimeout(all,150); setTimeout(all,500); return r; };
+var _g=window.goPage; if(_g) window.goPage=function(){ var r=_g.apply(this,arguments); setTimeout(all,200); return r; };
 setTimeout(all,500);
 })();
 

@@ -415,7 +415,13 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  Bloc <script id="units-62-module"> (101 blocs). Mise a jour : node add_units62.js dist\index.html (verify_js_syntax : 101 blocs).
  ETAPE 63 (30/10/2026) - FLUIDES (correctif de l'etape 62) : le tableau des refrigerants ne defile plus en interne en imperial (premiere ligne R410A cachee sous l'en-tete),
  valeurs converties sur une seule ligne ; l'onglet F-GAS n'est plus converti en imperial (ses textes etaient reecrits en continu). Pas de nouveau bloc (101 blocs). Mise a jour : node add_units63.js dist\index.html.
- PROCHAINES ETAPES : unites imperiales dans RESEAUX (debits d'eau en gpm, pertes de charge en ft.wg/psi), SCOP/COP, VANNES ; referentiel de calcul selectionnable (Europe / ASHRAE) ; langues es/ar/pt.
+ ETAPE 64 (30/10/2026) - OUVERTURE INTERNATIONALE (3/3, partie 2) : UNITES IMPERIALES dans RESEAUX (bouton SI / Imperial, calculs inchanges en SI).
+ Conversions propres a l'hydraulique : debits d'eau en gpm (m3/h x 4,403 ; L/s x 15,85), vitesses en ft/s, pertes de charge en psi et psi/ft, HMT en ft.wg,
+ volumes en gal, Kv -> Cv (x 1,156), DN -> NPS, puissances de pompe en hp; air des gaines en CFM / fpm / in.wg; delta de temperature x 1,8 (sans decalage de 32).
+ Bulles de conversion a cote des champs de saisie et resultats de tous les onglets (debit, pertes de charge, pompe, vase, separateur, collecteur, prereglage,
+ gaines, tuyauterie frigo, calcul reseau, acoustique, point de rosee). Bloc <script id="units-64-module"> (102 blocs).
+ Mise a jour : node add_units64.js dist\index.html (verify_js_syntax : 102 blocs).
+ PROCHAINES ETAPES : unites imperiales dans SCOP/COP et VANNES ; referentiel de calcul selectionnable (Europe / ASHRAE) ; langues es/ar/pt.
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
