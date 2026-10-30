@@ -360,6 +360,11 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  isolant XLPE derive des tables PVC (rapport 1,22, prudent, deja signale). MECATRONIQUE : Pt100 IEC 60751, zones ISO 10816-3, NAMUR NE43, lois des ventilateurs,
  vibrations (deplacement/acceleration -> vitesse efficace) corrects. Pas d'installateur, pas de nouveau bloc (95).
  RESTE A TRAITER : couples de servomoteurs de volets (valeurs guides, a confirmer avec le constructeur), XLPE a remplacer par la table B.52.5 si disponible.
+ ETAPE 53 (30/10/2026) - ACCUEIL (audit) : compteurs verifies (80 equipements, 50 constructeurs du lecteur de codes, 29 normes, 28 sections) ; phrase inexacte
+ corrigee : "toutes vos donnees sont traitees localement / aucune connexion internet permanente" -> les calculs sont locaux ; seules la connexion au compte
+ (Supabase) et l'OCR (image envoyee a un service d'IA) utilisent internet ; renvoi a la politique de confidentialite (FR/EN). Remplacement de texte dans la page,
+ pas de nouveau bloc (95). Mise a jour : node add_accueil53.js dist\index.html
+ RESTE A TRAITER : modules OBD, Bluetooth, OCR, Historique, Aide, Contact ; codes defauts (72 Condor et autres marques).
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
