@@ -326,7 +326,7 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  Mise a jour : node add_scop47.js dist\index.html
  RESTE A TRAITER (SCOP) : facteurs CO2 (Algerie 0,587 et France 0,084 kg/kWh) a sourcer ; tarifs de ~190 pays a verifier (une soixantaine sont
  une moyenne internationale 0,15 USD) ; methode des bins EN 14825 complete a envisager.
- ETAPE 48 (29/10/2026) - HYDRAULIQUE (audit partiel). VERIFIE JUSTE : debit/diametre (Q = P/(4186 dT)), pertes de charge (Swamee-Jain, 64/Re),
+ ETAPE 48 (29/10/2026) - RESEAUX HVAC (audit, 1re partie). VERIFIE JUSTE : debit/diametre (Q = P/(4186 dT)), pertes de charge (Swamee-Jain, 64/Re),
  collecteur, acoustique (Lp = Lw - 20 log r - 11 ou - 8), point de rosee (recalcule independamment : 6,3 mm), diametre equivalent des gaines
  rectangulaires, proprietes des 5 fluides frigorigenes (comparees a CoolProp : masses volumiques de vapeur, viscosites et pentes de saturation
  exactes ; chaleur massique utile et masse volumique liquide correspondent a un liquide sous-refroidi de 5 a 8 K). CORRIGE : (1) SEPARATEUR : le
@@ -336,8 +336,14 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  (4) DEBIT / SEPARATEUR / COLLECTEUR : DN normalises (le collecteur arrondissait par 25 mm), au-dela de DN1000 message ; (5) frigo : sous-refroidissement
  indique ; (6) point de rosee : rappel de la marge de securite. Bloc <script id="hydraulique-48-module"> (93 blocs).
  Mise a jour : node add_hydraulique48.js dist\index.html
- RESTE A TRAITER (HYDRAULIQUE) : Refnet (distribution Daikin/..), Calcul reseau (cloud, SVG), Guide de prereglage (deja audite etape 36), tubes ACR
+ RESTE A TRAITER (RESEAUX HVAC) : Refnet (distribution Daikin/..), Calcul reseau (cloud, SVG), Guide de prereglage (deja audite etape 36), tubes ACR
  hors dimensions (DN > 104,78 mm), singularites dans les pertes de charge.
+ ETAPE 49 (30/10/2026) - RESEAUX HVAC (audit, fin) : REFNET : tables par marque avec sources documentees dans l'outil ; seuils Daikin (VRV IV) et
+ Mitsubishi (City Multi Y) conformes a ma connaissance, autres marques non verifiables sans les documents constructeur (avertissement deja
+ affiche) -> AUCUNE modification. CALCUL RESEAU : chemin critique (somme maximale racine-feuille) verifie par recalcul independant (A+C+D = 182 725 Pa,
+ HMT 18,63 m, +10 % = 20,49 m) ; corrections : (1) HMT calculee avec la masse volumique du fluide (elle utilisait 1000 kg/m3 pour tous) ; (2) hypotheses
+ affichees (K coude 0,9 / te 1,0 / vanne 0,2, 20 C, reseau a saisir aller ET retour, equipements exclus). Bloc <script id="reseau-49-module">
+ (94 blocs). Mise a jour : node add_reseau49.js dist\index.html
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 

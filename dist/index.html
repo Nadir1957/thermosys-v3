@@ -17335,6 +17335,36 @@ if(typeof _d==='function') window.calcDewPoint=function(){
 })();
 
 </script>
+<script id="reseau-49-module">
+/* Thermosys etape 49 - RESEAUX HVAC / Calcul reseau : hypotheses affichees, HMT avec la masse volumique du fluide (idempotent) */
+(function(){
+'use strict';
+if(window.__rs49)return; window.__rs49=1;
+function $(id){return document.getElementById(id);}
+function isFr(){var l=(typeof lang!=='undefined')?lang:window.lang;return (l||'fr')!=='en';}
+function L(fr,en){return isFr()?fr:en;}
+var _r=window.renderReseau;
+if(typeof _r!=='function') return;
+window.renderReseau=function(){
+ var r=_r.apply(this,arguments);
+ try{
+  var el=$('rsResult'); if(!el||typeof reseauSegments==='undefined'||!reseauSegments.length) return r;
+  var crit=computeCriticalPath(), rho=(crit.path[0]&&crit.path[0].fluid)||1000;
+  var txt=el.textContent.split('\n').filter(function(l){return l.indexOf('Hypothèses')!==0&&l.indexOf('Assumptions')!==0;});
+  if(rho!==1000){
+   var hmt=crit.total/(rho*9.81)*1.1, i;
+   for(i=txt.length-1;i>=0;i--){ if(/HMT pompe|Suggested pump head/.test(txt[i])){ txt[i]=L('HMT pompe suggérée (+10% marge)','Suggested pump head (+10% margin)')+' : '+hmt.toFixed(2)+' m ('+rho+' kg/m³)'; break; } }
+  }
+  txt.push('');
+  txt.push(L('Hypothèses : fluide à 20 °C, K coude 0,9 / té 1,0 / vanne 0,2, Ø intérieur ≈ DN. Réseau saisi dans un seul sens : pour un circuit fermé, saisir aussi le retour. Hors équipements (générateur, échangeurs, vannes de régulation, filtres) : ajouter leurs pertes de charge.','Assumptions: fluid at 20 °C, K elbow 0.9 / tee 1.0 / valve 0.2, inner Ø ≈ DN. Network entered one way only: for a closed loop, enter the return too. Equipment (generator, heat exchangers, control valves, strainers) excluded: add their pressure drops.'));
+  el.textContent=txt.join('\n');
+ }catch(e){}
+ return r;
+};
+try{ if(typeof reseauSegments!=='undefined'&&reseauSegments.length) renderReseau(); }catch(e){}
+})();
+
+</script>
 </body>
 </html>
 
