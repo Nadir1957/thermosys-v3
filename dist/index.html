@@ -17636,6 +17636,117 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 
 </script>
+<script id="aim-60-module">
+(function(){
+'use strict';
+function EN(){return window.lang==='en';}
+function T(fr,en){return EN()?en:fr;}
+var PH=[['2022–2023',90,'−10 %'],['2024–2028',60,'−40 %'],['2029–2033',30,'−70 %'],['2034–2035',20,'−80 %'],['2036 →',15,'−85 %']];
+var TT=[
+ ['Climatisation et PAC résidentielles / petit commercial (splits)','Residential and light-commercial AC and heat pumps (splits)','1 Jan 2025','1 Jan 2026','GWP < 700','GWP < 700'],
+ ['Systèmes VRF / VRV','VRF / VRV systems','1 Jan 2026','1 Jan 2027','GWP < 700','GWP < 700']
+];
+var RF=[['R410A',2088],['R32',675],['R454B',466],['R290',3],['R134a',1430],['R407C',1774],['R404A',3922],['R1234yf',4]];
+function css(){return 'font-size:10.5px;color:var(--ts);line-height:1.7';}
+function build(){
+ var h='<div class="ph" id="aim60_h">'+T('AIM ACT (USA) — RÉDUCTION PROGRESSIVE DES HFC','AIM ACT (USA) — HFC PHASEDOWN')+'</div><div style="'+css()+'">';
+ h+='<div style="margin-bottom:6px">'+T('American Innovation and Manufacturing Act (2020), appliqué par l’EPA : réduction des HFC mis sur le marché américain par rapport à une référence 2011–2013 (GWP selon AR4).','American Innovation and Manufacturing Act (2020), enforced by the EPA: HFC production and import cut against a 2011–2013 baseline (AR4 GWP values).')+'</div>';
+ h+='<table style="width:100%;border-collapse:collapse"><tr><th style="text-align:left">'+T('Période','Period')+'</th><th style="text-align:left">'+T('Niveau autorisé','Allowed level')+'</th><th style="text-align:left">'+T('Réduction','Reduction')+'</th></tr>';
+ PH.forEach(function(r){h+='<tr><td>'+r[0]+'</td><td>'+r[1]+' %</td><td>'+r[2]+'</td></tr>';});
+ h+='</table>';
+ h+='<div style="margin:8px 0 3px;font-weight:700">'+T('Règle des transitions technologiques (EPA, 2023) — équipements neufs','Technology Transitions rule (EPA, 2023) — new equipment')+'</div>';
+ h+='<table style="width:100%;border-collapse:collapse"><tr><th style="text-align:left">'+T('Équipement','Equipment')+'</th><th style="text-align:left">'+T('Fabrication / import','Manufacture / import')+'</th><th style="text-align:left">'+T('Installation','Installation')+'</th><th style="text-align:left">'+T('Limite','Limit')+'</th></tr>';
+ TT.forEach(function(r){h+='<tr><td>'+(EN()?r[1]:r[0])+'</td><td>'+r[2]+'</td><td>'+r[3]+'</td><td>'+(EN()?r[5]:r[4])+'</td></tr>';});
+ h+='</table>';
+ h+='<div style="margin:8px 0 3px;font-weight:700">'+T('Vérification rapide d’un fluide (climatisation / PAC neufs)','Quick refrigerant check (new AC / heat pumps)')+'</div>';
+ h+='<select id="aim60_sel" style="font-size:11px">';
+ RF.forEach(function(r,i){h+='<option value="'+r[1]+'">'+r[0]+' (GWP '+r[1]+')</option>';});
+ h+='</select> <span id="aim60_res" style="font-weight:700"></span>';
+ h+='<div style="margin-top:8px">'+T('Dépannage : à partir d’un seuil de charge (≈ 15 lb, soit 6,8 kg) l’EPA impose la réparation des fuites au-delà d’un taux annuel fixé par type d’installation. Les équipements existants peuvent continuer à être entretenus.','Servicing: above a charge threshold (≈ 15 lb, i.e. 6.8 kg) the EPA requires leak repair when the annual leak rate exceeds a limit set by application. Existing equipment may continue to be serviced.')+'</div>';
+ h+='<div style="margin-top:6px;font-style:italic">'+T('Réglementation américaine : indicatif hors USA (Algérie). Les échéances et seuils sont à confirmer sur les textes officiels de l’EPA avant toute décision réglementaire. Voir aussi le Protocole de Montréal (Amendement de Kigali) dans NORMES.','US regulation: indicative outside the USA (Algeria). Deadlines and thresholds must be confirmed against the official EPA texts before any regulatory decision. See also the Montreal Protocol (Kigali Amendment) in STANDARDS.')+'</div></div>';
+ return h;
+}
+function upd(){var s=document.getElementById('aim60_sel'),r=document.getElementById('aim60_res');if(!s||!r)return;var g=+s.value;
+ r.textContent=g<700?T('✔ GWP < 700 : admis pour les systèmes neufs','✔ GWP < 700: allowed for new systems'):T('✘ GWP ≥ 700 : interdit pour les systèmes neufs (entretien des existants permis)','✘ GWP ≥ 700: not allowed in new systems (servicing existing allowed)');
+ r.style.color=g<700?'#2e9e5b':'#d64545';}
+function render(){
+ var f=document.getElementById('fl2');if(!f)return;
+ var p=document.getElementById('aim60_panel');
+ if(!p){p=document.createElement('div');p.id='aim60_panel';p.className='panel';f.appendChild(p);}
+ var keep=null;var s=document.getElementById('aim60_sel');if(s)keep=s.selectedIndex;
+ p.innerHTML=build();
+ var n=document.getElementById('aim60_sel');if(keep!==null)n.selectedIndex=keep;
+ n.addEventListener('change',upd);upd();
+}
+var _t=window.toggleLang;
+window.toggleLang=function(){if(_t)_t.apply(this,arguments);setTimeout(render,140);};
+var _g=window.goPage;
+if(_g)window.goPage=function(){var r=_g.apply(this,arguments);setTimeout(render,60);return r;};
+render();
+})();
+
+</script>
+<script id="i18n-60-module">
+(function(){
+'use strict';
+function EN(){return window.lang==='en';}
+var MENU={"CODES":"FAULT CODES","CHARGE":"COOLING LOAD","CHAMBRE FROIDE":"COLD ROOM","TRAITEMENT D'AIR":"AIR TREATMENT","ACCUEIL": "HOME", "CATALOGUE": "CATALOG", "DEVIS": "QUOTES", "JOURNAL": "LOG", "FLUIDES": "FLUIDS", "OCR-IA": "OCR-AI", "VANNES": "VALVES", "RÉSEAUX": "NETWORKS", "NORMES": "STANDARDS", "CHAUFFAGE": "HEATING", "ÉLECTRICITÉ": "ELECTRICAL", "MÉCATRONIQUE": "MECHATRONICS", "PROJET": "PROJECT", "DÉSENFUMAGE": "SMOKE CONTROL", "AIDE": "HELP"};
+var TXT={"Réfrigération": "Refrigeration", "Sécurité": "Safety", "Charge max": "Max charge", "Local technique": "Machinery room", "Détection": "Detection", "Récupération": "Recovery", "Puissance": "Capacity", "Climats de référence": "Reference climates", "Étiquette énergie": "Energy label", "Qualité": "Quality", "Énergie": "Energy", "Électrique": "Electrical", "Arrêt urgence": "Emergency stop", "Algérie": "Algeria", "Remplacée": "Superseded", "Abrogé": "Repealed", "Étanchéité": "Tightness", "Écoconception": "Ecodesign", "Confort d'été": "Summer comfort", "Rénovation": "Renovation", "Électricité": "Electricity", "Désenfumage": "Smoke control", "Déperditions": "Heat losses", "Règl. UE 2024/573 (F-Gas révisé)": "Reg. EU 2024/573 (revised F-Gas)", "Règl. UE 517/2014 (abrogé)": "Reg. EU 517/2014 (repealed)", "Règl. UE 2016/2281 (Écoconception)": "Reg. EU 2016/2281 (Ecodesign)", "EN 1037:1995+A1:2008 (remplacée)": "EN 1037:1995+A1:2008 (superseded)", "Directive 2006/42/CE (remplacée par le règl. UE 2023/1230)": "Directive 2006/42/EC (replaced by Reg. EU 2023/1230)", "Amendement de Kigali (2016)": "Kigali Amendment (2016)", "Free-cooling, humidification adiabatique, pompe à chaleur": "Free-cooling, adiabatic humidification, heat pump", "Sud avec casquette": "South with overhang"};
+var CAUSES={"Condenseur encrassé, débit air insuffisant.": "Dirty condenser, insufficient airflow.", "Ventilateur bloqué, condensateur HS.": "Fan blocked, faulty capacitor.", "VDE bloquée ou bobine HS.": "EEV stuck or coil faulty.", "Sonde débranchée ou HS.": "Sensor disconnected or faulty.", "Sonde coupée ou débranchée.": "Sensor open-circuit or disconnected.", "Pression HP > seuil. Condenseur sale, débit réduit.": "HP above threshold. Dirty condenser, reduced airflow.", "Réfrigérant insuffisant, filtre bouché.": "Insufficient refrigerant, clogged filter.", "Surcharge, mauvaise phase, compresseur grippé.": "Overload, wrong phase, seized compressor.", "T° ambiante trop élevée, compresseur dégradé.": "Ambient temperature too high, degraded compressor.", "Ventilateur bloqué, alimentation incorrecte.": "Fan blocked, incorrect power supply.", "Réfrigérant insuffisant, VDE défaillante.": "Insufficient refrigerant, faulty EEV.", "Pale bloquée, roulement HS.": "Blade blocked, bearing faulty.", "Sonde coupée. Résistance cible: 10kΩ à 25°C.": "Sensor open-circuit. Target resistance: 10 kΩ at 25 °C.", "Coupure phase, fusible grillé.": "Phase loss, blown fuse.", "Court-circuit enroulements compresseur.": "Compressor winding short circuit.", "Compresseur dégradé, tension incorrecte.": "Degraded compressor, incorrect voltage.", "Réfrigérant insuffisant, VDE partiellement bloquée.": "Insufficient refrigerant, EEV partially blocked.", "Fuite détectée. Test étanchéité, réparer, recharger.": "Leak detected. Leak test, repair, recharge.", "Câble signal coupé, bornier desserré.": "Signal cable cut, loose terminal block.", "Condenseur sale, débit air réduit.": "Dirty condenser, reduced airflow.", "Fuite réfrigérant, filtre bouché.": "Refrigerant leak, clogged filter.", "Câble coupé ou erreur adressage DIP.": "Cable cut or DIP-switch addressing error.", "Thermistance HS. Mesurer résistance.": "Faulty thermistor. Measure resistance.", "Sonde débranchée ou hors plage.": "Sensor disconnected or out of range.", "Thermistance coupée. Cible: 10kΩ à 25°C.": "Thermistor open-circuit. Target: 10 kΩ at 25 °C.", "Sonde HS ou débranchée.": "Sensor faulty or disconnected.", "Tension > 265V. Protection surtension.": "Voltage > 265 V. Overvoltage protection.", "Tension < 185V. Section câbles insuffisante.": "Voltage < 185 V. Cable cross-section insufficient.", "Déséquilibre phases, phase manquante.": "Phase imbalance, missing phase.", "Câble communication coupé.": "Communication cable cut.", "Surchauffe ou surintensité compresseur.": "Compressor overheating or overcurrent.", "Court-circuit enroulements. Mesurer résistance.": "Winding short circuit. Measure resistance.", "Phase manquante ou inversée.": "Phase missing or reversed.", "Condenseur encrassé, surcharge réfrigérant.": "Dirty condenser, refrigerant overcharge.", "Réfrigérant insuffisant ou dégradé.": "Insufficient or degraded refrigerant.", "Compresseur dégradé. Mesurer courants.": "Degraded compressor. Measure currents.", "Thermistance hors plage.": "Thermistor out of range.", "Normal en chauffage. Si permanent: sonde HS.": "Normal in heating mode. If permanent: faulty sensor.", "Fuite en cours. Test étanchéité immédiat.": "Leak in progress. Immediate leak test.", "Protection thermique ou surintensité.": "Thermal protection or overcurrent.", "Sonde court-circuit ou circuit ouvert. Remplacer NTC.": "Sensor short-circuited or open. Replace NTC.", "Moteur bloqué ou sonde Hall défaillante.": "Motor blocked or Hall sensor faulty.", "Pale bloquée ou moteur DC HS.": "Blade blocked or DC motor faulty.", "Thermistance HS. Résistance cible: 10kΩ à 25°C.": "Faulty thermistor. Target resistance: 10 kΩ at 25 °C.", "Sonde défaillante.": "Faulty sensor.", "VDE bloquée, bobine HS ou câblage défectueux.": "EEV blocked, coil faulty or wiring defective.", "Condenseur encrassé, débit insuffisant.": "Dirty condenser, insufficient airflow.", "Réfrigérant insuffisant, VDE bloquée.": "Insufficient refrigerant, EEV blocked.", "Réfrigérant insuffisant, compresseur dégradé.": "Insufficient refrigerant, degraded compressor.", "T° serpentin < 2°C. Filtre bouché.": "Coil temperature < 2 °C. Clogged filter.", "Normal en chauffage. Si fréquent: sonde HS.": "Normal in heating mode. If frequent: faulty sensor.", "Condenseur encrassé, ventilateur HS.": "Dirty condenser, faulty fan.", "Serpentin gelé. Filtre bouché.": "Frozen coil. Clogged filter.", "Câble interne déconnecté.": "Internal cable disconnected.", "EXV bloquée, bobine HS.": "EXV blocked, coil faulty.", "Thermistance HS. 10kΩ à 25°C.": "Faulty thermistor. 10 kΩ at 25 °C.", "Sonde défaillante ou débranchée.": "Sensor faulty or disconnected.", "Thermistance sur tuyau refoulement HS.": "Discharge-pipe thermistor faulty.", "Normal en chauffage. Max 12 min.": "Normal in heating mode. Max 12 min.", "BP < réglage. Réfrigérant insuffisant.": "LP < setpoint. Insufficient refrigerant.", "Moteur DC HS ou bloqué.": "DC motor faulty or blocked.", "Câblage EXV défaillant ou bobine HS.": "EXV wiring defective or coil faulty.", "Sonde NTC UC ouverte/CC. Résistance à 25°C : 10kΩ.": "Indoor unit NTC sensor open/short circuit. Resistance at 25 °C: 10 kΩ.", "HP > seuil protection. Condenseur encrassé, ventilateur UE HS.": "HP > protection threshold. Dirty condenser, outdoor fan faulty.", "BP anormalement basse. Sous-charge, filtre bouché, EEV défaillant.": "LP abnormally low. Undercharge, clogged filter, faulty EEV.", "Courant > In × 1.3. Court-circuit bobine ou blocage mécanique.": "Current > In × 1.3. Coil short circuit or mechanical blockage.", "T_refoulement > 120°C. Charge réfrigérant faible ou EEV bloqué.": "Discharge temperature > 120 °C. Low refrigerant charge or EEV blocked.", "Capteur courant (CT) ouvert. Remplacer capteur ou carte variateur.": "Current sensor (CT) open. Replace sensor or inverter board.", "NTC UC hors plage. R à 25°C = 10kΩ. Remplacer si mesuré hors plage.": "Indoor NTC out of range. R at 25 °C = 10 kΩ. Replace if measured out of range.", "NTC UE défaillante. Remplacement carte si sonde intégrée.": "Outdoor NTC faulty. Replace the board if the sensor is integrated.", "Serpentin UC < 0°C. Filtre air bouché, débit insuffisant.": "Indoor coil < 0 °C. Clogged air filter, insufficient airflow.", "Mémoire carte UC corrompue. Réinitialiser ou remplacer carte principale.": "Indoor unit board memory corrupted. Reset or replace the main board.", "Séquence de phases incorrecte (RST). Inverser 2 phases alimentation triphasée.": "Incorrect phase sequence (RST). Swap 2 phases of the three-phase supply.", "Code informatif uniquement.": "Informational code only.", "Moteur ventilateur UE en surintensité ou blocage mécanique.": "Outdoor fan motor overcurrent or mechanical blockage.", "Ventilateur UC bloqué. Corps étranger ou roulement défaillant.": "Indoor fan blocked. Foreign object or faulty bearing.", "NTC extérieur défaillante.": "Outdoor NTC faulty.", "NTC condenseur/évaporateur UE HS.": "Outdoor condenser/evaporator NTC faulty.", "NTC refoulement compresseur défaillante.": "Compressor discharge NTC faulty.", "NTC aspiration défaillante.": "Suction NTC faulty.", "T° échangeur UC trop basse. Filtre air bouché ou débit insuffisant.": "Indoor heat-exchanger temperature too low. Clogged air filter or insufficient airflow.", "Fonctionnement normal.": "Normal operation.", "HP anormale. Condenseur encrassé ou surcharge réfrigérant.": "Abnormal HP. Dirty condenser or refrigerant overcharge.", "NTC UC HS. Résistance hors plage.": "Indoor NTC faulty. Resistance out of range.", "NTC serpentin UC défaillante.": "Indoor coil NTC faulty.", "NTC extérieur hors gamme.": "Outdoor NTC out of range.", "NTC condenseur UE défaillante.": "Outdoor condenser NTC faulty.", "Sonde T° refoulement ouverte.": "Discharge temperature sensor open.", "BP trop basse. Sous-charge ou obstruction.": "LP too low. Undercharge or obstruction.", "T° refoulement > 115°C. Charge insuffisante.": "Discharge temperature > 115 °C. Insufficient charge.", "Moteur ventilateur UC bloqué ou surintensité.": "Indoor fan motor blocked or overcurrent.", "Données configuration corrompues. Réinitialiser ou remplacer carte.": "Configuration data corrupted. Reset or replace the board.", "Signal COMM absent ou perturbé.": "COMM signal absent or disturbed.", "HP > seuil. Condenser bouché, surchargé en réfrigérant.": "HP above threshold. Clogged condenser, refrigerant overcharge.", "BP trop basse. Sous-charge réfrigérant ou obstruction.": "LP too low. Refrigerant undercharge or obstruction.", "NTC UC hors plage.": "Indoor NTC out of range.", "NTC serpentin évaporateur UC HS.": "Indoor evaporator coil NTC faulty.", "NTC échangeur condenseur/évaporateur UE HS.": "Outdoor condenser/evaporator heat-exchanger NTC faulty.", "NTC refoulement défaillante.": "Discharge NTC faulty.", "Gel détecté sur serpentin UC. Filtre bouché ou débit faible.": "Frost detected on indoor coil. Clogged filter or low airflow.", "NTC température ambiante UC HS. Résistance anormale.": "Indoor ambient-temperature NTC faulty. Abnormal resistance.", "NTC serpentin UC hors gamme.": "Indoor coil NTC out of range.", "Pression BP anormalement basse.": "Abnormally low LP pressure.", "Courant phase compresseur excessif.": "Excessive compressor phase current.", "Perte signal communication UC↔UE.": "Indoor↔outdoor communication signal lost.", "T° serpentin UC < 0°C. Filtre bouché.": "Indoor coil temperature < 0 °C. Clogged filter.", "T° refoulement > limite. Charge réfrigérant faible.": "Discharge temperature above limit. Low refrigerant charge.", "HP trop élevée. Condenseur bouché ou surcharge.": "HP too high. Clogged condenser or overcharge.", "BP anormale. Fuite ou filtre sec bouché.": "Abnormal LP. Leak or clogged filter drier.", "Surintensité compresseur.": "Compressor overcurrent.", "T° refoulement trop élevée. Surchauffe vapeur insuffisante.": "Discharge temperature too high. Insufficient vapour superheat.", "Signal COMM interrompu.": "COMM signal interrupted.", "NTC UE hors gamme.": "Outdoor NTC out of range.", "NTC ambiance UC hors plage.": "Indoor ambient NTC out of range.", "Gel serpentin UC. Filtre air obstrué.": "Indoor coil frost. Air filter obstructed.", "Mémoire carte corrompue. Réinitialiser ou remplacer.": "Board memory corrupted. Reset or replace.", "NTC serpentin UC HS.": "Indoor coil NTC faulty.", "Séquence phases incorrecte sur alimentation triphasée.": "Incorrect phase sequence on three-phase supply.", "Module IGBT défaillant. Mesurer en mode diode.": "IGBT module faulty. Measure in diode mode.", "BP anormale. Fuite ou obstruction.": "Abnormal LP. Leak or obstruction.", "Câble COMM UC↔UE coupé ou défaillant.": "Indoor↔outdoor COMM cable cut or faulty.", "T° serpentin < 0°C. Filtre bouché ou débit insuffisant.": "Coil temperature < 0 °C. Clogged filter or insufficient airflow.", "3 tentatives de démarrage échouées. Bobinages ou alimentation.": "3 failed start attempts. Windings or power supply.", "Transformateur courant (CT) défaillant.": "Current transformer (CT) faulty."};
+/* 1. Donnees : causes des codes de defaut en anglais */
+try{ if(window.ERROR_CODES){ ERROR_CODES.forEach(function(c){ if(c&&c.cause_en===c.cause&&CAUSES[c.cause]) c.cause_en=CAUSES[c.cause]; }); } }catch(e){}
+/* 2. Traduction de textes de feuilles (menu, etiquettes de normes, divers) avec retour au francais */
+function leafText(el){ return el.children.length===0; }
+function trLeaf(el,map){
+  if(!leafText(el)) return;
+  var t=el.textContent, o=el.getAttribute('data-i18n60'), e=el.getAttribute('data-i18n60e');
+  if(o!==null && t!==o && t!==e){ el.removeAttribute('data-i18n60'); el.removeAttribute('data-i18n60e'); o=null; }
+  var cur=(o!==null)?o:t.trim();
+  var en=map[cur];
+  if(en===undefined) return;
+  if(o===null){ el.setAttribute('data-i18n60',cur); el.setAttribute('data-i18n60e',en); }
+  var want=EN()?en:cur;
+  if(t!==want) el.textContent=want;
+}
+function sweepMenu(){
+  document.querySelectorAll('.mn').forEach(function(b){
+    var sp=b.querySelector('span'); if(sp){ trLeaf(sp,MENU); return; }
+    for(var i=0;i<b.childNodes.length;i++){ var n=b.childNodes[i];
+      if(n.nodeType===3){ var raw=n.textContent; var key=(n.__o60!==undefined)?n.__o60:raw.trim();
+        if(MENU[key]!==undefined){ if(n.__o60===undefined) n.__o60=key; var lead=raw.match(/^\s*/)[0]; var w=lead+(EN()?MENU[key]:key); if(n.textContent!==w) n.textContent=w; } } }
+  });
+}
+function sweepLabels(){
+  /* libelles bilingues dont le texte n'a pas ete bascule apres un redessin */
+  document.querySelectorAll('[data-cfr][data-cen]').forEach(function(el){
+    if(!leafText(el)) return;
+    var w=EN()?el.getAttribute('data-cen'):el.getAttribute('data-cfr');
+    if(w!==null&&el.textContent!==w) el.textContent=w;
+  });
+}
+function sweepText(){
+  var roots=['pg-normes','pg-airtreat','pg-charge','pg-consignation','pg-historique','pg-fluides'];
+  roots.forEach(function(id){ var r=document.getElementById(id); if(!r) return;
+    r.querySelectorAll('*').forEach(function(el){ if(leafText(el)&&el.tagName!=='SCRIPT'&&el.tagName!=='STYLE') trLeaf(el,TXT); });
+  });
+  document.querySelectorAll('#pg-charge option, #pg-consignation option').forEach(function(o){ trLeaf(o,TXT); });
+  var h=document.getElementById('pg-historique');
+  if(h){ h.querySelectorAll('*').forEach(function(el){ if(leafText(el)){ var t=el.textContent; if(/\b29 (normes|standards)\b/.test(t)) el.textContent=t.replace(/\b29 (normes|standards)\b/,'50 $1'); } }); }
+  document.querySelectorAll('[placeholder]').forEach(function(el){ var p=el.getAttribute('placeholder'); var o=el.getAttribute('data-ph60');
+    var cur=(o!==null)?o:p; if(cur==='Valeur V'){ if(o===null) el.setAttribute('data-ph60',cur); var w=EN()?'Value V':cur; if(p!==w) el.setAttribute('placeholder',w); } });
+}
+var busy=false,tm=null;
+function all(){ if(busy) return; busy=true; try{ sweepMenu(); sweepLabels(); sweepText(); }catch(e){} busy=false; }
+function later(){ clearTimeout(tm); tm=setTimeout(all,60); }
+var _t=window.toggleLang; window.toggleLang=function(){ var r=_t&&_t.apply(this,arguments); setTimeout(all,0); setTimeout(all,200); setTimeout(all,500); return r; };
+var _g=window.goPage; if(_g) window.goPage=function(){ var r=_g.apply(this,arguments); setTimeout(all,0); setTimeout(all,200); return r; };
+if(window.MutationObserver){ var nav=document.getElementById('mn-home'); nav=nav&&nav.parentElement;
+  if(nav) new MutationObserver(function(){ try{ sweepMenu(); }catch(e){} }).observe(nav,{childList:true,characterData:true,subtree:true});
+  var root=document.getElementById('app')||document.body; new MutationObserver(later).observe(root,{childList:true,subtree:true}); }
+all();
+})();
+
+</script>
 </body>
 </html>
 

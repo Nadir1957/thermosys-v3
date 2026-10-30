@@ -398,8 +398,15 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  AIM Act (USA, reduction HFC de 85 % en 2036, base 2011-2013) ; Amendement de Kigali (calendrier par groupe de pays, a verifier pays par pays). Editions des normes
  americaines a confirmer selon la juridiction. Compteur de l'Accueil et de l'Aide passes a 50. Bloc <script id="normes-59-module"> (98 blocs). Mise a jour : node add_normes59.js dist\index.html
  (verify_js_syntax : 98 blocs).
- PROCHAINES ETAPES (ouverture internationale 2/3 et 3/3) : unites imperiales dans les modules rapides (CHARGE, RESEAUX, FLUIDES...) ; AIM Act dans FLUIDES a cote du F-Gas ;
- referentiel de calcul selectionnable (Europe / ASHRAE) ; langues es/ar/pt.
+ ETAPE 60 (30/10/2026) - OUVERTURE INTERNATIONALE (2/3) : AIM ACT dans FLUIDES. Nouveau panneau "AIM ACT (USA)" sous le F-Gas (onglet F-GAS de la page FLUIDES), FR/EN :
+ calendrier de reduction des HFC (90 % 2022-2023, 60 % 2024-2028, 30 % 2029-2033, 20 % 2034-2035, 15 % des 2036, base 2011-2013, GWP AR4), regle EPA des transitions
+ technologiques (splits/PAC residentiels et petit commercial : GWP < 700, fabrication 2025 / installation 2026 ; VRF : 2026 / 2027), verificateur rapide de fluide (R410A,
+ R32, R454B, R290, R134a, R407C, R404A, R1234yf), rappel reparation des fuites (seuil ~15 lb). Indicatif hors USA ; echeances a confirmer sur les textes EPA.
+ ETAPE 60 (suite) - CORRECTIFS ANGLAIS : menu du haut (ACCUEIL, CATALOGUE, DEVIS, JOURNAL, FLUIDES, VANNES, RESEAUX, NORMES, CHAUFFAGE, ELECTRICITE,
+ MECATRONIQUE, PROJET, AIDE...) traduit en mode EN et restaure en FR ; libelles de formulaire (CHAUFFAGE, MECATRONIQUE) rebascules apres redessin ; etiquettes des normes
+ et titres FR en EN ; 124 causes de codes de defaut traduites ; compteur 29 -> 50 dans le journal ; quelques libelles (placeholder, free-cooling, orientation Sud).
+ Blocs <script id="aim-60-module"> et <script id="i18n-60-module"> (100 blocs). Mise a jour : node add_aim60.js dist\index.html (verify_js_syntax : 100 blocs).
+ PROCHAINES ETAPES (ouverture internationale 3/3) : unites imperiales dans les modules rapides ; referentiel de calcul selectionnable (Europe / ASHRAE) ; langues es/ar/pt.
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
