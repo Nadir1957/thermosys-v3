@@ -349,6 +349,11 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  personnes (55 W) ajoute ; ratio W/m2 affiche avec alerte si anormalement bas en climat chaud ; hypotheses affichees (vitrage 15 %, +/-30 %).
  Exemple 100 m2 : 7,33 kW (73 W/m2) au lieu de ~3,9 kW (39 W/m2). Bloc <script id="charge-50-module"> (95 blocs). Mise a jour : node add_charge50.js dist\index.html
  RESTE A TRAITER : vitrage 15 % fixe (a rendre saisissable), bilan complet = CHARGE PRO.
+ ETAPE 51 (30/10/2026) - CHARGE PRO et CHAUFFAGE (audit, AUCUNE modification de code) : CHARGE PRO : moteur testes par cas physiques (paroi en regime
+ permanent, conservation de l'energie des gains internes, air neuf sensible et latent = valeurs theoriques a 0,5 %, ciel clair ~815 W/m2 direct a midi en juillet
+ a 36,7 N, profil horaire ASHRAE) -> justes. CHAUFFAGE (EN 12831 simplifiee) : transmission, ponts thermiques, sol EN ISO 13370 (f_g1 1,45), infiltration
+ 2.V.n50.e.eps, rho.cp 0,34, ventilation double flux recalcules a la main -> justes. Pas d'installateur, pas de nouveau bloc (95).
+ RESTE A TRAITER : temperatures de base et annexe nationale a verifier par pays (deja signale dans l'outil).
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
