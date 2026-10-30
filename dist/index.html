@@ -17432,7 +17432,12 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 (function(){
 'use strict';
 if(window.__val56)return; window.__val56=1;
-var VERSION='étape 56 — 30/10/2026';
+var VERSION_FR='étape 56 — 30/10/2026',VERSION_EN='step 56 — 30/10/2026';
+var MODEN={'CHAUFFAGE':'HEATING','ÉLECTRICITÉ':'ELECTRICAL','MÉCATRONIQUE':'MECHATRONICS'};
+var SRCEN={'ISO 2533 (atmosphère standard)':'ISO 2533 (standard atmosphere)','CoolProp 8.0 (Δh à W constant)':'CoolProp 8.0 (Δh at constant W)','CoolProp 8.0 (bilan enthalpie − condensat)':'CoolProp 8.0 (enthalpy balance − condensate)','Calcul manuel EN 12831 / EN ISO 13370':'Manual calculation EN 12831 / EN ISO 13370','Calcul manuel EN 12831':'Manual calculation EN 12831','Formule P / (√3·U·cos φ)':'Formula P / (√3·U·cos φ)','Calcul manuel (ρ à 70 °C, X = 0,08 mΩ/m)':'Manual calculation (ρ at 70 °C, X = 0.08 mΩ/m)','Linéaire (NAMUR NE43)':'Linear (NAMUR NE43)','Calcul manuel π·f·d/√2':'Manual calculation π·f·d/√2','Lois de similitude (P ∝ n³)':'Similarity laws (P ∝ n³)','Calcul manuel (ρ = 1,18 kg/m³, cp = 1 006)':'Manual calculation (ρ = 1.18 kg/m³, cp = 1,006)','Calcul manuel (h_fg = 2 501 kJ/kg)':'Manual calculation (h_fg = 2,501 kJ/kg)','Calcul manuel R = Σ e/λ + films':'Manual calculation R = Σ d/λ + films'};
+function mod(s){return EN()&&MODEN[s]?MODEN[s]:s;}
+function src(s){return EN()&&SRCEN[s]?SRCEN[s]:s;}
+function unit(u){return EN()&&u==='mm/s eff.'?'mm/s rms':u;}
 function $(i){return document.getElementById(i);}
 function EN(){return window.lang==='en';}
 function T(a,b){return EN()?b:a;}
@@ -17484,7 +17489,7 @@ function build(){
  return '<div class="ph" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px"><span class="ptitle" style="margin:0">'+T('VALIDATION — CAS DE RÉFÉRENCE','VALIDATION — REFERENCE CASES')+'</span><button class="btn" onclick="valRun()" style="padding:4px 12px">'+T('Relancer','Run again')+'</button></div>'+
  '<div class="panel" style="padding:10px 14px;font-size:11px;line-height:1.7">'+T('Cette page rejoue des cas dont le résultat est connu par une source indépendante (bibliothèque CoolProp, tables des normes, calcul manuel) sur les moteurs de calcul de Thermosys. Chaque ouverture relance les essais. Un écart au-delà de la tolérance est signalé en rouge : il ne faut alors pas se fier au module concerné avant correction.','This page replays cases whose result is known from an independent source (CoolProp library, standard tables, manual calculation) on the Thermosys calculation engines. The tests run again each time the page opens. A deviation beyond tolerance is shown in red: the module concerned should not be relied upon until corrected.')+'</div>'+
  '<div id="val_sum" style="margin:8px 0"></div><div id="val_tab" style="overflow-x:auto"></div>'+
- '<div style="font-size:10px;color:var(--ts);margin-top:8px">'+T('Version : Thermosys v3, ','Version: Thermosys v3, ')+VERSION+T('. Ces essais ne remplacent pas la vérification d’un projet par un bureau d’études.','. These tests do not replace the verification of a project by an engineering office.')+'</div>';
+ '<div style="font-size:10px;color:var(--ts);margin-top:8px">'+T('Version : Thermosys v3, ','Version: Thermosys v3, ')+T(VERSION_FR,VERSION_EN)+T('. Ces essais ne remplacent pas la vérification d’un projet par un bureau d’études.','. These tests do not replace the verification of a project by an engineering office.')+'</div>';
 }
 function render(){
  var R=run(),n=R.filter(function(x){return x.ok;}).length,sum=$('val_sum'),tab=$('val_tab'); if(!sum||!tab)return;
@@ -17492,9 +17497,9 @@ function render(){
  sum.innerHTML='<div style="display:inline-block;padding:6px 14px;border-radius:6px;font-weight:700;font-size:13px;border:1px solid '+(allOk?'#59a14f':'var(--er)')+';color:'+(allOk?'#59a14f':'var(--er)')+'">'+(allOk?'✓ ':'✗ ')+n+' / '+R.length+' '+T('cas validés','cases passed')+'</div>';
  var rows='',last='';
  R.forEach(function(x){var c=x.c;
-  if(c[0]!==last){last=c[0];rows+='<tr><td colspan="6" style="padding:6px 8px;background:var(--bg2);font-weight:700;font-size:11px">'+esc(c[0])+'</td></tr>';}
+  if(c[0]!==last){last=c[0];rows+='<tr><td colspan="6" style="padding:6px 8px;background:var(--bg2);font-weight:700;font-size:11px">'+esc(mod(c[0]))+'</td></tr>';}
   var col=x.ok?'#59a14f':'var(--er)';
-  rows+='<tr><td style="padding:4px 8px;font-size:11px">'+esc(T(c[2],c[3]))+'</td><td style="padding:4px 8px;text-align:right;white-space:nowrap">'+esc(fmt(c[4],c[7]))+'</td><td style="padding:4px 8px;text-align:right;white-space:nowrap">'+esc(x.err?x.err:fmt(x.v,c[7]))+'</td><td style="padding:4px 8px;text-align:right;white-space:nowrap">'+(x.e==null?'—':(c[6]==='rel'?x.e.toFixed(2)+' %':x.e.toFixed(3)))+' <span style="color:var(--ts)">(≤ '+c[5]+(c[6]==='rel'?' %':'')+')</span></td><td style="padding:4px 8px;font-size:10px;color:var(--ts)">'+esc(c[8])+'</td><td style="padding:4px 8px;font-weight:700;color:'+col+'">'+(x.ok?'OK':T('ÉCART','FAIL'))+'</td></tr>';});
+  rows+='<tr><td style="padding:4px 8px;font-size:11px">'+esc(T(c[2],c[3]))+'</td><td style="padding:4px 8px;text-align:right;white-space:nowrap">'+esc(fmt(c[4],unit(c[7])))+'</td><td style="padding:4px 8px;text-align:right;white-space:nowrap">'+esc(x.err?x.err:fmt(x.v,unit(c[7])))+'</td><td style="padding:4px 8px;text-align:right;white-space:nowrap">'+(x.e==null?'—':(c[6]==='rel'?x.e.toFixed(2)+' %':x.e.toFixed(3)))+' <span style="color:var(--ts)">(≤ '+c[5]+(c[6]==='rel'?' %':'')+')</span></td><td style="padding:4px 8px;font-size:10px;color:var(--ts)">'+esc(src(c[8]))+'</td><td style="padding:4px 8px;font-weight:700;color:'+col+'">'+(x.ok?'OK':T('ÉCART','FAIL'))+'</td></tr>';});
  tab.innerHTML='<table style="width:100%;border-collapse:collapse"><thead><tr style="text-align:left;font-size:10px;color:var(--ts)"><th style="padding:4px 8px">'+T('Cas','Case')+'</th><th style="padding:4px 8px;text-align:right">'+T('Attendu','Expected')+'</th><th style="padding:4px 8px;text-align:right">'+T('Calculé','Computed')+'</th><th style="padding:4px 8px;text-align:right">'+T('Écart','Deviation')+'</th><th style="padding:4px 8px">'+T('Source','Source')+'</th><th style="padding:4px 8px"></th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
 window.valRun=function(){render();};

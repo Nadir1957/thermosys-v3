@@ -382,6 +382,9 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  Mise a jour : node add_validation56.js dist\index.html (verify_js_syntax : 96 blocs).
  PROCHAINE ETAPE : notes de calcul (hypotheses, formules, normes, limites, version) par module ; puis ouverture internationale (ASHRAE, unites imperiales partout, langues).
  RESTE A TRAITER : ajouter des cas de reference pour les modules DOM (CHARGE rapide, RESEAUX, SCOP, FLUIDES, CHAMBRE FROIDE, TRAITEMENT D'AIR).
+ ETAPE 57 (30/10/2026) - VALIDATION (correction anglais) : en EN, les rubriques CHAUFFAGE / ELECTRICITE / MECATRONIQUE, les sources (Calcul manuel, Formule, Lineaire...),
+ l'unite "mm/s eff." et la ligne de version restaient en francais -> traduits (HEATING, ELECTRICAL, MECHATRONICS, Manual calculation, rms, step 56). Le bloc
+ validation-56-module est remplace (96 blocs). Mise a jour : node add_validation57.js dist\index.html
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
