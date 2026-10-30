@@ -435,7 +435,13 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  Valeurs Rp/Ra a confirmer sur le texte officiel ASHRAE 62.1 (indique dans le resultat). Charges sensible/latente recalculees sur le debit ASHRAE; CFM en imperial.
  Aucune autre formule modifiee (pas de selecteur de facade). Bloc <script id="ref-66-module"> (104 blocs). Mise a jour : node add_ref66.js dist\index.html (verify_js_syntax : 104 blocs).
  ETAPE 66b (30/10/2026) - correctif : le resultat AIR NEUF est recalcule quand on change de langue (il restait en francais). Bloc ref-66-module mis a jour (104 blocs). node add_ref66b.js dist\index.html.
- PROCHAINES ETAPES : referentiel selectionnable pour CHAUFFAGE (EN 12831 / ASHRAE) et SCOP ; langues es/ar/pt.
+ ETAPE 67 (30/10/2026) - LANGUES (1/n) : ESPAGNOL, moteur de traduction a 3 langues + lot 1.
+ Le bouton globe fait defiler FR > EN > ES (choix memorise : thermosys_lang3). En ES le noyau reste en anglais (langue pivot) et une couche de traduction
+ (window.I18N3, bloc <script id="lang-i18n3-module">) remplace les textes anglais par l'espagnol, y compris apres chaque redessin, et restaure l'anglais/le francais a la sortie.
+ Dictionnaires dans des blocs de donnees <script id="lang-es-data-N"> : lot 1 = en-tete, menu, pied de page, accueil, DEVIS, REGISTRE, OBD, OCR, BLUETOOTH, CONV., PROJET, CONTACT, MAINT.
+ Les modules non encore traduits restent en anglais en ES. Lots suivants : un lot par groupe de modules (FLUIDES, SCOP, RESEAUX, VANNES, CHARGE, CHAUFFAGE...), puis portugais et arabe (droite a gauche).
+ Correctif d'accompagnement : les notes du convertisseur ne sont plus rebasculees en anglais. Blocs : 106. Mise a jour : node add_lang67.js dist\index.html (verify_js_syntax : 106 blocs).
+ PROCHAINES ETAPES : espagnol lots 2 et suivants, puis portugais et arabe (referentiel ASHRAE pour CHAUFFAGE/SCOP : non fait, tables a verifier).
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
