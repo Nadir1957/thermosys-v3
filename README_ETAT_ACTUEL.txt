@@ -385,6 +385,14 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  ETAPE 57 (30/10/2026) - VALIDATION (correction anglais) : en EN, les rubriques CHAUFFAGE / ELECTRICITE / MECATRONIQUE, les sources (Calcul manuel, Formule, Lineaire...),
  l'unite "mm/s eff." et la ligne de version restaient en francais -> traduits (HEATING, ELECTRICAL, MECHATRONICS, Manual calculation, rms, step 56). Le bloc
  validation-56-module est remplace (96 blocs). Mise a jour : node add_validation57.js dist\index.html
+ ETAPE 58 (30/10/2026) - NOTES DE CALCUL : bouton "Note de calcul" ajoute sous le resultat de 16 calculateurs rapides qui n'avaient pas de note : CHARGE (rapide, air neuf),
+ FLUIDES (TEWI), SCOP (SCOP, cout, ROI), VANNES (Kvs), RESEAUX (debit, pertes de charge, pompe, vase, separateur, collecteur, gaines, frigorifique), DESENFUMAGE. La note
+ s'ouvre dans une fenetre imprimable/PDF : projet, client, site, auteur (onglet PROJET), date, version ; 1 donnees d'entree (libelles et valeurs lus a l'ecran) ; 2 resultats ;
+ 3 methode et formules ; 4 normes et references ; 5 limites et hypotheses ; avertissement de pre-dimensionnement. Bilingue FR/EN. Bloc <script id="notes-58-module"> (97 blocs).
+ Mise a jour : node add_notes58.js dist\index.html (verify_js_syntax : 97 blocs).
+ DEJA AVEC NOTE : CHARGE PRO, PSYCHRO, CHAUFFAGE, ELECTRICITE, MECATRONIQUE, CHAMBRE FROIDE, TRAITEMENT D'AIR, DEVIS, LOTO, MAINTENANCE, RESEAU RAMIFIE, PROJET (PDF combine).
+ RESTE A TRAITER : inclure ces nouvelles notes dans le PDF combine du module PROJET ; notes pour RE2020, repartiteur Refnet, point de rosee / isolation.
+ PROCHAINE ETAPE : ouverture internationale (referentiel ASHRAE 90.1/62.1/15, unites imperiales partout, langues es/ar/pt).
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 

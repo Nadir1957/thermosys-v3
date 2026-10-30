@@ -17520,6 +17520,104 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 
 </script>
+<script id="notes-58-module">
+/* Thermosys etape 58 - NOTES DE CALCUL : bouton "Note de calcul" pour les calculateurs rapides (idempotent) */
+(function(){
+'use strict';
+if(window.__note58)return; window.__note58=1;
+var VER_FR='Thermosys v3 — étape 58',VER_EN='Thermosys v3 — step 58';
+function $(i){return document.getElementById(i);}
+function EN(){return window.lang==='en';}
+function T(a,b){return EN()?b:a;}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+/* id, page, titre FR/EN, entrees, resultats, formules, references, limites */
+var REG=[
+{id:'chg',page:'charge',fr:'CHARGE — estimation rapide de la charge frigorifique',en:'CHARGE — quick cooling load estimate',inp:['chgSurf','chgH','chgIso','chgSol','chgPers','chgEquip','chgText','chgTint','chgType'],res:['chgResult','chgReco'],
+ f:[['Enveloppe : Φ = U · S · ΔT, avec U selon le niveau d’isolation choisi et ΔT = T ext. − T int.','Envelope: Φ = U · S · ΔT, with U according to the selected insulation level and ΔT = outdoor − indoor temperature.'],['Apports solaires : surface vitrée = 15 % de la surface au sol, multipliée par un flux de pointe de 50, 150, 250 ou 400 W par m² de vitrage selon l’exposition.','Solar gains: glazed area = 15 % of floor area, multiplied by a peak flux of 50, 150, 250 or 400 W per m² of glazing depending on exposure.'],['Occupants : 75 W sensibles et 55 W latents par personne ; équipements et éclairage saisis en watts.','Occupants: 75 W sensible and 55 W latent per person; equipment and lighting entered in watts.'],['Renouvellement d’air : Φ = S · H · n · 1,2 · 1006 · ΔT / 3600, avec n = 0,5 / 1,5 / 2 / 2 vol/h (résidentiel / bureau / commerce / industriel).','Air change: Φ = S · H · n · 1.2 · 1006 · ΔT / 3600, with n = 0.5 / 1.5 / 2 / 2 ACH (residential / office / retail / industrial).'],['Puissance recommandée : le plus grand de la charge majorée de 20 % arrondie par pas de 1,5 kW et d’une charge spécifique minimale par type de local.','Recommended capacity: the larger of the load increased by 20 % rounded in 1.5 kW steps and a minimum specific load by room type.']],
+ r:['ASHRAE Handbook — Fundamentals (charges de refroidissement)','EN 16798-1'],
+ l:[['Estimation rapide : précision d’environ ±30 %.','Quick estimate: accuracy of about ±30 %.'],['Le latent de l’air neuf n’est pas inclus ; pour un bilan complet utiliser CHARGE PRO.','Fresh-air latent load is not included; use CHARGE PRO for a complete load.']]},
+{id:'an',page:'charge',fr:'CHARGE — air neuf, débit et charge thermique',en:'CHARGE — fresh air flow and thermal load',inp:['anPersons','anType','anText','anTint','anHext'],res:['anResult'],
+ f:[['Débit d’air neuf = nombre de personnes × débit par personne selon l’usage du local.','Fresh air flow = number of persons × flow per person according to room use.'],['Charge thermique de l’air neuf calculée à partir du débit massique d’air et de l’écart de température (et d’humidité) entre l’extérieur et l’intérieur.','Fresh-air thermal load calculated from the air mass flow and the temperature (and humidity) difference between outdoors and indoors.']],
+ r:['EN 16798-1','ASHRAE 62.1'],l:[['Débits par personne indicatifs : à confirmer avec la réglementation locale.','Flows per person are indicative: confirm with local regulations.']]},
+{id:'tewi',page:'fluides',fr:'FLUIDES — impact équivalent sur le réchauffement (TEWI)',en:'FLUIDS — total equivalent warming impact (TEWI)',inp:['tewi_sys','tewi_kw','tewi_ref','tewi_charge','tewi_leak','tewi_life','tewi_recov','tewi_elec','tewi_grid','tewi_grid_custom'],res:['tewiResult'],
+ f:[['TEWI = GWP · m · L · n  +  GWP · m · (1 − α)  +  n · E · β','TEWI = GWP · m · L · n  +  GWP · m · (1 − α)  +  n · E · β'],['m : charge de fluide (kg) ; L : taux de fuite annuel ; n : durée de vie (ans) ; α : taux de récupération en fin de vie ; E : consommation annuelle (kWh) ; β : facteur d’émission du réseau électrique (kgCO2/kWh).','m: refrigerant charge (kg); L: annual leak rate; n: lifetime (years); α: end-of-life recovery rate; E: annual energy consumption (kWh); β: grid emission factor (kgCO2/kWh).']],
+ r:['EN 378-1, annexe sur le TEWI','Règlement (UE) 2024/573 (gaz à effet de serre fluorés)','GWP sur 100 ans, valeurs AR4'],l:[['Les facteurs d’émission du réseau sont des valeurs par pays à vérifier.','Grid emission factors are country values to be verified.'],['Les valeurs de GWP AR5/AR6 diffèrent de AR4.','AR5/AR6 GWP values differ from AR4.']]},
+{id:'scop',page:'scop',fr:'SCOP / COP / EER — efficacité énergétique saisonnière',en:'SCOP / COP / EER — seasonal energy efficiency',inp:['scopCountry','scopZone','scopCap','scopCOP','scopFiche','scopRef'],res:['scopResult'],
+ f:[['Efficacité saisonnière : ηs = SCOP / 2,5 × 100 − F(1), avec F(1) = 3 % (et 5 % supplémentaires pour les pompes à chaleur eau ou saumure).','Seasonal efficiency: ηs = SCOP / 2.5 × 100 − F(1), with F(1) = 3 % (and an additional 5 % for water or brine heat pumps).'],['Classe d’efficacité énergétique déduite de ηs (à 35 °C de départ).','Energy efficiency class derived from ηs (at 35 °C flow temperature).']],
+ r:['EN 14825','EN 14511','Règlement (UE) 811/2013 et 813/2013'],l:[['Estimation à partir des performances saisies ; ±15 %. La méthode complète par température (bins) n’est pas appliquée.','Estimate from the performances entered; ±15 %. The full bin method is not applied.']]},
+{id:'cost',page:'scop',fr:'SCOP — coût d’exploitation',en:'SCOP — operating cost',inp:['costCap','costEER','costH','costKWh'],res:['costResult'],
+ f:[['Énergie annuelle = puissance / EER × heures de fonctionnement ; coût = énergie × prix du kWh.','Annual energy = capacity / EER × operating hours; cost = energy × price per kWh.']],r:['—'],l:[['Hypothèse de fonctionnement à charge nominale : le coût réel dépend de la charge partielle.','Nominal-load operation assumed: actual cost depends on part load.']]},
+{id:'roi',page:'scop',fr:'SCOP — retour sur investissement',en:'SCOP — return on investment',inp:['roiInstPAC','roiInstChaud','roiKwh','roiScop','roiCopChaud','roiPrixElec','roiPrixGaz'],res:['roiResult'],
+ f:[['Temps de retour = surcoût d’investissement / économie annuelle d’énergie.','Payback = additional investment / annual energy saving.']],r:['—'],l:[['Prix de l’énergie constants ; ni actualisation ni maintenance.','Constant energy prices; no discounting or maintenance.']]},
+{id:'kvs',page:'vannes',fr:'VANNES — calcul du Kvs',en:'VALVES — Kvs calculation',inp:['kvsQ','kvsDp','kvsRho'],res:['kvsResult'],
+ f:[['Kvs = Q · √(ρ / 1000 / ΔP), avec Q en m³/h, ΔP en bar et ρ en kg/m³.','Kvs = Q · √(ρ / 1000 / ΔP), with Q in m³/h, ΔP in bar and ρ in kg/m³.']],r:['IEC 60534-2-1 (dimensionnement des vannes de régulation)'],l:[['Écoulement turbulent d’un liquide, sans cavitation ni vaporisation.','Turbulent liquid flow, without cavitation or flashing.']]},
+{id:'hflow',page:'hydraulique',fr:'RÉSEAUX — débit d’eau et diamètre',en:'NETWORKS — water flow and diameter',inp:['hCap','hDt','hV'],res:['hydFlowResult'],
+ f:[['Débit : Q = P / (ρ · cp · ΔT).','Flow: Q = P / (ρ · cp · ΔT).'],['Diamètre : D = √(4 · Q / (π · v)), puis diamètre normalisé (DN) et vitesse réelle.','Diameter: D = √(4 · Q / (π · v)), then standard diameter (DN) and actual velocity.']],r:['EN 12828','Guides de vitesses recommandées'],l:[['Eau à 20 °C ; vitesses recommandées indicatives.','Water at 20 °C; recommended velocities are indicative.']]},
+{id:'pdc',page:'hydraulique',fr:'RÉSEAUX — pertes de charge linéaires',en:'NETWORKS — linear pressure drop',inp:['pdcQ','pdcDN','pdcL','pdcFluid'],res:['pdcResult'],
+ f:[['Darcy-Weisbach : ΔP = λ · (L / D) · ρ · v² / 2.','Darcy-Weisbach: ΔP = λ · (L / D) · ρ · v² / 2.'],['Coefficient de frottement λ par la formule de Swamee-Jain (approximation de Colebrook-White) ; régimes laminaire, transitoire et turbulent distingués.','Friction factor λ from the Swamee-Jain formula (Colebrook-White approximation); laminar, transitional and turbulent regimes distinguished.']],r:['Colebrook-White','Swamee-Jain'],l:[['Acier lisse, fluide à 20 °C, sans singularités.','Smooth steel, fluid at 20 °C, no fittings.']]},
+{id:'pump',page:'hydraulique',fr:'RÉSEAUX — pompe',en:'NETWORKS — pump',inp:['pompeQ','pompeHMT','pompeEta'],res:['pompeResult'],
+ f:[['Puissance hydraulique : P = ρ · g · Q · H ; puissance absorbée = P / η.','Hydraulic power: P = ρ · g · Q · H; absorbed power = P / η.']],r:['—'],l:[['Rendement saisi par l’utilisateur ; sélection finale selon la courbe du constructeur.','Efficiency entered by the user; final selection according to the manufacturer’s curve.']]},
+{id:'vase',page:'hydraulique',fr:'RÉSEAUX — vase d’expansion',en:'NETWORKS — expansion vessel',inp:['vaseVol','vaseT1','vaseT2','vasePs','vasePmax'],res:['vaseResult'],
+ f:[['Volume du vase déterminé à partir de la dilatation de l’eau entre les températures T1 et T2, de la réserve d’eau, de la pression de gonflage et de la pression maximale admissible.','Vessel volume determined from the expansion of water between temperatures T1 and T2, the water reserve, the pre-charge pressure and the maximum allowable pressure.']],r:['EN 12828'],l:[['Valeurs à confirmer avec la fiche du constructeur du vase.','Values to be confirmed with the vessel manufacturer’s datasheet.']]},
+{id:'sep',page:'hydraulique',fr:'RÉSEAUX — séparateur hydraulique',en:'NETWORKS — hydraulic separator',inp:['sepQ','sepV'],res:['sepResult'],
+ f:[['Diamètre : D = √(4 · Q / (π · v)) ; volume du corps et temps de séjour affichés.','Diameter: D = √(4 · Q / (π · v)); body volume and residence time displayed.']],r:['—'],l:[['Dimensionnement indicatif.','Indicative sizing.']]},
+{id:'col',page:'hydraulique',fr:'RÉSEAUX — collecteur distributeur',en:'NETWORKS — distribution header',inp:['colQ','colN','colV'],res:['colResult'],
+ f:[['Diamètre du collecteur : D = √(4 · Q / (π · v)) pour la vitesse maximale choisie.','Header diameter: D = √(4 · Q / (π · v)) for the selected maximum velocity.']],r:['—'],l:[['Dimensionnement indicatif.','Indicative sizing.']]},
+{id:'duct',page:'hydraulique',fr:'RÉSEAUX — gaines d’air',en:'NETWORKS — air ducts',inp:['gaineQ','gainePos','gaineForme','gaineH','gaineVmax'],res:['gaineResult'],
+ f:[['Section : S = Q / v ; diamètre équivalent d’une gaine rectangulaire par la formule de Huebscher.','Area: S = Q / v; equivalent diameter of a rectangular duct by the Huebscher formula.']],r:['ASHRAE Handbook — Fundamentals (conduits)'],l:[['Vitesses maximales recommandées indicatives.','Recommended maximum velocities are indicative.']]},
+{id:'frigo',page:'hydraulique',fr:'RÉSEAUX — tuyauterie frigorifique',en:'NETWORKS — refrigerant piping',inp:['frigoCap','frigoFluid','frigoLigne','frigoRiser','frigoLeq'],res:['frigoResult'],
+ f:[['Sélection du tube ACR normalisé dont la vitesse respecte le critère de retour d’huile (colonne montante) et les vitesses admissibles de la ligne.','Selection of the standard ACR tube whose velocity meets the oil return criterion (riser) and the allowable line velocities.']],r:['EN 378','ASHRAE Handbook — Refrigeration'],l:[['Fluides : R410A, R32, R134a, R404A, R290 ; à confirmer avec le constructeur.','Refrigerants: R410A, R32, R134a, R404A, R290; to be confirmed with the manufacturer.']]},
+{id:'dsf',page:'desenfumage',fr:'DÉSENFUMAGE — panache thermique',en:'SMOKE EXTRACTION — thermal plume',inp:['dsf_surface','dsf_hauteur','dsf1_type','dsf1_mode','dsf1_cantons','dsf1_fan','dsf2_qc','dsf2_qc_custom','dsf2_z','dsf2_t0','dsf2_plume','dsf2_fan','dsf2_balW','dsf2_balH','dsf3_q','dsf3_q_custom','dsf3_z','dsf3_t0','dsf3_plume','dsf3_fan','dsf3_balW','dsf3_balH'],res:['dsf_result'],
+ f:[['Débit d’extraction par la méthode du panache thermique (Thomas / Hinkley) selon la configuration : axisymétrique, contre paroi, en coin, sous balcon.','Extraction rate by the thermal plume method (Thomas / Hinkley) according to the configuration: axisymmetric, against a wall, in a corner, balcony spill.']],r:['EN 12101-5','NFPA 92'],l:[['Résultat indicatif, à valider par un bureau de contrôle ou un ingénieur sécurité incendie.','Indicative result, to be validated by a control body or a fire safety engineer.']]}
+];
+function lab(id){var e=$(id),l,t='';if(!e)return id;
+ l=document.querySelector('label[for="'+id+'"]');
+ if(l)t=l.textContent;else{var r=e.closest&&e.closest('.frow');var f=r&&r.querySelector('.flb,label,span');if(f)t=f.textContent;else if(e.previousElementSibling)t=e.previousElementSibling.textContent;}
+ t=String(t||id).replace(/\s+/g,' ').trim();
+ if(t.indexOf(' / ')>0){var p=t.split(' / ');t=EN()?p[p.length-1]:p[0];}
+ return t.replace(/\s*:\s*$/,'');}
+function val(e){if(!e)return '';if(e.tagName==='SELECT'){var o=e.options[e.selectedIndex];var x=o?o.text:'';if(x.indexOf(' / ')>0){var p=x.split(' / ');x=EN()?p[p.length-1]:p[0];}return x;}return e.value;}
+function info(id){var e=$(id);return e?String(e.value||'').trim():'';}
+function note(R){
+ var rows='',any=false;
+ R.inp.forEach(function(id){var e=$(id);if(!e)return;var v=val(e);if(v===''||v==null)return;if(e.offsetParent===null&&e.type!=='hidden'&&!e.closest('.page'))return;any=true;rows+='<tr><td>'+esc(lab(id))+'</td><td class="v">'+esc(v)+'</td></tr>';});
+ var res='';R.res.forEach(function(id){var e=$(id);if(e){var t=String(e.innerText||'').trim();if(t)res+='<div class="res">'+esc(t)+'</div>';}});
+ if(!res){if(typeof showToast==='function'){showToast(T('Lancez d’abord le calcul pour obtenir une note.','Run the calculation first to get a note.'),'w');}return;}
+ var d=new Date(),ds=d.toLocaleDateString(EN()?'en-GB':'fr-FR')+' '+d.toLocaleTimeString(EN()?'en-GB':'fr-FR',{hour:'2-digit',minute:'2-digit'});
+ var f=R.f.map(function(x){return '<li>'+esc(T(x[0],x[1]))+'</li>';}).join('');
+ var refs=R.r.filter(function(x){return x!=='—';}).map(function(x){return '<li>'+esc(x)+'</li>';}).join('');
+ var lim=R.l.map(function(x){return '<li>'+esc(T(x[0],x[1]))+'</li>';}).join('');
+ var html='<!doctype html><html lang="'+(EN()?'en':'fr')+'"><head><meta charset="utf-8"><title>'+esc(T(R.fr,R.en))+'</title><style>*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:0;padding:24px;font-size:12px;line-height:1.5}h1{font-size:16px;margin:0 0 4px}h2{font-size:12px;margin:16px 0 6px;padding-bottom:3px;border-bottom:1px solid #999;text-transform:uppercase}table{border-collapse:collapse;width:100%}td{padding:3px 6px;border-bottom:1px solid #ddd;vertical-align:top}td.v{font-weight:700;text-align:right}.res{white-space:pre-wrap;font-family:Consolas,monospace;background:#f4f6f8;border:1px solid #ccc;padding:8px;margin:0 0 6px}.meta td{border:0;padding:1px 6px}ul{margin:4px 0 0 18px;padding:0}.foot{margin-top:18px;font-size:10px;color:#555;border-top:1px solid #999;padding-top:6px}.btn{padding:6px 14px;margin-bottom:12px;cursor:pointer}@media print{.btn{display:none}body{padding:0}}</style></head><body>'+
+ '<button class="btn" onclick="window.print()">'+T('Imprimer / enregistrer en PDF','Print / save as PDF')+'</button>'+
+ '<h1>THERMOSYS — '+T('NOTE DE CALCUL','CALCULATION NOTE')+'</h1><div style="font-size:13px;font-weight:700;margin-bottom:6px">'+esc(T(R.fr,R.en))+'</div>'+
+ '<table class="meta"><tr><td>'+T('Date','Date')+' : '+esc(ds)+'</td><td>'+T('Version','Version')+' : '+esc(T(VER_FR,VER_EN))+'</td></tr><tr><td>'+T('Projet','Project')+' : '+esc(info('pj_proj'))+'</td><td>'+T('Client','Client')+' : '+esc(info('pj_cli'))+'</td></tr><tr><td>'+T('Site','Site')+' : '+esc(info('pj_site'))+'</td><td>'+T('Établi par','Prepared by')+' : '+esc(info('pj_by'))+'</td></tr></table>'+
+ '<h2>1. '+T('Données d’entrée','Input data')+'</h2>'+(any?'<table>'+rows+'</table>':'<div>—</div>')+
+ '<h2>2. '+T('Résultats','Results')+'</h2>'+res+
+ '<h2>3. '+T('Méthode et formules','Method and formulas')+'</h2><ul>'+f+'</ul>'+
+ '<h2>4. '+T('Normes et références','Standards and references')+'</h2>'+(refs?'<ul>'+refs+'</ul>':'<div>—</div>')+
+ '<h2>5. '+T('Limites et hypothèses','Limits and assumptions')+'</h2><ul>'+lim+'</ul>'+
+ '<div class="foot">'+T('Note générée automatiquement par Thermosys v3 à partir des données saisies. Pré-dimensionnement : les résultats doivent être vérifiés par un professionnel qualifié avant toute décision.','Note generated automatically by Thermosys v3 from the data entered. Preliminary sizing: results must be checked by a qualified professional before any decision.')+'</div></body></html>';
+ var w=window.open('','_blank');
+ if(!w){if(typeof showToast==='function'){showToast(T('Fenêtre bloquée : autorisez les fenêtres pour imprimer la note.','Pop-up blocked: allow pop-ups to print the note.'),'w');}return;}
+ w.document.open();w.document.write(html);w.document.close();
+}
+window.nt58=function(id){var R=REG.filter(function(x){return x.id===id;})[0];if(R)note(R);};
+window.nt58Html=function(id){var R=REG.filter(function(x){return x.id===id;})[0];return R?R:null;};
+function ensure(){
+ REG.forEach(function(R){
+  var last=$(R.res[R.res.length-1]);if(!last||!last.parentNode)return;
+  var bid='nt58_'+R.id,b=$(bid);
+  if(!b){var wrap=document.createElement('div');wrap.id=bid;wrap.style.cssText='margin:4px 0 8px';wrap.innerHTML='<button class="btn" style="padding:3px 10px;font-size:11px" onclick="nt58(\''+R.id+'\')"></button>';last.insertAdjacentElement('afterend',wrap);b=wrap;}
+  var bt=b.querySelector('button');var t='📄 '+T('Note de calcul','Calculation note');if(bt&&bt.textContent!==t)bt.textContent=t;
+ });
+}
+var _og=window.goPage;window.goPage=function(p){if(_og)_og.apply(this,arguments);setTimeout(ensure,60);};
+var _ot=window.toggleLang;window.toggleLang=function(){if(_ot)_ot.apply(this,arguments);setTimeout(ensure,160);};
+function start(){ensure();setInterval(ensure,2000);}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+})();
+
+</script>
 </body>
 </html>
 
