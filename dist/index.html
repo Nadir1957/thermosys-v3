@@ -14393,9 +14393,9 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
     put('Te', 0); put('Tme', 14); put('n50', 3); put('n50p', 3); put('shield', 'moderate'); put('zc', 5); put('dutb', 0.1); put('frh', 0); put('gw', 1.0); put('margin', 10);
     var mk = function (name, type, area, h, ex, per, elems) { var r = newRoom(type); r.name = name; r.area = area; r.h = h; r.exposure = ex; r.per = per; r.elems = elems; return r; };
     var E = function (k, a, cons, adj, extra) { var e = newElem(k); e.area = a; e.cons = cons; e.adj = adj; if (extra) { Object.keys(extra).forEach(function (x) { e[x] = extra[x]; }); } return e; };
-    RM = [mk('Séjour', 'living', 24, 2.7, 'more', 20, [E('wall', 18, 'w4', 'ext'), E('glaz', 4.5, 'g4', 'ext'), E('door', 2, 'd3', 'ext'), E('roof', 24, 'r3', 'ext'), E('floor', 24, 'f2', 'gnd'), E('wall', 12, 'w7', 'adj', { Tadj: 20 })]),
-      mk('Chambre', 'bed', 14, 2.7, 'one', 8, [E('wall', 9, 'w4', 'ext'), E('glaz', 2, 'g4', 'ext'), E('roof', 14, 'r3', 'ext'), E('floor', 14, 'f2', 'gnd')]),
-      mk('Salle de bains', 'bath', 6, 2.7, 'one', 5, [E('wall', 6, 'w4', 'ext'), E('glaz', 0.8, 'g4', 'ext'), E('roof', 6, 'r3', 'ext'), E('floor', 6, 'f2', 'gnd'), E('wall', 8, 'w7', 'unc', { bu: 0.5 })])];
+    RM = [mk(T('Séjour', 'Living room'), 'living', 24, 2.7, 'more', 20, [E('wall', 18, 'w4', 'ext'), E('glaz', 4.5, 'g4', 'ext'), E('door', 2, 'd3', 'ext'), E('roof', 24, 'r3', 'ext'), E('floor', 24, 'f2', 'gnd'), E('wall', 12, 'w7', 'adj', { Tadj: 20 })]),
+      mk(T('Chambre', 'Bedroom'), 'bed', 14, 2.7, 'one', 8, [E('wall', 9, 'w4', 'ext'), E('glaz', 2, 'g4', 'ext'), E('roof', 14, 'r3', 'ext'), E('floor', 14, 'f2', 'gnd')]),
+      mk(T('Salle de bains', 'Bathroom'), 'bath', 6, 2.7, 'one', 5, [E('wall', 6, 'w4', 'ext'), E('glaz', 0.8, 'g4', 'ext'), E('roof', 6, 'r3', 'ext'), E('floor', 6, 'f2', 'gnd'), E('wall', 8, 'w7', 'unc', { bu: 0.5 })])];
     CUR = 0; drawRooms(); window.htCalc();
   };
   window.htReset = function () {
@@ -14442,6 +14442,12 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
   function applyLang() {
     var root = $('pg-heat'); if (!root) { return; }
     root.querySelectorAll('[data-cfr]').forEach(function (el) { el.textContent = EN() ? el.getAttribute('data-cen') : el.getAttribute('data-cfr'); });
+    /* RELOC_NAMES_61 : les noms de pieces par defaut suivent la langue */
+    var _al = { 'Séjour': 'Living room', 'Living room': 'Living room' };
+    var _fr = { 'Living room': 'Séjour, salon' };
+    RT.forEach(function (t) { _al[t.fr] = t.en; _al[t.en] = t.en; _fr[t.en] = t.fr; });
+    _al['Séjour'] = 'Living room'; _fr['Séjour'] = 'Séjour';
+    RM.forEach(function (r) { if (!r || typeof r.name !== 'string') { return; } var nm = r.name.trim(); if (_al[nm] === undefined) { return; } var en = _al[nm]; var fr = (nm === 'Séjour') ? 'Séjour' : (_fr[en] || nm); if (nm === 'Séjour' && !EN()) { return; } r.name = EN() ? en : fr; });
     drawRooms();
   }
   function install() {

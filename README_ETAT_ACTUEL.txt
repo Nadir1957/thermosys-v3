@@ -406,6 +406,8 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  MECATRONIQUE, PROJET, AIDE...) traduit en mode EN et restaure en FR ; libelles de formulaire (CHAUFFAGE, MECATRONIQUE) rebascules apres redessin ; etiquettes des normes
  et titres FR en EN ; 124 causes de codes de defaut traduites ; compteur 29 -> 50 dans le journal ; quelques libelles (placeholder, free-cooling, orientation Sud).
  Blocs <script id="aim-60-module"> et <script id="i18n-60-module"> (100 blocs). Mise a jour : node add_aim60.js dist\index.html (verify_js_syntax : 100 blocs).
+ ETAPE 61 (30/10/2026) - CHAUFFAGE : les noms de pieces par defaut (Sejour/salon, Chambre, Salle de bains...) suivent la langue (FR/EN), y compris l'exemple;
+ un nom saisi par l'utilisateur n'est jamais modifie. Pas de nouveau bloc (100 blocs). Mise a jour : node add_heat61.js dist\index.html.
  PROCHAINES ETAPES (ouverture internationale 3/3) : unites imperiales dans les modules rapides ; referentiel de calcul selectionnable (Europe / ASHRAE) ; langues es/ar/pt.
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
