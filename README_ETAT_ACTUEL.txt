@@ -375,6 +375,13 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  contre la documentation constructeur officielle" (faux) -> base indicative sur 37 marques, a confirmer avec le manuel de service ; "calcul des deperditions" (module CHARGE)
  -> renvoi au module CHAUFFAGE. Remplacement de texte dans la page, pas de nouveau bloc (95). Mise a jour : node add_aide55.js dist\index.html
  RESTE A TRAITER : OBD, Bluetooth, OCR, Historique (modules d'accompagnement) ; codes defaut des autres marques ; "Gemini 2.5 Flash" a confirmer cote serveur (API_PROXY).
+ ETAPE 56 (30/10/2026) - AUDIT DES MODULES D'ACCOMPAGNEMENT + PAGE VALIDATION. OBD et Bluetooth : pages masquees (materiel requis), rien a corriger ; OCR et
+ Historique : conformes (mention "WEBP" de la zone de depot absente de l'aide : mineur). NOUVEAU : onglet VALIDATION (page pg-validation, bloc <script id="validation-56-module">,
+ 96 blocs) : 26 cas de reference rejoues a chaque ouverture sur les moteurs PSY, HEAT, ELEC, MECH, CLE ; sources independantes : CoolProp 8.0, IEC 60751, IEC 60364-5-52/-5-54,
+ ISO 2533, calculs manuels EN 12831 ; tolerance et ecart affiches, ligne rouge si ecart, bilingue. Fonction window.valResults() (essais automatisables).
+ Mise a jour : node add_validation56.js dist\index.html (verify_js_syntax : 96 blocs).
+ PROCHAINE ETAPE : notes de calcul (hypotheses, formules, normes, limites, version) par module ; puis ouverture internationale (ASHRAE, unites imperiales partout, langues).
+ RESTE A TRAITER : ajouter des cas de reference pour les modules DOM (CHARGE rapide, RESEAUX, SCOP, FLUIDES, CHAMBRE FROIDE, TRAITEMENT D'AIR).
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
