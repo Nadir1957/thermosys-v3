@@ -15136,7 +15136,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
   window.__unitsMod = true;
   if (typeof document === 'undefined') { return; }
   /* ============ UNITES IMPERIALES : affichage double, calculs inchanges (SI) ============ */
-  var KEY = 'thermosys_units_v1', MARK = '​', PAGES = ['pg-chargepro', 'pg-heat', 'pg-elec', 'pg-mecha', 'pg-coldroom', 'pg-airtreat'], ALLP = ['pg-chargepro', 'pg-psy', 'pg-heat', 'pg-elec', 'pg-mecha', 'pg-coldroom', 'pg-airtreat'];
+  var KEY = 'thermosys_units_v1', MARK = '​', PAGES = ['pg-chargepro', 'pg-heat', 'pg-elec', 'pg-mecha', 'pg-coldroom', 'pg-airtreat', 'pg-fluides', 'pg-charge'], ALLP = ['pg-chargepro', 'pg-psy', 'pg-heat', 'pg-elec', 'pg-mecha', 'pg-coldroom', 'pg-airtreat', 'pg-fluides', 'pg-charge'];
   var imp = false, busy = false;
   function EN() { return window.lang === 'en'; }
   function T(fr, en) { return EN() ? en : fr; }
@@ -16221,8 +16221,8 @@ if(typeof _sc==='function') window.calcSCOP=function(){
     'Placing-on-the-market dates in the EU (Regulation (EU) 2024/573, Annex IV). Equipment placed on the market before the date may still be installed and serviced. These rules do not apply directly outside the EU (indicative for Algeria). Confirm against the official text before any regulatory decision.'];
   function content() {
     var h = {};
-    h.ref = '<tr>' + [L('Réfrigérant', 'Refrigerant'), 'GWP (AR4)', L('T crit. (°C)', 'T crit. (°C)'), L('P crit. (bar)', 'P crit. (bar)'), L('T éb. 1 atm (°C)', 'T boil. 1 atm (°C)'), L('Classification', 'Safety class'), L('Statut F-Gas (UE)', 'F-Gas status (EU)'), 'Usage'].map(function (c) { return '<th>' + esc(c) + '</th>'; }).join('') + '</tr>';
-    h.refB = REF.map(function (r) { return tdr([r[0], r[1], r[2], r[3], r[4], r[5], T(r[6]), T(r[7])]); }).join('');
+    h.ref = '<tr>' + [L('Réfrigérant', 'Refrigerant'), 'GWP (AR4)', L('T crit. (°C)', 'T crit. (°C)'), L('P crit. (bar)', 'P crit. (bar)'), L('T éb. 1 atm (°C)', 'T boil. 1 atm (°C)'), L('Classification', 'Safety class'), L('Statut F-Gas (UE)', 'F-Gas status (EU)'), L('Utilisation', 'Use')].map(function (c) { return '<th>' + esc(c) + '</th>'; }).join('') + '</tr>';
+    h.refB = REF.map(function (r) { var I = !!(window.UNITS && window.UNITS.isImp && window.UNITS.isImp()); var cv = function (x, k) { var m = String(x).match(/[−-]?\d+(?:[.,]\d+)?/); if (!I || !m) { return x; } var v = parseFloat(m[0].replace('−', '-').replace(',', '.')); return x + (k === 'C' ? ' (' + (v * 9 / 5 + 32).toFixed(1) + ' °F)' : ' (' + Math.round(v * 14.5038) + ' psia)'); }; return tdr([r[0], r[1], cv(r[2], 'C'), cv(r[3], 'B'), cv(r[4], 'C'), r[5], T(r[6]), T(r[7])]); }).join('');
     h.oil = thr([L('Huile', 'Oil'), 'Type', L('Viscosité ISO VG', 'ISO VG viscosity'), L('Réfrigérants compatibles (voir fiche du compresseur)', 'Compatible refrigerants (see compressor datasheet)'), L('Applications', 'Applications')]);
     h.oilB = OIL.map(function (r) { return tdr([r[0], T(r[1]), r[2], T(r[3]), T(r[4])]); }).join('');
     h.fg = '<table class="tbl"><thead>' + thr([L('Échéance', 'Date'), L('Mesure', 'Measure'), L('Impact', 'Impact')]) + '</thead><tbody>' + FG.map(function (r) { return tdr([r[0], r[en() ? 3 : 1], r[en() ? 4 : 2]]); }).join('') + '</tbody></table><div style="font-size:10px;opacity:.8;margin-top:8px">' + esc(T(NOTE_FG)) + '</div>';
@@ -17668,7 +17668,7 @@ function build(){
  h+='<select id="aim60_sel" style="font-size:11px">';
  RF.forEach(function(r,i){h+='<option value="'+r[1]+'">'+r[0]+' (GWP '+r[1]+')</option>';});
  h+='</select> <span id="aim60_res" style="font-weight:700"></span>';
- h+='<div style="margin-top:8px">'+T('Dépannage : à partir d’un seuil de charge (≈ 15 lb, soit 6,8 kg) l’EPA impose la réparation des fuites au-delà d’un taux annuel fixé par type d’installation. Les équipements existants peuvent continuer à être entretenus.','Servicing: above a charge threshold (≈ 15 lb, i.e. 6.8 kg) the EPA requires leak repair when the annual leak rate exceeds a limit set by application. Existing equipment may continue to be serviced.')+'</div>';
+ h+='<div style="margin-top:8px">'+T('Dépannage : à partir d’un seuil de charge de 6,8 kg l’EPA impose la réparation des fuites au-delà d’un taux annuel fixé par type d’installation. Les équipements existants peuvent continuer à être entretenus.','Servicing: above a charge threshold of 6.8 kg the EPA requires leak repair when the annual leak rate exceeds a limit set by application. Existing equipment may continue to be serviced.')+'</div>';
  h+='<div style="margin-top:6px;font-style:italic">'+T('Réglementation américaine : indicatif hors USA (Algérie). Les échéances et seuils sont à confirmer sur les textes officiels de l’EPA avant toute décision réglementaire. Voir aussi le Protocole de Montréal (Amendement de Kigali) dans NORMES.','US regulation: indicative outside the USA (Algeria). Deadlines and thresholds must be confirmed against the official EPA texts before any regulatory decision. See also the Montreal Protocol (Kigali Amendment) in STANDARDS.')+'</div></div>';
  return h;
 }
@@ -17750,6 +17750,53 @@ if(window.MutationObserver){ var nav=document.getElementById('mn-home'); nav=nav
   if(nav) new MutationObserver(function(){ try{ sweepMenu(); }catch(e){} }).observe(nav,{childList:true,characterData:true,subtree:true});
   var root=document.getElementById('app')||document.body; new MutationObserver(later).observe(root,{childList:true,subtree:true}); }
 all();
+})();
+
+</script>
+<script id="units-62-module">
+(function(){
+'use strict';
+function EN(){return window.lang==='en';}
+function T(fr,en){return EN()?en:fr;}
+function $(id){return document.getElementById(id);}
+function imp(){return !!(window.UNITS&&window.UNITS.isImp&&window.UNITS.isImp());}
+function grp(n,d){var s=n.toFixed(d),p=s.split('.');p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,' ');return p.join('.');}
+function pnum(x){return parseFloat(String(x).replace('−','-').replace(/[\s\u00a0\u202f]/g,'').replace(',','.'));}
+var busy=false,tm=null;
+
+/* 1. FLUIDES : bulles de conversion pour Capacite (kW) et Charge (kg) */
+function hint(id,fn){
+  var inp=$(id); if(!inp) return;
+  var h=inp.parentElement.querySelector('.un62-hint');
+  if(!imp()){ if(h) h.remove(); return; }
+  if(!h){ h=document.createElement('span'); h.className='un62-hint'; h.style.cssText='font-size:10px;color:var(--ts);margin-left:6px;white-space:nowrap'; inp.insertAdjacentElement('afterend',h); }
+  var v=parseFloat(String(inp.value).replace(',','.'));
+  var t=isFinite(v)?'= '+fn(v):'';
+  if(h.textContent!==t) h.textContent=t;
+}
+function hints(){
+  hint('tewi_kw',function(v){return grp(v*3412.14,0)+' Btu/h ('+grp(v/3.51685,1)+' TR)';});
+  hint('tewi_charge',function(v){return grp(v*2.20462,1)+' lb';});
+}
+
+/* 3. CHARGE : en imperial, le resultat ne garde qu'une seule valeur en Btu/h (retrait de la valeur dupliquee du calcul) */
+var _cc=window.calcCharge;
+if(typeof _cc==='function'){ window.calcCharge=function(){ var r=_cc.apply(this,arguments); try{ var e=$('chgResult'); if(e&&imp()){ var t=e.textContent; if(/\|\s*\d+\s*BTU\/h/i.test(t)) e.textContent=t.replace(/\s*\|\s*\d+\s*BTU\/h/gi,''); } }catch(x){} return r; }; }
+var _ca=window.calcAirNeuf;
+if(typeof _ca==='function'){ window.calcAirNeuf=function(){ var r=_ca.apply(this,arguments); try{ var e=$('anResult'); if(e&&imp()){ var t=e.textContent; t=t.replace(/\bm3\/h\b/g,'m³/h').replace(/(\d\s*W)\s*\|\s*\d+(?:\.\d+)?\s*kW/,'$1'); if(t!==e.textContent) e.textContent=t; } }catch(x){} return r; }; }
+function all(){ if(busy) return; busy=true; try{ hints(); }catch(e){} busy=false; }
+function later(){ clearTimeout(tm); tm=setTimeout(all,90); }
+['pg-fluides','pg-charge'].forEach(function(id){ var pg=$(id); if(!pg) return;
+  pg.addEventListener('input',later,true); pg.addEventListener('change',later,true);
+  if(window.MutationObserver) new MutationObserver(function(){ if(!busy) later(); }).observe(pg,{childList:true,subtree:true,characterData:true});
+});
+var _u=window.unSet;
+window.unSet=function(v){ var r=_u&&_u.apply(this,arguments);
+  try{ var c=$('chgResult'); if(c&&/TOTAL:/.test(c.textContent)&&typeof window.calcCharge==='function'){ window.calcCharge(); } var a=$('anResult'); if(a&&/RESULTATS AIR NEUF/.test(a.textContent)&&typeof window.calcAirNeuf==='function'){ window.calcAirNeuf(); } }catch(e){}
+  setTimeout(all,150); return r; };
+var _g=window.goPage; if(_g) window.goPage=function(){ var r=_g.apply(this,arguments); setTimeout(all,150); return r; };
+var _t=window.toggleLang; if(_t) window.toggleLang=function(){ var r=_t.apply(this,arguments); setTimeout(all,300); return r; };
+setTimeout(all,500);
 })();
 
 </script>

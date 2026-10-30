@@ -408,7 +408,12 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  Blocs <script id="aim-60-module"> et <script id="i18n-60-module"> (100 blocs). Mise a jour : node add_aim60.js dist\index.html (verify_js_syntax : 100 blocs).
  ETAPE 61 (30/10/2026) - CHAUFFAGE : les noms de pieces par defaut (Sejour/salon, Chambre, Salle de bains...) suivent la langue (FR/EN), y compris l'exemple;
  un nom saisi par l'utilisateur n'est jamais modifie. Pas de nouveau bloc (100 blocs). Mise a jour : node add_heat61.js dist\index.html.
- PROCHAINES ETAPES (ouverture internationale 3/3) : unites imperiales dans les modules rapides ; referentiel de calcul selectionnable (Europe / ASHRAE) ; langues es/ar/pt.
+ ETAPE 62 (30/10/2026) - OUVERTURE INTERNATIONALE (3/3, partie 1) : UNITES IMPERIALES dans FLUIDES et CHARGE (bouton SI / Imperial, calculs inchanges en SI).
+ CHARGE : champs de saisie avec conversion (ft2, ft, Btu/h, degF), resultats en Btu/h (valeur dupliquee du calcul retiree en imperial), air neuf en CFM.
+ FLUIDES : capacite (Btu/h et TR), charge (lb), tableau des refrigerants avec T crit. et T eb. en degF et P crit. en psia. Les masses de CO2eq du TEWI restent en kg/t (usage international).
+ Correctif : boucle de rafraichissement infinie du tableau des refrigerants (ancienne etape 38, ~1500 mises a jour/s) supprimee; en-tete 'Use' en anglais.
+ Bloc <script id="units-62-module"> (101 blocs). Mise a jour : node add_units62.js dist\index.html (verify_js_syntax : 101 blocs).
+ PROCHAINES ETAPES : unites imperiales dans RESEAUX (debits d'eau en gpm, pertes de charge en ft.wg/psi), SCOP/COP, VANNES ; referentiel de calcul selectionnable (Europe / ASHRAE) ; langues es/ar/pt.
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
