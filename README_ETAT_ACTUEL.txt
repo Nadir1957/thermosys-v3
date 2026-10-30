@@ -393,6 +393,13 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  DEJA AVEC NOTE : CHARGE PRO, PSYCHRO, CHAUFFAGE, ELECTRICITE, MECATRONIQUE, CHAMBRE FROIDE, TRAITEMENT D'AIR, DEVIS, LOTO, MAINTENANCE, RESEAU RAMIFIE, PROJET (PDF combine).
  RESTE A TRAITER : inclure ces nouvelles notes dans le PDF combine du module PROJET ; notes pour RE2020, repartiteur Refnet, point de rosee / isolation.
  PROCHAINE ETAPE : ouverture internationale (referentiel ASHRAE 90.1/62.1/15, unites imperiales partout, langues es/ar/pt).
+ ETAPE 59 (30/10/2026) - OUVERTURE INTERNATIONALE (1/3) : NORMES. 21 references americaines et internationales ajoutees a la page NORMES (29 -> 50) : ASHRAE 62.1, 55, 169, 52.2 ;
+ NFPA 70 (NEC), 90A, 92 ; UL 60335-2-40 ; AHRI 210/240 (SEER2/HSPF2), 550/590 ; ISO 817, 7730, 14644-1, 16890-1, 20816-3 ; IEC 60751 ; EN 16798-1, 12831-1, 12828 ;
+ AIM Act (USA, reduction HFC de 85 % en 2036, base 2011-2013) ; Amendement de Kigali (calendrier par groupe de pays, a verifier pays par pays). Editions des normes
+ americaines a confirmer selon la juridiction. Compteur de l'Accueil et de l'Aide passes a 50. Bloc <script id="normes-59-module"> (98 blocs). Mise a jour : node add_normes59.js dist\index.html
+ (verify_js_syntax : 98 blocs).
+ PROCHAINES ETAPES (ouverture internationale 2/3 et 3/3) : unites imperiales dans les modules rapides (CHARGE, RESEAUX, FLUIDES...) ; AIM Act dans FLUIDES a cote du F-Gas ;
+ referentiel de calcul selectionnable (Europe / ASHRAE) ; langues es/ar/pt.
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
