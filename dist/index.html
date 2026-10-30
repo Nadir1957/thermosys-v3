@@ -17365,6 +17365,66 @@ try{ if(typeof reseauSegments!=='undefined'&&reseauSegments.length) renderReseau
 })();
 
 </script>
+<script id="charge-50-module">
+/* Thermosys etape 50 - CHARGE (audit) : apports solaires recalibres, eclairage, controle de vraisemblance, agregation protegee (idempotent) */
+(function(){
+'use strict';
+if(window.__ch50)return; window.__ch50=1;
+function $(id){return document.getElementById(id);}
+function isFr(){var l=(typeof lang!=='undefined')?lang:window.lang;return (l||'fr')!=='en';}
+function L(fr,en){return isFr()?fr:en;}
+function nv(id,def){var e=$(id);if(!e||String(e.value).trim()==='')return def;var v=parseFloat(String(e.value).replace(',','.'));return isFinite(v)?v:def;}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+/* Flux solaire utile par m2 de vitrage (pointe, double vitrage avec protection interieure), selon l'exposition choisie (valeur de la liste : 0/30/60/90) */
+var SOL={0:50,30:150,60:250,90:400};
+window.calcCharge=function(){
+ var out=$('chgResult'), reco=$('chgReco'); if(!out)return;
+ var S=nv('chgSurf',NaN), H=nv('chgH',NaN), U=nv('chgIso',0.9), sol=nv('chgSol',30), pers=Math.round(nv('chgPers',0)), eq=nv('chgEquip',0), Te=nv('chgText',NaN), Ti=nv('chgTint',NaN);
+ var type=($('chgType')||{}).value||'bur', err=[];
+ if(!(S>0)) err.push(L('Surface > 0 m².','Area > 0 m².'));
+ if(!(H>0&&H<=20)) err.push(L('Hauteur entre 0 et 20 m.','Height between 0 and 20 m.'));
+ if(!isFinite(Te)||!isFinite(Ti)) err.push(L('Températures extérieure et intérieure à saisir.','Enter outdoor and indoor temperatures.'));
+ if(!(pers>=0)) err.push(L('Nombre de personnes ≥ 0.','Occupants ≥ 0.'));
+ if(!(eq>=0)) err.push(L('Équipements ≥ 0 W.','Equipment ≥ 0 W.'));
+ if(err.length){ out.textContent='⚠ '+err.join('\n⚠ '); if(reco) reco.textContent='-'; return; }
+ var dT=Math.max(0,Te-Ti), vit=S*0.15, ach=({res:0.5,bur:1.5,com:2,ind:2})[type]||2;
+ var env=U*S*dT, solar=vit*(SOL[sol]!=null?SOL[sol]:150), occ=pers*75, ren=S*H*ach*1.2*1006*dT/3600;
+ var tot=(env+solar+occ+eq+ren)/1000, lat=pers*55/1000, all=tot+lat;
+ var rule=({res:35,bur:50,com:70,ind:60})[type]||50;
+ var need=Math.max(Math.ceil(all*1.2/1.5)*1.5, S*rule/1000), ratio=all*1000/S;
+ var R=function(n){return Math.round(n);};
+ out.textContent=[
+  L('CHARGE FRIGORIFIQUE','COOLING LOAD'),
+  L('Parois/enveloppe: ','Walls/envelope:   ')+R(env)+' W',
+  L('Apports solaires: ','Solar gains:      ')+R(solar)+' W',
+  L('Personnes:        ','Occupants:        ')+R(occ)+' W',
+  L('Equipements:      ','Equipment:        ')+R(eq)+' W',
+  L('Renouvellement:   ','Ventilation:      ')+R(ren)+' W',
+  '─────────────────────────────',
+  'TOTAL: '+tot.toFixed(2)+' kW  |  '+R(tot*3412)+' BTU/h',
+  L('+ latent personnes (≈55 W/pers.) : ','+ occupants latent (≈55 W/person): ')+lat.toFixed(2)+' kW',
+  L('TOTAL avec latent personnes : ','TOTAL incl. occupant latent: ')+all.toFixed(2)+' kW  ('+R(ratio)+' W/m²)',
+  L('Hypothèses : vitrage = 15 % de la surface, flux solaire de pointe '+(SOL[sol]!=null?SOL[sol]:150)+' W/m² de vitrage, personnes 75 W sensible + 55 W latent. Éclairage à inclure dans « Équipements ». Estimation rapide (±30 %), air neuf : latent non inclus. Bilan complet : modules CHARGE PRO / PSYCHRO.','Assumptions: glazing = 15 % of floor area, peak solar flux '+(SOL[sol]!=null?SOL[sol]:150)+' W/m² of glazing, occupants 75 W sensible + 55 W latent. Include lighting in “Equipment”. Quick estimate (±30 %), fresh-air latent not included. Full load: CHARGE PRO / PSYCHRO modules.')
+ ].join('\n');
+ if(reco) reco.textContent=L('Puissance recommandée : ','Recommended capacity: ')+need.toFixed(1)+' kW ('+L('majoration 20 % appliquée, paliers de 1,5 kW','20 % margin applied, 1.5 kW steps')+')'+(Te>=35&&ratio<60?L(' — ⚠ charge spécifique basse pour ce climat : vérifier avec CHARGE PRO',' — ⚠ low specific load for this climate: check with CHARGE PRO'):'');
+ try{ if(typeof logHist==='function') logHist(L('Charge frigo : ','Cooling load: ')+all.toFixed(2)+' kW'); }catch(e){}
+};
+window.renderChargeAgg=function(){
+ var listEl=$('chgAggList'), resEl=$('chgAggResult'); if(!listEl||!resEl)return;
+ if(!chgAggRooms.length){ listEl.innerHTML=''; resEl.innerHTML=L('Aucune pièce ajoutée','No room added yet'); return; }
+ listEl.innerHTML=chgAggRooms.map(function(r,i){ return '<div class="frow"><span class="flb">'+esc(r.name)+'</span><b>'+r.load.toFixed(1)+' kW</b><button class="btn bd" onclick="removeChargeRoom('+i+')" style="margin-left:6px;padding:2px 8px">×</button></div>'; }).join('');
+ var sum=chgAggRooms.reduce(function(a,r){return a+r.load;},0), d=Math.min(1,Math.max(0.1,nv('chgAggDiv',1))), tot=sum*d;
+ var lines=[[L('Nombre de pièces','Number of rooms'),chgAggRooms.length],[L('Somme arithmétique','Arithmetic sum'),sum.toFixed(1)+' kW'],[L('Facteur de foisonnement','Diversity factor'),d.toFixed(2)],[L('Charge totale bâtiment','Total building load'),tot.toFixed(1)+' kW']];
+ resEl.innerHTML=lines.map(function(p){return '<div class="frow"><span class="flb">'+p[0]+' :</span><b>'+__sxl(p[1])+'</b></div>';}).join('');
+};
+function labels(){
+ var e=$('chgEquip'); if(e&&e.parentNode){ var l=e.parentNode.querySelector('.flb'); if(l){ l.setAttribute('data-fr','Équipements + éclairage (W) :'); l.setAttribute('data-en','Equipment + lighting (W):'); l.textContent=L('Équipements + éclairage (W) :','Equipment + lighting (W):'); } }
+}
+function start(){ labels(); var last=isFr(); setInterval(function(){ if(isFr()!==last){ last=isFr(); labels(); } },400); }
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
+})();
+
+</script>
 </body>
 </html>
 

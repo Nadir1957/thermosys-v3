@@ -344,6 +344,11 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  HMT 18,63 m, +10 % = 20,49 m) ; corrections : (1) HMT calculee avec la masse volumique du fluide (elle utilisait 1000 kg/m3 pour tous) ; (2) hypotheses
  affichees (K coude 0,9 / te 1,0 / vanne 0,2, 20 C, reseau a saisir aller ET retour, equipements exclus). Bloc <script id="reseau-49-module">
  (94 blocs). Mise a jour : node add_reseau49.js dist\index.html
+ ETAPE 50 (30/10/2026) - CHARGE (audit) : estimation rapide de charge frigorifique. Agregation et air neuf verifies (justes). Corrections : apports
+ solaires recalibres (50/150/250/400 W par m2 de vitrage, ancien 0/30/60/90 : sous-estimation) ; champ "Equipements + eclairage" ; latent des
+ personnes (55 W) ajoute ; ratio W/m2 affiche avec alerte si anormalement bas en climat chaud ; hypotheses affichees (vitrage 15 %, +/-30 %).
+ Exemple 100 m2 : 7,33 kW (73 W/m2) au lieu de ~3,9 kW (39 W/m2). Bloc <script id="charge-50-module"> (95 blocs). Mise a jour : node add_charge50.js dist\index.html
+ RESTE A TRAITER : vitrage 15 % fixe (a rendre saisissable), bilan complet = CHARGE PRO.
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
