@@ -365,6 +365,11 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  (Supabase) et l'OCR (image envoyee a un service d'IA) utilisent internet ; renvoi a la politique de confidentialite (FR/EN). Remplacement de texte dans la page,
  pas de nouveau bloc (95). Mise a jour : node add_accueil53.js dist\index.html
  RESTE A TRAITER : modules OBD, Bluetooth, OCR, Historique, Aide, Contact ; codes defauts (72 Condor et autres marques).
+ ETAPE 54 (30/10/2026) - CODES DEFAUTS (audit partiel) : base de 845 codes, 37 marques, 72 Condor. Gree : H3, H4, H5, H7 (split) contredisaient la plateforme Gree
+ utilisee dans les entrees Condor (pressostats au lieu de surcharge compresseur / IPM / decrochage) -> corriges ; liste des marques revues (note orange) : Daikin,
+ Mitsubishi, LG, Panasonic, Gree (en partie). Modification du bloc <script id="codes39-module"> (95 blocs). Mise a jour : node add_codes54.js dist\index.html
+ A CONFIRMER PAR NADIR (Condor) : les mentions "technologie Hisense partenaire depuis 2022", "OEM TICA confirme", "plateforme Gree" des 72 entrees Condor ; codes marques
+ "non confirme" (P0, P1, P2, P5). RESTE A TRAITER : Midea, Hisense, Samsung, Toshiba, Hitachi, Carrier, Trane... a verifier avec les manuels de service.
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 

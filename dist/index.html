@@ -16261,6 +16261,10 @@ if(typeof _sc==='function') window.calcSCOP=function(){
   function en() { return window.lang === 'en'; }
   /* Corrections d'entrees dont le sens etait faux. Cle = Marque|Code ; valeur = [description FR, description EN, cause / action] */
   var FIX = {
+    'Gree|H3': ['Protection de surcharge du compresseur', 'Compressor overload protection', 'Courant ou température du compresseur trop élevés : vérifier la tension, le condenseur, la charge de fluide et le compresseur.'],
+    'Gree|H4': ['Protection de surcharge (système)', 'Overload protection (system)', 'Courant ou pression anormaux : vérifier la tension, la propreté du condenseur et la charge de fluide.'],
+    'Gree|H5': ['Protection du module de puissance (IPM)', 'IPM (inverter power module) protection', 'Module de puissance ou compresseur défaillant, court-circuit, tension d’alimentation anormale.'],
+    'Gree|H7': ['Décrochage du compresseur (perte de synchronisme)', 'Compressor out-of-step (loss of synchronism)', 'Compresseur ou carte variateur défaillants, tension anormale ; vérifier le câblage du compresseur.'],
     'Daikin|A5': ['Contrôle haute pression (chauffage) ou protection antigel — UI', 'High-pressure control (heating) or freeze-up protection — indoor unit', 'Filtre ou échangeur intérieur encrassé, débit d’air insuffisant, sonde d’échangeur défaillante.'],
     'Daikin|C9': ['Sonde d’air de reprise (unité intérieure)', 'Indoor suction (return) air thermistor failure', 'Sonde coupée, en court-circuit ou débranchée : vérifier le connecteur et la résistance de la sonde.'],
     'Daikin|L3': ['Échauffement des composants électriques (coffret)', 'Electrical parts overheating (electrical box)', 'Ventilation ou refroidissement du coffret insuffisant, carte ou réacteur défaillant.'],
@@ -16287,8 +16291,8 @@ if(typeof _sc==='function') window.calcSCOP=function(){
     'Panasonic|F17': ['Gel de l’unité intérieure à l’arrêt (protection)', 'Indoor standby units freezing abnormality', 'Fuite de vanne ou de circuit vers une unité intérieure à l’arrêt, sonde défaillante.'],
     'Panasonic|F90': ['Protection du circuit PFC', 'PFC circuit protection', 'Carte de puissance extérieure défaillante, tension d’alimentation anormale.']
   };
-  var NOTE = ['Base indicative : les codes varient selon la marque, le modèle et la génération. Vérifiez toujours dans le manuel de service du constructeur avant d’intervenir. Marques revues à ce jour (entrées erronées corrigées en octobre 2026) : Daikin, Mitsubishi, LG, Panasonic ; les autres marques n’ont pas encore été vérifiées.',
-    'Indicative database: codes vary by brand, model and generation. Always check the manufacturer’s service manual before working on the unit. Brands reviewed so far (incorrect entries corrected in October 2026): Daikin, Mitsubishi, LG, Panasonic; the other brands have not been verified yet.'];
+  var NOTE = ['Base indicative : les codes varient selon la marque, le modèle et la génération. Vérifiez toujours dans le manuel de service du constructeur avant d’intervenir. Marques revues à ce jour (entrées erronées corrigées en octobre 2026) : Daikin, Mitsubishi, LG, Panasonic, Gree (en partie) ; les autres marques n’ont pas encore été vérifiées.',
+    'Indicative database: codes vary by brand, model and generation. Always check the manufacturer’s service manual before working on the unit. Brands reviewed so far (incorrect entries corrected in October 2026): Daikin, Mitsubishi, LG, Panasonic, Gree (partly); the other brands have not been verified yet.'];
   var busy = false;
   function fix() {
     if (busy) { return; }
