@@ -354,6 +354,12 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  a 36,7 N, profil horaire ASHRAE) -> justes. CHAUFFAGE (EN 12831 simplifiee) : transmission, ponts thermiques, sol EN ISO 13370 (f_g1 1,45), infiltration
  2.V.n50.e.eps, rho.cp 0,34, ventilation double flux recalcules a la main -> justes. Pas d'installateur, pas de nouveau bloc (95).
  RESTE A TRAITER : temperatures de base et annexe nationale a verifier par pays (deja signale dans l'outil).
+ ETAPE 52 (30/10/2026) - PSYCHRO, ELECTRICITE, MECATRONIQUE (audit, AUCUNE modification de code) : PSYCHRO : proprietes de l'air humide comparees a CoolProp
+ sur 28 etats (-10 a 45 C, 10 a 80 % HR) : ecart max W 0,56 %, h 0,63 kJ/kg, v 0,07 %, point de rosee 0,015 K, temp. humide 0,024 K ; bilan chaleur/eau des procedes
+ correct. ELECTRICITE : tables IEC 60364-5-52 (PVC cuivre/alu) verifiees, chute de tension, court-circuit (k), Isc mini TN (UTE C 15-105), PE et neutre corrects ;
+ isolant XLPE derive des tables PVC (rapport 1,22, prudent, deja signale). MECATRONIQUE : Pt100 IEC 60751, zones ISO 10816-3, NAMUR NE43, lois des ventilateurs,
+ vibrations (deplacement/acceleration -> vitesse efficace) corrects. Pas d'installateur, pas de nouveau bloc (95).
+ RESTE A TRAITER : couples de servomoteurs de volets (valeurs guides, a confirmer avec le constructeur), XLPE a remplacer par la table B.52.5 si disponible.
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
