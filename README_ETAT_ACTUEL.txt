@@ -370,6 +370,11 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  Mitsubishi, LG, Panasonic, Gree (en partie). Modification du bloc <script id="codes39-module"> (95 blocs). Mise a jour : node add_codes54.js dist\index.html
  A CONFIRMER PAR NADIR (Condor) : les mentions "technologie Hisense partenaire depuis 2022", "OEM TICA confirme", "plateforme Gree" des 72 entrees Condor ; codes marques
  "non confirme" (P0, P1, P2, P5). RESTE A TRAITER : Midea, Hisense, Samsung, Toshiba, Hitachi, Carrier, Trane... a verifier avec les manuels de service.
+ ETAPE 55 (30/10/2026) - AIDE et CONTACT (audit) : Contact conforme (adresse e-mail, site). Aide : 5 affirmations inexactes corrigees (FR/EN) : "38 normes actives" -> 29 ;
+ "80 equipements de 50 constructeurs" -> 38 constructeurs dans le catalogue ; "F-Gas 517/2014 revision 2024" -> reglement (UE) 2024/573 ; "codes defaut sources et verifies
+ contre la documentation constructeur officielle" (faux) -> base indicative sur 37 marques, a confirmer avec le manuel de service ; "calcul des deperditions" (module CHARGE)
+ -> renvoi au module CHAUFFAGE. Remplacement de texte dans la page, pas de nouveau bloc (95). Mise a jour : node add_aide55.js dist\index.html
+ RESTE A TRAITER : OBD, Bluetooth, OCR, Historique (modules d'accompagnement) ; codes defaut des autres marques ; "Gemini 2.5 Flash" a confirmer cote serveur (API_PROXY).
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
