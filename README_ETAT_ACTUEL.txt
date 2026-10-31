@@ -446,6 +446,9 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  Moteur ameliore (lang-i18n3-module) : traduction par segments ('Marque — Type — 5 Nm'), suffixes entre parentheses ('Algerie (0.587)'), fonction window.I18N3.x(texte) pour les modules qui reecrivent eux-memes leurs textes.
  Correctifs d'accompagnement : le module FLUIDES ne reecrit plus son tableau en boucle en espagnol (L() et put() adaptes). Les resultats de calcul generes (messages avec chiffres) restent en anglais en ES : lots suivants.
  Blocs : 107. Mise a jour : node add_lang68.js dist\index.html (verify_js_syntax : 107 blocs).
+ ETAPE 68b (31/10/2026) - CORRECTIF ESPAGNOL : plus de clignotement. Le moteur traduit immediatement (avant l'affichage) les textes reecrits par d'autres modules,
+ et les boutons 'Export PDF' / 'Note de calcul' (anciens modules a minuteur) ecrivent directement l'espagnol. Mesure : 0 image avec texte anglais (avant : 186/37/62).
+ Blocs : 107 (inchange). Mise a jour : node add_lang68b.js dist\index.html.
  PROCHAINES ETAPES : espagnol lots 3 et suivants (CHAUFFAGE, ELEC, MECA, CHARGE PRO, CHAMBRE FROIDE, TRAITEMENT D'AIR, NORMES, CODES, AIDE...) et resultats de calcul, puis portugais et arabe (referentiel ASHRAE pour CHAUFFAGE/SCOP : non fait, tables a verifier).
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
