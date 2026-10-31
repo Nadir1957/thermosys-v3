@@ -441,7 +441,12 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  Dictionnaires dans des blocs de donnees <script id="lang-es-data-N"> : lot 1 = en-tete, menu, pied de page, accueil, DEVIS, REGISTRE, OBD, OCR, BLUETOOTH, CONV., PROJET, CONTACT, MAINT.
  Les modules non encore traduits restent en anglais en ES. Lots suivants : un lot par groupe de modules (FLUIDES, SCOP, RESEAUX, VANNES, CHARGE, CHAUFFAGE...), puis portugais et arabe (droite a gauche).
  Correctif d'accompagnement : les notes du convertisseur ne sont plus rebasculees en anglais. Blocs : 106. Mise a jour : node add_lang67.js dist\index.html (verify_js_syntax : 106 blocs).
- PROCHAINES ETAPES : espagnol lots 2 et suivants, puis portugais et arabe (referentiel ASHRAE pour CHAUFFAGE/SCOP : non fait, tables a verifier).
+ ETAPE 68 (31/10/2026) - LANGUES (2/n) : ESPAGNOL, lot 2 = FLUIDES (refrigerants, huiles, F-Gas, AIM Act, TEWI), SCOP/COP (pays, villes), RESEAUX (tous les onglets),
+ VANNES (cartes, actionneurs), CHARGE (zones climatiques, air neuf, agregation), PSYCHRO. Bloc de donnees <script id="lang-es-data-2"> (environ 800 textes).
+ Moteur ameliore (lang-i18n3-module) : traduction par segments ('Marque — Type — 5 Nm'), suffixes entre parentheses ('Algerie (0.587)'), fonction window.I18N3.x(texte) pour les modules qui reecrivent eux-memes leurs textes.
+ Correctifs d'accompagnement : le module FLUIDES ne reecrit plus son tableau en boucle en espagnol (L() et put() adaptes). Les resultats de calcul generes (messages avec chiffres) restent en anglais en ES : lots suivants.
+ Blocs : 107. Mise a jour : node add_lang68.js dist\index.html (verify_js_syntax : 107 blocs).
+ PROCHAINES ETAPES : espagnol lots 3 et suivants (CHAUFFAGE, ELEC, MECA, CHARGE PRO, CHAMBRE FROIDE, TRAITEMENT D'AIR, NORMES, CODES, AIDE...) et resultats de calcul, puis portugais et arabe (referentiel ASHRAE pour CHAUFFAGE/SCOP : non fait, tables a verifier).
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
