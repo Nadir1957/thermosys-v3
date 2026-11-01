@@ -446,10 +446,20 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  Moteur ameliore (lang-i18n3-module) : traduction par segments ('Marque — Type — 5 Nm'), suffixes entre parentheses ('Algerie (0.587)'), fonction window.I18N3.x(texte) pour les modules qui reecrivent eux-memes leurs textes.
  Correctifs d'accompagnement : le module FLUIDES ne reecrit plus son tableau en boucle en espagnol (L() et put() adaptes). Les resultats de calcul generes (messages avec chiffres) restent en anglais en ES : lots suivants.
  Blocs : 107. Mise a jour : node add_lang68.js dist\index.html (verify_js_syntax : 107 blocs).
- ETAPE 68b (31/10/2026) - CORRECTIF ESPAGNOL : plus de clignotement. Le moteur traduit immediatement (avant l'affichage) les textes reecrits par d'autres modules,
- et les boutons 'Export PDF' / 'Note de calcul' (anciens modules a minuteur) ecrivent directement l'espagnol. Mesure : 0 image avec texte anglais (avant : 186/37/62).
- Blocs : 107 (inchange). Mise a jour : node add_lang68b.js dist\index.html.
- PROCHAINES ETAPES : espagnol lots 3 et suivants (CHAUFFAGE, ELEC, MECA, CHARGE PRO, CHAMBRE FROIDE, TRAITEMENT D'AIR, NORMES, CODES, AIDE...) et resultats de calcul, puis portugais et arabe (referentiel ASHRAE pour CHAUFFAGE/SCOP : non fait, tables a verifier).
+ ETAPE 68b (31/10/2026) - CORRECTIF ESPAGNOL (moteur : traduction immediate, boutons 'Export PDF' / 'Note de calcul' ecrivant directement l'espagnol).
+ Installe puis ESPAGNOL DESACTIVE (voir ci-dessous) : l'instabilite constatee chez l'utilisateur venait d'une boucle (voir 68c), pas du clignotement seul.
+ ETAPE 68c (01/11/2026) - CAUSE DE L'INSTABILITE ESPAGNOLE (identifiee, correctif PRET mais NON INSTALLE : add_lang68c.js).
+ Le module i18n-60 (trLeaf, sweepMenu) remettait en anglais les textes espagnols (ex. OCR-IA <-> OCR-AI, 800+ ecritures en 4 s), le moteur les retraduisait : boucle.
+ Correctif : trLeaf/sweepMenu passent par I18N3.x() quand l'espagnol est actif (reduction de 1744 a 82 ecritures en 4 s, plus aucune boucle sur 20 modules testes).
+ A installer AVANT de reactiver l'espagnol : node add_lang68c.js dist\index.html (idempotent).
+ ESPAGNOL DESACTIVE TEMPORAIREMENT (01/11/2026) : add_lang_off.js remplace ORDER=['fr','en','es','pt','ar'] par ORDER=['fr','en'] dans le moteur (lang-i18n3-module).
+ Les dictionnaires espagnols (lang-es-data-1 et -2) restent dans le fichier, inactifs. Pour reactiver : remettre ORDER=['fr','en','es'] (decision : seulement FR/EN/ES, ni arabe ni portugais).
+ Correctifs de demarrage (01/11/2026) : add_toast_off.js supprime le message 'Thermosys v3 pret / ready - N equipements / items' ;
+ add_lang_quiet.js supprime les messages 'Langue : ...' repetes au rechargement (bascules automatiques de fix-lang-init) ; la confirmation au clic sur le globe est conservee.
+ Blocs : 107. Commits : 4d3b6cb (68b), 946fc35 (espagnol desactive), 2523f4d (toast), db46627 (messages de langue).
+ DEPLOIEMENT : toujours depuis le dossier dist (cd dist puis vercel --prod). Ne jamais lancer vercel --prod depuis files (envoie 237 Mo, depasse la limite de 100 Mo).
+ Apres un 'vercel rollback', les nouveaux deploiements ne sont plus mis en ligne automatiquement : faire vercel ls puis vercel promote <adresse> (une fois suffit, ensuite c'est automatique).
+ PROCHAINES ETAPES : installer add_lang68c.js, reactiver l'espagnol et le tester chez l'utilisateur ; puis espagnol lots 3 et suivants (CHAUFFAGE, ELEC, MECA, CHARGE PRO, CHAMBRE FROIDE, TRAITEMENT D'AIR, NORMES, CODES, AIDE...) et resultats de calcul. Langues retenues : FR, EN, ES uniquement (referentiel ASHRAE pour CHAUFFAGE/SCOP : non fait, tables a verifier).
  A FAIRE ENSUITE : amelioration de l'interface (resultats toujours visibles, hierarchie des chiffres, graphiques, PDF),
  puis paiement/TVA/CGV, nom de domaine, marque INAPI ; sauvegardes completes a la fin du projet.
 
