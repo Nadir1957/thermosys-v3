@@ -16230,7 +16230,7 @@ if(typeof _sc==='function') window.calcSCOP=function(){
     return h;
   }
   var busy = false;
-  function put(el, html) { if (el && el.__f38 !== html || (el && el.__f38s !== el.innerHTML && !(window.I18N3 && window.I18N3.ov && window.I18N3.ov()))) { el.innerHTML = html; el.__f38 = html; el.__f38s = el.innerHTML; } }
+  function put(el, html) { if (el && el.__f38 !== html || (el && el.__f38s !== el.innerHTML && !(window.I18N3 && window.I18N3.ov && window.I18N3.ov()) && !(window.ENFIX && window.ENFIX.on && window.ENFIX.on()))) { el.innerHTML = html; el.__f38 = html; el.__f38s = el.innerHTML; } }
   function fix() {
     if (busy) { return; }
     var rt = document.getElementById('refTable');
@@ -18252,6 +18252,212 @@ function wrap(){
 wrap();
 setTimeout(wrap,1500);
 })();
+</script>
+<script id="en-fix-data-1">
+(function(){
+var E=window.ENFIX=window.ENFIX||{}; E.dict=E.dict||{}; E.words=E.words||[];
+var D={
+"🇳🇴 NOK — Couronne norvégienne":"🇳🇴 NOK — Norwegian Krone",
+"Marque...":"Brand...",
+"Supprimer ce favori":"Delete this favorite",
+"Thermosys v3 initialisé — 80 équipements | 50 constructeurs | 55 vannes | 50 normes":"Thermosys v3 initialized — 80 items | 50 manufacturers | 55 valves | 50 standards",
+"POE ISO VG 68 (générique)":"POE ISO VG 68 (generic)",
+"Resultat cout":"Cost result",
+"Renseignez les donnees et calculez":"Enter the data and calculate",
+"Resultat Kvs":"Kvs result",
+"🔍 AUDIT DE CONFORMITÉ INSTALLATION — RE2020 / EN ISO 52120-1":"🔍 INSTALLATION COMPLIANCE AUDIT — RE2020 / EN ISO 52120-1",
+"Carrier AquaSnap 30RB (Groupe froid Air/Eau)":"Carrier AquaSnap 30RB (Air/Water chiller)",
+"Protocole structuré · Applicable à tous équipements CVC · Conforme EN 60204-1 + EN 378":"Structured protocol · Applicable to all HVAC equipment · Compliant with EN 60204-1 + EN 378",
+"• Carrier ComfortVIEW / CCNWeb ou laptop RS-485":"• Carrier ComfortVIEW / CCNWeb or RS-485 laptop",
+"Détail ▶":"Details ▶",
+"Toutes marques":"All brands",
+"Specifications techniques détaillées":"Detailed technical specifications",
+"Valeur":"Value",
+"Fermer":"Close",
+"Plage débit":"Flow range",
+"Remarque":"Remark",
+"Chauffage":"Heating",
+"Est / Ouest":"East / West",
+"Egypte Nord Le Caire (38C)":"Egypt North Cairo (38C)",
+"Pays-Bas Amsterdam (28C)":"Netherlands Amsterdam (28C)",
+"Turquie Est Ankara (38C)":"Turkey East Ankara (38C)",
+"Afrique du Sud Johannesburg (34C)":"South Africa Johannesburg (34C)",
+"Coree du Sud Seoul (34C)":"South Korea Seoul (34C)",
+"Le coefficient de simultanéité sert à estimer le courant total du tableau à partir de la somme des circuits. Il relève du jugement du concepteur.":"The simultaneity factor is used to estimate the total panel current from the sum of the circuits. It is a matter of the designer's judgement.",
+"ℹ Copiez votre message et envoyez-le à thermosys.hvac@outlook.com / Copy your message and send it to thermosys.hvac@outlook.com":"ℹ Copy your message and send it to thermosys.hvac@outlook.com",
+"Contrôle pression remplissage : 1.5 à 2.5 bar (froid)":"Fill pressure check: 1.5 to 2.5 bar (cold)",
+"Vibrations en limite acceptable (< 2.8 mm/s selon ISO 20816-3)":"Vibration within acceptable limit (< 2.8 mm/s per ISO 20816-3)",
+"Balancing robinets : ΔT uniforme sur tous circuits ±1°C":"Balancing valves: uniform ΔT across all circuits ±1 °C",
+"Le Caire / Cairo":"Cairo",
+"Dubaï / Dubai":"Dubai",
+"Le désenfumage est une mesure de":"Smoke extraction is a",
+"sécurité incendie obligatoire":"mandatory fire safety",
+"visant à extraire fumées et gaz chauds afin de faciliter l'évacuation des personnes et l'intervention des secours. Il est régi par des textes réglementaires stricts applicables en France, Algérie et à l'international.":"measure intended to extract smoke and hot gases in order to facilitate the evacuation of occupants and the intervention of rescue services. It is governed by strict regulations applicable in France, Algeria and internationally.",
+"IT 246 (France/Algérie) — Méthode par renouvellements d'air avec coefficients réglementaires selon type de local. Applicable ERP, IGH, habitation, parking.":"IT 246 (France/Algeria) — Air-change method with regulatory coefficients according to room type. Applicable to public buildings (ERP), high-rise buildings (IGH), housing and car parks.",
+"DTR C3-41 — Algérie":"DTR C3-41 — Algeria",
+"EN 12101 (Europe) — Méthode thermique basée sur la puissance du feu de calcul (kW) et la hauteur libre souhaitée. Calcul du panache selon Thomas/Hinkley.":"EN 12101 (Europe) — Thermal method based on the design fire output (kW) and the required clear height. Plume calculation according to Thomas/Hinkley.",
+"⚙ CALCULER / CALCULATE":"⚙ CALCULATE",
+"Puissance totale du feu Q (kW) / Total fire HRR (70 % convectif appliqué)":"Total fire HRR Q (kW) (70 % convective applied)",
+"Température ambiante T":"Ambient temperature T",
+"Civil Defence Directorate — Requirements Bahreïn. Standards internationaux.":"Civil Defence Directorate — Bahrain requirements. International standards.",
+"NFPA 92 utilisé comme référence internationale dans ces pays.":"NFPA 92 used as an international reference in these countries.",
+"Fans for general purposes — Indian Standard pour ventilateurs.":"Fans for general purposes — Indian Standard for fans.",
+"ABNT NBR 9077 — Brésil":"ABNT NBR 9077 — Brazil",
+"KBC — Corée du Sud":"KBC — South Korea",
+"SANS 10400 — Afrique du Sud":"SANS 10400 — South Africa",
+"vitré %":"glazed %"
+};
+Object.keys(D).forEach(function(k){ E.dict[k]=D[k]; });
+E.words.push(
+ [/Linéaire/g,'Linear'],
+ [/Électrothermique/g,'Electrothermal'],
+ [/Équilibrage/g,'Balancing'],
+ [/\bTOR\b/g,'On/Off'],
+ [/\(autorégulé\)/g,'(self-regulated)'],
+ [/\bPROJET module\b/g,'PROJECT module']
+);
+})();
+
+</script>
+<script id="en-fix-module">
+(function(){
+'use strict';
+/* Thermosys - correction du francais restant en mode anglais (textes ecrits en dur sans version anglaise). Actif seulement quand la langue est EN. */
+var E=window.ENFIX=window.ENFIX||{}; E.dict=E.dict||{}; E.words=E.words||[];
+function EN(){ return window.lang==='en' && !(window.I18N3&&I18N3.ov&&I18N3.ov()); }
+E.on=EN;
+function N(s){ return s.replace(/\s+/g,' ').trim(); }
+var cache=null, cn=-1;
+function nd(){ var k=Object.keys(E.dict); if(cache&&cn===k.length) return cache; var m={}; k.forEach(function(x){ m[N(x)]=E.dict[x]; }); cache=m; cn=k.length; return m; }
+var ACC=/[éèêëàâùûôîïçœÉÈÊÀÂÙÛÔÎÏÇ]/;
+var FRW=/(^|[^A-Za-zÀ-ÿ])(le|la|les|des|du|une|pour|avec|sans|dans|est|sont|marque|marques|choisir|fichier|aucun|aucune|résultat|resultat|effacer|ajouter|supprimer|enregistrer|saisir|selon|vers|toutes|tous|donnees|données|renseignez|calculez|cout|coût|nombre|quantité|longueur|largeur|hauteur|épaisseur|puissance|débit|debit|pression|chauffage|froid|consommation|rendement|équipement|équipements|pièce|fenêtre|plancher|isolation|ouvrants?|vitrage|bureaux|salle|sous|plafond|superficie|panache|foyer|porte|fermée|actifs|obligatoire|lancer|vérification|surpression|minimale|maximale|vitesse|tirage|masse|fumées?|hauteur|décharge|coefficient)($|[^A-Za-zÀ-ÿ])/i;
+function fr2(s){ return ACC.test(s)||FRW.test(s); }
+function rng(k){ return /\d\s*à\s*\d/.test(k)? k.replace(/(\d[\d.,]*)\s*à\s*(\d)/g,'$1 to $2') : null; }
+function words(k){ var o=k, W=E.words; for(var i=0;i<W.length;i++){ o=o.replace(W[i][0],W[i][1]); } return o!==k?o:null; }
+function segOne(x,m){ var y=m[x]; if(y!==undefined) return y; var r=rng(x), w; if(r!==null){ w=words(r); return w!==null?w:r; } return words(x); }
+function bil(k){
+  var pos=0, i;
+  while((i=k.indexOf(' / ',pos))>=0){
+    var a=k.slice(0,i), b=k.slice(i+3), fa=fr2(a), fb=fr2(b);
+    if(fa&&!fb){ var p=/^([A-Za-z]{1,4} = )/.exec(a); return (p?p[1]:'')+b; }
+    if(fb&&!fa){ var t=/( ?: .+)$/.exec(b); return a+(t?t[1]:''); }
+    pos=i+3;
+  }
+  return null;
+}
+function tr(raw,el){
+  var k=N(raw); if(k.length<2) return null;
+  var m=nd(), v=m[k]; if(v!==undefined) return v;
+  if(k.indexOf(' — ')>0){ var hit=false, parts=k.split(' — ').map(function(x){ var y=segOne(x,m); if(y!==null){ hit=true; return y; } return x; }); if(hit) return parts.join(' — '); }
+  var r=(el&&el.closest&&el.closest('#pg-desenfumage,#pg-charge,#pg-aide,#pg-contact'))?bil(k):null; if(r!==null) return r;
+  r=rng(k); if(r!==null){ var w=words(r); return w!==null?w:r; }
+  return words(k);
+}
+var nodes=new Set(), attrs=new Set(), SKIP=/^(SCRIPT|STYLE|TEXTAREA|NOSCRIPT)$/;
+function doText(n){
+  var p=n.parentNode; if(!p||SKIP.test(p.nodeName)) return;
+  var raw=n.nodeValue;
+  if(n.__eft!==undefined){ if(raw===n.__eft) return; delete n.__efo; delete n.__eft; }
+  var v=tr(raw,p.nodeType===1?p:p.parentElement); if(v===null||v===N(raw)) return;
+  var a=raw.match(/^\s*/)[0], b=raw.match(/\s*$/)[0];
+  n.__efo=raw; n.__eft=a+v+b; n.nodeValue=n.__eft; nodes.add(n);
+  var e=p.nodeType===1?p:null;
+  if(e&&e.getAttribute('data-cen')!==null&&N(e.getAttribute('data-cen'))===N(raw)&&e.children.length===0){ e.__efc=e.getAttribute('data-cen'); e.setAttribute('data-cen',v); attrs.add(e); }
+}
+var AT=['placeholder','title'];
+function doEl(e){
+  AT.forEach(function(a){
+    var raw=e.getAttribute(a); if(raw===null) return;
+    var st=e.__efa&&e.__efa[a];
+    if(st){ if(raw===st[1]) return; delete e.__efa[a]; }
+    var v=tr(raw,e); if(v===null||v===N(raw)) return;
+    (e.__efa=e.__efa||{})[a]=[raw,v]; e.setAttribute(a,v); attrs.add(e);
+  });
+}
+function sweep(root){
+  if(!root||!EN()) return;
+  if(root.nodeType===3){ doText(root); return; }
+  if(root.nodeType!==1) return;
+  var tw=document.createTreeWalker(root,5,null), n=tw.currentNode;
+  if(n.nodeType===1) doEl(n);
+  while((n=tw.nextNode())){ if(n.nodeType===3) doText(n); else doEl(n); }
+}
+function revert(){
+  nodes.forEach(function(n){ if(n.__eft!==undefined&&n.nodeValue===n.__eft) n.nodeValue=n.__efo; delete n.__efo; delete n.__eft; });
+  nodes.clear();
+  attrs.forEach(function(e){
+    if(e.__efc!==undefined){ e.setAttribute('data-cen',e.__efc); delete e.__efc; }
+    var o=e.__efa||{}; Object.keys(o).forEach(function(a){ if(e.getAttribute(a)===o[a][1]) e.setAttribute(a,o[a][0]); }); delete e.__efa;
+  });
+  attrs.clear();
+}
+var was=false;
+function state(){
+  var on=EN();
+  if(on&&!was){ was=true; sweep(document.body); }
+  else if(!on&&was){ was=false; revert(); }
+}
+var tm=null, pend=[], budget=25, refill=false;
+function later(){ clearTimeout(tm); tm=setTimeout(function(){ var p=pend; pend=[]; if(EN()) p.forEach(sweep); },70); }
+if(window.MutationObserver){
+  new MutationObserver(function(ms){
+    if(!EN()) return;
+    if(budget>0){
+      budget--; if(!refill){ refill=true; setTimeout(function(){ budget=25; refill=false; },0); }
+      ms.forEach(function(m){
+        if(m.type==='characterData') sweep(m.target);
+        else if(m.type==='childList') m.addedNodes.forEach(function(x){ sweep(x); });
+        else if(m.type==='attributes') sweep(m.target);
+      });
+    } else {
+      ms.forEach(function(m){
+        if(m.type==='characterData') pend.push(m.target);
+        else if(m.type==='childList') m.addedNodes.forEach(function(x){ pend.push(x); });
+        else if(m.type==='attributes') pend.push(m.target);
+      });
+      later();
+    }
+  }).observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['placeholder','title']});
+}
+setInterval(state,300);
+var _g=window.goPage; if(_g) window.goPage=function(){ var r=_g.apply(this,arguments); setTimeout(function(){ sweep(document.body); },120); setTimeout(function(){ sweep(document.body); },500); return r; };
+document.addEventListener('click',function(){ setTimeout(function(){ if(EN()) sweep(document.body); },150); },true);
+setTimeout(state,100);
+})();
+
+</script>
+<script id="fileinput-module">
+(function(){
+'use strict';
+/* Thermosys - bouton "Choisir un fichier" traduit (le texte natif du navigateur suit la langue du navigateur, pas celle de Thermosys) */
+function L(){ var g=window.I18N3&&I18N3.get&&I18N3.ov&&I18N3.ov()?I18N3.get():(window.lang==='en'?'en':'fr'); return g; }
+var TXT={fr:{b:'Choisir un fichier',n:'Aucun fichier choisi',m:' fichiers'},en:{b:'Choose file',n:'No file chosen',m:' files'},es:{b:'Elegir archivo',n:'Ningún archivo elegido',m:' archivos'}};
+function T(){ return TXT[L()]||TXT.en; }
+var css=document.createElement('style'); css.id='fi-css';
+css.textContent='.fi-native{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;overflow:hidden!important;pointer-events:none!important;margin:0!important;padding:0!important}.fi-wrap{display:flex;align-items:center;gap:8px;margin:4px 0;width:100%}.fi-name{font-size:11px;opacity:.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}';
+document.head.appendChild(css);
+function setup(inp){
+  if(inp.__fi) return; if(inp.style.display==='none'||inp.type!=='file') return;
+  inp.__fi=true;
+  var w=document.createElement('span'); w.className='fi-wrap';
+  var b=document.createElement('button'); b.type='button'; b.className='btn'; b.style.cssText='padding:4px 10px;font-size:11px;flex:none';
+  var n=document.createElement('span'); n.className='fi-name';
+  w.appendChild(b); w.appendChild(n);
+  inp.classList.add('fi-native'); inp.setAttribute('tabindex','-1'); inp.setAttribute('aria-hidden','true');
+  inp.insertAdjacentElement('afterend',w);
+  b.addEventListener('click',function(){ inp.click(); });
+  inp.__fiUpd=function(){
+    var t=T(); if(b.textContent!==t.b) b.textContent=t.b;
+    var f=inp.files, s=(!f||f.length===0)?t.n:(f.length===1?f[0].name:f.length+t.m);
+    if(n.textContent!==s) n.textContent=s;
+  };
+  inp.addEventListener('change',inp.__fiUpd);
+  inp.__fiUpd();
+}
+function scan(){ document.querySelectorAll('input[type=file]').forEach(function(i){ setup(i); if(i.__fiUpd) i.__fiUpd(); }); }
+scan(); setInterval(scan,600);
+})();
+
 </script>
 </body>
 </html>
