@@ -8047,6 +8047,7 @@ function runVerifIT246() {
 (function(){
   document.addEventListener('DOMContentLoaded', function(){
     // Attendre que tout soit initialisé puis appliquer la langue
+    function quiet(fn){ var st=window.showToast; if(typeof st!=='function'){ fn(); return; } window.showToast=function(msg){ if(/^\s*(Langue|Language)\s*:/i.test(String(msg))) return; return st.apply(this,arguments); }; try{ fn(); } finally{ window.showToast=st; } }
     function applyLangIfEN(){
       var saved = null;
       try {
@@ -8063,13 +8064,13 @@ function runVerifIT246() {
       if(window.lang==='en' || saved==='en'){
         if(window.lang!=='en'){
           // Forcer la langue via toggleLang si on est en FR
-          if(typeof toggleLang==='function') toggleLang();
+          if(typeof toggleLang==='function') quiet(toggleLang);
         } else {
           // On est deja en EN mais le contenu n'a pas ete traduit
           // Appeler toggleLang deux fois pour faire FR->EN->FR->EN
           if(typeof toggleLang==='function'){
-            toggleLang(); // EN->FR
-            setTimeout(function(){ toggleLang(); }, 100); // FR->EN
+            quiet(toggleLang); // EN->FR
+            setTimeout(function(){ quiet(toggleLang); }, 100); // FR->EN
           }
         }
       }
