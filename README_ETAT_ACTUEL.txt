@@ -457,6 +457,15 @@ ETAPE 36 : VANNES - audit. Kv = Q racine(rho / (10 dP)) (Q m3/h, dP kPa, rho kg/
  Correctifs de demarrage (01/11/2026) : add_toast_off.js supprime le message 'Thermosys v3 pret / ready - N equipements / items' ;
  add_lang_quiet.js supprime les messages 'Langue : ...' repetes au rechargement (bascules automatiques de fix-lang-init) ; la confirmation au clic sur le globe est conservee.
  Blocs : 107. Commits : 4d3b6cb (68b), 946fc35 (espagnol desactive), 2523f4d (toast), db46627 (messages de langue).
+ ETAPE 69 (01/11/2026) - TEXTES FRANCAIS RESTANTS EN MODE ANGLAIS (add_enfix69.js, puis add_enfix69b.js).
+ Messages 'Langue : ...' au changement de langue supprimes (add_toast_lang_off.js, bloc toast-lang-off, commit 206dd66).
+ Blocs en-fix-data-1 (dictionnaire FR->EN), en-fix-module (moteur ENFIX : actif seulement si lang=en et espagnol inactif ; dictionnaire exact, segments ' - ', plages '2 a 5' -> '2 to 5', regles de mots, libelles doubles 'FR / EN' coupes seulement dans DESENFUMAGE, CHARGE, AIDE, CONTACT),
+ fileinput-module (bouton 'Choisir un fichier / Aucun fichier choisi' traduit : Choose file / No file chosen ; FR/EN/ES). Correctif FLUIDES : put() ne reecrit plus le tableau quand ENFIX l'a modifie.
+ Corriges : QUOTE (Marque...), SCOP/COP (Cost result, SCOP result, Enter the data and calculate), VALVES Kvs (Kvs result), CHARGE PRO / HEATING / TRAITEMENT D'AIR (boutons fichier), DESENFUMAGE, huile POE.
+ Etape 69b (add_enfix69b.js, bloc en-fix-data-2) : 'Resultat SCOP', 'Verification RE2020', 'Alkylbenzene AB', phrase des heures de CHARGE PRO. Cause : ancienne routine du module SCOP (scop-results-trad2) non fiable.
+ Blocs : 112. Commits : 206dd66, baf6515 (69), 3a1e02c (69b). Valide par l'utilisateur sur le site le 01/11/2026.
+ RESTE EN FRANCAIS EN MODE ANGLAIS (volontaire ou a traiter) : noms de villes accentues, references 'Arrete ...' (textes legaux), fiches detaillees VANNES (VALVES/ACTUATORS), CATALOGUE (descriptions), AIDE, causes des CODES erreur, quelques paragraphes DESENFUMAGE.
+ PROCHAINE ETAPE : traduction des fiches detaillees VANNES, puis CATALOGUE, AIDE, DESENFUMAGE, CODES.
  DEPLOIEMENT : toujours depuis le dossier dist (cd dist puis vercel --prod). Ne jamais lancer vercel --prod depuis files (envoie 237 Mo, depasse la limite de 100 Mo).
  Apres un 'vercel rollback', les nouveaux deploiements ne sont plus mis en ligne automatiquement : faire vercel ls puis vercel promote <adresse> (une fois suffit, ensuite c'est automatique).
  PROCHAINES ETAPES : installer add_lang68c.js, reactiver l'espagnol et le tester chez l'utilisateur ; puis espagnol lots 3 et suivants (CHAUFFAGE, ELEC, MECA, CHARGE PRO, CHAMBRE FROIDE, TRAITEMENT D'AIR, NORMES, CODES, AIDE...) et resultats de calcul. Langues retenues : FR, EN, ES uniquement (referentiel ASHRAE pour CHAUFFAGE/SCOP : non fait, tables a verifier).
