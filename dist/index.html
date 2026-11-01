@@ -16267,6 +16267,37 @@ if(typeof _sc==='function') window.calcSCOP=function(){
   window.__cd39 = true;
   function en() { return window.lang === 'en'; }
   /* Corrections d'entrees dont le sens etait faux. Cle = Marque|Code ; valeur = [description FR, description EN, cause / action] */
+  var FZ = {
+  "Gree|H3": "Compressor current or temperature too high: check the voltage, the condenser, the refrigerant charge and the compressor.",
+  "Gree|H4": "Abnormal current or pressure: check the voltage, condenser cleanliness and refrigerant charge.",
+  "Gree|H5": "Faulty power module or compressor, short circuit, abnormal supply voltage.",
+  "Gree|H7": "Faulty compressor or inverter board, abnormal voltage; check the compressor wiring.",
+  "Daikin|A5": "Dirty indoor filter or heat exchanger, insufficient airflow, faulty heat exchanger sensor.",
+  "Daikin|C9": "Sensor open, shorted or disconnected: check the connector and the sensor resistance.",
+  "Daikin|L3": "Insufficient ventilation or cooling of the electrical box, faulty board or reactor.",
+  "Mitsubishi|E3": "Remote controller wiring or address, interference on the line.",
+  "Mitsubishi|E4": "Remote controller wiring or address, interference on the line.",
+  "Mitsubishi|P4": "Drain pan sensor disconnected or faulty; also check the drain pump and drainage.",
+  "Mitsubishi|U1": "Dirty or blocked condenser, outdoor fan fault, refrigerant overcharge.",
+  "Mitsubishi|U2": "Low refrigerant charge, faulty expansion valve, outdoor unit overheating.",
+  "Mitsubishi|U3": "Sensor disconnected or faulty; check the connector and the resistance.",
+  "LG|CH03": "Remote controller cable or connector, remote controller power supply.",
+  "LG|CH04": "Drain pump, float switch or drainage blocked.",
+  "LG|CH05": "Indoor/outdoor connection cable cut or loose, faulty board.",
+  "LG|CH06": "Sensor disconnected or faulty; check the connector and the resistance.",
+  "LG|CH07": "Indoor units requesting different modes (cooling/heating) on a multi-split.",
+  "LG|CH10": "Faulty motor or capacitor, blocked fan blade, disconnected connector.",
+  "LG|CH21": "Faulty power module or compressor, short circuit on the compressor.",
+  "LG|CH53": "Indoor/outdoor connection cable, faulty outdoor or indoor board.",
+  "LG|CH67": "Faulty fan motor or board, blocked fan blade, disconnected connector.",
+  "Panasonic|H15": "Sensor disconnected or faulty; check the connector and the resistance.",
+  "Panasonic|H16": "Faulty current sensor or outdoor board; check the connectors.",
+  "Panasonic|H33": "Wiring error or incorrect indoor/outdoor combination.",
+  "Panasonic|H38": "Indoor/outdoor combination not supported; check the unit model references.",
+  "Panasonic|F11": "Faulty 4-way valve or its coil, faulty heat exchanger sensor.",
+  "Panasonic|F17": "Valve or circuit leak to a standby indoor unit, faulty sensor.",
+  "Panasonic|F90": "Faulty outdoor power board, abnormal supply voltage."
+};
   var FIX = {
     'Gree|H3': ['Protection de surcharge du compresseur', 'Compressor overload protection', 'Courant ou température du compresseur trop élevés : vérifier la tension, le condenseur, la charge de fluide et le compresseur.'],
     'Gree|H4': ['Protection de surcharge (système)', 'Overload protection (system)', 'Courant ou pression anormaux : vérifier la tension, la propreté du condenseur et la charge de fluide.'],
@@ -16316,7 +16347,8 @@ if(typeof _sc==='function') window.calcSCOP=function(){
         if (v) {
           if (c[2].textContent !== v[0]) { c[2].textContent = v[0]; }
           if (c[3].textContent !== v[1]) { c[3].textContent = v[1]; }
-          if (c[4].textContent !== v[2]) { c[4].textContent = v[2]; }
+          var cz = (en() && FZ[k]) ? FZ[k] : v[2];
+          if (c[4].textContent !== cz) { c[4].textContent = cz; }
         }
       }
       var box = document.getElementById('cd39note');
@@ -19168,6 +19200,41 @@ var D={
 "panache de balcon": "balcony plume",
 "Flow: 500–100,000 m³/h. Axial and centrifugal. / Débit : 500 – 100 000 m³/h. Axial et centrifuge.": "Flow: 500–100,000 m³/h. Axial and centrifugal.",
 "ECP 306 — Égypte": "ECP 306 — Egypt"
+};
+Object.keys(D).forEach(function(k){ if(!E.dict.hasOwnProperty(k)) E.dict[k]=D[k]; });
+})();
+</script>
+<script id="en-fix-data-6">
+(function(){
+var E=window.ENFIX=window.ENFIX||{}; E.dict=E.dict||{}; E.words=E.words||[];
+var D={
+"CTA (AirControl)": "AHU (AirControl)",
+"CTA (D-AHU Modular/Professional)": "AHU (D-AHU Modular/Professional)",
+"CTA (GOLD, systeme IQlogic)": "AHU (GOLD, system IQlogic)",
+"CTA (Geniox/Topvex, systeme Access)": "AHU (Geniox/Topvex, system Access)",
+"Chiller (LSQWRF, plateforme Gree)": "Chiller (LSQWRF, platform Gree)",
+"Climate (Split/VRF, plateforme Midea)": "Climate (Split/VRF, platform Midea)",
+"Climatisation (Split/VRF, plateforme Fujitsu)": "Air conditioning (Split/VRF, platform Fujitsu)",
+"Compresseur (CF10B Inverter)": "Compressor (CF10B Inverter)",
+"Compresseur (CM-RC-01)": "Compressor (CM-RC-01)",
+"Compresseur (CoreSense/EUC)": "Compressor (CoreSense/EUC)",
+"Compresseur (Optyma Plus)": "Compressor (Optyma Plus)",
+"Contrôle rapproché (JKF, plateforme Gree)": "Precision control (JKF, platform Gree)",
+"PAC Air/Eau (Alezio)": "Air/Water heat pump (Alezio)",
+"PAC Air/Eau (Alfea)": "Air/Water heat pump (Alfea)",
+"PAC Air/Eau (Audax Pro / Magis)": "Air/Water heat pump (Audax Pro / Magis)",
+"PAC Air/Eau (DHP-AQ / DHP-H)": "Air/Water heat pump (DHP-AQ / DHP-H)",
+"PAC Air/Eau (F/S-Serie)": "Air/Water heat pump (F/S-Serie)",
+"PAC Air/Eau (Nimbus / Clas One)": "Air/Water heat pump (Nimbus / Clas One)",
+"PAC Air/Eau (Platinum BC iPlus)": "Air/Water heat pump (Platinum BC iPlus)",
+"PAC Air/Eau (Vitocal)": "Air/Water heat pump (Vitocal)",
+"PAC Air/Eau (Yutaki)": "Air/Water heat pump (Yutaki)",
+"PAC Air/Eau (aroTHERM)": "Air/Water heat pump (aroTHERM)",
+"Regulation (IR32S)": "Control (IR32S)",
+"Rooftop (GK-H, plateforme Gree U-Match)": "Rooftop (GK-H, platform Gree U-Match)",
+"Split / Climatisation": "Split / Air conditioning",
+"VRF (GMV, plateforme Gree)": "VRF (GMV, platform Gree)",
+"VRF / Split (plateforme Midea)": "VRF / Split (platform Midea)"
 };
 Object.keys(D).forEach(function(k){ if(!E.dict.hasOwnProperty(k)) E.dict[k]=D[k]; });
 })();
