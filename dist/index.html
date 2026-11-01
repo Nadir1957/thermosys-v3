@@ -18237,6 +18237,22 @@ if(saved&&saved!=='fr'&&saved!=='en') setTimeout(function(){ if(has(saved)) setL
 })();
 
 </script>
+<script id="toast-lang-off">
+(function(){
+'use strict';
+/* Le changement de langue se voit directement a l'ecran : pas de notification "Language: English" / "Langue: Francais" / "Idioma: Espanol" */
+var RE=/^\s*(Langue|Language|Idioma)\s*:/i;
+function wrap(){
+  var st=window.showToast;
+  if(typeof st!=='function'||st.__langOff) return;
+  var w=function(msg){ if(RE.test(String(msg))) return; return st.apply(this,arguments); };
+  w.__langOff=true;
+  window.showToast=w;
+}
+wrap();
+setTimeout(wrap,1500);
+})();
+</script>
 </body>
 </html>
 
