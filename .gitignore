@@ -17,3 +17,7 @@ backups/
 Dossier final thermosys v3/
 Test_suggestion_catalogue/
 BACKUP_31mai2026/
+_archive/ 
+*.pdf 
+*.doc 
+*.docx
