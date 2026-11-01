@@ -19090,6 +19090,71 @@ E.words.push(
 Object.keys(D).forEach(function(k){ if(k.length>30){ var t=k.slice(0,30)+'...', v=D[k].slice(0,30)+'...'; if(!E.dict.hasOwnProperty(t)) E.dict[t]=v; } });
 })();
 </script>
+<script id="aide-lang-module">
+(function(){
+/* AIDE : chaque rubrique contient le texte francais puis sa traduction anglaise en italique.
+   On n'affiche que la langue active : le francais est range dans .ai-fr, l'anglais (<i>) dans .ai-en. */
+var st=document.createElement('style');
+st.textContent='html[data-ail="en"] #pg-aide .ai-fr{display:none!important}html[data-ail="fr"] #pg-aide .ai-en{display:none!important}';
+document.head.appendChild(st);
+
+/* Titres de rubriques "FR / EN" : une seule langue affichee, noms de modules comme dans le menu. */
+var MEN={"ACCUEIL":"HOME","CATALOGUE":"CATALOG","OCR + IA":"OCR + AI","FLUIDES":"FLUIDS","DEVIS":"QUOTE","RÉSEAUX HVAC":"HVAC NETWORKS","VANNES":"VALVES","NORMES":"STANDARDS","CONVERTISSEUR":"CONVERTER","CHAMBRE FROIDE":"COLD ROOM","TRAITEMENT D'AIR":"AIR TREATMENT","DÉSENFUMAGE":"SMOKE EXTRACTION","CHAUFFAGE":"HEATING","ÉLECTRICITÉ":"ELECTRICAL","MÉCATRONIQUE":"MECHATRONICS","PROJET":"PROJECT","UNITÉS":"UNITS"};
+var MFR={"FAULT CODES":"CODES","COOLING LOAD":"CHARGE"};
+var SPEC={"🌐 25. UNITÉS — SI / Impérial":["🌐 25. UNITÉS — SI / Impérial","🌐 25. UNITS — SI / Imperial"]};
+function esc(x){ return x.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+function mapMod(p,tab){ return p.replace(/^(\S*\s*(?:\d+\.\s*)?)(.+?)(\s*)$/,function(m,a,b,c){ var d=tab[b]; return a+(d||b)+c; }); }
+function titles(){
+  var root=document.getElementById('pg-aide'); if(!root) return;
+  var els=root.querySelectorAll('.ph, div[style*="font-weight:700"]');
+  for(var n=0;n<els.length;n++){
+    var el=els[n]; if(el.children.length||el.querySelector('.ai-fr')) continue;
+    var t=el.textContent.replace(/\s+/g,' ').trim(); if(t.indexOf(' / ')<0) continue;
+    var fr,en;
+    if(SPEC[t]){ fr=SPEC[t][0]; en=SPEC[t][1]; }
+    else{
+      var k=t.lastIndexOf(' / '), L=t.slice(0,k), R=t.slice(k+3), ic=(/^[^A-Za-z0-9À-ÿ]*/.exec(t)||[''])[0];
+      if(R.indexOf(' — ')>=0){ fr=L; en=ic+R; }
+      else{
+        var j=L.lastIndexOf(' — ');
+        if(j>=0){ fr=mapMod(L.slice(0,j),MFR)+L.slice(j); en=mapMod(L.slice(0,j),MEN)+' — '+R; }
+        else{ fr=L; en=ic+R; }
+      }
+    }
+    var q=/^(.*?\d+\. )(.+?) — (.+)$/.exec(en); if(q&&q[2].toLowerCase()===q[3].toLowerCase()) en=q[1]+q[2];
+    var q2=/^(.*?\d+\. )(.+?) — (.+)$/.exec(fr); if(q2&&q2[2].toLowerCase()===q2[3].toLowerCase()) fr=q2[1]+q2[2];
+    el.innerHTML='<span class="ai-fr">'+esc(fr)+'</span><span class="ai-en">'+esc(en)+'</span>';
+  }
+}
+function wrap(){
+  var root=document.getElementById('pg-aide'); if(!root) return;
+  var list=root.querySelectorAll('i');
+  for(var n=0;n<list.length;n++){
+    var i=list[n], p=i.parentNode;
+    if(!p||i.classList.contains('ai-en')) continue;
+    if(i.closest('.ai-fr')) continue;
+    var first=[], c=p.firstChild;
+    while(c&&c!==i){ first.push(c); c=c.nextSibling; }
+    if(!first.length) continue;
+    var txt=''; first.forEach(function(x){ txt+=x.textContent; });
+    if(!txt.replace(/\s+/g,'').length) continue;
+    var sp=document.createElement('span'); sp.className='ai-fr';
+    p.insertBefore(sp,first[0]);
+    first.forEach(function(x){ sp.appendChild(x); });
+    i.classList.add('ai-en');
+  }
+}
+function apply(){
+  var l=(window.lang==='en')?'en':'fr';
+  if(document.documentElement.getAttribute('data-ail')!==l) document.documentElement.setAttribute('data-ail',l);
+}
+function run(){ try{ wrap(); titles(); apply(); }catch(e){} }
+run();
+document.addEventListener('DOMContentLoaded',run);
+window.addEventListener('load',function(){ run(); setTimeout(run,800); setTimeout(run,2500); });
+setInterval(apply,250);
+})();
+</script>
 </body>
 </html>
 
