@@ -18168,20 +18168,23 @@ function $(id){return document.getElementById(id);}
 function N(s){return s.replace(/\s+/g,' ').trim();}
 function ndict(c){
   var d=I.dict[c]; if(!d) return null;
-  var k=Object.keys(d); if(norm[c]&&norm[c].n===k.length) return norm[c].m;
-  var m={}; k.forEach(function(x){ m[N(x)]=d[x]; }); norm[c]={n:k.length,m:m}; return m;
+  /* perf75 */ if(norm[c]&&!chk) return norm[c].m;
+  chk=false; var k=Object.keys(d); if(norm[c]&&norm[c].n===k.length) return norm[c].m;
+  var m={}; k.forEach(function(x){ m[N(x)]=d[x]; }); norm[c]={n:k.length,m:m}; memo={}; memoN=0; return m;
 }
 function has(c){ return c==='fr'||c==='en'||!!(I.dict[c]&&Object.keys(I.dict[c]).length); }
 function list(){ return ORDER.filter(has); }
 function isOv(){ return cur!=='fr'&&cur!=='en'; }
 function sfx(m,x){ var s=/^(.*\S)\s*(\([^()]*\))$/.exec(x); return (s&&m[s[1]]!==undefined)?m[s[1]]+' '+s[2]:null; }
-function tr(raw){ /* seg68 */
+function tr0(raw){ /* seg68 */
   var m=ndict(cur); if(!m) return null; var k=N(raw); if(!k||k.length<2) return null;
   var v=m[k]; if(v!==undefined) return v;
   v=sfx(m,k); if(v!==null) return v;
   if(k.indexOf(' \u2014 ')>0){ var hit=false, o=k.split(' \u2014 ').map(function(x){ var y=m[x]; if(y!==undefined){ hit=true; return y; } y=sfx(m,x); if(y!==null){ hit=true; return y; } return x; }); if(hit) return o.join(' \u2014 '); }
   return I.rx?I.rx(k,m):null;
 }
+var memo={},memoN=0,chk=true,lastChk=0;
+function tr(raw){ var key=cur+'\u0001'+raw; var h=memo[key]; if(h!==undefined) return h===0?null:h; var v=tr0(raw); if(++memoN>30000){ memo={}; memoN=0; } memo[key]=(v===null?0:v); return v; }
 var SKIP=/^(SCRIPT|STYLE|TEXTAREA|NOSCRIPT)$/;
 function doText(n){
   var p=n.parentNode; if(!p||SKIP.test(p.nodeName)) return;
@@ -18205,6 +18208,7 @@ function doEl(e){
   });
 }
 function sweep(root){
+  var tn=Date.now(); if(tn-lastChk>30){ chk=true; lastChk=tn; }
   if(!root||!isOv()) return;
   if(root.nodeType===3){ doText(root); return; }
   if(root.nodeType!==1) return;
@@ -18241,10 +18245,10 @@ document.addEventListener('click',function(ev){
   var b=ev.target&&ev.target.closest&&ev.target.closest('button[onclick="toggleLang()"]');
   if(b){ ev.stopImmediatePropagation(); ev.preventDefault(); cycle(); }
 },true);
-I.x=function(s){ if(!isOv()) return s; var v=tr(s); return v===null?s:v; };
+I.x=function(s){ if(!isOv()) return s; var tn=Date.now(); if(tn-lastChk>30){ chk=true; lastChk=tn; } var v=tr(s); return v===null?s:v; };
 I.ov=isOv;
 I.set=setLang; I.cycle=cycle; I.get=function(){return cur;}; I.list=list;
-I.add=function(c,d){ I.dict[c]=I.dict[c]||{}; Object.keys(d).forEach(function(k){ I.dict[c][k]=d[k]; }); if(isOv()&&cur===c) setTimeout(full,0); };
+I.add=function(c,d){ norm[c]=null; memo={}; memoN=0; I.dict[c]=I.dict[c]||{}; Object.keys(d).forEach(function(k){ I.dict[c][k]=d[k]; }); if(isOv()&&cur===c) setTimeout(full,0); };
 var tm=null,pend=[],budget=25,refill=false;
 function later(){ clearTimeout(tm); tm=setTimeout(function(){ var p=pend; pend=[]; if(isOv()){ p.forEach(sweep); chrome(); } },70); }
 if(window.MutationObserver){
