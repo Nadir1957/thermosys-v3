@@ -6020,6 +6020,7 @@ setInterval(function() {
   if (costTranslating) return;
   var lbl = document.getElementById('langLbl');
   if (!lbl) return;
+  if(window.I18N3&&I18N3.ov&&I18N3.ov()) return;
   var isEN = lbl.textContent.trim() === 'EN';
   var el = document.getElementById('costResult');
   if (!el) return;
@@ -8306,7 +8307,7 @@ function clean(t){
     .replace(/\u202F/g," ")
     .replace(/[\u0080-\u009F]/g,"")
     .replace(/[\uD800-\uDFFF]/g,"")
-    .replace(/[^\x00-\xFF]/g,"?");
+    .replace(/\u2248/g,"~").replace(/\u03B7/g,"eta").replace(/\u2139\uFE0F?/g,"").replace(/\u26A0\uFE0F?/g,"[!]").replace(/\u2212/g,"-").replace(/\u2022/g,"-").replace(/[\u2018\u2019]/g,"\u0027").replace(/[\u201C\u201D]/g,"\u0022").replace(/\u2026/g,"...").replace(/\u2192/g,"->").replace(/[\u2600-\u27BF\uFE0F]/g,"").replace(/[^\x00-\xFF]/g,"?");
 }
 function exportScopPDF(){
   var L=window.lang||"fr";
@@ -8518,7 +8519,7 @@ function clean(t){
     .replace(/\u00B0/g,"deg")
     .replace(/\u2265/g,">=")
     .replace(/\u2264/g,"<=")
-    .replace(/[^\x00-\xFF]/g,"?");
+    .replace(/\u2248/g,"~").replace(/\u03B7/g,"eta").replace(/\u2139\uFE0F?/g,"").replace(/\u26A0\uFE0F?/g,"[!]").replace(/\u2212/g,"-").replace(/\u2022/g,"-").replace(/[\u2018\u2019]/g,"\u0027").replace(/[\u201C\u201D]/g,"\u0022").replace(/\u2026/g,"...").replace(/\u2192/g,"->").replace(/[\u2600-\u27BF\uFE0F]/g,"").replace(/[^\x00-\xFF]/g,"?");
 }
 function exportDsfPDF(){ /* espdf81 */
   var OVL=!!(window.I18N3&&I18N3.ov&&I18N3.ov());
@@ -8971,7 +8972,7 @@ function clean(t){
     .replace(/\u2264/g,"<=")
     .replace(/\u202F/g," ")
     .replace(/[\uD800-\uDFFF]/g,"")
-    .replace(/[^\x00-\xFF]/g,"?");
+    .replace(/\u2248/g,"~").replace(/\u03B7/g,"eta").replace(/\u2139\uFE0F?/g,"").replace(/\u26A0\uFE0F?/g,"[!]").replace(/\u2212/g,"-").replace(/\u2022/g,"-").replace(/[\u2018\u2019]/g,"\u0027").replace(/[\u201C\u201D]/g,"\u0022").replace(/\u2026/g,"...").replace(/\u2192/g,"->").replace(/[\u2600-\u27BF\uFE0F]/g,"").replace(/[^\x00-\xFF]/g,"?");
 }
 function gt(id){
   var el=document.getElementById(id);
@@ -9006,9 +9007,9 @@ function _thermosysTewiPDF(){
     rows.forEach(function(tr){
       var cells=Array.from(tr.querySelectorAll("td,th")).map(function(c){return clean(c.textContent.trim());});
       if(cells.length>=4){
-        if(cells[0].indexOf("Operational")!==-1||cells[0].indexOf("Fuites")!==-1){opLeakKg=cells[1];opLeakT=cells[2];opLeakPct=cells[3];}
-        if(cells[0].indexOf("End of life")!==-1||cells[0].indexOf("Fin de vie")!==-1){eolKg=cells[1];eolT=cells[2];eolPct=cells[3];}
-        if(cells[0].indexOf("Total Direct")!==-1){dirKg=cells[1];dirT=cells[2];dirPct=cells[3];}
+        if(cells[0].indexOf("Operational")!==-1||cells[0].indexOf("Fuites")!==-1||cells[0].indexOf("Fugas")!==-1){opLeakKg=cells[1];opLeakT=cells[2];opLeakPct=cells[3];}
+        if(cells[0].indexOf("End of life")!==-1||cells[0].indexOf("Fin de vie")!==-1||cells[0].indexOf("Fin de vida")!==-1){eolKg=cells[1];eolT=cells[2];eolPct=cells[3];}
+        if((cells[0].indexOf("Total Direct")!==-1||cells[0].indexOf("Total directo")!==-1)){dirKg=cells[1];dirT=cells[2];dirPct=cells[3];}
         if(cells[0].indexOf("Indirect")!==-1){indKg=cells[1];indT=cells[2];indPct=cells[3];}
         if(cells[0].indexOf("TOTAL")!==-1){totKg=cells[1];totT=cells[2];}
       }
@@ -9016,8 +9017,8 @@ function _thermosysTewiPDF(){
     var leafDivs=Array.from(resEl.querySelectorAll("div")).filter(function(d){return d.children.length===0;});
     for(var li=0;li<leafDivs.length;li++){
       var lt=clean(leafDivs[li].textContent.trim());
-      if(lt==="kgCO2/an"&&li<leafDivs.length-1)kgPerYr=clean(leafDivs[li+1].textContent.trim())+" kgCO2/an";
-      if((lt==="tCO2/kWcold"||lt==="tCO2/kWfroid")&&li<leafDivs.length-1)tco2kw=clean(leafDivs[li+1].textContent.trim())+" tCO2/kWfroid";
+      if(/^kgCO.?\/(an|año)$/.test(lt)&&li<leafDivs.length-1)kgPerYr=clean(leafDivs[li+1].textContent.trim())+" kgCO2/an";
+      if((lt==="tCO2/kWcold"||lt==="tCO2/kWfroid"||/^tCO.?\/kW/.test(lt))&&li<leafDivs.length-1)tco2kw=clean(leafDivs[li+1].textContent.trim())+" tCO2/kWfroid";
       if(lt==="Total tCO2"&&li<leafDivs.length-1)totalTco2=clean(leafDivs[li+1].textContent.trim())+" tCO2";
     }
   }
@@ -9190,7 +9191,7 @@ function clean(t){
     .replace(/\u2014/g,"-")
     .replace(/\u2013/g,"-")
     .replace(/\u2014/g,"-")
-    .replace(/[^\x00-\xFF]/g,"?");
+    .replace(/\u2248/g,"~").replace(/\u03B7/g,"eta").replace(/\u2139\uFE0F?/g,"").replace(/\u26A0\uFE0F?/g,"[!]").replace(/\u2212/g,"-").replace(/\u2022/g,"-").replace(/[\u2018\u2019]/g,"\u0027").replace(/[\u201C\u201D]/g,"\u0022").replace(/\u2026/g,"...").replace(/\u2192/g,"->").replace(/[\u2600-\u27BF\uFE0F]/g,"").replace(/[^\x00-\xFF]/g,"?");
 }
 function g(id){var el=document.getElementById(id);if(!el)return"";if(el.tagName==="SELECT"&&el.selectedIndex>=0)return el.options[el.selectedIndex].text;return el.value||"";}
 function _re2020PdfExport(){
@@ -19303,13 +19304,19 @@ var I=window.I18N3; if(!I||window.__esPrint) return; window.__esPrint=1;
 function N(s){return s.replace(/\s+/g,' ').trim();}
 function esHtml(h){
   if(typeof h!=='string'||!I.ov||!I.ov()) return h;
-  h=h.replace(/(<html[^>]*\blang=")en(")/,'$1'+I.get()+'$2');
-  return h.replace(/>([^<>]+)</g,function(m,t){
-    var k=N(t); if(k.length<2) return m;
-    var v=I.x(k); if(v===k) return m;
-    var a=t.match(/^\s*/)[0], b=t.match(/\s*$/)[0];
-    return '>'+a+v+b+'<';
-  }).replace(/(<title>)([^<]+)(<\/title>)/,function(m,a,t,c){ return a+t+c; });
+  h=h.replace(/(<html[^>]*\blang=")en(")/,'$1'+I.get()+'$2'); /* esfix82 */
+  var parts=h.split(/(<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>)/i);
+  return parts.map(function(p,n){
+    if(n%2===1) return p;
+    return p.replace(/>([^<>]+)</g,function(m,t){
+      var k=N(t); if(k.length<2) return m;
+      var v=I.x(k);
+      if(I.num) v=I.num(v);
+      if(v===k) return m;
+      var a=t.match(/^\s*/)[0], b=t.match(/\s*$/)[0];
+      return '>'+a+v+b+'<';
+    });
+  }).join('');
 }
 I.html=esHtml;
 var wo=window.open;
@@ -19558,7 +19565,7 @@ function runR(k){ for(var i=0;i<R.length;i++){ var v; try{ v=R[i](k); }catch(e){
 I.ml=function(raw,tr){
   var t1=raw.replace(/^\s+/,'').replace(/\s+$/,'');
   if(t1.indexOf('\n')<0){ var r1=runR(t1.replace(/\s+/g,' ')); return r1!==null?r1:tr(raw); }
-  var w=tr(raw); if(w!==null) return w;
+  var w=tr(raw); var dd=I.dict&&I.dict[I.get()]; if(w!==null&&dd&&dd[raw.replace(/s+/g,' ').trim()]!==undefined) return w; /* esml82 */
   var ls=raw.split('\n'), hit=false;
   var out=ls.map(function(ln){
     var body=ln.replace(/^\s+/,'').replace(/\s+$/,''); if(!body) return ln;
@@ -19570,7 +19577,7 @@ I.ml=function(raw,tr){
     if(oc&&nc){ var want=body.indexOf(':'), have=nc[1].length; if(want>have) v=nc[1]+new Array(want-have+1).join(' ')+v.slice(nc[1].length+nc[2].length); }
     return lead+v;
   });
-  if(!hit) return null;
+  if(!hit) return w;
   return out.join('\n').replace(/^\s+/,'').replace(/\s+$/,'');
 };
 })();
@@ -19606,6 +19613,244 @@ I.rxs.push(function(k,m){
   if((a=/^(\S+) All IT 246 requirements verified \((\d+)\/(\d+)\)$/.exec(k))) return a[1]+' Todos los requisitos de la IT 246 verificados ('+a[2]+'/'+a[3]+')';
   return null;
 });
+})();
+
+</script>
+<script id="lang-es-data-11">
+(window.I18N3=window.I18N3||{dict:{}});
+window.I18N3.dict=window.I18N3.dict||{};
+(function(){
+var I=window.I18N3; if(!I||window.__es82) return; window.__es82=1;
+
+/* ---------- 1. locale : dates et nombres en es-ES quand l'espagnol est actif ---------- */
+function isEsLoc(l){ return l===undefined||l===null||/^(en|fr)(-|$)/i.test(String(l)); }
+['toLocaleDateString','toLocaleTimeString','toLocaleString'].forEach(function(n){
+  var o=Date.prototype[n];
+  Date.prototype[n]=function(l,opt){ try{ if(I.ov&&I.ov()&&isEsLoc(l)) l='es-ES'; }catch(e){} return o.call(this,l,opt); };
+});
+var oNum=Number.prototype.toLocaleString;
+Number.prototype.toLocaleString=function(l,opt){ try{ if(I.ov&&I.ov()&&isEsLoc(l)) l='es-ES'; }catch(e){} return oNum.call(this,l,opt); };
+
+/* ---------- 2. nombres : jeton en-US -> espagnol ---------- */
+function cv(t){
+  if(/^[+\-−]?\d{2,3}(?:\.\d{3})+$/.test(t)) return t;
+  var m=/^([+\-−]?)(\d[\d,]*)(?:\.(\d+))?$/.exec(t); if(!m) return t;
+  var ip=m[2].replace(/,/g,''); if(ip.length>=5) ip=ip.replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+  return m[1]+ip+(m[3]!==undefined?','+m[3]:'');
+}
+function cvAll(s){ return s.replace(/[+\-−]?\d[\d,]*(?:\.\d+)?/g,cv); }
+/* virgule decimale dans un texte libre, en protegeant les references de normes et les noms de produits */
+var PROT=/(?:ASHRAE|ISO|EN|IEC|NFPA|DTR|AHRI|NF|DIN|BS|SMACNA|VDI|UNE|RE|IT|Gemini|Flash|Sonnet|Opus|Haiku|CoolProp|Pt|NTC|PTC|ISO\/IEC|F-Gas)\s?\d[\w.\-\/:+]*|\bv\d+(?:\.\d+)*\b|\b\d{1,2}\.\d{1,2}\.\d{2,4}\b|\w+\.(?:com|dz|org|app|net)\b|\b[A-Za-z]+\d+(?:\.\d+)+\b/g;
+function esNum(t){
+  if(typeof t!=='string'||t.indexOf('.')<0) return t;
+  var keep=[], tmp=t.replace(PROT,function(m){ keep.push(m); return '\u0001'+(keep.length-1)+'\u0002'; });
+  tmp=tmp.replace(/(^|[^\d.\u0001])(\d+)\.(\d+)(?![\d.])/g,function(m,p,i,d){ if(/^\d{2,3}$/.test(i)&&d.length===3) return m; return p+i+','+d; });
+  return tmp.replace(/\u0001(\d+)\u0002/g,function(m,i){ return keep[+i]; });
+}
+I.num=esNum;
+
+/* ---------- 3. dictionnaire exact ---------- */
+var D={
+/* TEWI (ecran) */
+"Operational leaks":"Fugas en operación","End of life":"Fin de vida útil","Total Direct":"Total directo","Indirect (elec.)":"Indirecto (electricidad)","Direct / Indirect":"Directo / Indirecto","Total tCO2":"Total tCO₂","kgCO2/an":"kgCO₂/año","tCO2/kWfroid":"tCO₂/kW frigorífico",
+"Phase-out F-Gas 2025+":"Eliminación progresiva F-Gas 2025+","Quarterly inspection (>=500 tCO2eq)":"Inspección trimestral (≥500 tCO₂eq)","Semi-annual inspection (>=50 tCO2eq)":"Inspección semestral (≥50 tCO₂eq)","Annual inspection (>=5 tCO2eq)":"Inspección anual (≥5 tCO₂eq)","No inspection obligation":"Sin obligación de inspección",
+"Leak check every 3 months (≥ 500 tCO2e)":"Control de estanqueidad cada 3 meses (≥ 500 tCO₂e)","Leak check every 6 months (≥ 50 tCO2e)":"Control de estanqueidad cada 6 meses (≥ 50 tCO₂e)","Leak check every 12 months (≥ 5 tCO2e; 10 tCO2e threshold if hermetically sealed)":"Control de estanqueidad cada 12 meses (≥ 5 tCO₂e; umbral de 10 tCO₂e si el equipo es hermético)","No mandatory periodic leak check (< 5 tCO2e)":"Sin control periódico obligatorio (< 5 tCO₂e)",
+"⚠️ GWP ≥ 2500: refrigerant subject to bans and phase-down of EU Regulation 2024/573 (use/servicing depending on case).":"⚠️ PCA ≥ 2500: refrigerante sujeto a las prohibiciones y a la reducción progresiva del Reglamento (UE) 2024/573 (uso/mantenimiento según el caso).",
+"Ref.: Regulation (EU) 2024/573.":"Ref.: Reglamento (UE) 2024/573.","Equiv. charge:":"Carga equiv.:","Custom":"Personalizada",
+/* CHARGE */
+"Area > 0 m².":"Superficie > 0 m².","Height between 0 and 20 m.":"Altura entre 0 y 20 m.","Enter outdoor and indoor temperatures.":"Introduzca las temperaturas exterior e interior.","Occupants ≥ 0.":"Ocupantes ≥ 0.","Equipment ≥ 0 W.":"Equipos ≥ 0 W.",
+"ℹ️ Quick estimate, sensible load (fresh-air latent not included). Full load: CHARGE PRO / PSYCHRO modules.":"ℹ️ Estimación rápida, carga sensible (latente del aire exterior no incluida). Balance completo: módulos CARGA PRO / PSICRO.",
+"FRESH AIR RESULTS":"RESULTADOS DE AIRE EXTERIOR","Note: outdoor T < indoor T: the sensible load is a HEATING need; humidification is not calculated here.":"Nota: T ext. < T int.: la carga sensible es una necesidad de CALEFACCIÓN; aquí no se calcula la humidificación.",
+"Number of rooms":"Número de locales","Arithmetic sum":"Suma aritmética","Diversity factor":"Factor de simultaneidad","Total building load":"Carga total del edificio","Number of rooms :":"Número de locales :","Arithmetic sum :":"Suma aritmética :","Diversity factor :":"Factor de simultaneidad :","Total building load :":"Carga total del edificio :",
+/* SCOP / coste / ROI */
+"to enter":"por introducir","if known":"si se conoce",
+"Capacity: enter a value > 0 kW.":"Capacidad: introduzca un valor > 0 kW.","COP A7/W35: enter a value between 1.5 and 8 (datasheet).":"COP A7/W35: introduzca un valor entre 1,5 y 8 (ficha técnica).","Datasheet SCOP: value between 1.5 and 9, or leave empty.":"SCOP de la ficha técnica: valor entre 1,5 y 9, o deje el campo vacío.",
+"Capacity: > 0 kW.":"Capacidad: > 0 kW.","EER/COP: between 1 and 12.":"EER/COP: entre 1 y 12.","Hours/year: between 1 and 8,760.":"Horas/año: entre 1 y 8760.","kWh price: value ≥ 0.":"Precio del kWh: valor ≥ 0.",
+"HP installation: value ≥ 0.":"Instalación de la bomba de calor: valor ≥ 0.","Boiler installation: value ≥ 0.":"Instalación de la caldera: valor ≥ 0.","Thermal needs: > 0 kWh/year.":"Necesidades térmicas: > 0 kWh/año.","HP SCOP: between 1.5 and 9.":"SCOP de la bomba de calor: entre 1,5 y 9.","Boiler efficiency: between 0.30 and 1.10.":"Rendimiento de la caldera: entre 0,30 y 1,10.","Electricity price per kWh: > 0.":"Precio del kWh eléctrico: > 0.","Gas price per kWh: to enter (> 0).":"Precio del kWh de gas: por introducir (> 0).",
+"ℹ️ Climate with little heating demand: SCOP is of limited use here; see EER/SEER (cooling).":"ℹ️ Clima sin demanda de calefacción significativa: el SCOP tiene poco sentido aquí; véase más bien EER/SEER (refrigeración).",
+"ℹ️ Estimate ±15 %: SCOP ≈ COP × climate factor (the colder the climate, the lower the SCOP; EN 14825: warmer / average / colder). The regulatory value uses the EN 14825 bin method: enter the datasheet SCOP if known.":"ℹ️ Estimación a ±15 %: SCOP ≈ COP × factor climático (cuanto más frío es el clima, más baja el SCOP; EN 14825: climas más cálido / medio / más frío). El valor reglamentario se calcula con el método de «bins» de la EN 14825: introduzca el SCOP de la ficha técnica si lo conoce.",
+"ℹ️ ηs = SCOP/2.5 − F(1) 3 % (air source; a further −5 % for water/brine). The class at 55 °C needs the COP at W55 (not calculated here).":"ℹ️ ηs = SCOP/2,5 − F(1) 3 % (bomba aire-agua; −5 % adicional para agua/agua o salmuera). La clase a 55 °C exige el COP a W55 (no calculado aquí).",
+"HEAT PUMP ROI":"RENTABILIDAD DE LA BOMBA DE CALOR",
+"✗ No payback: with these prices the heat pump energy costs as much as or more than the boiler energy.":"✗ Sin retorno de la inversión: con estos precios, la energía de la bomba de calor cuesta lo mismo o más que la de la caldera.",
+"OK Heat pump cheaper to install and to run.":"OK Bomba de calor más barata de instalar y de utilizar.","OK Profitable investment":"OK Inversión rentable","Long payback > 7 years":"Amortización larga > 7 años","✗ Payback above 20 years: poor investment.":"✗ Amortización superior a 20 años: inversión poco rentable.",
+"Excluding maintenance, tariff changes and discounting.":"Sin incluir mantenimiento ni evolución de las tarifas, y sin actualización.",
+"TARIFF SOURCE :":"FUENTE DE LA TARIFA :","TARIFF SOURCE:":"FUENTE DE LA TARIFA:",
+/* CARGA PRO : avisos */
+"No surfaces defined.":"No hay ninguna pared definida.",
+"The entered floor areas differ from the room floor area: check the surfaces (floor and roof).":"La superficie de los suelos introducidos difiere de la superficie en planta del local: compruebe las paredes (suelo y cubierta).",
+"No cooling load under these conditions: the room mainly needs heating (see EN 12831 heating, upcoming module).":"No hay carga frigorífica en estas condiciones: el local necesita sobre todo calefacción (véase la calefacción EN 12831).",
+"Low sensible heat ratio (< 0.70): high latent share. Provide a dehumidifying coil and humidity control.":"Factor de calor sensible bajo (< 0,70): fuerte proporción latente. Prevea una batería que deshumidifique y un control de humedad.",
+"Fresh air accounts for more than 35 % of the load: consider energy recovery (Air Treatment module).":"El aire exterior representa más del 35 % de la carga: conviene estudiar una recuperación de energía (módulo Tratamiento de aire).",
+"Glazing exceeds 40 % of the facade area: the solar load will be high; consider external shading and solar-control glass.":"Los acristalamientos superan el 40 % de la superficie de fachada: la carga solar será elevada; conviene estudiar protecciones exteriores y vidrio de control solar.",
+"Latitude beyond ±66°: the clear-sky model is not suitable.":"Latitud fuera de ±66°: el modelo de cielo despejado no es adecuado.",
+"The result did not reach a stable periodic state: reduce the time step or check the surfaces.":"El resultado no ha alcanzado un régimen periódico estable: reduzca el paso de tiempo o compruebe las paredes.",
+"Daily range is zero: the calculation is quasi-steady, without outdoor-temperature inertia effect.":"Amplitud diaria nula: el cálculo es casi estacionario, sin efecto de inercia sobre la temperatura exterior.",
+/* documentos imprimibles */
+"Not specified":"No especificado","⊕ PRINT QUOTE":"⊕ IMPRIMIR PRESUPUESTO","Total (excl. VAT) :":"Total sin IVA :","TOTAL (incl. VAT) :":"TOTAL CON IVA :","Client signature":"Firma del cliente","Company stamp":"Sello de la empresa","Net excl. VAT :":"Neto sin IVA :",
+"⊕ PRINT NETWORK CALCULATION":"⊕ IMPRIMIR CÁLCULO DE LA RED","NETWORK CALC":"CÁLCULO DE RED","Network":"Red","HVAC Network":"Red HVAC","Most unfavorable circuit":"Circuito más desfavorable","Segment":"Tramo","Circuit pressure drop :":"Pérdida de carga del circuito :","SUGGESTED PUMP HEAD (+10%):":"ALTURA MANOMÉTRICA DE BOMBA SUGERIDA (+10 %):","★ = segment(s) on the sizing circuit":"★ = tramo(s) del circuito de dimensionamiento",
+"PREVENTIVE MAINTENANCE REPORT":"INFORME DE MANTENIMIENTO PREVENTIVO","Check":"Control","Technician / Signature":"Técnico / Firma","Manager / Approval":"Responsable / Visto bueno",
+"PRINT LOTO":"IMPRIMIR LOTO","LOTO LOCKOUT/TAGOUT REPORT ISO 14118:2018":"INFORME DE BLOQUEO Y ETIQUETADO (LOTO) ISO 14118:2018","LOTO Step":"Paso LOTO","This document certifies completion of the lockout/tagout procedure per ISO 14118:2018. Keep for minimum 5 years.":"Este documento certifica la realización del procedimiento de bloqueo y etiquetado (LOTO) conforme a la norma ISO 14118:2018. Conservar durante un mínimo de 5 años.",
+"⊕ PRINT CERTIFICATE":"⊕ IMPRIMIR CERTIFICADO","THERMOSYS &#x2666; HVAC WORKSTATION &#x2666; STATION PROFESSIONNELLE":"THERMOSYS &#x2666; HVAC WORKSTATION &#x2666; ESTACIÓN PROFESIONAL","&#x2666; ALGÉRIE &amp; INTERNATIONAL &#x2666; 2026 &#x2666;":"&#x2666; ARGELIA &amp; INTERNACIONAL &#x2666; 2026 &#x2666;","CERTIFIED":"CERTIFICADO","THERMOSYS — PLATEFORME HVAC":"THERMOSYS — PLATAFORMA HVAC","SCAN TO VERIFY":"ESCANEAR PARA VERIFICAR","AUDIT INTEGRITY":"INTEGRIDAD DE LA AUDITORÍA","TECHNICAL COMPLIANCE AUDIT CERTIFICATE":"CERTIFICADO DE CONFORMIDAD Y AUDITORÍA TÉCNICA",
+"01 &mdash; IDENTIFICATION":"01 &mdash; IDENTIFICACIÓN","Operator / Technician:":"Operador / Técnico:","HVAC Operator":"Operador HVAC","Tool:":"Herramienta:","02 &mdash; VERIFIED STANDARDS (50)":"02 &mdash; NORMAS VERIFICADAS (50)","IEC / EN 60335-2-40 (éd. 2022)":"IEC / EN 60335-2-40 (ed. 2022)","03 &mdash; AUDITED DATABASE":"03 &mdash; BASE DE DATOS AUDITADA","Manufacturers:":"Fabricantes:","80 multi-brand ref. 2024-2025":"80 ref. multimarca 2024-2025","50 international brands":"50 marcas internacionales","Valves &amp; actuators:":"Válvulas y actuadores:","55 réf. (Danfoss, Belimo, Siemens, Honeywell, IMI)":"55 ref. (Danfoss, Belimo, Siemens, Honeywell, IMI)",
+"The undersigned certifies having performed the technical verification of HVAC equipment and installations using":"El abajo firmante certifica haber realizado la verificación técnica de equipos e instalaciones HVAC mediante",", in accordance with":", conforme a","and":"y","F-Gas EU Regulation 2024/573":"Reglamento F-Gas UE 2024/573","RE2020 — 2025 Threshold":"RE2020 — Umbral 2025",". Data presented is indicative and must be confirmed by official manufacturer documentation.":". Los datos presentados son indicativos y deben confirmarse con la documentación oficial del fabricante.","HVAC Technician / Stamp":"Técnico HVAC / Sello","Technical Manager / Visa":"Responsable técnico / Visto bueno",
+"SIZING NOTE":"NOTA DE DIMENSIONAMIENTO","NOTE — MOIST AIR":"NOTA — AIRE HÚMEDO",
+"1. PSYCHRO — moist air":"1. PSICROMETRÍA — aire húmedo","2. HEATING — EN 12831 heat loss":"2. CALEFACCIÓN — pérdidas térmicas EN 12831","3. ELECTRICAL — cables and protection":"3. ELECTRICIDAD — cables y protecciones","4. MECHATRONICS — signals, motor, vibration, dampers":"4. MECATRÓNICA — señales, motor, vibraciones, compuertas",
+"The following notes are sizing aids produced with THERMOSYS. They replace neither the standards in force nor the study of the responsible engineer; each note states its sources, assumptions and limits.":"Las notas siguientes son ayudas al dimensionamiento elaboradas con THERMOSYS. No sustituyen ni las normas vigentes ni el estudio del ingeniero responsable; cada nota indica sus fuentes, hipótesis y límites.",
+"Alta (confirm values with the standard)":"Alta (confirmar los valores con la norma)",
+/* PDF jsPDF : SCOP / TEWI / RE2020 */
+"SCOP/COP CALCULATION — HP PERFORMANCE":"CÁLCULO DE SCOP/COP — RENDIMIENTO DE LA BOMBA DE CALOR","EQUIPMENT PARAMETERS":"PARÁMETROS DEL EQUIPO","Country:":"País:","Zone / City:":"Zona / Ciudad:","Nominal capacity (kW):":"Potencia nominal (kW):","Refrigerant:":"Refrigerante:","SCOP RESULTS":"RESULTADOS DEL SCOP","RE2020 COMPLIANCE":"CONFORMIDAD RE2020","ANNUAL ENERGY COST":"COSTE ENERGÉTICO ANUAL","HP capacity (kW):":"Potencia de la bomba de calor (kW):","Operating hours/yr:":"Horas de funcionamiento/año:","Energy price (per kWh):":"Precio de la energía (por kWh):","HP vs BOILER ROI ANALYSIS":"ANÁLISIS DE RENTABILIDAD BOMBA DE CALOR vs CALDERA","HP investment:":"Inversión en bomba de calor:","Boiler investment:":"Inversión en caldera:","Thermal needs (kWh/yr):":"Necesidades térmicas (kWh/año):","SCOP PAC :":"SCOP de la bomba de calor :","Boiler efficiency:":"Rendimiento de la caldera:","Elec. price:":"Precio de la electricidad:","Gas price:":"Precio del gas:",
+"TEWI CALCULATION — EN 378-1:2021 / F-Gas EU 2024/573":"CÁLCULO DEL TEWI — EN 378-1:2021 / F-Gas UE 2024/573","SYSTEM DATA":"DATOS DEL SISTEMA","System type:":"Tipo de sistema:","Capacity (kW):":"Potencia (kW):","Refrigerant charge (kg):":"Carga de refrigerante (kg):","Leak rate (%/yr):":"Tasa de fugas (%/año):","Service life (yrs):":"Vida útil (años):","End-of-life recovery (%):":"Recuperación al final de la vida útil (%):","Electricity consumption (kWh/yr):":"Consumo eléctrico (kWh/año):","Electrical grid:":"Red eléctrica:","TEWI RESULTS — EN 378-1:2021":"RESULTADOS DEL TEWI — EN 378-1:2021","Item":"Concepto","Indirect (electricity)":"Indirecto (electricidad)","KEY INDICATORS":"INDICADORES CLAVE","STANDARDS & REFERENCES":"NORMAS Y REFERENCIAS",
+"- EN 378-1:2021 — Safety and environmental requirements for refrigerating systems":"- EN 378-1:2021 — Requisitos de seguridad y medioambientales de los sistemas de refrigeración","- EU Regulation 2024/573 (F-Gas) — Phase-down schedule HFC":"- Reglamento (UE) 2024/573 (F-Gas) — Calendario de reducción progresiva de los HFC","- ISO 817:2014 — Refrigerant designation and safety classification":"- ISO 817:2014 — Designación y clasificación de seguridad de los refrigerantes","- EU Regulation 517/2014 — Fluorinated greenhouse gases":"- Reglamento (UE) 517/2014 — Gases fluorados de efecto invernadero",
+"WARNING:":"ADVERTENCIA:","Indicative results only. To be validated by a qualified engineer per applicable regulations.":"Resultados meramente indicativos. Deben ser validados por un ingeniero cualificado conforme a la normativa vigente.","F-Gas EU 2024/573":"F-Gas UE 2024/573",
+"RE2020 COMPLIANCE AUDIT REPORT — 2025 THRESHOLD":"INFORME DE AUDITORÍA DE CONFORMIDAD RE2020 — UMBRAL 2025","01 — PROJECT IDENTIFICATION":"01 — IDENTIFICACIÓN DEL PROYECTO","File reference:":"Referencia del expediente:","Site / Installation:":"Obra / Instalación:","Auditor:":"Auditor:","Audit date:":"Fecha de la auditoría:","Building type:":"Tipo de edificio:","Area (m2):":"Superficie (m2):","N/A":"N/D",
+"02 — MEASURED RESULTS vs RE2020 2025 THRESHOLDS":"02 — RESULTADOS MEDIDOS vs UMBRALES RE2020 2025","Parameter":"Parámetro","Measured":"Medido","Threshold":"Umbral","Result":"Resultado","Ic construction (kgCO2eq/m2)":"Ic construcción (kgCO2eq/m2)","Cep,nr (kWhEP/m2/yr)":"Cep,nr (kWhEP/m2/año)","HP SCOP":"SCOP de la bomba de calor","Refrigerant GWP":"PCA del refrigerante","BMS Class (EN 15232-1)":"Clase BMS (EN 15232-1)","Class B min.":"Clase B mín.","INFO":"INFO",
+"03 — OBSERVATIONS":"03 — OBSERVACIONES","None":"Ninguna","COMPLIANT":"CONFORME","EXCEEDED":"SUPERADO","INSUFFICIENT":"INSUFICIENTE","[OK] COMPLIANT WITH RE2020 THRESHOLD 2025":"[OK] CONFORME CON EL UMBRAL RE2020 2025","[!] NON-COMPLIANT — SEE DETAILS ABOVE":"[!] NO CONFORME — VÉASE EL DETALLE ARRIBA","04 — REGULATORY REFERENCES":"04 — REFERENCIAS NORMATIVAS",
+"- RE2020 — Reglementation Environnementale 2020 (France)":"- RE2020 — Reglamentación medioambiental 2020 (Francia)","- Arrete du 4 aout 2021 — Seuils RE2020 2025":"- Orden de 4 de agosto de 2021 — Umbrales RE2020 2025","- EN 14825:2023 — SCOP calculation method":"- EN 14825:2023 — Método de cálculo del SCOP","- EU 2024/573 — F-Gas Regulation":"- UE 2024/573 — Reglamento F-Gas","- EN 15232-1:2017 — Building automation class":"- EN 15232-1:2017 — Clase de automatización de edificios","Auditor / Stamp":"Auditor / Sello","Thermosys v3 — RE2020 Compliance Audit — thermosys-v3.vercel.app":"Thermosys v3 — Auditoría de conformidad RE2020 — thermosys-v3.vercel.app",
+"Individual residential":"Vivienda unifamiliar","Multi-residential":"Vivienda colectiva","Commercial offices":"Oficinas terciarias","Education":"Educación","Healthcare / Hospital":"Sanidad / Hospital",
+"Export PDF Report":"Exportar informe PDF","RE2020 Audit PDF exported":"PDF de la auditoría RE2020 exportado","SCOP PDF exported ✓":"PDF del SCOP exportado ✓"
+};
+Object.keys(D).forEach(function(k){ I.dict.es=I.dict.es||{}; if(I.dict.es[k]===undefined) I.dict.es[k]=D[k]; });
+(function(){ var d=I.dict.es; ['TEWI RESULT','TEWI RESULTS'].forEach(function(k){}); })();
+
+/* ---------- 4. regles ---------- */
+var NUMT='[+\\-\\u2212]?\\d[\\d,]*(?:\\.\\d+)?';
+var KV={
+ "Walls/envelope":"Paredes/envolvente","Solar gains":"Aportes solares","Occupants":"Ocupantes","Equipment":"Equipos","Ventilation":"Ventilación",
+ "Flow/person":"Caudal/persona","Total flow":"Caudal total","Sensible load":"Carga sensible","Latent load":"Carga latente","TOTAL LOAD":"CARGA TOTAL","Reference":"Referencia","Assumptions":"Hipótesis","ASHRAE 62.1":"ASHRAE 62.1",
+ "HP energy cost/year":"Coste energético BC/año","Gas energy cost/year":"Coste energético gas/año","Annual savings":"Ahorro anual","Extra install cost":"Sobrecoste de instalación","Payback period":"Retorno de la inversión","Net gain 10 years":"Ganancia neta a 10 años",
+ "Electricity consumption":"Consumo eléctrico","ANNUAL COST":"COSTE ANUAL","Average monthly cost":"Coste mensual medio","Daily cost":"Coste diario","Hourly cost":"Coste horario","TARIFF APPLIED":"TARIFA APLICADA","Currency":"Moneda","Efficiency class":"Clase de eficiencia","CO₂ emissions/yr":"Emisiones de CO₂/año"
+};
+var EFF={"Very efficient":"Muy eficiente","Efficient":"Eficiente","Average":"Media","Below average":"Inferior a la media","Poor":"Deficiente"};
+function unitFix(v){ return v.replace(/\/an\b/g,'/año').replace(/\/yr\b/g,'/año').replace(/\/mo\b/g,'/mes').replace(/\/day\b/g,'/día').replace(/ years$/,' años'); }
+var ASHN={"Offices":"Oficinas","Retail":"Comercio","Residential":"Residencial","Restaurant":"Restaurante","Meeting room":"Sala de reuniones","Hospital (patient room)":"Hospital (habitación)","Hotel":"Hotel","Sports hall (play area)":"Pabellón deportivo (zona de juego)"};
+var TNOTE=[
+ [/Fortement subventionné/g,'Muy subvencionado'],[/Parmi les plus élevés EU/g,'Entre los más altos de la UE'],[/Tarif officiel \(pénurie structurelle\)/g,'Tarifa oficial (escasez estructural)'],
+ [/Première tranche résidentielle/g,'Primer tramo residencial'],[/Tarif Bleu \(TTC\)/g,'Tarifa Bleu (IVA incl.)'],[/Price Cap résidentiel/g,'Price Cap residencial'],
+ [/Tarif résidentiel basse tension/g,'Tarifa residencial de baja tensión'],[/Tarif réglementé résidentiel/g,'Tarifa regulada residencial'],[/Tarif régulé \(subventionné\)/g,'Tarifa regulada (subvencionada)'],
+ [/Basse tension résidentielle/g,'Baja tensión residencial'],[/PVPC résidentiel moyen/g,'PVPC residencial medio'],[/Résidentiel réglementé/g,'Residencial regulado'],[/Résidentiel subventionné/g,'Residencial subvencionado'],
+ [/Résidentiel moyen/g,'Residencial medio'],[/Résidentiel variable/g,'Residencial variable'],[/Résidentiel géothermie/g,'Residencial geotermia'],[/Résidentiel \(hors subv\.\)/g,'Residencial (sin subv.)'],[/Résidentiel \(subventionné\)/g,'Residencial (subvencionado)'],
+ [/Résidentiel \(fortement subventionné\)/g,'Residencial (muy subvencionado)'],[/Résidentiel (\d)/g,'Residencial $1'],[/Résidentiel/g,'Residencial'],[/Tarif subventionné/g,'Tarifa subvencionada'],[/Tarif résidentiel/g,'Tarifa residencial'],
+ [/Zone I \(Centre\) subventionné/g,'Zona I (Centro) subvencionado'],[/Tranche résidentielle/g,'Tramo residencial'],[/Tranche (\d)/g,'Tramo $1'],[/Tranches : /g,'Tramos : '],[/tranche (\d)/g,'tramo $1'],[/Estimé/g,'Estimado'],
+ [/tarif 54 M, HT hors taxes/g,'tarifa 54 M, sin impuestos'],[/trimestre/g,'trimestre'],[/\bHT hors taxes\b/g,'sin impuestos'],[/\bsubventionné\b/g,'subvencionado'],[/\bmoyen\b/g,'medio'],[/\bTarif\b/g,'Tarifa']
+];
+function tnote(k){
+  if(!/(Résidentiel|Tarif|tranche|Tranche|subventionn|Estimé|Basse tension|HT hors)/.test(k)) return null;
+  var o=k; TNOTE.forEach(function(p){ o=o.replace(p[0],p[1]); }); return o!==k?o:null;
+}
+function kv(k,m){
+  var a=/^([^:]{2,40}?)\s*:\s*(.*)$/.exec(k); if(!a) return null;
+  var lbl=a[1].replace(/\s+$/,''), es=KV[lbl]; if(es===undefined) return null;
+  var val=a[2], sep=/^[^:]*?(\s*):/.exec(k)[1];
+  if(!/^(Currency|Efficiency class|Reference|Assumptions)$/.test(lbl)&&!/^[+\-\u2212]?\d|^—$/.test(val)) return null;
+  if(lbl==='Efficiency class'){ var q=/^([A-E]) — (.+)$/.exec(val); if(q&&EFF[q[2]]) return es+sep+': '+q[1]+' — '+EFF[q[2]]; }
+  if(lbl==='Reference'){
+    var r1=m[val]; if(r1!==undefined) return es+sep+': '+r1;
+    if(val==='EN 16798-1 / ASHRAE 62.1 (indicative value, confirm by category and floor area)') return es+sep+': EN 16798-1 / ASHRAE 62.1 (valor indicativo, a confirmar según categoría y superficie)';
+    if(val==='ASHRAE 62.1 (ventilation rate procedure): Vbz = Rp·Pz + Ra·Az; Ez = 1.0') return es+sep+': ASHRAE 62.1 (procedimiento de caudal de ventilación): Vbz = Rp·Pz + Ra·Az; Ez = 1,0';
+    return null;
+  }
+  if(lbl==='Assumptions'){ var q2=/^indoor RH 50 % ; air 1\.2 kg\/m3$/.exec(val); if(q2) return es+sep+': HR interior 50 % ; aire 1,2 kg/m3'; return null; }
+  return es+sep+': '+unitFix(cvAll(val));
+}
+var RS=I.rxs||(I.rxs=[]);
+RS.push(function(k,m){
+  var a, b;
+  if(k.indexOf('⚠ ')===0){ var rest=k.slice(2), t=m[rest]; if(t===undefined) t=tryAll(rest,m); if(t!==null&&t!==undefined) return '⚠ '+t; return null; }
+  return tryAll(k,m);
+});
+function tryAll(k,m){
+  var a;
+  /* TEWI */
+  if((a=/^TEWI RESULT — (.+)$/.exec(k))) return 'RESULTADO DEL TEWI — '+a[1];
+  if((a=/^· Grid: (.+?) \((\d+(?:\.\d+)?)\)$/.exec(k))) return '· Red: '+a[1]+' ('+cv(a[2])+')';
+  if((a=/^(\d+(?:\.\d+)?) tCO2eq$/.exec(k))) return cv(a[1])+' tCO₂eq';
+  if((a=/^Total TEWI: (\d+(?:\.\d+)?) tCO2$/.exec(k))) return 'TEWI total: '+cv(a[1])+' tCO2';
+  if((a=/^(\d+) kgCO2\/an$/.exec(k))) return a[1]+' kgCO2/año';
+  if((a=/^(\d+(?:\.\d+)?) tCO2\/kWfroid$/.exec(k))) return cv(a[1])+' tCO2/kW frigorífico';
+  /* SCOP */
+  if((a=/^Zone: (.+?) \| Climate factor \(estimated\): (\d+(?:\.\d+)?)$/.exec(k))) return 'Zona: '+a[1]+'  |  Factor climático (estimado): '+cv(a[2]);
+  if((a=/^HDD: (\d+) · CDD: (\d+) · T_ext_base: ([+\-−]?\d+(?:\.\d+)?)\s?°C$/.exec(k))) return 'HDD: '+a[1]+'  ·  CDD: '+a[2]+'  ·  T_ext_base: '+cv(a[3])+' °C';
+  if((a=/^Nominal COP \(A7\/W35\): (\S+)$/.exec(k))) return 'COP nominal (A7/W35): '+cvAll(a[1]);
+  if((a=/^(Estimated SCOP|SCOP \(manufacturer datasheet\)): (\d+(?:\.\d+)?) \(ηs = ([+\-−]?\d+) %\)$/.exec(k))) return (a[1]==='Estimated SCOP'?'SCOP estimado: ':'SCOP (ficha del fabricante): ')+cv(a[2])+'   (ηs = '+a[3]+' %)';
+  if((a=/^Energy class at 35 °C \(EU 811\/2013\): (\S+)$/.exec(k))) return 'Clase energética a 35 °C (UE 811/2013): '+a[1];
+  if((a=/^Energy\/year \(≈2000 full-load-equivalent h\): (\S+) kWh — (.+)$/.exec(k))){
+    var co=a[2], c2;
+    if((c2=/^CO₂: (\S+) kg \((\S+) kg\/kWh\)$/.exec(co))) co='CO₂: '+cvAll(c2[1])+' kg ('+cvAll(c2[2])+' kg/kWh)';
+    else if(co==='CO₂: see TEWI module (country grid factor)') co='CO₂: véase el módulo TEWI (factor de red del país)';
+    return 'Energía/año (≈2000 h equivalentes a plena carga): '+cvAll(a[1])+' kWh — '+co;
+  }
+  /* coste : cabecera y nota tarifaria */
+  if((a=/^RESULTS — (.+?)\s*(\S*)$/.exec(k)) && /RESULTS — /.test(k)){
+    var nm='';
+    try{ var sel=document.getElementById('scopCountry'); if(sel&&sel.selectedIndex>=0) nm=sel.options[sel.selectedIndex].text.replace(/[^ -ɏ]/g,'').trim(); }catch(e){}
+    var flag=(/([\uD83C][\uDDE6-\uDDFF][\uD83C][\uDDE6-\uDDFF])\s*$/.exec(k)||[])[1]||'';
+    if(nm&&flag) return 'RESULTADOS — '+nm+' '+flag;
+  }
+  /* CHARGE */
+  if((a=/^TOTAL: (\S+) kW \| (\S+) BTU\/h$/.exec(k))) return 'TOTAL: '+cvAll(a[1])+' kW  |  '+a[2]+' BTU/h';
+  if((a=/^\+ occupants latent \(≈55 W\/person\): (\S+) kW$/.exec(k))) return '+ latente de los ocupantes (≈55 W/persona): '+cvAll(a[1])+' kW';
+  if((a=/^TOTAL incl\. occupant latent: (\S+) kW \((\S+) W\/m²\)$/.exec(k))) return 'TOTAL con latente de los ocupantes: '+cvAll(a[1])+' kW  ('+a[2]+' W/m²)';
+  if((a=/^Assumptions: glazing = 15 % of floor area, peak solar flux (\d+) W\/m² of glazing, occupants 75 W sensible \+ 55 W latent\. Include lighting in “Equipment”\. Quick estimate \(±30 %\), fresh-air latent not included\. Full load: CHARGE PRO \/ PSYCHRO modules\.$/.exec(k)))
+    return 'Hipótesis: acristalamiento = 15 % de la superficie en planta, flujo solar máximo de '+a[1]+' W/m² de acristalamiento, ocupantes 75 W sensible + 55 W latente. Incluya la iluminación en «Equipos». Estimación rápida (±30 %), latente del aire exterior no incluido. Balance completo: módulos CARGA PRO / PSICRO.';
+  if((a=/^Recommended capacity: (\S+) kW \(20 % margin applied, 1\.5 kW steps\)( — ⚠ low specific load for this climate: check with CHARGE PRO)?$/.exec(k)))
+    return 'Potencia recomendada: '+cvAll(a[1])+' kW (margen del 20 % aplicado, escalones de 1,5 kW)'+(a[2]?' — ⚠ carga específica baja para este clima: compruebe con CARGA PRO':'');
+  if((a=/^📦 Catalog (\d+) products \| ★ (\d+) recommended for (\S+) kW$/.exec(k))) return '📦 Catálogo de '+a[1]+' productos | ★ '+a[2]+' recomendados para '+cvAll(a[3])+' kW';
+  /* CARGA PRO */
+  if((a=/^at (\d+) h$/.exec(k))) return 'a las '+a[1]+' h';
+  if((a=/^SHR (\d+(?:\.\d+)?)$/.exec(k))) return 'FCS '+cv(a[1]);
+  /* aire exterior ASHRAE */
+  if((a=/^(Offices|Retail|Residential|Restaurant|Meeting room|Hospital \(patient room\)|Hotel|Sports hall \(play area\)) \((\d+(?:\.\d+)?) L\/s·pers \+ (\d+(?:\.\d+)?) L\/s·m²\)$/.exec(k))) return ASHN[a[1]]+' ('+cv(a[2])+' L/s·pers + '+cv(a[3])+' L/s·m²)';
+  if((a=/^Vbz\s*: (.+) — Rp, Ra to be confirmed on the official text$/.exec(k))) return 'Vbz                : '+cvAll(a[1])+' — Rp, Ra por confirmar en el texto oficial';
+  /* documentos imprimibles */
+  if((a=/^Tax\/VAT \((.+?)%\) :$/.exec(k))) return 'IVA ('+a[1].replace('.',',')+' %) :';
+  if((a=/^Discount \((.+?)%\) :$/.exec(k))) return 'Descuento ('+a[1].replace('.',',')+' %) :';
+  if((a=/^Thermosys HVAC Workstation v3 — (.+) — Indicative data, verify before signing\.$/.exec(k))) return 'Thermosys HVAC Workstation v3 — '+a[1]+' — Datos indicativos, verificar antes de firmar.';
+  if(k==='Thermosys HVAC Workstation v3 — Indicative calculation, verify before construction.') return 'Thermosys HVAC Workstation v3 — Cálculo indicativo, verificar antes de la ejecución.';
+  if((a=/^Certificate THERMOSYS — (.+)$/.exec(k))) return 'Certificado THERMOSYS — '+a[1];
+  if((a=/^© (\d{4}) Thermosys HVAC Platform — (.+?) — Indicative data, to be verified by a qualified engineer\.$/.exec(k))) return '© '+a[1]+' Thermosys HVAC Platform — '+a[2]+' — Datos indicativos, a verificar por un ingeniero cualificado.';
+  if((a=/^(.*?) — (\d+(?:\.\d+)?) % fresh air$/.exec(k))) return (m[a[1]]||esNum(a[1]))+' — '+a[2]+' % de aire exterior';
+  if((a=/^Page (\d+)\/(\d+)$/.exec(k))) return 'Página '+a[1]+'/'+a[2];
+  /* lineas etiqueta : valor */
+  var r=kv(k,m); if(r!==null) return r;
+  /* nota tarifaria */
+  r=tnote(k); if(r!==null) return r;
+  /* numeros sueltos con coma decimal */
+  if(/^[+\-−]?\d+\.\d+( ?(\/|·|—|–|±) ?[+\-−]?\d+\.\d+)*( ?[A-Za-zµ°%²³\/·]{0,10})?$/.test(k)) return esNum(k);
+  return null;
+}
+
+if(I.mlRules&&I.mlRules.unshift) I.mlRules.unshift(function(k){ if(k.indexOf('Reference : EN 16798-1')!==0&&k.indexOf('Reference : ASHRAE 62.1 (ventilation')!==0) return null; try{ return tryAll(k,I.dict.es||{}); }catch(e){ return null; } });
+if(I.mlRules&&I.mlRules.push) I.mlRules.push(function(k){ if(k.length>600) return null; try{ return tryAll(k,I.dict.es||{}); }catch(e){ return null; } });
+
+/* ---------- 5. esHtml : numeros + hors script/style ---------- */
+/* (esHtml est redefini par add_es82 ; ici le texte libre est complete par I.num) */
+
+/* ---------- 6. jsPDF : traduction des textes ecrits dans les PDF ---------- */
+function tx(x){
+  if(Array.isArray(x)) return x.map(tx);
+  if(typeof x!=='string') return x;
+  if(!I.ov||!I.ov()) return x;
+  var lead=/^\s*/.exec(x)[0], tail=/\s*$/.exec(x)[0], core=x.trim();
+  if(core.length<2) return x;
+  var norm=core.replace(/\s+/g,' ');
+  var v=I.x(norm);
+  return lead+v+tail;
+}
+function wrapPdf(){
+  var J=window.jspdf&&window.jspdf.jsPDF; if(!J||J.__es82) return;
+  var O=J;
+  function W(){
+    var d=new (Function.prototype.bind.apply(O,[null].concat([].slice.call(arguments))))();
+    var t=d.text;
+    d.text=function(x){ var a=[].slice.call(arguments); try{ a[0]=tx(x); }catch(e){} return t.apply(d,a); };
+    return d;
+  }
+  W.prototype=O.prototype;
+  Object.getOwnPropertyNames(O).forEach(function(k){ if(k==='prototype'||k==='length'||k==='name') return; try{ W[k]=O[k]; }catch(e){} });
+  W.__es82=1;
+  window.jspdf.jsPDF=W; if(window.jsPDF===O) window.jsPDF=W;
+}
+wrapPdf(); setInterval(wrapPdf,700);
 })();
 
 </script>
