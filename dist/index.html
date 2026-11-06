@@ -8520,186 +8520,168 @@ function clean(t){
     .replace(/\u2264/g,"<=")
     .replace(/[^\x00-\xFF]/g,"?");
 }
-function exportDsfPDF(){
-  var L=window.lang||"fr";
-  var FR=L==="fr";
+function exportDsfPDF(){ /* espdf81 */
+  var OVL=!!(window.I18N3&&I18N3.ov&&I18N3.ov());
+  var LG=OVL?"es":((window.lang||"fr")==="fr"?"fr":"en");
+  var M=(typeof _dsfMode!=="undefined")?_dsfMode:1;
+  var T={
+    fr:{ttl:"CALCUL DESENFUMAGE - ",room:"DONNEES DU LOCAL",area:"Surface (m²) :",h:"Hauteur (m) :",vol:"Volume (m³) :",type:"Type de local :",mode:"Mode d'extraction :",zones:"Nombre de cantons :",fan:"Debit ventilateur unitaire (m³/h) :",
+      fire:"PARAMETRES DU FEU ET DU PANACHE",q:"Puissance du feu Q (kW) :",z:"Hauteur libre z (m) :",t0:"Temperature ambiante T0 (°C) :",plume:"Type de panache :",bw:"Largeur du debordement W (m) :",bh:"Hauteur du balcon H (m) :",
+      res:"RESULTATS DESENFUMAGE",ver:"VERIFICATION REGLEMENTAIRE IT 246",chk:"CHECK-LIST DE CONFORMITE",std:"NORMES ET REFERENCES",warn:"AVERTISSEMENT :",
+      w1:"Resultats indicatifs uniquement. A valider obligatoirement par un bureau d'etudes agree",w2:"conformement aux reglementations en vigueur.",pg:"Page ",ok:"OK",nok:"NON CONFORME",chkm:"A VERIFIER",
+      toast:"PDF Desenfumage exporte",hist:"Export PDF Desenfumage"},
+    en:{ttl:"SMOKE EXTRACTION CALCULATION - ",room:"ROOM DATA",area:"Area (m²):",h:"Height (m):",vol:"Volume (m³):",type:"Room type:",mode:"Extraction mode:",zones:"Smoke zones:",fan:"Fan unit flow (m³/h):",
+      fire:"FIRE AND PLUME PARAMETERS",q:"Fire HRR Q (kW):",z:"Clear height z (m):",t0:"Ambient temperature T0 (°C):",plume:"Plume type:",bw:"Spill width W (m):",bh:"Balcony height H (m):",
+      res:"SMOKE EXTRACTION RESULTS",ver:"IT 246 COMPLIANCE CHECK",chk:"COMPLIANCE CHECKLIST",std:"STANDARDS AND REFERENCES",warn:"WARNING:",
+      w1:"Indicative results only. Must be validated by an approved engineering firm",w2:"in accordance with applicable regulations.",pg:"Page ",ok:"OK",nok:"NON-COMPLIANT",chkm:"TO CHECK",
+      toast:"Smoke extraction PDF exported",hist:"Smoke extraction PDF export"},
+    es:{ttl:"CÁLCULO DE EXTRACCIÓN DE HUMOS - ",room:"DATOS DEL LOCAL",area:"Superficie (m²):",h:"Altura (m):",vol:"Volumen (m³):",type:"Tipo de local:",mode:"Modo de extracción:",zones:"Sectores de humos:",fan:"Caudal unitario del ventilador (m³/h):",
+      fire:"PARÁMETROS DEL FUEGO Y DEL PENACHO",q:"Potencia del fuego Q (kW):",z:"Altura libre z (m):",t0:"Temperatura ambiente T0 (°C):",plume:"Tipo de penacho:",bw:"Anchura del derrame W (m):",bh:"Altura del balcón H (m):",
+      res:"RESULTADOS DE LA EXTRACCIÓN DE HUMOS",ver:"VERIFICACIÓN REGLAMENTARIA IT 246",chk:"LISTA DE VERIFICACIÓN DE CONFORMIDAD",std:"NORMAS Y REFERENCIAS",warn:"ADVERTENCIA:",
+      w1:"Resultados meramente indicativos. Deben ser validados por una oficina de ingeniería autorizada",w2:"de conformidad con la reglamentación vigente.",pg:"Página ",ok:"OK",nok:"NO CONFORME",chkm:"A COMPROBAR",
+      toast:"PDF de extracción de humos exportado",hist:"Exportación PDF de extracción de humos"}
+  }[LG];
+  var STD={
+    fr:{1:["IT 246 (Instruction Technique 246) - Desenfumage des ERP","DTR C3-41 - Regles de conception du desenfumage (Algerie)","EN 12101-6 - Systemes de differentiel de pression","EN 12101-3 - Ventilateurs de desenfumage mecaniques"],
+        2:["EN 12101-3 - Ventilateurs de desenfumage mecaniques certifies HT","EN 12101-6 - Systemes de differentiel de pression","CEN/TR 12101-5 - Methodes de calcul du panache (Thomas/Hinkley)"],
+        3:["NFPA 92 - Standard for Smoke Control Systems","EN 12101-3 - Ventilateurs de desenfumage mecaniques certifies HT"]},
+    en:{1:["IT 246 (Instruction Technique 246) - Smoke extraction in public buildings (ERP)","DTR C3-41 - Smoke extraction design rules (Algeria)","EN 12101-6 - Pressure differential systems","EN 12101-3 - Powered smoke exhaust fans"],
+        2:["EN 12101-3 - Powered smoke exhaust fans (high temperature)","EN 12101-6 - Pressure differential systems","CEN/TR 12101-5 - Plume calculation methods (Thomas/Hinkley)"],
+        3:["NFPA 92 - Standard for Smoke Control Systems","EN 12101-3 - Powered smoke exhaust fans (high temperature)"]},
+    es:{1:["IT 246 (Instruction Technique 246) - Extracción de humos en ERP (Francia)","DTR C3-41 - Reglas de diseño de la extracción de humos (Argelia)","EN 12101-6 - Sistemas de diferencial de presión","EN 12101-3 - Ventiladores mecánicos de extracción de humos"],
+        2:["EN 12101-3 - Ventiladores mecánicos de extracción de humos (alta temperatura)","EN 12101-6 - Sistemas de diferencial de presión","CEN/TR 12101-5 - Métodos de cálculo del penacho (Thomas/Hinkley)"],
+        3:["NFPA 92 - Standard for Smoke Control Systems","EN 12101-3 - Ventiladores mecánicos de extracción de humos (alta temperatura)"]}
+  }[LG][M]||[];
+  var REF={1:"IT 246 / DTR C3-41",2:"EN 12101",3:"NFPA 92"}[M]||"";
+  function C(t){
+    if(!t)return "";
+    return String(t).replace(/[\uD83C-\uD83E][\uDC00-\uDFFF]/g,"").replace(/️/g,"")
+      .replace(/ⓘ/g,"").replace(/[✅✔✓]/g,"").replace(/[❌✖✘]/g,"").replace(/⚠/g,"")
+      .replace(/ρ/g,"rho").replace(/Δ/g,"Delta").replace(/≥/g,">=").replace(/≤/g,"<=").replace(/≈/g,"~").replace(/₂/g,"2")
+      .replace(/→/g,"->").replace(/[—–]/g,"-").replace(/[  ]/g," ").replace(/[’‘]/g,"'")
+      .replace(/[^\x00-\xFF]/g,"").replace(/\s+/g," ").trim();
+  }
   var g=function(id){return(document.getElementById(id)||{}).value||"";};
   var gt=function(id){
     var el=document.getElementById(id);
-    if(!el)return"";
-    if(el.selectedIndex!==undefined&&el.options&&el.options[el.selectedIndex])
-      return el.options[el.selectedIndex].text;
+    if(!el)return "";
+    if(el.options&&el.options[el.selectedIndex])return el.options[el.selectedIndex].text;
     return el.value||"";
   };
-  var surf=g("dsf_surface");
-  var haut=g("dsf_hauteur");
-  var type=gt("dsf1_type");
-  var mode=gt("dsf1_mode");
-  var cantons=g("dsf1_cantons");
-  var qc2=g("dsf2_qc");
-  var z2=g("dsf2_z");
-  var t02=g("dsf2_t0");
-  var qc3=g("dsf3_q");
-  var z3=g("dsf3_z");
-  var resEl=document.getElementById("dsf_result");
-  var resText=clean(resEl?resEl.textContent:"");
-  var checks=[];
-  document.querySelectorAll("#pg-desenfumage .it246-check, #pg-desenfumage input[type=checkbox]").forEach(function(el){
-    var lbl=el.parentElement?el.parentElement.textContent.trim():"";
-    if(lbl) checks.push((el.checked?"[OK] ":"[ ] ")+clean(lbl.substring(0,60)));
-  });
   var jsPDF=window.jspdf?window.jspdf.jsPDF:window.jsPDF;
-  if(!jsPDF){alert(FR?"jsPDF non disponible":"jsPDF not available");return;}
+  if(!jsPDF){alert("jsPDF not available");return;}
+  var surf=g("dsf_surface"),haut=g("dsf_hauteur");
   var doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
-  var now=new Date();
-  var dateStr=now.toLocaleDateString()+" "+now.toLocaleTimeString();
+  var LC={es:"es-ES",fr:"fr-FR",en:undefined}[LG];var dateStr=new Date().toLocaleDateString(LC)+" "+new Date().toLocaleTimeString(LC);
+  var DC=function(x){x=String(x);return LG==="es"?x.replace(".",","):x;};
   var W=210,y=0;
-  doc.setFillColor(0,119,168);
-  doc.rect(0,0,W,30,"F");
-  doc.setFillColor(255,140,0);
-  doc.rect(0,26,W,4,"F");
-  doc.setTextColor(255,255,255);
-  doc.setFontSize(20);doc.setFont("helvetica","bold");
+  doc.setFillColor(0,119,168);doc.rect(0,0,W,30,"F");
+  doc.setFillColor(255,140,0);doc.rect(0,26,W,4,"F");
+  doc.setTextColor(255,255,255);doc.setFontSize(20);doc.setFont("helvetica","bold");
   doc.text("THERMOSYS v3",14,13);
   doc.setFontSize(9);doc.setFont("helvetica","normal");
-  doc.text(FR?"CALCUL DESENFUMAGE - IT 246 / DTR C3-41":"SMOKE EXTRACTION CALCULATION - IT 246 / DTR C3-41",14,21);
+  doc.text(T.ttl+REF,14,21);
   doc.text(dateStr,W-14,21,{align:"right"});
   doc.setTextColor(0,0,0);
   y=38;
+  function room(){ if(y>270){doc.addPage();y=20;} }
   function section(title){
-    if(y>260){doc.addPage();y=20;}
-    doc.setFillColor(230,242,255);
-    doc.rect(10,y,W-20,8,"F");
-    doc.setDrawColor(0,119,168);
-    doc.setLineWidth(0.5);
-    doc.rect(10,y,W-20,8,"S");
-    doc.setFont("helvetica","bold");
-    doc.setFontSize(9);
-    doc.setTextColor(0,80,130);
-    doc.text(title,14,y+5.5);
-    doc.setTextColor(0,0,0);
-    y+=11;
+    if(y>255){doc.addPage();y=20;}
+    doc.setFillColor(230,242,255);doc.rect(10,y,W-20,8,"F");
+    doc.setDrawColor(0,119,168);doc.setLineWidth(0.5);doc.rect(10,y,W-20,8,"S");
+    doc.setFont("helvetica","bold");doc.setFontSize(9);doc.setTextColor(0,80,130);
+    doc.text(title,14,y+5.5);doc.setTextColor(0,0,0);y+=11;
   }
   function row(lbl,val){
-    if(y>275){doc.addPage();y=20;}
-    doc.setFont("helvetica","bold");
-    doc.setFontSize(8.5);
-    doc.setTextColor(60,60,60);
-    doc.text(lbl,14,y);
-    doc.setFont("helvetica","normal");
-    doc.setTextColor(0,0,0);
-    doc.text(String(val),105,y);
-    y+=5.5;
+    var lines=doc.splitTextToSize(String(val),W-14-105);
+    var ll=doc.splitTextToSize(lbl,88);
+    var n=Math.max(lines.length,ll.length);
+    if(y+n*4.6>278){doc.addPage();y=20;}
+    doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.setTextColor(60,60,60);
+    doc.text(ll,14,y);
+    doc.setFont("helvetica","normal");doc.setTextColor(0,0,0);
+    doc.text(lines,105,y);
+    y+=n*4.6+1;
   }
-  function bloc(txt){
-    if(!txt)return;
-    doc.setFont("courier","normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(30,30,30);
-    doc.setFillColor(248,252,255);
-    var tLines=txt.split(String.fromCharCode(10));
-    var validLines=tLines.filter(function(l){return l.trim().length>0;});
-    var bh=validLines.length*4.5+6;
-    if(y+bh>275){doc.addPage();y=20;}
-    doc.rect(10,y,W-20,bh,"F");
-    doc.setDrawColor(180,210,240);
-    doc.rect(10,y,W-20,bh,"S");
-    y+=4;
-    validLines.forEach(function(l){
-      if(y>272){doc.addPage();y=20;}
-      doc.text(l.trim(),14,y);
-      y+=4.5;
+  function para(txt,x,w,fs){
+    doc.setFont("helvetica","normal");doc.setFontSize(fs||8);doc.setTextColor(40,40,40);
+    doc.splitTextToSize(txt,w).forEach(function(l){room();doc.text(l,x,y);y+=4.4;});
+  }
+  /* 1. donnees */
+  section(T.room);
+  row(T.area,DC(surf));row(T.h,DC(haut));
+  row(T.vol,surf&&haut?DC((parseFloat(surf)*parseFloat(haut)).toFixed(1)):"");
+  if(M===1){
+    row(T.type,C(gt("dsf1_type")));row(T.mode,C(gt("dsf1_mode")));row(T.zones,g("dsf1_cantons"));
+    if(g("dsf1_fan"))row(T.fan,g("dsf1_fan"));
+  } else {
+    var p="dsf"+M+"_";
+    y+=2;section(T.fire);
+    var qs=g(p+(M===2?"qc":"q"));
+    row(T.q,qs==="custom"?g(p+(M===2?"qc":"q")+"_custom"):qs);
+    row(T.z,DC(g(p+"z")));row(T.t0,DC(g(p+"t0")));
+    row(T.plume,C(gt(p+"plume")));
+    if(g(p+"plume")==="balcony"){row(T.bw,DC(g(p+"balW")));row(T.bh,DC(g(p+"balH")));}
+    if(g(p+"fan"))row(T.fan,g(p+"fan"));
+  }
+  y+=3;
+  /* 2. resultats : une carte = libelle / valeur / annotation */
+  section(T.res);
+  var resEl=document.getElementById("dsf_result");
+  var grid=resEl&&resEl.firstElementChild&&resEl.firstElementChild.children[1];
+  var noteEl=resEl&&resEl.firstElementChild&&resEl.firstElementChild.children[2];
+  if(grid){
+    Array.prototype.forEach.call(grid.children,function(card){
+      var k=card.children,l=C(k[0]&&k[0].textContent),v=C(k[1]&&k[1].textContent),s=C(k[2]&&k[2].textContent);
+      if(l&&v)row(l+" :",v+(s?"  -  "+s:""));
     });
-    y+=3;
   }
-  section(FR?"DONNEES DU LOCAL":"ROOM DATA");
-  row(FR?"Surface (m2) :":"Area (m2):",surf);
-  row(FR?"Hauteur (m) :":"Height (m):",haut);
-  row(FR?"Volume (m3) :":"Volume (m3):",surf&&haut?(parseFloat(surf)*parseFloat(haut)).toFixed(1):"");
-  row(FR?"Type de local :":"Room type:",clean(type));
-  row(FR?"Mode d'extraction :":"Extraction mode:",clean(mode));
-  row(FR?"Nombre de cantons :":"Smoke zones:",cantons);
+  if(noteEl){y+=1;para(C(noteEl.textContent),14,W-28,7.5);}
   y+=3;
-  section(FR?"PANACHE THERMIQUE (Methode IT 246)":"THERMAL PLUME (IT 246 Method)");
-  row(FR?"Puissance feu Qc (kW) :":"Fire HRR Qc (kW):",qc2);
-  row(FR?"Hauteur interface z (m) :":"Interface height z (m):",z2);
-  row(FR?"Temperature ambiante T0 (degC) :":"Ambient temp T0 (degC):",t02);
-  y+=3;
-  section(FR?"RESULTATS DESENFUMAGE":"SMOKE EXTRACTION RESULTS");
-  // Extraire donnees depuis les cellules du tableau de resultats
-  var resEl2=document.getElementById("dsf_result");
-  if(resEl2){
-    var leafDivs=Array.from(resEl2.querySelectorAll("div")).filter(function(d){return d.children.length===0&&d.textContent.trim().length>=1;});
-    var skip=["Résultats","Results","Calcul selon","Indicatifs","indicatifs","valider"];
-    // Paires fixes: label aux indices impairs, valeur au suivant non-sous-valeur
-    var SUBVAL=["(",String.fromCharCode(8805),">= ",">=","IT 246","EN 12101","recommand","ⓘ"];
-    function isSub(t){
-      if(SUBVAL.some(function(s){return t.indexOf(s)===0;}))return true;
-      // Exclure annotations: recommandé, EN 12101, IT 246 seul
-      return false;
-    }
-    var i=1;
-    while(i<leafDivs.length){
-      var lbl=clean(leafDivs[i].textContent.trim());
-      if(isSub(lbl)||lbl.length<3||lbl.indexOf("Calcul selon")!==-1||lbl.indexOf("indicatif")!==-1){i++;continue;}
-      var j=i+1;
-      while(j<leafDivs.length&&isSub(clean(leafDivs[j].textContent.trim())))j++;
-      if(j>=leafDivs.length)break;
-      var val=clean(leafDivs[j].textContent.trim());
-      if(isSub(val)){i++;continue;}
-      if(lbl.length>2&&lbl.length<80&&val.length>0&&val.length<60){
-        row(lbl+" :",val);
-        i=j+1;
-      } else {i++;}
-    }
+  /* 3. verification IT 246 (si elle a ete lancee) */
+  var vt=document.getElementById("verif_it246_table"),vr=document.getElementById("verif_it246_rows");
+  if(M===1&&vt&&vt.style.display!=="none"&&vr&&vr.children.length){
+    section(T.ver);
+    Array.prototype.forEach.call(vr.children,function(r){
+      var sp=r.children;if(sp.length<4)return;
+      var ic=sp[3].textContent,st=/❌/.test(ic)?T.nok:(/⚠/.test(ic)?T.chkm:T.ok);
+      row(C(sp[0].textContent)+" :",C(sp[2].textContent)+"  [req. "+C(sp[1].textContent)+"]  -> "+st);
+    });
+    var bl=document.getElementById("verif_it246_bilan");
+    if(bl&&bl.textContent.trim()){doc.setFont("helvetica","bold");doc.setFontSize(8.5);room();doc.text(C(bl.textContent),14,y);y+=6;}
+    y+=2;
   }
-  y+=3;
-  section(FR?"NORMES ET REFERENCES":"STANDARDS AND REFERENCES");
-  doc.setFont("helvetica","normal");
-  doc.setFontSize(8);
-  doc.setTextColor(40,40,40);
-  var normes=[
-    "IT 246 (Instruction Technique 246) - Desenfumage des ERP",
-    "DTR C3-41 - Regles de conception du desenfumage (Algerie)",
-    "EN 12101-6 - Systemes de controle des fumees et de la chaleur",
-    "EN 12101-3 - Extracteurs de fumees et de chaleur"
-  ];
-  normes.forEach(function(n){
-    if(y>272){doc.addPage();y=20;}
-    doc.text("- "+n,14,y);
-    y+=5;
+  /* 4. check-list */
+  var items=[];
+  document.querySelectorAll("#dsf_checklist input[type=checkbox]").forEach(function(el){
+    var lb=el.parentElement?C(el.parentElement.textContent):"";
+    if(lb)items.push((el.checked?"[x] ":"[  ] ")+lb);
   });
+  if(items.length&&items.some(function(t){return t.indexOf("[x]")===0;})){
+    section(T.chk);items.forEach(function(t){para(t,14,W-28,7.5);});y+=3;
+  }
+  /* 5. normes */
+  section(T.std);
+  STD.forEach(function(n){para("- "+n,14,W-28,8);});
   y+=3;
   if(y>240){doc.addPage();y=20;}
-  doc.setFillColor(255,248,230);
-  doc.rect(10,y,W-20,18,"F");
-  doc.setDrawColor(255,140,0);
-  doc.setLineWidth(0.5);
-  doc.rect(10,y,W-20,18,"S");
-  doc.setFont("helvetica","bold");
-  doc.setFontSize(8);
-  doc.setTextColor(180,80,0);
-  doc.text(FR?"AVERTISSEMENT :":"WARNING:",14,y+5);
-  doc.setFont("helvetica","normal");
-  doc.setTextColor(100,60,0);
-  doc.text(FR?"Resultats indicatifs uniquement. A valider obligatoirement par un bureau d'etudes agree":"Indicative results only. Must be validated by an approved engineering firm.",14,y+10);
-  doc.text(FR?"conformement aux reglementations en vigueur.":"in accordance with applicable regulations.",14,y+15);
+  doc.setFillColor(255,248,230);doc.rect(10,y,W-20,18,"F");
+  doc.setDrawColor(255,140,0);doc.setLineWidth(0.5);doc.rect(10,y,W-20,18,"S");
+  doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(180,80,0);
+  doc.text(T.warn,14,y+5);
+  doc.setFont("helvetica","normal");doc.setTextColor(100,60,0);
+  doc.text(T.w1,14,y+10);doc.text(T.w2,14,y+15);
   y+=22;
   var pages=doc.internal.getNumberOfPages();
   for(var i=1;i<=pages;i++){
-    doc.setPage(i);
-    doc.setDrawColor(0,119,168);
-    doc.setLineWidth(0.3);
-    doc.line(10,285,W-10,285);
-    doc.setFontSize(7);
-    doc.setTextColor(120,120,120);
+    doc.setPage(i);doc.setDrawColor(0,119,168);doc.setLineWidth(0.3);doc.line(10,285,W-10,285);
+    doc.setFontSize(7);doc.setTextColor(120,120,120);
     doc.text("Thermosys v3 - thermosys-v3.vercel.app",14,290);
-    doc.text("Page "+i+"/"+pages,W-14,290,{align:"right"});
+    doc.text(T.pg+i+"/"+pages,W-14,290,{align:"right"});
   }
-  var fn="Thermosys_Desenfumage_"+new Date().toISOString().slice(0,10)+".pdf";
-  doc.save(fn);
-  if(typeof showToast==="function")showToast(FR?"PDF Desenfumage exporte":"Smoke extraction PDF exported","s");
-  if(typeof logHist==="function")logHist(FR?"Export PDF Desenfumage":"Smoke extraction PDF export");
+  doc.save("Thermosys_Desenfumage_"+new Date().toISOString().slice(0,10)+".pdf");
+  if(typeof showToast==="function")showToast(T.toast,"s");
+  if(typeof logHist==="function")logHist(T.hist);
 }
 window.exportDsfPDF=exportDsfPDF;
 window._dsfClean=clean;
