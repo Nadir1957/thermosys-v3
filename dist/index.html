@@ -18192,7 +18192,7 @@ function doText(n){
   var p=n.parentNode; if(!p||SKIP.test(p.nodeName)) return;
   var raw=n.nodeValue;
   if(n.__i3t!==undefined){ if(raw===n.__i3t) return; delete n.__i3o; delete n.__i3t; }
-  var v=(raw.indexOf('\n')>0&&I.ml)?I.ml(raw,tr):tr(raw); /* esml78 */ if(v===null) return;
+  var v=I.ml?I.ml(raw,tr):tr(raw); /* esml79 */ if(v===null) return;
   var a=raw.match(/^\s*/)[0], b=raw.match(/\s*$/)[0];
   n.__i3o=raw; n.__i3t=a+v+b; n.nodeValue=n.__i3t; nodes.add(n);
   /* libelles bilingues (data-cen) : l'attribut suit la traduction pour que les autres modules ne la rebasculent pas */
@@ -19565,15 +19565,17 @@ var R=[
  function(k){ var a; if((a=/^EN 378-1 practical limit \(0\.008 kg\/m³\): (\d+) g$/.exec(k))) return 'Límite práctico EN 378-1 (0,008 kg/m³): '+a[1]+' g'; },
  function(k){ var a; if((a=/^✅ Maximum charge retained: (\d+) g \(([\d.]+) g\/m³\)$/.exec(k))) return '✅ Carga máxima adoptada: '+a[1]+' g ('+dc(a[2])+' g/m³)'; },
  function(k){ var a; if((a=/^(?:Audit score|Score audit) ?: (\d+) \/ (\d+) \((\d+)%\) — (.+)$/.exec(k))&&sc(a[4])) return 'Puntuación de la auditoría : '+a[1]+' / '+a[2]+' ('+a[3]+'%) — '+sc(a[4]); },
+ function(k){ var a; if((a=/^(Puntuación de la auditoría : .*) — ✅ COMPLIANT$/.exec(k))) return a[1]+' — ✅ CONFORME'; },
  function(k){ var a; if((a=/^(\d+) \/ (\d+) (?:points validated|points validés|puntos validados) \((\d+)%\) — (.+)$/.exec(k))&&ms(a[4])) return a[1]+' / '+a[2]+' puntos validados ('+a[3]+'%) — '+ms(a[4]); },
  function(k){ var a; if((a=/^(\d+) \/ 8 (?:steps validated|étapes validées)\.( ✅ (?:PROTOCOLE COMPLET|COMPLETE PROTOCOL))?$/.exec(k))) return a[1]+' / 8 pasos validados.'+(a[2]?' ✅ PROTOCOLO COMPLETO':''); },
  function(k){ var a; if((a=/^Phase (\S+) : ([\d.]+)V → (.+)$/.exec(k))&&ig(a[3])) return 'Fase '+a[1]+' : '+dc(a[2])+'V → '+ig(a[3]); }
 ];
 I.mlRules=R;
 function runR(k){ for(var i=0;i<R.length;i++){ var v; try{ v=R[i](k); }catch(e){ v=null; } if(v!==null&&v!==undefined) return v; } return null; }
-I.rxs.push(function(k){ return runR(k); });
 /* chaque ligne d'un bloc multi-lignes (resultat pre-formate) est traduite separement, retours a la ligne conserves */
 I.ml=function(raw,tr){
+  var t1=raw.replace(/^\s+/,'').replace(/\s+$/,'');
+  if(t1.indexOf('\n')<0){ var r1=runR(t1.replace(/\s+/g,' ')); return r1!==null?r1:tr(raw); }
   var w=tr(raw); if(w!==null) return w;
   var ls=raw.split('\n'), hit=false;
   var out=ls.map(function(ln){
