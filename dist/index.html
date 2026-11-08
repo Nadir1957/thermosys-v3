@@ -20015,6 +20015,49 @@ if(I.mlRules&&I.mlRules.unshift) I.mlRules.unshift(function(k){ if(k.length>700)
 })();
 
 </script>
+<script id="lang-es-data-14">
+(window.I18N3=window.I18N3||{dict:{}});
+/* es86 : auditoria - ayuda TRATAMIENTO DE AIRE, codigos, registro, RE2020 (idempotent) */
+(function(){
+var I=window.I18N3; if(!I||window.__es86) return; window.__es86=1;
+var E=I.dict.es=I.dict.es||{};
+var D={"Additions (step 32):": "Complementos (paso 32):", "flow type (single or double flow), heat source including reversible heat-pump rooftop (COP depending on outdoor temperature, defrost not modelled), steam or adiabatic humidification (required saturation efficiency, hygiene warning in clean rooms), filter classes G4 to F9 with indicative pressure drops, silencers (pressure drop only, acoustics not calculated),": "tipo de flujo (simple o doble flujo), fuente de calor incluida la bomba de calor reversible (rooftop, COP según la temperatura exterior, desescarche no modelizado), humidificación por vapor o adiabática (rendimiento de saturación requerido, aviso de higiene en sala limpia), clases de filtros G4 a F9 con pérdidas de carga indicativas, silenciadores (solo pérdida de carga, acústica no calculada),", "modulating free-cooling": "free-cooling modulante", "(fresh air up to 100 % by enthalpy or temperature) with annual saving.": "(aire exterior hasta el 100 % según la entalpía o la temperatura) con ahorro anual.", "Protection thermique du moteur du compresseur déclenchée. Vérifier bobinages et alimentation.": "Protección térmica del motor del compresor disparada. Compruebe los bobinados y la alimentación.", "Protection thermique du moteur du ventilateur déclenchée.": "Protección térmica del motor del ventilador disparada.", "Vérifier l'alimentation secteur et l'état du variateur.": "Compruebe la alimentación de red y el estado del variador.", "Vérifier RE2020": "Verificar RE2020", "Check RE2020": "Verificar RE2020", "Compliance Audit": "Auditoría de conformidad", "Audit Report": "Informe de auditoría", "Effective date:": "Fecha de entrada en vigor:", "Date d'entrée en vigueur :": "Fecha de entrada en vigor:"}, NAV={"home": "INICIO", "catalogue": "CATÁLOGO", "devis": "PRESUPUESTO", "historique": "REGISTRO", "coldroom": "CÁMARA FRIGORÍFICA", "airtreat": "TRATAMIENTO DE AIRE", "obd": "OBD", "fluides": "FLUIDOS", "scop": "SCOP/COP", "ocr": "OCR-IA", "bluetooth": "BLUETOOTH", "convert": "CONV.", "consignation": "LOTO", "rt2025": "RE2020", "vannes": "VÁLVULAS", "hydraulique": "REDES", "normes": "NORMAS", "codes": "CÓDIGOS DE FALLA", "charge": "CARGA TÉRMICA", "chargepro": "CARGA PRO", "psy": "PSICROMETRÍA", "heat": "CALEFACCIÓN", "elec": "ELECTRICIDAD", "mecha": "MECATRÓNICA", "proj": "PROYECTO", "validation": "VALIDACIÓN", "maint": "MANT.", "desenfumage": "EXTRACCIÓN DE HUMOS", "aide": "AYUDA", "contact": "CONTACTO"};
+Object.keys(D).forEach(function(k){ E[k]=D[k]; });
+function dc(s){ return String(s).replace(/(\d)\.(\d)/g,'$1,$2'); }
+var NU={}; Object.keys(NAV).forEach(function(k){ NU[k.toUpperCase()]=NAV[k]; });
+function ex86(k){
+  var t=k.replace(/^\s+/,''), lead=k.slice(0,k.length-t.length), a;
+  var P=[['Actionneur: ','Actuador: '],['Devis (perso): ','Presupuesto (personalizado): '],['Devis chargé: ','Presupuesto cargado: '],['Devis sauvegardé: ','Presupuesto guardado: '],['Devis exporté PDF: ','Presupuesto exportado en PDF: '],['Quote PDF exported: ','Presupuesto exportado en PDF: '],['Devis: ','Presupuesto: '],['Réseau chargé: ','Red cargada: '],['Réseau sauvegardé: ','Red guardada: '],['Réseau supprimé: ','Red eliminada: '],['Network PDF exported: ','Red exportada en PDF: '],['Vanne: ','Válvula: '],['Vocal: ','Voz: '],['OCR: erreur — ','OCR: error — '],['OCR: fichier chargé — ','OCR: archivo cargado — '],['Cold room sizing note: ','Nota de dimensionamiento de cámara frigorífica: '],['Audit report: ','Informe de auditoría: '],['BT connected: ','BT conectado: '],['Detail: ','Detalle: '],['Certificate exported: ','Certificado exportado: ']];
+  for(var q=0;q<P.length;q++){ if(t.indexOf(P[q][0])===0) return lead+P[q][1]+t.slice(P[q][0].length); }
+  var EXACT={'LOTO: consignation validée':'LOTO: bloqueo validado','LOTO: réinitialisé':'LOTO: reiniciado','SCOP PDF export':'Exportación PDF del SCOP','OBD: full diagnostic':'OBD: diagnóstico completo','Rentabilité PAC calculée':'Rentabilidad de la BC calculada','Coût énergétique calculé':'Coste energético calculado','SCOP calculé':'SCOP calculado'};
+  if(EXACT[t]) return lead+EXACT[t];
+  var TY={'Individual residential':'Vivienda unifamiliar','Collective residential':'Vivienda colectiva','Offices':'Oficinas terciarias','Tertiary offices':'Oficinas terciarias','Education':'Enseñanza','Health / Hospital':'Sanitario / Hospital'};
+  var POS={'principale':'conducto principal','secondaire':'conducto de derivación','terminal':'boca terminal'}, LIG={'liquide':'líquido','aspiration':'aspiración','refoulement':'descarga'}, FOR={'circulaire':'circular','rectangulaire':'rectangular'};
+  if((a=/^OCR: analyse (.+) terminée$/.exec(t))) return lead+'OCR: análisis '+a[1]+' terminado';
+  if((a=/^Air treatment: ([\d.,]+) m³\/h$/.exec(t))) return lead+'Tratamiento de aire: '+dc(a[1])+' m³/h';
+  if((a=/^Cold room: ([\d.,]+) kW$/.exec(t))) return lead+'Cámara frigorífica: '+dc(a[1])+' kW';
+  if((a=/^Acoustic: ([\d.,]+) dB\(A\) @ ([\d.,]+)m$/.exec(t))) return lead+'Acústica: '+dc(a[1])+' dB(A) @ '+dc(a[2])+' m';
+  if((a=/^Building aggregation: (\d+) rooms, ([\d.,]+)kW$/.exec(t))) return lead+'Agregación del edificio: '+a[1]+' locales, '+dc(a[2])+' kW';
+  if((a=/^Dew point: ([\d.,-]+)C, insulation ([\d.,]+)mm$/.exec(t))) return lead+'Punto de rocío: '+dc(a[1])+' °C, aislamiento '+dc(a[2])+' mm';
+  if((a=/^Network: (\d+) segments, critical circuit ΔP (\d+) Pa$/.exec(t))) return lead+'Red: '+a[1]+' tramos, circuito crítico ΔP '+a[2]+' Pa';
+  if((a=/^HP ROI: (ok|non)$/.exec(t))) return lead+'ROI BC: '+(a[1]==='ok'?'sí':'no');
+  if((a=/^SCOP: ([\d.,]+)$/.exec(t))) return lead+'SCOP: '+dc(a[1]);
+  if((a=/^RE2020 check: (.+)$/.exec(t))) return lead+'Verificación RE2020: '+(TY[a[1]]||a[1]);
+  if((a=/^Gaine: ([\d.,]+)m3\/h, (\w+), (\w+)$/.exec(t))) return lead+'Conducto: '+dc(a[1])+' m³/h, '+(POS[a[2]]||a[2])+', '+(FOR[a[3]]||a[3]);
+  if((a=/^Frigo: (.+), (liquide|aspiration|refoulement), ([\d.,]+)kW$/.exec(t))) return lead+'Frigorífico: '+a[1]+', '+LIG[a[2]]+', '+dc(a[3])+' kW';
+  if((a=/^Refnet: (.+?), (.+)$/.exec(t))) return lead+'Refnet: '+a[1]+', '+(a[2]==='hors plage'?'fuera de rango':a[2]);
+  if((a=/^Cooling load: ([\d.,]+) kW$/.exec(t))) return lead+'Carga de refrigeración: '+dc(a[1])+' kW';
+  if((a=/^Heating load: ([\d.,]+) kW$/.exec(t))) return lead+'Carga de calefacción: '+dc(a[1])+' kW';
+  if((a=/^Navigation → (.+)$/.exec(t))&&NU[a[1]]) return lead+'Navegación → '+NU[a[1]];
+  if((a=/^(R\d+\w*) \(GWP=(\d+)\) recommended — (R\d+\w*) optional$/.exec(t))) return lead+a[1]+' (PCA='+a[2]+') recomendado — '+a[3]+' opcional';
+  return null;
+}
+var RS=I.rxs||(I.rxs=[]);
+RS.unshift(function(k,mm){ return ex86(k); });
+if(I.mlRules&&I.mlRules.unshift) I.mlRules.unshift(function(k){ if(k.length>300) return null; try{ return ex86(k); }catch(e){ return null; } });
+})();
+
+</script>
 </body>
 </html>
 
