@@ -9588,7 +9588,7 @@ document.addEventListener("DOMContentLoaded",function(){
     // palier-result
     var pr=document.getElementById("palier-result");
     if(pr){
-      if(lang==="en"&&pr.textContent.indexOf("disponible")!==-1)
+      if(window.I18N3&&I18N3.get&&I18N3.get()==="es"){var _m=/Kv[^\d]*(\d[\d.,]*)\s*m\u00b3\/h[^\d]*(\d[\d.,]*)\s*kPa[^\d]*(\d[\d.,]*)/.exec(pr.textContent);if(_m){var _t="Kv requerido: "+_m[1].replace(".",",")+" m\u00b3/h  |  \u0394P disponible: "+_m[2].replace(".",",")+" kPa  |  Caudal nominal: "+_m[3].replace(".",",")+" m\u00b3/h";if(pr.textContent!==_t)pr.textContent=_t;}}else /*pal85*/ if(lang==="en"&&pr.textContent.indexOf("disponible")!==-1)
         pr.textContent=pr.textContent.replace(/ΔP disponible:/g,"Available ΔP:").replace(/Q nominal:/g,"Nominal flow:");
       if(lang==="fr"&&pr.textContent.indexOf("Available")!==-1)
         pr.textContent=pr.textContent.replace(/Available ΔP:/g,"ΔP disponible:").replace(/Nominal flow:/g,"Q nominal:");
@@ -19914,6 +19914,103 @@ if(I.mlRules&&I.mlRules.unshift) I.mlRules.unshift(function(k){ if(k.length>400)
   };
   try{ var c0=document.getElementById('scopCountry'); window.__zfC=c0?c0.value:undefined; }catch(e){}
 })();
+</script>
+<script id="lang-es-data-13">
+(window.I18N3=window.I18N3||{dict:{}});
+window.I18N3.dict=window.I18N3.dict||{};
+/* es85 : resultados RESEAUX y VANNES (idempotent) */
+(function(){
+var I=window.I18N3; if(!I||window.__es85) return; window.__es85=1;
+var E=I.dict.es=I.dict.es||{};
+var LAB={"Calculated diameter :": "Diámetro calculado :", "Standard diameter :": "Diámetro normalizado :", "Actual velocity (std Ø) :": "Velocidad real (Ø normalizado) :", "Airflow :": "Caudal de aire :", "Duct position :": "Posición del conducto :", "Recommended range :": "Rango recomendado :", "Design velocity:": "Velocidad de diseño:", "Line type :": "Tipo de línea :", "Cooling capacity :": "Potencia frigorífica :", "Estimated mass flow :": "Caudal másico estimado :", "Standard ACR tube :": "Tubo ACR normalizado :", "Inner diameter (ACR wall) :": "Diámetro interior (pared ACR) :", "Pressure drop (equiv. length) :": "Pérdida de carga (longitud equiv.) :", "Reference conditions :": "Condiciones de referencia :", "Actual velocity :": "Velocidad real :", "Equiv. length entered :": "Longitud equiv. introducida :", "Brand :": "Marca :", "Refnet reference :": "Referencia Refnet :", "Matching range :": "Rango correspondiente :", "Total sound power :": "Potencia sonora total :", "Installation type :": "Tipo de implantación :", "Dew point :": "Punto de rocío :", "Minimum required thickness :": "Espesor mínimo requerido :", "Achieved surface temperature :": "Temperatura superficial alcanzada :", "Main duct": "Conducto principal", "Branch duct": "Conducto de derivación", "Terminal": "Boca terminal", "Indicative estimate (velocity method, approximate fluid properties) — verify against manufacturer software or charts before construction.": "Estimación indicativa (método de la velocidad, propiedades del fluido aproximadas) — verifique con el software o los ábacos del fabricante antes de construir.", "Free-field propagation calculation. Verify with a qualified acoustic engineer for any official regulatory study.": "Cálculo en propagación libre. A verificar con un acústico cualificado para cualquier estudio reglamentario oficial.", "Radial conduction + surface convection/radiation calculation. Verify with the insulation manufacturer for any critical application.": "Cálculo de conducción radial + convección/radiación superficial. Verifique con el fabricante del aislamiento para cualquier aplicación crítica.", "Add at least one segment.": "Añada al menos un tramo.", "High temp 80/60°C": "Alta temperatura 80/60 °C", "Moy. T° 60/40°C": "Media temperatura 60/40 °C", "Low temp 45/35°C (HP)": "Baja temperatura 45/35 °C (BC)", "Froid 7/12°C": "Frío 7/12 °C (enfriadora)", "Cold 14/18°C (beams)": "Frío 14/18 °C (vigas frías)"}, SRC={"Haier MRV": "Fuente: Haier MRV — manuales oficiales AV08NMSETA Service Manual y AV16NMVERA Design Manual (los dos primeros escalones están confirmados explícitamente; umbrales idénticos en ambos documentos). ⚠️ Escalones superiores (FQG-B730A/B1350A/B2040A) deducidos de la convención de nomenclatura del fabricante (el número de modelo corresponde a la capacidad en centenares de vatios), no confirmados explícitamente por una tabla oficial.", "Samsung DVM S": "Fuente: Samsung DVM S — manuales técnicos oficiales (Installation Manual + VRF Technical Data Book Europe). ⚠️ Simplificado: selecciona siempre la opción más amplia (nunca infradimensionada), sin tener en cuenta la dependencia del número de estancias conectadas en algunos escalones — verifique con el software del fabricante para una selección óptima.", "Mitsubishi Electric City Multi Y-Series": "Fuente: Mitsubishi Electric City Multi Y-Series — manuales técnicos oficiales (Y-Series general manual + WR2/PQHY design manual), umbrales contrastados en dos documentos distintos.", "Daikin VRV IV": "Fuente: Daikin VRV IV — doc. del fabricante 4P388987-1 (2015.03).", "Toshiba SMMS": "Fuente: Toshiba SMMS — documentación oficial del fabricante.", "Gree GMV5": "Fuente: Gree GMV5 — greecommercial.com (system-pipe-accessories).", "Midea V6": "Fuente: Midea V6 — Midea UK (Branch-Joint-Data-Sheet).", "Hisense Hi-Flexi": "Fuente: Hisense Hi-Flexi — catálogo oficial de accesorios.", "Panasonic ECOi 6N": "Fuente: Panasonic ECOi 6N — aircon.panasonic.eu.", "Trane Mini-VRF monophasé": "Fuente: Trane Mini-VRF monofásico — VRF-SVN33D-EN.", "LG Multi F MAX": "Fuente: LG Multi F MAX — Engineering Manual oficial de LG (BD Unit + Y-Branch PMBL5620).", "LG Multi V (2 tubes, série ARBLN)": "Fuente: LG Multi V (2 tubos, serie ARBLN) — LG Canada (lgvrf.ca) + manual técnico oficial, umbrales contrastados con un distribuidor independiente. Equivalente de 3 tubos (recuperación): serie ARBLB, mismos umbrales. ⚠️ Escalón ARBLN23220 (>145 kW) menos verificado que los demás.", "Fujitsu Airstage": "Fuente: Fujitsu Airstage — connect.fujitsugeneral.com + manuales técnicos oficiales (contrastado en 3 fuentes)."};
+Object.keys(LAB).forEach(function(k){ if(E[k]===undefined) E[k]=LAB[k]; });
+function dc(s){ return String(s).replace(/(\d)\.(\d)/g,'$1,$2'); }
+function pc(s){ return dc(s).replace(/(\d) ?%/g,'$1 %'); }
+var REG={'High temp 80/60°C':'Alta temperatura 80/60 °C','Moy. T° 60/40°C':'Media temperatura 60/40 °C','Low temp 45/35°C (HP)':'Baja temperatura 45/35 °C (BC)','Froid 7/12°C':'Frío 7/12 °C (enfriadora)','Cold 14/18°C (beams)':'Frío 14/18 °C (vigas frías)'};
+var RT='Verifique la referencia exacta con el software del fabricante antes de construir.';
+function ex85(k){
+  var t=k.replace(/^\s+/,''), lead=k.slice(0,k.length-t.length), a, N='([\\d.,]+)';
+  function m(re){ return (a=re.exec(t)); }
+  /* RESEAUX : debit, pertes de charge, pompe, vase, separateur, collecteur */
+  if(m(/^Q = ([\d.]+) L\/s = ([\d.]+) m³\/h$/)) return lead+'Q = '+dc(a[1])+' L/s = '+dc(a[2])+' m³/h';
+  if(m(/^Theoretical Ø: (.+)$/)) return lead+'Ø teórico: '+dc(a[1]);
+  if(m(/^Actual velocity (DN\d+): (.+)$/)) return lead+'Velocidad real '+a[1]+': '+dc(a[2]);
+  if(m(/^Assumption: water \(cp (\S+) kJ\/kg·K\), inner Ø ≈ DN\.$/)) return lead+'Hipótesis: agua (cp '+dc(a[1])+' kJ/kg·K), Ø interior ≈ DN.';
+  if(m(/^v = (\S+) m\/s \| Re = (\d+) \((turbulent|laminar|transitional[^)]*)\)$/)) return lead+'v = '+dc(a[1])+' m/s | Re = '+a[2]+' ('+(a[3]==='turbulent'?'turbulento':a[3]==='laminar'?'laminar':'transitorio — incierto')+')';
+  if(m(/^Assumptions: smooth steel pipe \(ε = (\S+) mm\), fluid at 20 °C, straight length without fittings \(add elbows, valves\), inner Ø ≈ DN\.$/)) return lead+'Hipótesis: tubo de acero liso (ε = '+dc(a[1])+' mm), fluido a 20 °C, tramo recto sin accesorios (añada codos y válvulas), Ø interior ≈ DN.';
+  if(m(/^Hydraulic power: (\S+) kW(\s+)\(ρ = 1000 kg\/m³, cold water\)$/)) return lead+'Potencia hidráulica: '+dc(a[1])+' kW'+a[2]+'(ρ = 1000 kg/m³, agua fría)';
+  if(m(/^Shaft power \(hyd\. \/ pump η\): (\S+) kW$/)) return lead+'Potencia en el eje (hidr. / η bomba): '+dc(a[1])+' kW';
+  if(m(/^Electric input \(motor η (\S+) assumed\): (\S+) kW$/)) return lead+'Potencia eléctrica absorbida (η motor '+dc(a[1])+' supuesto): '+dc(a[2])+' kW';
+  if(m(/^Recommended motor \(shaft ×(\S+), IEC series\): (\S+) kW$/)) return lead+'Motor recomendado (eje ×'+dc(a[1])+', serie IEC): '+dc(a[2])+' kW';
+  if(m(/^NPSH: to be checked — NPSHa = \(Patm − Pv\)\/\(ρ·g\) − suction lift − suction losses; it must exceed the NPSHr of the manufacturer curve by at least (\S+) m\.$/)) return lead+'NPSH: a verificar — NPSHd = (Patm − Pv)/(ρ·g) − altura de aspiración − pérdidas en la aspiración; debe superar el NPSHr de la curva del fabricante en al menos '+dc(a[1])+' m.';
+  if(m(/^Expansion coefficient β \((.+?)\): (\S+)(\s+)\(interpolated water density\)$/)) return lead+'Coeficiente de expansión β ('+a[1]+'): '+dc(a[2])+a[3]+'(densidad del agua interpolada)';
+  if(m(/^Expansion Ve: (\S+) L(\s+)\|(\s+)Water reserve Vr \((\S+) % min (\S+) L\): (\S+) L$/)) return lead+'Expansión Ve: '+dc(a[1])+' L'+a[2]+'|'+a[3]+'Reserva de agua Vr ('+dc(a[4])+' % mín. '+a[5]+' L): '+dc(a[6])+' L';
+  if(m(/^Pre-charge: (\S+) bar abs \((\S+) bar rel\.\)(\s+)\|(\s+)Final P: (\S+) bar abs(\s+)\((?:soupape|valve|relief valve) (\S+) bar − (\S+) bar\)$/)) return lead+'Presión de precarga: '+dc(a[1])+' bar abs ('+dc(a[2])+' bar rel.)'+a[3]+'|'+a[4]+'P final: '+dc(a[5])+' bar abs'+a[6]+'(válvula '+dc(a[7])+' bar − '+dc(a[8])+' bar)';
+  if(m(/^CALCULATED VESSEL VOLUME: (.+)$/)) return lead+'VOLUMEN DE VASO CALCULADO: '+a[1];
+  if(m(/^Commercial vessel selected: (\S+) L(.*)$/)) return lead+'Vaso comercial seleccionado: '+a[1]+' L'+a[2];
+  if(m(/^Min Ø: (.+)$/)) return lead+'Ø mín.: '+dc(a[1]);
+  if(m(/^Selected DN: (DN\d+)$/)) return lead+'DN seleccionado: '+a[1];
+  if(m(/^H min = 3×Ø: (.+)$/)) return lead+'H mín. = 3×Ø: '+dc(a[1]);
+  if(m(/^Body volume \(Ø × 3Ø\): (\S+) L → (?:residence time|tiempo de residencia) (\S+) s$/)) return lead+'Volumen del cuerpo (Ø × 3Ø): '+dc(a[1])+' L → tiempo de residencia '+dc(a[2])+' s';
+  if(m(/^Flow\/circuit: (.+)$/)) return lead+'Caudal/circuito: '+dc(a[1]);
+  if(m(/^Ø body: (.+)$/)) return lead+'Ø cuerpo: '+dc(a[1]);
+  if(m(/^Min length: (.+)$/)) return lead+'Longitud mín.: '+dc(a[1]);
+  if(m(/^Branch spacing: (\S+) mm min$/)) return lead+'Separación entre derivaciones: '+dc(a[1])+' mm mín.';
+  /* equilibrado / preregulacion */
+  if(m(/^Circuit: (\S+) kW(\s+)\|(\s+)Regime: (.+)$/)) return lead+'Circuito: '+dc(a[1])+' kW'+a[2]+'|'+a[3]+'Régimen: '+(REG[a[4]]||E[a[4]]||a[4]);
+  if(m(/^Flow Q(\s*): (.*)$/)) return lead+'Caudal Q'+a[1]+': '+dc(a[2]);
+  if(m(/^Selected DN: (DN\d+)(\s+)\|(\s+)Velocity: (\S+) m\/s$/)) return lead+'DN seleccionado: '+a[1]+a[2]+'|'+a[3]+'Velocidad: '+dc(a[4])+' m/s';
+  if(m(/^ΔP\/ml circuit: (.+)$/)) return lead+'ΔP/ml del circuito: '+dc(a[1]);
+  if(m(/^ΔP total \((\d+(?:[.,]\d+)?) ?m \+ sing\.\): (.+)$/)) return lead+'ΔP total ('+dc(a[1])+' m + sing.): '+dc(a[2]);
+  if(m(/^(?:Required Kv|Kv requerido): (\S+) m³\/h(\s+)\|(\s+)Available ΔP: (\S+) kPa(\s+)\|(\s+)Nominal flow: (\S+) m³\/h$/)) return lead+'Kv requerido: '+dc(a[1])+' m³/h'+a[2]+'|'+a[3]+'ΔP disponible: '+dc(a[4])+' kPa'+a[5]+'|'+a[6]+'Caudal nominal: '+dc(a[7])+' m³/h';
+  if(m(/^Available ΔP: (\S+) kPa$/)) return lead+'ΔP disponible: '+dc(a[1])+' kPa';
+  if(m(/^Nominal flow: (\S+) m³\/h$/)) return lead+'Caudal nominal: '+dc(a[1])+' m³/h';
+  if(m(/^Required Kv(\s*): (.+)$/)) return lead+'Kv requerido'+a[1]+': '+dc(a[2]);
+  if(m(/^Valve ΔP(\s*): (.+)$/)) return lead+'ΔP de la válvula'+a[1]+': '+dc(a[2]);
+  if(m(/^Authority N(\s*): (.*)$/)) return lead+'Autoridad N'+a[1]+': '+pc(a[2]).replace('revoir ΔP pompe','revisar la ΔP de la bomba').replace('Good regulation','Buena regulación').replace(/<\s*(\d)/,'< $1');
+  if(m(/^✔ Recommended setting: SETTING (\d+) \((.+)\)$/)) return lead+'✔ Reglaje recomendado: REGLAJE '+a[1]+' ('+a[2]+')';
+  if(m(/^Setting Kv (\d+): (.+)$/)) return lead+'Kv del reglaje '+a[1]+': '+dc(a[2]);
+  /* horas-grado (confort de verano) */
+  if(m(/^Max outdoor T: (\S+?)\s?°C$/)) return lead+'T ext. máx.: '+dc(a[1])+' °C';
+  if(m(/^Indoor T: (\S+?)\s?°C$/)) return lead+'T interior: '+dc(a[1])+' °C';
+  if(m(/^Comfort limit T: (\S+?)\s?°C \((.+) h\/d × (\d+) days\)$/)) return lead+'T límite de confort: '+dc(a[1])+' °C ('+dc(a[2])+' h/d × '+a[3]+' días)';
+  if(m(/^DH calculated: (.+) DH$/)) return lead+'GH calculados: '+dc(a[1])+' GH';
+  if(m(/^DH limit cat\. (\S+)(\s*): (\S+) DH \(tool indicative threshold, not normative\)$/)) return lead+'Límite GH cat. '+a[1]+a[2]+': '+dc(a[3])+' GH (umbral indicativo de la herramienta, no normativo)';
+  if(m(/^❌ Criterion exceeded: (.+)$/)) return lead+'❌ Criterio superado: '+pc(a[1]);
+  if(m(/^✅ Criterion (?:met|satisfied|OK)(.*)$/)) return lead+'✅ Criterio cumplido'+pc(a[1]);
+  if(m(/^Severe overheating DH \(>(\S+?)\s?°C\): (.+) DH$/)) return lead+'GH de sobrecalentamiento severo (>'+dc(a[1])+' °C): '+dc(a[2])+' GH';
+  if(m(/^Estimated cooling power: (\S+) kW(\s+)\((.+)\)$/)) return lead+'Potencia frigorífica estimada: '+dc(a[1])+' kW'+a[2]+'('+dc(a[3])+')';
+  if(m(/^Maximum electric energy\/year: (\S+) kWh \(COP=(\S+), full load\)$/)) return lead+'Energía eléctrica máxima/año: '+dc(a[1])+' kWh (COP='+dc(a[2])+', plena carga)';
+  if(m(/^Conditioned area: (.+)$/)) return lead+'Superficie climatizada: '+dc(a[1]);
+  if(m(/^ℹ️ Rough estimate \(±50 %\): use COOLING LOAD \/ CHARGE PRO modules for sizing\.$/)) return lead+'ℹ️ Estimación aproximada (±50 %): utilice los módulos CARGA / CARGA PRO para dimensionar.';
+  /* acustica */
+  if(m(/^Level perceived at (\S+) m :$/)) return lead+'Nivel percibido a '+dc(a[1])+' m :';
+  /* Refnet : notas de fuente */
+  if(/^Source: /.test(t)&&/Verify the exact reference via manufacturer software before construction\.$/.test(t)){
+    var b=/^Source: (.+?) — /.exec(t); if(b&&SRC[b[1]]) return lead+SRC[b[1]]+' '+RT;
+  }
+  /* VANNES : Kvs */
+  if(m(/^Kv at design flow: (.+)$/)) return lead+'Kv al caudal de diseño: '+dc(a[1]);
+  if(m(/^Next standard Kvs above \((\S+) series\): (.+)$/)) return lead+'Kvs normalizado superior siguiente (serie '+a[1]+'): '+dc(a[2]);
+  if(m(/^Valve ΔP when fully open at this flow: (.+)$/)) return lead+'ΔP de la válvula totalmente abierta a este caudal: '+dc(a[1]);
+  if(m(/^Design ΔP: (\S+) kPa \| Density: (\S+) kg\/m³$/)) return lead+'ΔP de cálculo: '+dc(a[1])+' kPa | Masa volúmica: '+dc(a[2])+' kg/m³';
+  if(m(/^Do not oversize: a valve that is too large lowers its authority \(a = ΔPvalve \/ \(ΔPvalve \+ ΔPcircuit\), at least (\S+), (\S+) recommended\)\. Manufacturer ranges differ: check the real Kvs of the chosen model\.$/)) return lead+'No sobredimensionar: una válvula demasiado grande reduce su autoridad (a = ΔPválvula / (ΔPválvula + ΔPcircuito), como mínimo '+dc(a[1].replace(/,$/,''))+'; se recomienda '+dc(a[2])+'). Los rangos de los fabricantes difieren: compruebe el Kvs real del modelo elegido.';
+  /* red de tuberias */
+  if(m(/^Number of segments \(full network\)(\s*): (.+)$/)) return lead+'Número de tramos (red completa)'+a[1]+': '+a[2];
+  if(m(/^Most unfavorable circuit(\s*): Segment (\d+)$/)) return lead+'Circuito más desfavorable'+a[1]+': Tramo '+a[2];
+  if(m(/^Circuit length(\s*): (.+)$/)) return lead+'Longitud del circuito'+a[1]+': '+dc(a[2]);
+  if(m(/^(\s*)incl\. linear losses(\s*): (.+)$/)) return lead+a[1]+'incl. pérdidas lineales'+a[2]+': '+dc(a[3]);
+  if(m(/^(\s*)incl\. singular losses(\s*): (.+)$/)) return lead+a[1]+'incl. pérdidas singulares'+a[2]+': '+dc(a[3]);
+  if(m(/^Circuit pressure drop(\s*): (\S+) Pa \((\S+) mCE\)$/)) return lead+'Pérdida de carga del circuito'+a[1]+': '+a[2]+' Pa ('+dc(a[3])+' m.c.a.)';
+  if(m(/^Suggested pump head \(\+10% margin\)(\s*): (.+)$/)) return lead+'Altura manométrica de la bomba sugerida (+10 % de margen)'+a[1]+': '+dc(a[2]);
+  if(m(/^Assumptions: fluid at 20 °C, K elbow (\S+) \/ tee (\S+) \/ valve (\S+), inner Ø ≈ DN\. Network entered one way only: for a closed loop, enter the return too\. Equipment \(generator, heat exchangers, control valves, strainers\) excluded: add their pressure drops\.$/)) return lead+'Hipótesis: fluido a 20 °C, K codo '+dc(a[1])+' / te '+dc(a[2])+' / válvula '+dc(a[3])+', Ø interior ≈ DN. Red introducida solo en un sentido: en un circuito cerrado, introduzca también el retorno. Equipos (generador, intercambiadores, válvulas de regulación, filtros) excluidos: añada sus pérdidas de carga.';
+  return null;
+}
+var RS=I.rxs||(I.rxs=[]);
+RS.unshift(function(k,mm){ return ex85(k); });
+if(I.mlRules&&I.mlRules.unshift) I.mlRules.unshift(function(k){ if(k.length>700) return null; try{ return ex85(k); }catch(e){ return null; } });
+})();
+
 </script>
 </body>
 </html>
