@@ -19931,6 +19931,9 @@ var RT='Verifique la referencia exacta con el software del fabricante antes de c
 function ex85(k){
   var t=k.replace(/^\s+/,''), lead=k.slice(0,k.length-t.length), a, N='([\\d.,]+)';
   function m(re){ return (a=re.exec(t)); }
+  var em=/^([^A-Za-z0-9À-ÿ]+\s)?(.*)$/.exec(t), DHM={'Severe overheating — night ventilation + thermal mass':'Sobrecalentamiento severo — ventilación nocturna + masa térmica','Ceiling fans: perceived reduction −2 to −4°C (~25 W/room)':'Ventiladores de techo: reducción percibida de −2 a −4 °C (~25 W/estancia)','External solar shading: gains reduction ≈ −40 % (blinds/shutters)':'Protección solar exterior: reducción de aportes ≈ −40 % (persianas/contraventanas)','Green façade: lower façade temperature (site dependent)':'Fachada vegetal: menor temperatura de fachada (según el emplazamiento)','Comfort satisfactory without air conditioning':'Confort satisfactorio sin climatización','Natural cross ventilation sufficient':'Ventilación cruzada natural suficiente','Ceiling fans recommended as precaution':'Ventiladores de techo recomendados como precaución'};
+  if(em&&DHM[em[2]]) return lead+(em[1]||'')+DHM[em[2]];
+  if(em&&(a=/^Air conditioning needed — min power: (\S+) kW$/.exec(em[2]))) return lead+(em[1]||'')+'Climatización necesaria — potencia mínima: '+dc(a[1])+' kW';
   /* RESEAUX : debit, pertes de charge, pompe, vase, separateur, collecteur */
   if(m(/^Q = ([\d.]+) L\/s = ([\d.]+) m³\/h$/)) return lead+'Q = '+dc(a[1])+' L/s = '+dc(a[2])+' m³/h';
   if(m(/^Theoretical Ø: (.+)$/)) return lead+'Ø teórico: '+dc(a[1]);
