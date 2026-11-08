@@ -1,6 +1,6 @@
 # ⚡ Thermosys v3
 
-**Station de travail professionnelle CVC/Froid — Bilingue FR/EN**
+**Station de travail professionnelle CVC/Froid — FR / EN / ES**
 
 Application web complète destinée aux ingénieurs en génie climatique, bureaux d'études, techniciens HVAC et installateurs frigoristes.
 
@@ -10,13 +10,13 @@ Application web complète destinée aux ingénieurs en génie climatique, bureau
 
 Thermosys v3 est un outil professionnel de calcul, de dimensionnement et de conformité réglementaire pour le génie climatique et la réfrigération. Conçu et développé par Nadir Mouissat, avec la validation technique de plusieurs ingénieurs spécialisés en automatisme et régulation.
 
-L'application fonctionne comme un fichier HTML unique déployé sur Vercel, accessible en ligne, avec authentification et gestion des utilisateurs.
+L'application fonctionne comme un fichier HTML unique (`dist/index.html`) déployé sur Vercel, accessible en ligne, avec authentification et gestion des utilisateurs. Elle est installable comme application (PWA) et son service worker utilise une stratégie « réseau d'abord » : la dernière version déployée est toujours servie en priorité.
 
 ---
 
 ## ✅ Modules principaux
 
-- **HYDRAULIQUE** — débit/diamètre, pertes de charge, pompe/HMT, vase d'expansion, séparateur, collecteur, guide de préréglage vannes, gaines d'air (ASHRAE), tuyauterie frigorifique, **sélection Refnet multi-marques** (Daikin, Toshiba, Gree, Midea, Hisense, Panasonic, Trane, LG, Fujitsu — données sourcées documentation constructeur officielle)
+- **HYDRAULIQUE** — débit/diamètre, pertes de charge, pompe/HMT, vase d'expansion, séparateur, collecteur, guide de préréglage vannes, confort d'été (heures-degrés), gaines d'air (ASHRAE), tuyauterie frigorifique, acoustique, isolation/point de rosée, réseau de tuyauteries, **sélection Refnet multi-marques** (Haier, Samsung, Mitsubishi Electric, Daikin, Toshiba, Gree, Midea, Hisense, Panasonic, Trane, LG, Fujitsu — données sourcées documentation constructeur officielle)
 - **VANNES** — dimensionnement Kvs (IEC 60534)
 - **DÉSENFUMAGE** — calculs conformes IT246 / EN12101 / NFPA92
 - **CHARGE** — charges thermiques et frigorifiques
@@ -37,9 +37,32 @@ L'application fonctionne comme un fichier HTML unique déployé sur Vercel, acce
 
 Système de comptes utilisateurs via Supabase — inscription libre avec approbation manuelle par l'administrateur, garantissant un accès contrôlé pendant la phase de bêta.
 
-## 🌍 Bilingue natif
+## 🌍 Langues
 
-Toutes les interfaces et exports PDF sont disponibles en français et en anglais.
+- **Français et anglais** : interface et exports PDF complets.
+- **Espagnol** : traduction complète des modules (interface, résultats de calcul, PDF, virgule décimale, villes et pays). Elle reste en **préversion privée** (`?es=1`) tant qu'elle n'a pas été validée ; une fois validée, le bouton de langue fera défiler FR → EN → ES.
+
+## 🗂️ Organisation du dépôt
+
+- `dist/` — le site déployé (`index.html`, `sw.js`, `manifest.json`, données).
+- `api/` — fonctions serveur Vercel.
+- `verify_js_syntax.js` — vérifie la syntaxe de tous les scripts du fichier `dist/index.html`.
+- `*.sql` — scripts de configuration Supabase.
+- Les anciens scripts d'installation par étape (étapes 70 à 85 : traduction espagnole, service worker) sont archivés hors dépôt.
+
+## 🛠️ Méthode de modification
+
+Chaque évolution est appliquée par un installateur Node idempotent (le relancer ne change rien), puis contrôlée avant publication :
+
+```
+node add_esNN.js dist\index.html
+node verify_js_syntax.js dist\index.html
+git add dist/index.html
+git commit -m "..."
+git push
+cd dist
+vercel --prod
+```
 
 ## 🚀 Déploiement
 
