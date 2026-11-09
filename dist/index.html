@@ -20073,7 +20073,7 @@ function ex87(k){
     return lead+'⚠ Rueda desecante utilizada para alcanzar este punto de rocío: la energía de regeneración es un valor indicativo de ingeniería ('+a[1].replace(/,(?=\d{3}\b)/,'')+' kJ por kg de agua por defecto), a sustituir por los datos del fabricante de la rueda.';
   if((a=/^(.*?)\s*—\s*(minimum air changes|unidirectional flow|thermal load \(supply temperature difference\)|required fresh air)\s*$/.exec(t)))
     return lead+dc(a[1])+' — '+D[a[2]];
-  if((a=/^(.+?) · (Adjacent heated room|Ground slab|Unheated space)((?: \((?:T|B['’])=[^)]*\))?)$/.exec(t))){
+  if((a=/^(.+?) · (Adjacent heated room|Ground slab|Unheated space)((?: \((?:T|B['’]|b)=[^)]*\))?)$/.exec(t))){
     var h=a[1]; try{ h=I.x(h)||h; }catch(e){}
     return lead+h+' · '+D[a[2]]+dc(a[3]);
   }
