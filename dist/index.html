@@ -20058,6 +20058,34 @@ if(I.mlRules&&I.mlRules.unshift) I.mlRules.unshift(function(k){ if(k.length>300)
 })();
 
 </script>
+<script id="lang-es-data-15">
+(window.I18N3=window.I18N3||{dict:{}});
+/* es87 : notas imprimibles - rueda desecante, caudal, suelo/local contiguo, indice del proyecto (idempotent) */
+(function(){
+var I=window.I18N3; if(!I||window.__es87) return; window.__es87=1;
+var E=I.dict.es=I.dict.es||{};
+var D={"Desiccant wheel: water removed": "Rueda desecante: agua retirada", "Regeneration energy": "Energía de regeneración", "minimum air changes": "renovaciones de aire mínimas", "unidirectional flow": "flujo unidireccional", "thermal load (supply temperature difference)": "carga térmica (diferencia de temperatura de impulsión)", "required fresh air": "aire exterior requerido", "Desiccant wheel leaving": "Salida de la rueda desecante", "Ground slab": "Solera sobre terreno", "Adjacent heated room": "Local calefactado contiguo", "Unheated space": "Espacio no calefactado", "⚠ Very dry room: door openings, airlocks and humid-air leakage dominate the moisture load in practice; they are not calculated here (represent them with the process moisture input).": "⚠ Local muy seco: las aperturas de puertas, las esclusas y las fugas de aire húmedo dominan en la práctica la carga de humedad; no se calculan aquí (represéntelas con la entrada de humedad de proceso)."};
+Object.keys(D).forEach(function(k){ if(E[k]===undefined) E[k]=D[k]; });
+function dc(s){ return String(s).replace(/(\d)\.(\d)/g,'$1,$2'); }
+function ex87(k){
+  var t=k.replace(/^\s+/,''), lead=k.slice(0,k.length-t.length), a;
+  if((a=/^⚠ Desiccant wheel used to reach this dew point: regeneration energy is an indicative engineering value \(([\d.,]+) kJ per kg of water by default\), to be replaced by the wheel manufacturer['’]s data\.$/.exec(t)))
+    return lead+'⚠ Rueda desecante utilizada para alcanzar este punto de rocío: la energía de regeneración es un valor indicativo de ingeniería ('+a[1].replace(/,(?=\d{3}\b)/,'')+' kJ por kg de agua por defecto), a sustituir por los datos del fabricante de la rueda.';
+  if((a=/^(.*?)\s*—\s*(minimum air changes|unidirectional flow|thermal load \(supply temperature difference\)|required fresh air)\s*$/.exec(t)))
+    return lead+dc(a[1])+' — '+D[a[2]];
+  if((a=/^(.+?) · (Adjacent heated room|Ground slab|Unheated space)((?: \((?:T|B['’])=[^)]*\))?)$/.exec(t))){
+    var h=a[1]; try{ h=I.x(h)||h; }catch(e){}
+    return lead+h+' · '+D[a[2]]+dc(a[3]);
+  }
+  if((a=/^(\d+\. )(.+)$/.exec(t))&&E[a[2]]) return lead+a[1]+E[a[2]];
+  return null;
+}
+var RS=I.rxs||(I.rxs=[]);
+RS.unshift(function(k,mm){ return ex87(k); });
+if(I.mlRules&&I.mlRules.unshift) I.mlRules.unshift(function(k){ if(k.length>400) return null; try{ return ex87(k); }catch(e){ return null; } });
+})();
+
+</script>
 </body>
 </html>
 
