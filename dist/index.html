@@ -20086,6 +20086,37 @@ if(I.mlRules&&I.mlRules.unshift) I.mlRules.unshift(function(k){ if(k.length>400)
 })();
 
 </script>
+<script id="lang-es-data-16">
+(window.I18N3=window.I18N3||{dict:{}});
+/* es88 : barrido de listas y etiquetas (ayuda, RE2020, codigos, registro, tratamiento de aire) (idempotent) */
+(function(){
+var I=window.I18N3; if(!I||window.__es88) return; window.__es88=1;
+var E=I.dict.es=I.dict.es||{};
+var D={"Local (setpoint)": "Local (consigna)", "Room (setpoint)": "Local (consigna)", "Transmission (envelope)": "Transmisión (envolvente)", "MECHATRONICS — SIGNALS, MOTORS, VIBRATION, DAMPERS": "MECATRÓNICA — SEÑALES, MOTORES, VIBRACIONES, COMPUERTAS", "MECATRÓNICA — SIGNALS, MOTORS, VIBRATION, DAMPERS": "MECATRÓNICA — SEÑALES, MOTORES, VIBRACIONES, COMPUERTAS", "Max Cep,nr:": "Cep,nr máx.:", "BAS mandatory:": "BAS obligatorio:", "Cumulative compliance: Ic ∩ Cep ∩ SCOP → RE2020 Certificate": "Conformidad acumulada: Ic ∩ Cep ∩ SCOP → Certificado RE2020", "Indiv. ≤530 · Collective ≤490 kgCO₂eq/m²": "Indiv. ≤530 · Colectiva ≤490 kgCO₂eq/m²", "Enfriadora (commercial)": "Enfriadora (comercial)"};
+Object.keys(D).forEach(function(k){ E[k]=D[k]; });
+function X(s){ try{ var r=I.x(s); return r||s; }catch(e){ return s; } }
+function ex88(k){
+  var t=k.replace(/^\s+/,''), lead=k.slice(0,k.length-t.length), a;
+  if((a=/^(\W*\d+\. )(CATALOG|FLUIDS|VALVES)( — .*)?$/.exec(t))){
+    var N={CATALOG:'CATÁLOGO',FLUIDS:'FLUIDOS',VALVES:'VÁLVULAS'}[a[2]];
+    var r=a[3]||''; r=r.replace(/ — (Equipment|Equipo)$/,' — Equipos').replace(/ — (Refrigerants)$/,' — Refrigerantes').replace(/ — (References)$/,' — Referencias');
+    return lead+a[1]+N+r;
+  }
+  if((a=/^(Retail|Comercio) \(7 days, (.+)\)$/.exec(t))) return lead+'Comercio (7 días, '+a[2]+')';
+  if((a=/^(.*\()zone (H\d) — (.+\))$/.exec(t))) return lead+a[1]+'zona '+a[2]+' — '+a[3];
+  if((a=/^Class ([A-D]) \((.+)\) — commercial (.+)$/.exec(t))) return lead+'Clase '+a[1]+' ('+a[2]+') — comercial '+a[3];
+  if((a=/^(Undervoltage|Phase|Overvoltage) protection — (.+)$/.exec(t))) return lead+({Undervoltage:'Protección de subtensión',Phase:'Protección de fase',Overvoltage:'Protección de sobretensión'}[a[1]])+' — '+X(a[2]);
+  if((a=/^(.+) \(commercial\)$/.exec(t))&&k.length<80) return lead+X(a[1])+' (comercial)';
+  if((a=/^Thermosys v3 (?:initialis[ée]|initialized) — (\d+) (?:équipements|equipment|equipos) \| (\d+) (?:constructeurs|manufacturers|fabricantes) \| (\d+) (?:vannes|valves|válvulas) \| (\d+) (?:normes|standards|normas)$/.exec(t)))
+    return lead+'Thermosys v3 inicializado — '+a[1]+' equipos | '+a[2]+' fabricantes | '+a[3]+' válvulas | '+a[4]+' normas';
+  return null;
+}
+var RS=I.rxs||(I.rxs=[]);
+RS.unshift(function(k,mm){ return ex88(k); });
+if(I.mlRules&&I.mlRules.unshift) I.mlRules.unshift(function(k){ if(k.length>400) return null; try{ return ex88(k); }catch(e){ return null; } });
+})();
+
+</script>
 </body>
 </html>
 
