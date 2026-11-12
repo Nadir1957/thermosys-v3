@@ -9214,11 +9214,11 @@ function _re2020PdfExport(){
   var obs=g("rpt-obs")||"None";
   var seuils={indiv:{ic:530,cep:70,scop:3.8},collec:{ic:490,cep:70,scop:3.8},
     tertio:{ic:600,cep:120,scop:3.6},enseig:{ic:550,cep:100,scop:3.6},sante:{ic:580,cep:120,scop:3.6}};
-  var r=seuils[type]||seuils.indiv;
+  var _tc=(document.getElementById("rpt-type")||{}).value||"indiv";var r=seuils[_tc]||seuils.indiv;try{if(typeof RE2025!=="undefined"&&RE2025[_tc]&&typeof RE2025[_tc].ic==="number"){r={ic:RE2025[_tc].ic,cep:RE2025[_tc].cep,scop:r.scop};}}catch(e){}/*es92*/
   var typeLabel={indiv:"Individual residential",collec:"Multi-residential",tertio:"Commercial offices",
     enseig:"Education",sante:"Healthcare / Hospital"}[type]||type;
   var icN=parseFloat(ic)||0,cepN=parseFloat(cep)||0,scopN=parseFloat(scop)||0,gwpN=parseFloat(gwp)||0;
-  var compliant=icN>0&&icN<=r.ic&&cepN>0&&cepN<=r.cep&&scopN>0&&scopN>=r.scop&&gwpN>0&&gwpN<=750;
+  var compliant=r.ic>0&&icN>0&&icN<=r.ic&&cepN>0&&cepN<=r.cep;
   var doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
   var now=new Date();
   var W=210,y=0;
@@ -9291,21 +9291,21 @@ function _re2020PdfExport(){
     doc.setTextColor(0,0,0);doc.setFont("helvetica","normal");
     y+=6.5;
   }
-  trow("Ic construction (kgCO2eq/m2)",ic+"","<="+r.ic,(icN>0?(icN<=r.ic?"COMPLIANT":"EXCEEDED"):"N/A"),(icN>0?icN<=r.ic:null));
-  trow("Cep,nr (kWhEP/m2/yr)",cep+"","<="+r.cep,(cepN>0?(cepN<=r.cep?"COMPLIANT":"EXCEEDED"):"N/A"),(cepN>0?cepN<=r.cep:null));
-  trow("HP SCOP",scop+"",">="+((window.I18N3&&I18N3.get&&I18N3.get()==="es")?String(r.scop).replace(".",","):r.scop),(scopN>0?(scopN>=r.scop?"COMPLIANT":"INSUFFICIENT"):"N/A"),(scopN>0?scopN>=r.scop:null));
-  trow("Refrigerant GWP",gwp+"","<=750",(gwpN>0?(gwpN<=750?"COMPLIANT":"EXCEEDED"):"N/A"),(gwpN>0?gwpN<=750:null));
+  trow("Ic construction (kgCO2eq/m2)",ic+"",(r.ic>0?"<="+r.ic:"—"),((icN>0&&r.ic>0)?(icN<=r.ic?"COMPLIANT":"EXCEEDED"):"N/A"),((icN>0&&r.ic>0)?icN<=r.ic:null));
+  trow("Cep,nr (kWhEP/m2/yr)",cep+"",(r.cep>0?"<="+r.cep:"—"),((cepN>0&&r.cep>0)?(cepN<=r.cep?"COMPLIANT":"EXCEEDED"):"N/A"),((cepN>0&&r.cep>0)?cepN<=r.cep:null));
+  trow("HP SCOP",scop+"","—","INFO",null);
+  trow("Refrigerant GWP",gwp+"","—","INFO",null);
   trow("BMS Class (EN 15232-1)",clean(gtb),"Class B min.","INFO",null);
   y+=3;
   section("03 — OBSERVATIONS");
   doc.setFont("helvetica","normal");doc.setFontSize(8.5);
   doc.text(clean(obs)||"—",14,y);
   y+=10;
-  var bgColor=compliant?[0,120,0]:[180,0,0];
+  var bgColor=r.ic<=0?[90,90,90]:(compliant?[0,120,0]:[180,0,0]);
   doc.setFillColor(bgColor[0],bgColor[1],bgColor[2]);
   doc.rect(10,y,W-20,14,"F");
   doc.setFont("helvetica","bold");doc.setFontSize(11);doc.setTextColor(255,255,255);
-  var verdict=compliant?"[OK] COMPLIANT WITH RE2020 THRESHOLD 2025":"[!] NON-COMPLIANT — SEE DETAILS ABOVE";
+  var verdict=r.ic<=0?"[i] NO PUBLISHED THRESHOLD FOR THIS BUILDING TYPE":(compliant?"[OK] COMPLIANT WITH RE2020 THRESHOLD 2025":"[!] NON-COMPLIANT — SEE DETAILS ABOVE");
   doc.text(verdict,W/2,y+9,{align:"center"});
   doc.setTextColor(0,0,0);
   y+=20;
@@ -20156,6 +20156,16 @@ window.showPrivacyPolicy=function(){ if(oP) oP(); prep(); window.setPrivacyLang(
 var I=window.I18N3; if(!I||window.__es91) return; window.__es91=1;
 var E=I.dict.es=I.dict.es||{};
 var D={"🇬🇧 © 2026 Thermosys HVAC Platform | All rights reserved. 50 manufacturers · 80 products · Gemini 2.5 Flash · ISO 14118:2018 · RE2020": "🇪🇸 © 2026 Thermosys HVAC Platform | Todos los derechos reservados. 50 fabricantes · 80 productos · Gemini 2.5 Flash · ISO 14118:2018 · RE2020"};
+for(var k in D) if(!E[k]) E[k]=D[k];
+})();
+</script>
+<script id="lang-es-data-18">
+(window.I18N3=window.I18N3||{dict:{}});
+/* es92 : veredicto sin umbral (idempotent) */
+(function(){
+var I=window.I18N3; if(!I||window.__es92) return; window.__es92=1;
+var E=I.dict.es=I.dict.es||{};
+var D={"[i] NO PUBLISHED THRESHOLD FOR THIS BUILDING TYPE": "[i] SIN UMBRAL PUBLICADO PARA ESTE TIPO DE EDIFICIO"};
 for(var k in D) if(!E[k]) E[k]=D[k];
 })();
 </script>
