@@ -9293,7 +9293,7 @@ function _re2020PdfExport(){
   }
   trow("Ic construction (kgCO2eq/m2)",ic+"","<="+r.ic,(icN>0?(icN<=r.ic?"COMPLIANT":"EXCEEDED"):"N/A"),(icN>0?icN<=r.ic:null));
   trow("Cep,nr (kWhEP/m2/yr)",cep+"","<="+r.cep,(cepN>0?(cepN<=r.cep?"COMPLIANT":"EXCEEDED"):"N/A"),(cepN>0?cepN<=r.cep:null));
-  trow("HP SCOP",scop+"",">="+r.scop,(scopN>0?(scopN>=r.scop?"COMPLIANT":"INSUFFICIENT"):"N/A"),(scopN>0?scopN>=r.scop:null));
+  trow("HP SCOP",scop+"",">="+((window.I18N3&&I18N3.get&&I18N3.get()==="es")?String(r.scop).replace(".",","):r.scop),(scopN>0?(scopN>=r.scop?"COMPLIANT":"INSUFFICIENT"):"N/A"),(scopN>0?scopN>=r.scop:null));
   trow("Refrigerant GWP",gwp+"","<=750",(gwpN>0?(gwpN<=750?"COMPLIANT":"EXCEEDED"):"N/A"),(gwpN>0?gwpN<=750:null));
   trow("BMS Class (EN 15232-1)",clean(gtb),"Class B min.","INFO",null);
   y+=3;
@@ -20148,6 +20148,16 @@ window.showTerms=function(){ if(oT) oT(); prep(); window.setTermsLang(esOn()&&((
 window.showPrivacyPolicy=function(){ if(oP) oP(); prep(); window.setPrivacyLang(esOn()&&((window.I18N3&&I18N3.get&&I18N3.get())==='es')?'es':'en'); };
 })();
 
+</script>
+<script id="lang-es-data-17">
+(window.I18N3=window.I18N3||{dict:{}});
+/* es91 : pie de pagina y umbral SCOP del informe RE2020 (idempotent) */
+(function(){
+var I=window.I18N3; if(!I||window.__es91) return; window.__es91=1;
+var E=I.dict.es=I.dict.es||{};
+var D={"🇬🇧 © 2026 Thermosys HVAC Platform | All rights reserved. 50 manufacturers · 80 products · Gemini 2.5 Flash · ISO 14118:2018 · RE2020": "🇪🇸 © 2026 Thermosys HVAC Platform | Todos los derechos reservados. 50 fabricantes · 80 productos · Gemini 2.5 Flash · ISO 14118:2018 · RE2020"};
+for(var k in D) if(!E[k]) E[k]=D[k];
+})();
 </script>
 </body>
 </html>
