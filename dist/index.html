@@ -5193,7 +5193,7 @@ function populateParentDropdown(){
 
 function addReseauSegment(){
   var fr = (typeof lang!=='undefined' && lang==='fr');
-  var name = (document.getElementById('rsName')||{}).value || ((fr?'Tronçon ':'Segment ')+(reseauSegments.length+1));
+  var name = (document.getElementById('rsName')||{}).value || ((fr?'Tronçon ':((window.I18N3&&I18N3.get&&I18N3.get()==='es')?'Tramo ':'Segment '))+(reseauSegments.length+1));
   var Q = parseFloat((document.getElementById('rsQ')||{}).value) || 10;
   var D = parseFloat((document.getElementById('rsD')||{}).value) || 40;
   var L = parseFloat((document.getElementById('rsL')||{}).value) || 50;
@@ -5565,7 +5565,7 @@ function exportReseau(){
     +'<table><thead><tr><th>'+(L?'Tronçon':'Segment')+'</th><th>Q (m³/h)</th><th>D (mm)</th><th>L (m)</th><th>ΔP</th></tr></thead>'
     +'<tbody>'+rows+'</tbody>'
     +'<tfoot>'
-    +'<tr><td colspan="4" style="text-align:right;padding:5px 8px;border:1pt solid #dde">'+(L?'Perte de charge du circuit':'Circuit pressure drop')+' :</td><td style="text-align:right;padding:5px 8px;border:1pt solid #dde;font-weight:700">'+crit.total.toFixed(0)+' Pa ('+(crit.total/9810).toFixed(2)+' mCE)</td></tr>'
+    +'<tr><td colspan="4" style="text-align:right;padding:5px 8px;border:1pt solid #dde">'+(L?'Perte de charge du circuit':'Circuit pressure drop')+' :</td><td style="text-align:right;padding:5px 8px;border:1pt solid #dde;font-weight:700">'+crit.total.toFixed(0)+' Pa ('+(crit.total/9810).toFixed(2)+((window.I18N3&&I18N3.get&&I18N3.get()==='es')?' m.c.a.)':' mCE)')+'</td></tr>'
     +'<tr class="tot-row"><td colspan="4" style="text-align:right;letter-spacing:1px">'+(L?'HMT POMPE SUGGÉRÉE (+10%) :':'SUGGESTED PUMP HEAD (+10%):')+'</td><td style="text-align:right">'+hmt+' m</td></tr>'
     +'</tfoot>'
     +'</table>'
@@ -20000,7 +20000,7 @@ function ex85(k){
   if(m(/^Do not oversize: a valve that is too large lowers its authority \(a = ΔPvalve \/ \(ΔPvalve \+ ΔPcircuit\), at least (\S+), (\S+) recommended\)\. Manufacturer ranges differ: check the real Kvs of the chosen model\.$/)) return lead+'No sobredimensionar: una válvula demasiado grande reduce su autoridad (a = ΔPválvula / (ΔPválvula + ΔPcircuito), como mínimo '+dc(a[1].replace(/,$/,''))+'; se recomienda '+dc(a[2])+'). Los rangos de los fabricantes difieren: compruebe el Kvs real del modelo elegido.';
   /* red de tuberias */
   if(m(/^Number of segments \(full network\)(\s*): (.+)$/)) return lead+'Número de tramos (red completa)'+a[1]+': '+a[2];
-  if(m(/^Most unfavorable circuit(\s*): Segment (\d+)$/)) return lead+'Circuito más desfavorable'+a[1]+': Tramo '+a[2];
+  if(m(/^Most unfavorable circuit(\s*): (?:Segment|Tramo) (\d+)$/)) return lead+'Circuito más desfavorable'+a[1]+': Tramo '+a[2];
   if(m(/^Circuit length(\s*): (.+)$/)) return lead+'Longitud del circuito'+a[1]+': '+dc(a[2]);
   if(m(/^(\s*)incl\. linear losses(\s*): (.+)$/)) return lead+a[1]+'incl. pérdidas lineales'+a[2]+': '+dc(a[3]);
   if(m(/^(\s*)incl\. singular losses(\s*): (.+)$/)) return lead+a[1]+'incl. pérdidas singulares'+a[2]+': '+dc(a[3]);
