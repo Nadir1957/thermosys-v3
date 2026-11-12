@@ -20169,6 +20169,25 @@ var D={"[i] NO PUBLISHED THRESHOLD FOR THIS BUILDING TYPE": "[i] SIN UMBRAL PUBL
 for(var k in D) if(!E[k]) E[k]=D[k];
 })();
 </script>
+<script id="re2020-btn-fix-93">
+(function(){
+if(window.__re93) return; window.__re93=1;
+function lab(){return (window.lang==='fr')?"\uD83D\uDCC4 Exporter le rapport PDF":"\uD83D\uDCC4 Export PDF Report";}
+function ensure(){
+  try{
+    var gen=document.querySelector("[onclick*=genRapportAudit]"); if(!gen||!gen.parentNode) return;
+    var b=document.getElementById("re2020-pdf-btn");
+    if(!b){
+      b=document.createElement("button"); b.id="re2020-pdf-btn"; b.className="btn bp"; b.style.cssText="width:100%;margin-top:8px;";
+      b.addEventListener("click",function(e){e.preventDefault(); if(typeof window._re2020PdfExport==="function") window._re2020PdfExport();});
+      b.innerHTML=lab();
+    }
+    if(b.previousElementSibling!==gen){ gen.parentNode.insertBefore(b,gen.nextSibling); }
+  }catch(e){}
+}
+ensure(); setInterval(ensure,1000);
+})();
+</script>
 </body>
 </html>
 
