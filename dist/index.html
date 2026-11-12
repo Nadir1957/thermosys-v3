@@ -20172,7 +20172,7 @@ for(var k in D) if(!E[k]) E[k]=D[k];
 <script id="re2020-btn-fix-93">
 (function(){
 if(window.__re93) return; window.__re93=1;
-function lab(){return (window.lang==='fr')?"\uD83D\uDCC4 Exporter le rapport PDF":"\uD83D\uDCC4 Export PDF Report";}
+function lab(){var es=false;try{es=!!(window.I18N3&&I18N3.get&&I18N3.get()==='es');}catch(e){} if(es) return "\uD83D\uDCC4 Exportar informe PDF"; return (window.lang==='fr')?"\uD83D\uDCC4 Exporter le rapport PDF":"\uD83D\uDCC4 Export PDF Report";}
 function ensure(){
   try{
     var gen=document.querySelector("[onclick*=genRapportAudit]"); if(!gen||!gen.parentNode) return;
@@ -20182,6 +20182,7 @@ function ensure(){
       b.addEventListener("click",function(e){e.preventDefault(); if(typeof window._re2020PdfExport==="function") window._re2020PdfExport();});
       b.innerHTML=lab();
     }
+    var L=lab(); if(b.getAttribute("data-l93")!==L){ b.innerHTML=L; b.setAttribute("data-l93",L); }
     if(b.previousElementSibling!==gen){ gen.parentNode.insertBefore(b,gen.nextSibling); }
   }catch(e){}
 }
