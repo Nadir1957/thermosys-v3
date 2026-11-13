@@ -5853,7 +5853,7 @@ setInterval(function() {
       doc.text('THERMOSYS v3', 15, 13);
       doc.setFontSize(10);
       doc.setTextColor(122, 184, 212);
-      doc.text(lang==='fr' ? 'BILAN DE CHARGE FRIGORIFIQUE' : 'COOLING LOAD REPORT', 15, 22);
+      doc.text(lang==='fr' ? 'BILAN DE CHARGE FRIGORIFIQUE' : ((window.I18N3&&I18N3.get&&I18N3.get()==='es') ? 'INFORME DE CARGA FRIGORÍFICA' : 'COOLING LOAD REPORT'), 15, 22);
 
       // Date
       doc.setTextColor(122, 184, 212);
@@ -7109,7 +7109,7 @@ function runVerifIT246() {
       doc.text('THERMOSYS v3', 15, 12);
       doc.setFontSize(9);
       doc.setTextColor(60, 120, 150);
-      doc.text(lang==='en' ? 'COOLING LOAD REPORT' : 'BILAN DE CHARGE FRIGORIFIQUE', 15, 19);
+      doc.text(lang==='en' ? ((window.I18N3&&I18N3.get&&I18N3.get()==='es') ? 'INFORME DE CARGA FRIGORÍFICA' : 'COOLING LOAD REPORT') : 'BILAN DE CHARGE FRIGORIFIQUE', 15, 19);
       doc.setFontSize(8);
       doc.text(new Date().toLocaleString(lang==='en'?'en-GB':'fr-FR'), pageWidth - margin, 19, {align:'right'});
 
@@ -19526,7 +19526,7 @@ var R=[
  function(k){ var a; if((a=/^Ic: (\S+) kg CO₂éq\/m² → limit (≤[\d.]+) → (.+)$/.exec(k))) return 'Ic: '+a[1]+' kg CO₂éq/m² → límite '+a[2]+' → '+st(a[3]); },
  function(k){ var a; if((a=/^steps: (.+)$/.exec(k))) return 'escalones: '+a[1]; },
  function(k){ var a; if((a=/^Cep,nr: (\S+) kWhEP\/m²\/yr → limit (≤[\d.]+) → (.+)$/.exec(k))) return 'Cep,nr: '+a[1]+' kWhEP/m²/año → límite '+a[2]+' → '+st(a[3]); },
- function(k){ var a; if((a=/^HP SCOP: (\S+) → information: RE2020 sets no minimum SCOP \(see EN 14825\)$/.exec(k))) return 'SCOP BdC: '+dc(a[1])+' → información: la RE2020 no fija ningún SCOP mínimo (véase EN 14825)'; },
+ function(k){ var a; if((a=/^HP SCOP: (\S+) → information: RE2020 sets no minimum SCOP \(see EN 14825\)$/.exec(k))) return 'SCOP BC: '+dc(a[1])+' → información: la RE2020 no fija ningún SCOP mínimo (véase EN 14825)'; },
  function(k){ var a; if((a=/^Reference : (.*)$/.exec(k))) return 'Referencia : '+a[1]; },
  function(k){ var a; if((a=/^Site : (.*)$/.exec(k))) return 'Emplazamiento : '+a[1]; },
  function(k){ var a; if((a=/^Auditor : (.*)$/.exec(k))) return 'Auditor : '+a[1]; },
@@ -20513,6 +20513,24 @@ function fixNorms(){
   }catch(e){}
 }
 setTimeout(fixNorms,1500);
+})();
+</script>
+<script id="lang-es-data-23">
+(window.I18N3=window.I18N3||{dict:{}});
+/* es102 : restos fichas de producto (idempotent) */
+(function(){
+var I=window.I18N3; if(!I||window.__es102) return; window.__es102=1;
+var D={
+'Chiller Inverter air 100kW':'Enfriadora inverter por aire 100kW',
+'FOCS-Q Vis':'FOCS-Q Tornillo',
+'RC2 Vis':'RC2 Tornillo',
+'Semi-herm. 6DT':'Semihermético 6DT',
+'RE2020 Seuil 2025':'umbral RE2020 2025',
+'RE2020 Seuil 2025 compatible':'compatible con el umbral RE2020 2025'
+};
+var E=(I.dict&&I.dict.es)||{};
+for(var k in E){ if(typeof E[k]!=='string') continue; var v=E[k].replace(/\bBdC\b/g,'BC').replace(/PSICRO(?!METR)/g,'PSICROMETRÍA'); if(v!==E[k]) D[k]=v; }
+if(I.add) I.add('es',D);
 })();
 </script>
 </body>
