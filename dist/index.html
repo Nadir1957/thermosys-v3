@@ -18172,7 +18172,7 @@ var memo={},memoN=0,chk=true,lastChk=0;
 function tr(raw){ var key=cur+'\u0001'+raw; var h=memo[key]; if(h!==undefined) return h===0?null:h; var v=tr0(raw); if(++memoN>30000){ memo={}; memoN=0; } memo[key]=(v===null?0:v); return v; }
 var SKIP=/^(SCRIPT|STYLE|TEXTAREA|NOSCRIPT)$/;
 function doText(n){
-  var p=n.parentNode; if(!p||SKIP.test(p.nodeName)) return;
+  var p=n.parentNode; if(!p||SKIP.test(p.nodeName)||(p.closest&&p.closest('[data-notr]'))) return;
   var raw=n.nodeValue; if(/^\s*\d+\.\d+\s*$/.test(raw)&&p.closest&&p.closest("#pg-codes")) return; /* escode84 */
   if(n.__i3t!==undefined){ if(raw===n.__i3t) return; delete n.__i3o; delete n.__i3t; }
   var v=(raw==='EN'&&p.id==='err-en-th')?'Descripción':(I.ml?I.ml(raw,tr):tr(raw)); /* esfix80 */ if(v===null){ if(I.num&&/\d\.\d/.test(raw)){ var zz=I.num(raw); if(zz!==raw) v=zz; } } else if(I.num){ v=I.num(v); } /* esnum84 */ if(v===null) return;
@@ -18382,7 +18382,7 @@ function tr(raw,el){
 }
 var nodes=new Set(), attrs=new Set(), SKIP=/^(SCRIPT|STYLE|TEXTAREA|NOSCRIPT)$/;
 function doText(n){
-  var p=n.parentNode; if(!p||SKIP.test(p.nodeName)) return;
+  var p=n.parentNode; if(!p||SKIP.test(p.nodeName)||(p.closest&&p.closest('[data-notr]'))) return;
   var raw=n.nodeValue;
   if(n.__eft!==undefined){ if(raw===n.__eft) return; delete n.__efo; delete n.__eft; }
   var v=tr(raw,p.nodeType===1?p:p.parentElement); if(v===null||v===N(raw)) return;
@@ -20548,6 +20548,60 @@ if(I.add) I.add('es',{'⏳ Generating...':'⏳ Generando...'});
 var I=window.I18N3; if(!I||window.__es106) return; window.__es106=1;
 var RS=I.rxs||(I.rxs=[]);
 RS.unshift(function(k,m){ var a=/^(\d+(?:[.,]\d+)?) ACH$/.exec(k); if(!a) return null; return a[1].replace('.',',')+' ren/h'; });
+})();
+</script>
+<script id="lang-es-data-26">
+(window.I18N3=window.I18N3||{dict:{}});
+/* es107 : restos de varios modulos (idempotent) */
+(function(){
+var I=window.I18N3; if(!I||window.__es107) return; window.__es107=1;
+var D={
+"Nom du local :":"Nombre del local:",
+"Surface au sol (m²) :":"Superficie en planta (m²):",
+"U in W/m²K":"U en W/m²K",
+"U in Btu/(h·ft²·°F)":"U en Btu/(h·ft²·°F)",
+"COMFORT AND VENTILATION CHECKS":"COMPROBACIONES DE CONFORT Y VENTILACIÓN",
+"Usual filtration: ISO Coarse 55 % pre-filter (≈ G4), ePM1 50 % (≈ F7) or 80 % (≈ F9) fine filter":"Filtración habitual: prefiltro ISO Coarse 55 % (≈ G4), filtro fino ePM1 50 % (≈ F7) u 80 % (≈ F9)",
+"SUMMER — COOLING AND DESICCANT WHEEL DEHUMIDIFICATION":"VERANO — ENFRIAMIENTO Y DESHUMIDIFICACIÓN POR RUEDA DESECANTE",
+"Desiccant wheel: water removed / regeneration":"Rueda desecante: agua retirada / regeneración",
+"Desiccant wheel: water removed":"Rueda desecante: agua retirada",
+"Pt100 at 100 °C":"Pt100 a 100 °C",
+"Pt100 at −50 °C":"Pt100 a −50 °C",
+"Pt100 at 850 °C":"Pt100 a 850 °C"
+};
+if(I.add) I.add('es',D);
+var GOV={'thermal load (supply temperature difference)':'carga térmica (diferencia de temperatura de impulsión)','minimum air changes':'renovaciones de aire mínimas','unidirectional flow':'flujo unidireccional','required fresh air':'aire exterior requerido','imposed flow or strongest criterion':'caudal impuesto o criterio más exigente'};
+var RS=I.rxs||(I.rxs=[]);
+RS.unshift(function(k,m){
+  var a;
+  if((a=/^(\d+(?:[.,]\d+)?) ACH — governed by: (.+)$/.exec(k))){ var g=GOV[a[2]]; if(g) return a[1].replace('.',',')+' ren/h — determinado por: '+g; return null; }
+  if((a=/^at (-?\d.*|TD .*)$/.exec(k))) return 'a '+a[1];
+  if((a=/^US equivalents \(unit conversion\): (.*)\. Not a certified SEER2 \/ HSPF2 \(AHRI 210\/240 use other test conditions\)\.$/.exec(k))) return 'Equivalentes en EE. UU. (conversión de unidades): '+a[1].replace(/Capacity/g,'Capacidad')+'. No es un SEER2 / HSPF2 certificado (AHRI 210/240 utilizan otras condiciones de ensayo).';
+  return null;
+});
+/* MECATRONICA : ejemplos de codigo (comentarios en espanol, decimales con punto) */
+var CM=[
+['send the alarm "Imminent mechanical failure" to the supervision system','enviar la alarma "Avería mecánica inminente" a la supervisión'],
+['// Fan vibration monitoring (teaching example, not a SIL function)','// Vigilancia de la vibración del ventilador (ejemplo didáctico, no es una función SIL)'],
+['// mm/s rms','// mm/s eficaz'],['// continuous time before trip','// tiempo continuo antes del disparo'],
+['// latched until acknowledged','// enclavado hasta el reconocimiento'],['// motor trip (safety relay in parallel)','// disparo del motor (relé de seguridad en paralelo)'],
+['"Imminent mechanical failure"','"Avería mecánica inminente"'],['// Modbus: alarm bit; WebSocket via gateway','// Modbus: bit de alarma; WebSocket mediante pasarela'],
+['// the timer restarts from zero','// el temporizador vuelve a cero'],['// deliberate, protected action','// acción deliberada y protegida'],
+['(* IEC 61131-3 - Fan vibration monitoring (teaching example) *)','(* IEC 61131-3 - Vigilancia de la vibración del ventilador (ejemplo didáctico) *)'],
+['(* measured rms velocity *)','(* velocidad eficaz medida *)'],['(* latched *)','(* enclavado *)'],['(* acknowledge *)','(* reconocimiento *)'],
+['(* motor trip *)','(* disparo del motor *)'],['(* Modbus bit to the supervision system *)','(* bit Modbus hacia la supervisión *)'],
+['At each (periodic) measurement:','En cada medición (periódica):'],['if the timer is not running: start it','si el cronómetro no está en marcha: ponerlo en marcha'],
+['latch the trip','enclavar el disparo'],['stop the motor','parar el motor'],
+['reset the timer to zero','poner el cronómetro a cero'],['Restart requires a deliberate acknowledgement after inspection.','El rearranque exige un reconocimiento voluntario tras la inspección.'],
+['  else:','  si no:']
+];
+function esCode(t){ CM.forEach(function(p){ t=t.split(p[0]).join(p[1]); }); t=t.replace(/if vibration > (\S+) mm\/s:/,'si la vibración > $1 mm/s:').replace(/if continuous time >= (\S+) s:/,'si el tiempo continuo >= $1 s:'); if(/^En cada medición/.test(t)) t=t.replace(/(\d)\.(\d)/g,'$1,$2'); return t; }
+function wrapCode(){
+  var o=window.mcCode; if(typeof o!=='function'||o.__es107) return false;
+  var w=function(k){ var r=o.apply(this,arguments); try{ var p=document.getElementById('mc_code'); if(p){ p.setAttribute('data-notr','1'); if(I.get&&I.get()==='es'&&!p.__es){ p.textContent=esCode(p.textContent); } } }catch(e){} return r; };
+  w.__es107=1; window.mcCode=w; return true;
+}
+if(!wrapCode()){ var n=0,iv=setInterval(function(){ if(wrapCode()||++n>60) clearInterval(iv); },500); }
 })();
 </script>
 </body>
