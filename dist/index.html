@@ -20352,6 +20352,42 @@ if(typeof of==='function'&&!window.__es97f){ window.__es97f=1;
 }
 })();
 </script>
+<script id="quote-fix-98">
+(window.I18N3=window.I18N3||{dict:{}});
+/* es98 : del catalogo al presupuesto - rellena la linea personalizada (idempotent) */
+(function(){
+var I=window.I18N3; if(!I||window.__es98) return; window.__es98=1;
+var E=I.dict.es=I.dict.es||{};
+E['Save error']='Error al guardar';
+var RS=I.rxs||(I.rxs=[]);
+RS.unshift(function(k,mm){
+  var t=k.replace(/^\s+/,''), lead=k.slice(0,k.length-t.length), a;
+  if(t.length<200 && (a=/^(.+) added$/.exec(t))) return lead+a[1]+' añadido';
+  if(t.length<220 && t.indexOf('Excl. VAT:')>=0 && t.indexOf('Incl. VAT:')>0) return k.replace('Excl. VAT:','Base:').replace(/VAT (\d+(?:[.,]\d+)?)%:/,'IVA $1 %:').replace('Incl. VAT:','Total con IVA:');
+  return null;
+});
+var o=window.addToDevisById;
+if(typeof o==='function' && !o.__es98){
+  var w=function(btn){
+    var id=null;
+    try{ id=btn&&btn.getAttribute&&btn.getAttribute('data-addid'); }catch(e){}
+    var r=o.apply(this,arguments);
+    try{
+      var p=(typeof PRODS!=='undefined')?PRODS.find(function(x){ return x.id===id; }):null;
+      if(p){
+        var es=I.get&&I.get()==='es', nm=p.n;
+        if(es){ try{ nm=I.x(p.n)||p.n; }catch(e){} }
+        var set=function(i,v){ var el=document.getElementById(i); if(el) el.value=v; };
+        set('dvCustomBrand',p.brand||''); set('dvCustomRef',p.m||''); set('dvCustomDes',nm||''); set('dvCustomQty',1); set('dvCustomPU','');
+        setTimeout(function(){ var pu=document.getElementById('dvCustomPU'); if(pu){ try{ pu.focus(); pu.scrollIntoView({block:'center'}); }catch(e){} } },200);
+      }
+    }catch(e){}
+    return r;
+  };
+  w.__es98=true; window.addToDevisById=w;
+}
+})();
+</script>
 </body>
 </html>
 
