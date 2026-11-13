@@ -20541,6 +20541,15 @@ var I=window.I18N3; if(!I||window.__es103) return; window.__es103=1;
 if(I.add) I.add('es',{'⏳ Generating...':'⏳ Generando...'});
 })();
 </script>
+<script id="lang-es-data-25">
+(window.I18N3=window.I18N3||{dict:{}});
+/* es106 : ACH -> ren/h (idempotent) */
+(function(){
+var I=window.I18N3; if(!I||window.__es106) return; window.__es106=1;
+var RS=I.rxs||(I.rxs=[]);
+RS.unshift(function(k,m){ var a=/^(\d+(?:[.,]\d+)?) ACH$/.exec(k); if(!a) return null; return a[1].replace('.',',')+' ren/h'; });
+})();
+</script>
 </body>
 </html>
 
