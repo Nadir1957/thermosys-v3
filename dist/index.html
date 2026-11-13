@@ -6002,7 +6002,7 @@ setInterval(function() {
       doc.text(lang==='fr' ? 'Document genere le ' + new Date().toLocaleString('fr-FR') : 'Generated on ' + new Date().toLocaleString('en-GB'), 120, 290);
 
       // Télécharger
-      doc.save('Thermosys_Bilan_Charge_' + new Date().toISOString().slice(0,10) + '.pdf');
+      doc.save('Thermosys_'+((window.I18N3&&I18N3.get&&I18N3.get()==='es')?'Balance_Carga':'Bilan_Charge')+'_' + new Date().toISOString().slice(0,10) + '.pdf');
 
     } catch(e) {
       alert(lang==='fr' ? 'Erreur PDF: ' + e.message : 'PDF Error: ' + e.message);
@@ -7152,7 +7152,7 @@ function runVerifIT246() {
         doc.text((lang==='en'?'Page ':'Page ') + i + '/' + totalPages, pageWidth - margin, 295, {align:'right'});
       }
 
-      doc.save('Thermosys_Charge_' + new Date().toISOString().slice(0,10) + '.pdf');
+      doc.save('Thermosys_'+((window.I18N3&&I18N3.get&&I18N3.get()==='es')?'Carga':'Charge')+'_' + new Date().toISOString().slice(0,10) + '.pdf');
     } catch(err) {
       console.error('Export PDF error:', err);
       alert(lang==='en' ? ((window.I18N3&&I18N3.get&&I18N3.get()==='es') ? 'Error al exportar el PDF. Inténtelo de nuevo.' : 'PDF export failed. Please try again.') : 'Echec de l\u2019export PDF. Veuillez r\u00e9essayer.');
@@ -8680,7 +8680,7 @@ function exportDsfPDF(){ /* espdf81 */
     doc.text("Thermosys v3 - thermosys-v3.vercel.app",14,290);
     doc.text(T.pg+i+"/"+pages,W-14,290,{align:"right"});
   }
-  doc.save("Thermosys_Desenfumage_"+new Date().toISOString().slice(0,10)+".pdf");
+  doc.save("Thermosys_"+((window.I18N3&&I18N3.get&&I18N3.get()==='es')?"Extraccion_Humos":"Desenfumage")+"_"+new Date().toISOString().slice(0,10)+".pdf");
   if(typeof showToast==="function")showToast(T.toast,"s");
   if(typeof logHist==="function")logHist(T.hist);
 }
