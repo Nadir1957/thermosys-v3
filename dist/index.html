@@ -20388,6 +20388,133 @@ if(typeof o==='function' && !o.__es98){
 }
 })();
 </script>
+<script id="lang-es-data-22">
+(window.I18N3=window.I18N3||{dict:{}});
+/* es101 : notas de calculo, categorias de equipos, registro (idempotent) */
+(function(){
+var I=window.I18N3; if(!I||window.__es101) return; window.__es101=1;
+var E=I.dict.es=I.dict.es||{};
+var D={
+"CHARGE — quick cooling load estimate": "CARGA — estimación rápida de la carga frigorífica",
+"Envelope: Φ = U · S · ΔT, with U according to the selected insulation level and ΔT = outdoor − indoor temperature.": "Envolvente: Φ = U · S · ΔT, con U según el nivel de aislamiento elegido y ΔT = T.ª exterior − T.ª interior.",
+"Solar gains: glazed area = 15 % of floor area, multiplied by a peak flux of 50, 150, 250 or 400 W per m² of glazing depending on exposure.": "Aportes solares: superficie acristalada = 15 % de la superficie en planta, multiplicada por un flujo máximo de 50, 150, 250 o 400 W por m² de acristalamiento según la exposición.",
+"Occupants: 75 W sensible and 55 W latent per person; equipment and lighting entered in watts.": "Ocupantes: 75 W sensibles y 55 W latentes por persona; equipos e iluminación introducidos en vatios.",
+"Air change: Φ = S · H · n · 1.2 · 1006 · ΔT / 3600, with n = 0.5 / 1.5 / 2 / 2 ACH (residential / office / retail / industrial).": "Renovación de aire: Φ = S · H · n · 1,2 · 1006 · ΔT / 3600, con n = 0,5 / 1,5 / 2 / 2 ren/h (residencial / oficina / comercio / industrial).",
+"Recommended capacity: the larger of the load increased by 20 % rounded in 1.5 kW steps and a minimum specific load by room type.": "Potencia recomendada: el mayor valor entre la carga incrementada un 20 % y redondeada en escalones de 1,5 kW, y una carga específica mínima por tipo de local.",
+"ASHRAE Handbook — Fundamentals (charges de refroidissement)": "ASHRAE Handbook — Fundamentals (cargas de refrigeración)",
+"Quick estimate: accuracy of about ±30 %.": "Estimación rápida: precisión de aproximadamente ±30 %.",
+"Fresh-air latent load is not included; use CHARGE PRO for a complete load.": "El latente del aire nuevo no está incluido; para un balance completo utilice CARGA PRO.",
+"CHARGE — fresh air flow and thermal load": "CARGA — aire nuevo, caudal y carga térmica",
+"Fresh air flow = number of persons × flow per person according to room use.": "Caudal de aire nuevo = número de personas × caudal por persona según el uso del local.",
+"Fresh-air thermal load calculated from the air mass flow and the temperature (and humidity) difference between outdoors and indoors.": "Carga térmica del aire nuevo calculada a partir del caudal másico de aire y de la diferencia de temperatura (y de humedad) entre el exterior y el interior.",
+"Flows per person are indicative: confirm with local regulations.": "Caudales por persona indicativos: confirmar con la normativa local.",
+"FLUIDS — total equivalent warming impact (TEWI)": "FLUIDOS — impacto equivalente total sobre el calentamiento (TEWI)",
+"m: refrigerant charge (kg); L: annual leak rate; n: lifetime (years); α: end-of-life recovery rate; E: annual energy consumption (kWh); β: grid emission factor (kgCO2/kWh).": "m: carga de refrigerante (kg); L: tasa de fugas anual; n: vida útil (años); α: tasa de recuperación al final de la vida útil; E: consumo energético anual (kWh); β: factor de emisión de la red eléctrica (kgCO2/kWh).",
+"EN 378-1, annexe sur le TEWI": "EN 378-1, anexo sobre el TEWI",
+"Règlement (UE) 2024/573 (gaz à effet de serre fluorés)": "Reglamento (UE) 2024/573 (gases fluorados de efecto invernadero)",
+"GWP sur 100 ans, valeurs AR4": "GWP a 100 años, valores AR4",
+"Grid emission factors are country values to be verified.": "Los factores de emisión de la red son valores por país que deben verificarse.",
+"AR5/AR6 GWP values differ from AR4.": "Los valores de GWP AR5/AR6 difieren de los de AR4.",
+"SCOP / COP / EER — seasonal energy efficiency": "SCOP / COP / EER — eficiencia energética estacional",
+"Seasonal efficiency: ηs = SCOP / 2.5 × 100 − F(1), with F(1) = 3 % (and an additional 5 % for water or brine heat pumps).": "Eficiencia estacional: ηs = SCOP / 2,5 × 100 − F(1), con F(1) = 3 % (y un 5 % adicional para bombas de calor de agua o de salmuera).",
+"Energy efficiency class derived from ηs (at 35 °C flow temperature).": "Clase de eficiencia energética deducida de ηs (a 35 °C de temperatura de impulsión).",
+"Règlement (UE) 811/2013 et 813/2013": "Reglamento (UE) 811/2013 y 813/2013",
+"Estimate from the performances entered; ±15 %. The full bin method is not applied.": "Estimación a partir de las prestaciones introducidas; ±15 %. No se aplica el método completo por temperaturas (bins).",
+"SCOP — operating cost": "SCOP — coste de explotación",
+"Annual energy = capacity / EER × operating hours; cost = energy × price per kWh.": "Energía anual = potencia / EER × horas de funcionamiento; coste = energía × precio del kWh.",
+"Nominal-load operation assumed: actual cost depends on part load.": "Se supone funcionamiento a carga nominal: el coste real depende de la carga parcial.",
+"SCOP — return on investment": "SCOP — retorno de la inversión",
+"Payback = additional investment / annual energy saving.": "Periodo de retorno = inversión adicional / ahorro energético anual.",
+"Constant energy prices; no discounting or maintenance.": "Precios de la energía constantes; sin actualización financiera ni mantenimiento.",
+"VALVES — Kvs calculation": "VÁLVULAS — cálculo del Kvs",
+"Kvs = Q · √(ρ / 1000 / ΔP), with Q in m³/h, ΔP in bar and ρ in kg/m³.": "Kvs = Q · √(ρ / 1000 / ΔP), con Q en m³/h, ΔP en bar y ρ en kg/m³.",
+"IEC 60534-2-1 (dimensionnement des vannes de régulation)": "IEC 60534-2-1 (dimensionamiento de válvulas de regulación)",
+"Turbulent liquid flow, without cavitation or flashing.": "Flujo líquido turbulento, sin cavitación ni vaporización súbita (flashing).",
+"NETWORKS — water flow and diameter": "REDES — caudal de agua y diámetro",
+"Flow: Q = P / (ρ · cp · ΔT).": "Caudal: Q = P / (ρ · cp · ΔT).",
+"Diameter: D = √(4 · Q / (π · v)), then standard diameter (DN) and actual velocity.": "Diámetro: D = √(4 · Q / (π · v)), después diámetro normalizado (DN) y velocidad real.",
+"Guides de vitesses recommandées": "Guías de velocidades recomendadas",
+"Water at 20 °C; recommended velocities are indicative.": "Agua a 20 °C; las velocidades recomendadas son indicativas.",
+"NETWORKS — linear pressure drop": "REDES — pérdida de carga lineal",
+"Friction factor λ from the Swamee-Jain formula (Colebrook-White approximation); laminar, transitional and turbulent regimes distinguished.": "Factor de fricción λ según la fórmula de Swamee-Jain (aproximación de Colebrook-White); se distinguen los regímenes laminar, de transición y turbulento.",
+"Smooth steel, fluid at 20 °C, no fittings.": "Acero liso, fluido a 20 °C, sin accesorios.",
+"NETWORKS — pump": "REDES — bomba",
+"Hydraulic power: P = ρ · g · Q · H; absorbed power = P / η.": "Potencia hidráulica: P = ρ · g · Q · H; potencia absorbida = P / η.",
+"Efficiency entered by the user; final selection according to the manufacturer’s curve.": "Rendimiento introducido por el usuario; selección final según la curva del fabricante.",
+"NETWORKS — expansion vessel": "REDES — vaso de expansión",
+"Vessel volume determined from the expansion of water between temperatures T1 and T2, the water reserve, the pre-charge pressure and the maximum allowable pressure.": "Volumen del vaso determinado a partir de la expansión del agua entre las temperaturas T1 y T2, la reserva de agua, la presión de precarga y la presión máxima admisible.",
+"Values to be confirmed with the vessel manufacturer’s datasheet.": "Valores a confirmar con la ficha técnica del fabricante del vaso.",
+"NETWORKS — hydraulic separator": "REDES — separador hidráulico",
+"Diameter: D = √(4 · Q / (π · v)); body volume and residence time displayed.": "Diámetro: D = √(4 · Q / (π · v)); se muestran el volumen del cuerpo y el tiempo de residencia.",
+"Indicative sizing.": "Dimensionamiento indicativo.",
+"NETWORKS — distribution header": "REDES — colector de distribución",
+"Header diameter: D = √(4 · Q / (π · v)) for the selected maximum velocity.": "Diámetro del colector: D = √(4 · Q / (π · v)) para la velocidad máxima seleccionada.",
+"NETWORKS — air ducts": "REDES — conductos de aire",
+"Area: S = Q / v; equivalent diameter of a rectangular duct by the Huebscher formula.": "Sección: S = Q / v; diámetro equivalente de un conducto rectangular según la fórmula de Huebscher.",
+"ASHRAE Handbook — Fundamentals (conduits)": "ASHRAE Handbook — Fundamentals (conductos)",
+"Recommended maximum velocities are indicative.": "Las velocidades máximas recomendadas son indicativas.",
+"NETWORKS — refrigerant piping": "REDES — tuberías frigoríficas",
+"Selection of the standard ACR tube whose velocity meets the oil return criterion (riser) and the allowable line velocities.": "Selección del tubo ACR normalizado cuya velocidad cumple el criterio de retorno de aceite (columna ascendente) y las velocidades admisibles en las líneas.",
+"ASHRAE Handbook — Refrigeration": "ASHRAE Handbook — Refrigeración",
+"Refrigerants: R410A, R32, R134a, R404A, R290; to be confirmed with the manufacturer.": "Refrigerantes: R410A, R32, R134a, R404A, R290; a confirmar con el fabricante.",
+"SMOKE EXTRACTION — thermal plume": "EXTRACCIÓN DE HUMOS — penacho térmico",
+"Extraction rate by the thermal plume method (Thomas / Hinkley) according to the configuration: axisymmetric, against a wall, in a corner, balcony spill.": "Caudal de extracción por el método del penacho térmico (Thomas / Hinkley) según la configuración: axisimétrico, contra una pared, en una esquina, derrame de balcón.",
+"Indicative result, to be validated by a control body or a fire safety engineer.": "Resultado indicativo, a validar por un organismo de control o un ingeniero de seguridad contra incendios.",
+"THERMOSYS — CALCULATION NOTE": "THERMOSYS — NOTA DE CÁLCULO",
+"1. Input data": "1. Datos de entrada",
+"3. Method and formulas": "3. Método y fórmulas",
+"4. Standards and references": "4. Normas y referencias",
+"5. Limits and assumptions": "5. Límites e hipótesis",
+"Note generated automatically by Thermosys v3 from the data entered. Preliminary sizing: results must be checked by a qualified professional before any decision.": "Nota generada automáticamente por Thermosys v3 a partir de los datos introducidos. Predimensionamiento: los resultados deben ser verificados por un profesional cualificado antes de cualquier decisión.",
+"Run the calculation first to get a note.": "Ejecute primero el cálculo para obtener una nota.",
+"Pop-up blocked: allow pop-ups to print the note.": "Ventana bloqueada: permita las ventanas emergentes para imprimir la nota.",
+"Residential (15 m³/h/pers)": "Residencial (15 m³/h/pers)",
+"Vis HSK5343-25Y 135kW": "Tornillo HSK5343-25Y 135kW",
+"RC2-250B Vis 250kW": "RC2-250B Tornillo 250kW",
+"Q-4-28-1 Semi-herm. 35kW": "Q-4-28-1 Semihermético 35kW"
+};
+/* correccion de valores existentes del diccionario */
+Object.keys(E).forEach(function(k){ var v=E[k]; if(typeof v==='string' && v.indexOf('Semi-herm.')>=0) E[k]=v.split('Semi-herm.').join('Semihermético'); });
+var CAT={REGULATION:'REGULACIÓN',CHILLER:'ENFRIADORA',COMPRESSEUR:'COMPRESOR',PAC:'BOMBA DE CALOR',AHU:'UTA',DIFFUSION:'DIFUSIÓN'};
+function ex101(k){
+  var t=k.replace(/^\s+/,''), lead=k.slice(0,k.length-t.length), a;
+  if((a=/^(Mod: .+ \| .+ \| )(REGULATION|CHILLER|COMPRESSEUR|PAC|AHU|DIFFUSION)$/.exec(t))) return lead+a[1]+CAT[a[2]];
+  if((a=/^Date : (.*)$/.exec(t))) return lead+'Fecha : '+a[1];
+  if((a=/^Version : (.*)$/.exec(t))) return lead+'Versión : '+a[1].replace(/ — step (\d+)$/,' — paso $1');
+  if((a=/^Project : ?(.*)$/.exec(t))) return lead+'Proyecto : '+a[1];
+  if((a=/^Client : ?(.*)$/.exec(t))) return lead+'Cliente : '+a[1];
+  if((a=/^Site : ?(.*)$/.exec(t))) return lead+'Obra : '+a[1];
+  if((a=/^Prepared by : ?(.*)$/.exec(t))) return lead+'Elaborado por : '+a[1];
+  if((a=/^(?:D[ée]tail|Detail|Detalle): (.+)$/.exec(t)) && typeof PRODS!=='undefined'){
+    var rest=a[1], i, p=null;
+    for(i=0;i<PRODS.length;i++){ if((PRODS[i].brand+' '+PRODS[i].n)===rest){ p=PRODS[i]; break; } }
+    if(p){ var nm=p.n; try{ nm=I.x(p.n)||p.n; }catch(e){} return lead+'Detalle: '+p.brand+' '+nm; }
+  }
+  return null;
+}
+I.add('es',D);
+var RS=I.rxs||(I.rxs=[]);
+RS.unshift(function(k,mm){ return ex101(k); });
+if(I.mlRules&&I.mlRules.unshift) I.mlRules.unshift(function(k){ if(k.length>300) return null; try{ return ex101(k); }catch(e){ return null; } });
+/* registro de actividad : contador de normas leido antes de anadir las 21 normas finales */
+var n=0;
+function fixNorms(){
+  try{
+    if(typeof NORMS==='undefined'||!NORMS||NORMS.length<=29){ if(n++<80) setTimeout(fixNorms,500); return; }
+    var c=NORMS.length, ch=false;
+    if(window.hist&&Array.isArray(window.hist)){
+      window.hist.forEach(function(e){ if(e&&typeof e.msg==='string'&&/^Thermosys v3 initialis[ée] — .*\| \d+ normes$/.test(e.msg)){ var m=e.msg.replace(/\d+ normes$/,c+' normes'); if(m!==e.msg){ e.msg=m; ch=true; } } });
+    }
+    if(ch){
+      var el=document.getElementById('histLog');
+      if(el&&typeof __sx==='function'){ el.innerHTML=window.hist.map(function(i){ return '<div class="ll"><span class="lt">['+__sx(i.t)+']</span><span class="ls i">'+__sx(i.msg)+'</span></div>'; }).join(''); }
+      try{ localStorage.setItem('thermosys_journal_v4',JSON.stringify(window.hist)); }catch(e){}
+    }
+  }catch(e){}
+}
+setTimeout(fixNorms,1500);
+})();
+</script>
 </body>
 </html>
 
