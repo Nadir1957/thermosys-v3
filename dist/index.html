@@ -8062,7 +8062,7 @@ function runVerifIT246() {
         }
       } catch(e){}
       // Aussi verifier window.lang
-      if(window.lang==='en' || saved==='en'){
+      if((window.lang==='en' || saved==='en') && !(window.I18N3&&I18N3.get&&I18N3.get()!=='fr'&&I18N3.get()!=='en')){
         if(window.lang!=='en'){
           // Forcer la langue via toggleLang si on est en FR
           if(typeof toggleLang==='function') quiet(toggleLang);
@@ -18260,7 +18260,7 @@ if(window.MutationObserver){
 }
 var _g=window.goPage; if(_g) window.goPage=function(){ var r=_g.apply(this,arguments); setTimeout(full,120); setTimeout(full,500); return r; };
 var saved=null; try{ saved=localStorage.getItem(KEY); }catch(e){}
-if(saved&&saved!=='fr'&&saved!=='en') setTimeout(function(){ if(has(saved)) setLang(saved); },1400);
+if(saved&&saved!=='fr'&&saved!=='en') setTimeout(function(){ if(has(saved)) setLang(saved); },450);
 })();
 
 </script>
