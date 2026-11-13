@@ -6964,7 +6964,7 @@ function runVerifIT246() {
     var lang = isEn() ? 'en' : 'fr';
     page.querySelectorAll('[data-en]').forEach(function(el) {
       var val = el.getAttribute('data-' + lang);
-      if (val) el.textContent = val;
+      if (val) { var __v=val; try{ if(lang==='en'&&window.I18N3&&I18N3.get&&I18N3.get()==='es') __v=I18N3.x(val)||val; }catch(e){} el.textContent=__v; }
     });
   }
 
@@ -6996,7 +6996,7 @@ function runVerifIT246() {
     var lang = isEn() ? 'en' : 'fr';
     document.querySelectorAll('[data-en][data-fr]').forEach(function(el) {
       var val = el.getAttribute('data-' + lang);
-      if (val) el.textContent = val;
+      if (val) { var __v=val; try{ if(lang==='en'&&window.I18N3&&I18N3.get&&I18N3.get()==='es') __v=I18N3.x(val)||val; }catch(e){} el.textContent=__v; }
     });
   }
 
@@ -18221,7 +18221,7 @@ function setLang(c){
   cur=c;
   if(c==='fr'||c==='en') coreTo(c); else coreTo('en');
   try{ localStorage.setItem(KEY,c); }catch(e){}
-  setTimeout(full,0); setTimeout(full,250); setTimeout(full,900);
+  full(); setTimeout(full,0); setTimeout(full,250); setTimeout(full,900);
 }
 function actual(){ return isOv()?cur:(window.lang==='en'?'en':'fr'); }
 function cycle(){ var L=list(), i=L.indexOf(actual()); setLang(L[(i+1)%L.length]); }
@@ -18234,14 +18234,14 @@ I.x=function(s){ if(!isOv()) return s; var tn=Date.now(); if(tn-lastChk>30){ chk
 I.ov=isOv;
 I.set=setLang; I.cycle=cycle; I.get=function(){return cur;}; I.list=list;
 I.add=function(c,d){ norm[c]=null; memo={}; memoN=0; I.dict[c]=I.dict[c]||{}; Object.keys(d).forEach(function(k){ I.dict[c][k]=d[k]; }); if(isOv()&&cur===c) setTimeout(full,0); };
-var tm=null,pend=[],budget=25,refill=false;
+var tm=null,pend=[],budget=400,refill=false;
 function later(){ clearTimeout(tm); tm=setTimeout(function(){ var p=pend; pend=[]; if(isOv()){ p.forEach(sweep); chrome(); } },70); }
 if(window.MutationObserver){
   new MutationObserver(function(ms){
     if(!isOv()) return;
     /* traduction immediate (avant le prochain affichage) pour eviter le clignotement ; budget par tache pour ne jamais boucler */
     if(budget>0){
-      budget--; if(!refill){ refill=true; setTimeout(function(){ budget=25; refill=false; },0); }
+      budget--; if(!refill){ refill=true; setTimeout(function(){ budget=400; refill=false; },0); }
       ms.forEach(function(m){
         if(m.type==='characterData') sweep(m.target);
         else if(m.type==='childList') m.addedNodes.forEach(function(x){ sweep(x); });
@@ -18430,7 +18430,7 @@ if(window.MutationObserver){
   new MutationObserver(function(ms){
     if(!EN()) return;
     if(budget>0){
-      budget--; if(!refill){ refill=true; setTimeout(function(){ budget=25; refill=false; },0); }
+      budget--; if(!refill){ refill=true; setTimeout(function(){ budget=400; refill=false; },0); }
       ms.forEach(function(m){
         if(m.type==='characterData') sweep(m.target);
         else if(m.type==='childList') m.addedNodes.forEach(function(x){ sweep(x); });
