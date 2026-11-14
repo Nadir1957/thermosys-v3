@@ -3029,7 +3029,7 @@ function dsfUncheckAll(){
 <div id="footerFR" class="footer-warn"><b>AVERTISSEMENT LÉGAL :</b> THERMOSYS est un outil d'aide à la décision destiné aux professionnels HVAC qualifiés. Les méthodes de calcul s'appuient sur les normes et réglementations listées ci-dessus, mais aucune certification de conformité officielle n'est délivrée par cet outil. Les données techniques sont fournies à titre indicatif uniquement et ne remplacent en aucun cas les documents constructeur officiels ni la validation par un ingénieur qualifié habilité. Consultez toujours la documentation constructeur pour les projets réels. L'éditeur décline toute responsabilité en cas d'utilisation des résultats sans vérification préalable par un professionnel compétent. <b style="color:var(--wn)">&mdash; &copy; 2026  &mdash; Tous droits r&eacute;serv&eacute;s.</b></div>
 <div id="footerEN" class="footer-warn" style="display:none"><b>LEGAL WARNING:</b> THERMOSYS is a decision-support tool for qualified HVAC professionals. Calculation methods are based on the standards and regulations listed above, but this tool does not issue any official certification of compliance. Technical data is indicative only and does not replace official manufacturer documentation nor validation by a qualified licensed engineer. ALWAYS consult official manufacturer documentation for real projects. The publisher disclaims all liability for use of results without prior verification by a competent professional. <b style="color:var(--wn)">&mdash; &copy; 2026  &mdash; All rights reserved.</b></div>
 <div class="no-print-creator" style="margin-top:7px;padding:7px 0 4px;border-top:1px solid rgba(0,229,255,.12);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px">
-  <div style="font-size:9.5px;color:var(--ts)">Con&ccedil;u &amp; d&eacute;velopp&eacute; par / Designed &amp; developed by <b style="color:var(--ac)"></b> </div>
+  <div style="font-size:9.5px;color:var(--ts)">Con&ccedil;u &amp; d&eacute;velopp&eacute; par / Designed &amp; developed by <b style="color:var(--ac)">N. Mouissat</b> </div>
   <div style="font-size:9px;color:var(--tm);font-family:var(--fmo)">&copy; 2026 THERMOSYS &mdash; Propri&eacute;t&eacute; intellectuelle prot&eacute;g&eacute;e.</div>
 </div>
 <div class="footer-copy" id="footerCopy">&#127465;&#127487; &copy; 2026 Thermosys HVAC Platform | Tous droits r&eacute;serv&eacute;s &mdash; <b>Cr&eacute;&eacute; par </b> &mdash; 50 constructeurs &middot; 80 &eacute;quipements &middot; Gemini 2.5 Flash &middot; ISO 14118:2018 &middot; RE2020 Seuil 2025</div>
@@ -20793,6 +20793,14 @@ function walk(root,l){
 }
 function run(){ try{ var l=lang(); var lp=document.getElementById('landingPage'), ag=document.getElementById('authGate'); walk(lp,l); walk(ag,l); if(lp) lp.style.visibility='visible'; if(ag) ag.style.visibility='visible'; }catch(e){} }
 setInterval(run,500); run();
+})();
+</script>
+<script id="lang-es-data-31">
+(window.I18N3=window.I18N3||{dict:{}});
+/* es113 : titre extraccion de humos (idempotent) */
+(function(){
+var I=window.I18N3; if(!I||window.__es113) return; window.__es113=1;
+I.add('es',{"DÉSENFUMAGE / SMOKE EXTRACTION":"EXTRACCIÓN DE HUMOS"});
 })();
 </script>
 </body>
