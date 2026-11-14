@@ -3241,7 +3241,7 @@ function rptLoadVoices() {
   var all    = window.speechSynthesis.getVoices();
   if (!all.length) return;
   var fr     = lang === 'fr';
-  var target = fr ? 'fr' : 'en';
+  var target = rptLangCode();
 
   // Score voices: Neural/Premium = 3, Google/Microsoft = 2, local = 1
   function score(v) {
@@ -3323,7 +3323,7 @@ function rptLoadVoices() {
 /* ─ Get selected voice ───────────────────────────────────────────────── */
 function rptGetVoice() {
   var fr = lang==='fr';
-  var target = fr ? 'fr' : 'en';
+  var target = rptLangCode();
   var name = (document.getElementById('rpt-voice')||{}).value||'';
   var all  = window.speechSynthesis.getVoices();
   if (name) {
@@ -3375,7 +3375,7 @@ function rptSpeak(text) {
   text = rptPreprocess(text);  // Convert THERMOSYS → Thermosys, etc.
 
   _rpt.utt = new SpeechSynthesisUtterance(text);
-  _rpt.utt.lang   = fr ? 'fr-FR' : 'en-US';
+  _rpt.utt.lang   = rptLangCode()==='es' ? 'es-ES' : (fr ? 'fr-FR' : 'en-US');
   _rpt.utt.rate   = speed;
   _rpt.utt.pitch  = 0.95;   // slightly lower = more authoritative
   _rpt.utt.volume = _rpt.vol;
@@ -3533,6 +3533,20 @@ var _THERMO_PRES_FR = "Thermosys, version 3. "
   + "et un dossier projet avec document P.D.F. combiné. "
   + "L affichage peut basculer entre unités S.I. et impériales.";
 
+var _THERMO_PRES_ES = "Termosis, versión 3. "
+  + "Estación de trabajo, H.V.A.C. profesional. "
+  + "Termosis es una aplicación de campo, "
+  + "diseñada para los profesionales de la climatización. "
+  + "Centraliza en una sola herramienta, "
+  + "los recursos técnicos, las calculadoras, "
+  + "y los datos de referencia, "
+  + "indispensables en la actividad diaria "
+  + "de técnicos, ingenieros, "
+  + "y oficinas de ingeniería H.V.A.C. "
+  + "También incluye: cámara frigorífica, tratamiento de aire, carga de refrigeración horaria, psicrometría, calefacción, electricidad con esquema unifilar, mecatrónica, "
+  + "y un archivo de proyecto con un documento P.D.F. combinado. "
+  + "La visualización puede alternar entre unidades S.I. e imperiales.";
+function rptLangCode(){ try{ if(window.I18N3&&I18N3.get&&I18N3.get()==='es') return 'es'; }catch(e){} return (typeof lang!=='undefined'&&lang==='fr')?'fr':'en'; }
 var _THERMO_PRES_EN = "Thermosis, version 3. "
   + "Professional H.V.A.C. Workstation. "
   + "Thermosis is a field application, "
@@ -3550,13 +3564,13 @@ var _THERMO_PRES_EN = "Thermosis, version 3. "
 function rptPlayPresentation() {
   if (!window.speechSynthesis){ alert(lang==='fr'?'Synthèse vocale non disponible.':'Speech not available.'); return; }
   var fr   = lang==='fr';
-  var text = fr ? _THERMO_PRES_FR : _THERMO_PRES_EN;
+  var text = rptLangCode()==='es' ? _THERMO_PRES_ES : (fr ? _THERMO_PRES_FR : _THERMO_PRES_EN);
   // Show panel and load voices
   var ap = document.getElementById('rpt-audio-panel');
   if (ap){ ap.style.display='block'; rptLoadVoices(); }
   // Show text in result box
   var el = document.getElementById('rpt-result');
-  if (el) el.textContent = fr
+  if (el) el.textContent = rptLangCode()==='es' ? 'THERMOSYS v3 — ESTACIÓN DE TRABAJO H.V.A.C. PROFESIONAL\nTermosis es una aplicación de campo diseñada para los profesionales de la climatización.\nCentraliza en una sola herramienta los recursos técnicos, las calculadoras y los datos de referencia indispensables en la actividad diaria de técnicos, ingenieros y oficinas de ingeniería H.V.A.C.' : fr
     ? 'THERMOSYS v3 — STATION DE TRAVAIL HVAC PROFESSIONNELLE\nThermosys est une application de terrain conçue pour les professionnels du génie climatique.\nElle centralise en un seul outil les ressources techniques, les calculateurs et les données de référence indispensables à l\'activité quotidienne des techniciens, ingénieurs et bureaux d\'études HVAC.'
     : 'Thermosys v3 — Professional HVAC Workstation\nThermosys is a field application designed for HVAC professionals.\nIt centralizes in a single tool the technical resources, calculators and reference data essential to the daily work of technicians, engineers and HVAC consulting firms.';
   rptSpeak(text);
@@ -4495,7 +4509,39 @@ function voiceReport() {
       def:         'Thermosys version 3, professional HVAC workstation.'
     }
   };
-  var l    = lang === 'en' ? 'en' : 'fr';
+texts.es = {
+      home:        'Termosis v3. Estación de trabajo H.V.A.C. profesional. Termosis es una aplicación de campo diseñada para los profesionales de la climatización.',
+      catalogue:   'Módulo catálogo H.V.A.C. Más de 80 equipos disponibles, entre ellos Daikin, Mitsubishi, Carrier, Condor, Gree y muchos otros fabricantes.',
+      ocr:         'Módulo de diagnóstico inteligente. Gemini dos punto cinco Flash. Fotografíe la placa de características para la extracción de datos y el diagnóstico automáticos.',
+      vannes:      'Sección de válvulas y actuadores. '+VALVES.length+' referencias de Danfoss, Belimo, Honeywell, IMI Hydronic y Siemens.',
+      normes:      'Sección de normas. '+NORMS.length+' normas vigentes, entre ellas E.N. 378, I.S.O. 5149, A.S.H.R.A.E. 15, el reglamento F guion Gas, y las directivas europeas.',
+      hydraulique: 'Sección de redes H.V.A.C. Calculadoras profesionales: caudal y diámetro, pérdidas de carga, altura de la bomba, vaso de expansión, separador hidráulico, colector distribuidor, guía de preajuste de válvulas, dimensionamiento de conductos de aire, tuberías frigoríficas, selección Refnet multimarca, cálculo de red ramificada con identificación del circuito crítico, cálculo acústico del nivel sonoro a distancia, y cálculo del punto de rocío para el espesor mínimo de aislamiento.',
+      consignation:'Módulo de bloqueo y etiquetado. Procedimiento de aislamiento en nueve etapas según I.S.O. 14118 y E.N. 60204 guion 1. Aislamiento de las energías eléctrica, frigorífica e hidráulica.',
+      fluides:     'Sección de fluidos refrigerantes. Base de datos de refrigerantes, aceites de compresor, reglamento F guion Gas 2025 y cálculo del impacto total equivalente de calentamiento.',
+      scop:        'Sección de eficiencia energética. Coeficiente de rendimiento estacional, cálculo del C.O.P. y del E.E.R., y verificación del cumplimiento de los umbrales R.E. 2020 de 2025.',
+      devis:       'Generador de presupuestos H.V.A.C. Seleccione los equipos e introduzca los datos del cliente para elaborar un presupuesto profesional.',
+      historique:  'Registro de actividad de Termosis. Todas las acciones se registran aquí.',
+      obd:         'Módulo de diagnóstico O.B.D. H.V.A.C. Conecte su interfaz para leer los parámetros del sistema en tiempo real.',
+      bluetooth:   'Módulo Bluetooth H.V.A.C. Busque los dispositivos cercanos para controlar la temperatura y la presión en tiempo real.',
+      convert:     'Conversor H.V.A.C. profesional. Temperatura, potencia, presión, caudal, dimensiones y magnitudes eléctricas.',
+      rt2025:      'Módulo umbral R.E. 2020 de 2025. Verifique el cumplimiento de su proyecto con la normativa medioambiental francesa vigente.',
+      codes:       'Módulo de códigos de fallo y diagnóstico. Base de datos de códigos de error de los principales fabricantes de H.V.A.C.: equipos de aire acondicionado, unidades de tratamiento de aire, bombas de calor y sistemas V.R.F.',
+      charge:      'Módulo de cálculo de carga de refrigeración. Dimensionamiento de sistemas de aire acondicionado a partir de las pérdidas térmicas del edificio, las ganancias solares, las cargas internas y las condiciones climáticas exteriores.',
+      maint:       'Módulo de mantenimiento preventivo de instalaciones H.V.A.C. Listas de verificación del mantenimiento periódico, seguimiento de intervenciones, control de los parámetros de funcionamiento y gestión del cumplimiento normativo.',
+      desenfumage: 'Módulo de extracción de humos. Cálculo de caudales de extracción según los métodos I.T. 246, E.N. 12101 y N.F.P.A. 92, para zonas de seguridad contra incendios.',
+      aide:        'Sección de ayuda. Consulte la documentación y las guías de usuario de Termosis.',
+      contact:     'Sección de contacto. Encuentre los datos de contacto del soporte de Termosis.',
+      coldroom:    'Módulo de cámara frigorífica. Dimensionamiento completo de una cámara de temperatura positiva o negativa: carga frigorífica, sistema de una o dos etapas, refrigerantes, carga de refrigerante según E.N. 378, energía anual y coste de explotación, aislamiento y riesgo de condensación, con esquemas y una nota de cálculo imprimible.',
+      airtreat:    'Módulo de tratamiento de aire. Unidades de tratamiento de aire, rooftops y salas limpias: psicrometría, recuperación de energía según E.N. 13053, aire exterior según E.N. 16798 guion 1, filtración E.N. 1822, clases I.S.O. 14644 guion 1, cascada de presión entre locales, y energía anual en 8760 horas a partir de un archivo meteorológico.',
+      chargepro:   'Módulo de carga de refrigeración profesional. Carga de refrigeración hora por hora de un local, con inercia térmica de los muros, radiación solar, acristalamiento y protecciones solares, ganancias internas, aire exterior y archivo meteorológico, y una nota imprimible.',
+      psy:         'Módulo de psicrometría. Propiedades del aire húmedo según A.S.H.R.A.E. y transformaciones: calentamiento, humidificación, batería de enfriamiento con factor de contacto y mezcla de aire, con diagrama psicrométrico.',
+      heat:        'Módulo de calefacción. Pérdidas térmicas de diseño local por local según E.N. 12831: transmisión, suelo según I.S.O. 13370, ventilación con recuperación de calor, recalentamiento y potencia instalada, con una nota imprimible.',
+      elec:        'Módulo eléctrico. Dimensionamiento de cables y protecciones circuito por circuito según I.E.C. 60364: intensidad admisible, caída de tensión, resistencia térmica, corriente de cortocircuito mínima, conductores de protección y neutro, arranque de motores, con esquema unifilar y una nota imprimible.',
+      mecha:       'Módulo de mecatrónica. Señales de cero a diez voltios y de cuatro a veinte miliamperios, sondas Pt100, Pt1000 y N.T.C., motores y variadores, leyes de los ventiladores, vibraciones I.S.O. 10816, par de los actuadores de compuertas, lógica de seguridad y diagnóstico de averías guiado.',
+      proj:        'Módulo de proyecto. Archivo de proyecto compartido y un único P.D.F. que reúne las notas de cálculo de todos los módulos, con guardado y apertura de proyectos.',
+      def:         'Termosis versión 3, estación de trabajo H.V.A.C. profesional.'
+    };
+  var l    = rptLangCode();
   var text = texts[l][pid];
   if (text === undefined) text = texts[l].def;
   if (!text || text.trim() === '') {
@@ -4519,7 +4565,7 @@ function voiceReport() {
   // Ne coupe qu'après un vrai point de fin de phrase (précédé d'une lettre minuscule,
   // d'un chiffre ou d'une parenthèse), jamais entre les lettres d'un sigle du type
   // "E.N.", "I.S.O.", "N.F.P.A.", "H.M.T." (où le caractère avant le point est une majuscule).
-  var segments = text.split(/(?<=[a-zàâäéèêëïîôöùûüç0-9\)])[.!?]+\s+(?=[A-ZÀ-Þ])/g)
+  var segments = text.split(/(?<=[a-zàâäéèêëïîôöùûüçáíóúñ0-9\)])[.!?]+\s+(?=[A-ZÀ-Þ])/g)
     .map(function(s){ return s.trim(); }).filter(Boolean)
     .map(function(s){ return /[.!?]$/.test(s) ? s : s + '.'; });
   // Filet de sécurité : re-découper les segments qui resteraient très longs (>220 car.)
@@ -4534,7 +4580,7 @@ function voiceReport() {
 
   var queue = segments.map(function(seg){ return new SpeechSynthesisUtterance(seg.trim()); });
   window._voiceReportQueue = queue; // référence persistante anti-garbage-collection (bug Chrome mobile/Android)
-  var voiceLang = l === 'fr' ? 'fr-FR' : 'en-US';
+  var voiceLang = l === 'fr' ? 'fr-FR' : (l === 'es' ? 'es-ES' : 'en-US');
 
   function applyVoice(utt){
     utt.lang   = voiceLang;
@@ -4543,7 +4589,7 @@ function voiceReport() {
     utt.volume = 1.0;
     var voices = synth.getVoices();
     if (voices.length > 0) {
-      var target = l === 'fr' ? 'fr' : 'en';
+      var target = l;
       var v = voices.find(function(x){ return x.lang.toLowerCase().startsWith(target); });
       if (v) utt.voice = v;
     }
