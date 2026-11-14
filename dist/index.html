@@ -20643,6 +20643,64 @@ setInterval(function(){
 },700);
 })();
 </script>
+<script id="lang-es-data-28">
+(window.I18N3=window.I18N3||{dict:{}});
+/* es109 : pantalla de acceso, bienvenida, errores (idempotent) */
+(function(){
+var I=window.I18N3; if(!I||window.__es109) return; window.__es109=1;
+var D={
+"Professional HVAC engineering calculations, in one bilingual tool. Load, ductwork, piping, and code compliance.":"Cálculos profesionales de ingeniería HVAC en una sola herramienta trilingüe. Cargas térmicas, conductos, tuberías y cumplimiento normativo.",
+"20+ calculation modules":"Más de 20 módulos de cálculo",
+"Bilingual French/English":"Trilingüe francés/inglés/español",
+"PDF reports and quotes":"Informes y presupuestos en PDF",
+"Get started":"Comenzar",
+"Log in":"Iniciar sesión",
+"Don't have an account?":"¿No tiene una cuenta?",
+"Create an account":"Crear una cuenta",
+"Create my account":"Crear mi cuenta",
+"← Back to login":"← Volver al inicio de sesión",
+"Email":"Correo electrónico",
+"Password":"Contraseña",
+"Password (6 characters min.)":"Contraseña (6 caracteres mín.)",
+"New password (6 characters min.)":"Nueva contraseña (6 caracteres mín.)",
+"Confirm password":"Confirmar contraseña",
+"New password":"Nueva contraseña",
+"Choose a new password for your account.":"Elija una nueva contraseña para su cuenta.",
+"Set new password":"Establecer la nueva contraseña",
+"Account pending approval":"Cuenta pendiente de aprobación",
+"Your account was created successfully. An administrator still needs to approve your access before you can use the application.":"Su cuenta se ha creado correctamente. Un administrador debe aún aprobar su acceso antes de que pueda usar la aplicación.",
+"Account disabled":"Cuenta desactivada",
+"Your access has been disabled. Contact the administrator for more information.":"Su acceso ha sido desactivado. Póngase en contacto con el administrador para obtener más información.",
+"Signing in...":"Iniciando sesión...",
+"Please fill in all fields.":"Rellene todos los campos.",
+"Incorrect email or password.":"Correo electrónico o contraseña incorrectos.",
+"Password must be at least 6 characters.":"La contraseña debe tener al menos 6 caracteres.",
+"Please accept the terms of use and the privacy policy to create an account. / Veuillez accepter les conditions générales d’utilisation et la politique de confidentialité pour créer un compte.":"Acepte las condiciones de uso y la política de privacidad para crear una cuenta.",
+"An account already exists with this email.":"Ya existe una cuenta con este correo electrónico.",
+"Veuillez remplir les deux champs.":"Rellene los dos campos.",
+"Le mot de passe doit contenir au moins 6 caractères.":"La contraseña debe tener al menos 6 caracteres.",
+"Les deux mots de passe ne correspondent pas.":"Las dos contraseñas no coinciden."
+};
+if(I.add) I.add('es',D);
+var RS=I.rxs||(I.rxs=[]);
+RS.unshift(function(k,m){ var a;
+  if((a=/^Unable to verify your account \(error (.+)\)\. Please try again or contact the administrator\.$/.exec(k))) return 'No se pudo verificar su cuenta (error '+a[1]+'). Inténtelo de nuevo o póngase en contacto con el administrador.';
+  if((a=/^Erreur : (.+)$/.exec(k))) return 'Error: '+a[1];
+  return null; });
+/* frase de consentimiento: en espanol una sola frase (la original es bilingue FR/EN) */
+var A='style="color:#7fa8c9;text-decoration:underline"';
+var ESH='He leído y acepto las <a href="#" onclick="showTerms();return false;" '+A+'>condiciones de uso</a> y la <a href="#" onclick="showPrivacyPolicy();return false;" '+A+'>política de privacidad</a>.';
+setInterval(function(){
+  try{
+    var c=document.getElementById('authConsentSignup'); if(!c) return;
+    var sp=c.nextElementSibling; if(!sp||sp.tagName!=='SPAN') return;
+    var es=I.get&&I.get()==='es';
+    if(es&&sp.getAttribute('data-es109')!=='1'){ sp.setAttribute('data-orig109',sp.innerHTML); sp.innerHTML=ESH; sp.setAttribute('data-es109','1'); }
+    else if(!es&&sp.getAttribute('data-es109')==='1'){ sp.innerHTML=sp.getAttribute('data-orig109'); sp.setAttribute('data-es109','0'); }
+  }catch(e){}
+},600);
+})();
+</script>
 </body>
 </html>
 
