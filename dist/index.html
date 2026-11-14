@@ -1494,6 +1494,7 @@
       <div class="res" id="rsResult" style="margin-top:8px" data-fr="Ajoutez au moins un tronçon." data-en="Add at least one segment.">Ajoutez au moins un tronçon.</div>
       <div style="font-size:10px;font-weight:700;color:var(--ac3);margin-top:10px;margin-bottom:4px" data-fr="SCHÉMA DU RÉSEAU (généré automatiquement)" data-en="NETWORK DIAGRAM (auto-generated)">SCHÉMA DU RÉSEAU (généré automatiquement)</div>
       <div id="rsSvgWrap" style="overflow-x:auto"></div>
+      <div id="bomPanel" style="margin-top:12px"></div>
     </div>
   </div>
 </div>
@@ -20860,6 +20861,90 @@ I.add('es',{
 "2. HEATING — EN 12831 heat loss":"2. CALEFACCIÓN — pérdidas de calor EN 12831"
 });
 })();
+</script>
+<script id="bom-module">
+
+(function(){
+if(window.__bom122) return; window.__bom122=1;
+function L(){ try{ if(window.I18N3&&I18N3.get&&I18N3.get()==='es') return 'es'; }catch(e){} return (typeof lang!=='undefined'&&lang==='fr')?'fr':'en'; }
+var T={
+ fr:{title:'NOMENCLATURE DU RÉSEAU',item:'Désignation',qty:'Quantité',unit:'Unité',m:'m',pc:'pcs',pipe:'Tube',elbow:'Coude 90°',tee:'Té',valve:'Vanne',
+     note:'Quantités déduites des tronçons saisis. Longueurs telles que saisies, sans chutes ni coupes ; coudes, tés et vannes tels que comptés par tronçon. Les prix sont à renseigner dans le DEVIS.',
+     csv:'⬇ Exporter en CSV',dv:'➜ Envoyer au DEVIS',brand:'RÉSEAU',ok:' ligne(s) envoyée(s) au DEVIS (prix à renseigner)',none:'Aucun élément à exporter',file:'Thermosys_Nomenclature',dec:','},
+ en:{title:'NETWORK BILL OF MATERIALS',item:'Item',qty:'Quantity',unit:'Unit',m:'m',pc:'pcs',pipe:'Pipe',elbow:'90° elbow',tee:'Tee',valve:'Valve',
+     note:'Quantities derived from the entered segments. Lengths as entered, without cutting allowance or waste; elbows, tees and valves as counted per segment. Prices are to be entered in the QUOTE.',
+     csv:'⬇ Export CSV',dv:'➜ Send to QUOTE',brand:'NETWORK',ok:' line(s) sent to the QUOTE (prices to be entered)',none:'Nothing to export',file:'Thermosys_BillOfMaterials',dec:'.'},
+ es:{title:'NOMENCLATURA DE LA RED',item:'Designación',qty:'Cantidad',unit:'Unidad',m:'m',pc:'uds.',pipe:'Tubo',elbow:'Codo 90°',tee:'Te',valve:'Válvula',
+     note:'Cantidades deducidas de los tramos introducidos. Longitudes tal como se introducen, sin recortes ni mermas; codos, tes y válvulas según el recuento de cada tramo. Los precios se introducen en el PRESUPUESTO.',
+     csv:'⬇ Exportar a CSV',dv:'➜ Enviar al PRESUPUESTO',brand:'RED',ok:' línea(s) enviada(s) al PRESUPUESTO (precios por introducir)',none:'Nada que exportar',file:'Thermosys_Nomenclatura',dec:','}
+};
+function compute(){
+  var segs=(typeof reseauSegments!=='undefined'&&reseauSegments)||[];
+  var pipes={},el={},te={},va={};
+  segs.forEach(function(s){
+    var d=s.D; if(!(d>0)) return;
+    pipes[d]=(pipes[d]||0)+(+s.L||0);
+    if(s.coudes>0) el[d]=(el[d]||0)+s.coudes;
+    if(s.tes>0) te[d]=(te[d]||0)+s.tes;
+    if(s.vannes>0) va[d]=(va[d]||0)+s.vannes;
+  });
+  var out=[];
+  function add(map,kind,unitKey){ Object.keys(map).map(Number).sort(function(a,b){return a-b;}).forEach(function(d){ if(map[d]>0) out.push({kind:kind,d:d,q:map[d],u:unitKey}); }); }
+  add(pipes,'pipe','m'); add(el,'elbow','pc'); add(te,'tee','pc'); add(va,'valve','pc');
+  return out;
+}
+function nm(t,it){ return t[it.kind]+' Ø'+it.d+' mm'; }
+function fq(t,it){ var v=it.u==='m'?(Math.round(it.q*10)/10):Math.round(it.q); return String(v).replace('.',t.dec); }
+function render(){
+  var host=document.getElementById('bomPanel'); if(!host) return;
+  var items=compute();
+  var l=L(); var t=T[l]; host.setAttribute('data-bomlang',l);
+  if(!items.length){ host.innerHTML=''; return; }
+  var h='<div style="font-size:10px;font-weight:700;color:var(--ac3);margin-bottom:4px">'+t.title+'</div>'
+   +'<div class="tw"><table class="tbl"><thead><tr><th>'+t.item+'</th><th>'+t.qty+'</th><th>'+t.unit+'</th></tr></thead><tbody>'
+   +items.map(function(it){ return '<tr><td>'+nm(t,it)+'</td><td>'+fq(t,it)+'</td><td>'+t[it.u]+'</td></tr>'; }).join('')
+   +'</tbody></table></div>'
+   +'<div style="font-size:9px;color:var(--ts);margin:6px 0">'+t.note+'</div>'
+   +'<div class="frow" style="gap:6px"><button class="btn bp" style="flex:1" onclick="bomExportCsv()">'+t.csv+'</button>'
+   +'<button class="btn bp" style="flex:1" onclick="bomToDevis()">'+t.dv+'</button></div>';
+  host.innerHTML=h;
+}
+window.bomExportCsv=function(){
+  var l=L(), t=T[l], items=compute();
+  if(!items.length){ try{ showToast(t.none,'w'); }catch(e){} return; }
+  var rows=[[t.item,t.qty,t.unit]].concat(items.map(function(it){ return [nm(t,it),fq(t,it),t[it.u]]; }));
+  var csv='\ufeff'+rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(';'); }).join('\r\n');
+  var nmEl=(document.getElementById('rsNetworkName')||{}).value||'';
+  nmEl=nmEl.replace(/[^A-Za-z0-9À-ÿ _-]/g,'').trim().replace(/\s+/g,'_').slice(0,40);
+  var d=new Date(), ds=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=t.file+(nmEl?'_'+nmEl:'')+'_'+ds+'.csv';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ try{ URL.revokeObjectURL(a.href); document.body.removeChild(a); }catch(e){} },500);
+};
+window.bomToDevis=function(){
+  var l=L(), t=T[l], items=compute();
+  if(!items.length){ try{ showToast(t.none,'w'); }catch(e){} return; }
+  if(typeof devisLines==='undefined') return;
+  devisLines=devisLines.filter(function(x){ return !x.bom; });
+  var base=Date.now();
+  items.forEach(function(it,i){
+    var q=it.u==='m'?Math.max(1,Math.ceil(it.q)):Math.round(it.q);
+    devisLines.push({id:base+i, bom:true, brand:t.brand, ref:'—', des:nm(t,it)+' ('+t[it.u]+')', qty:q, prix:0, tot:0});
+  });
+  try{ renderDevis(); saveDevis(); }catch(e){}
+  try{ showToast(items.length+t.ok,'s'); }catch(e){}
+  try{ logHist('BOM -> Devis: '+items.length); }catch(e){}
+};
+if(typeof window.renderReseau==='function'){
+  var orig=window.renderReseau;
+  window.renderReseau=function(){ var r=orig.apply(this,arguments); try{ render(); }catch(e){} return r; };
+}
+render();
+setInterval(function(){ var h=document.getElementById('bomPanel'); if(h&&h.getAttribute('data-bomlang')&&h.getAttribute('data-bomlang')!==L()) render(); },1000);
+})();
+
 </script>
 </body>
 </html>
