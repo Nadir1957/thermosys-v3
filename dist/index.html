@@ -9923,7 +9923,7 @@ function authShowLogin(){ authShowPanel('authLoginForm'); }
 
 function authShowError(elId, msg){
   var el = document.getElementById(elId);
-  if (el) { el.textContent = msg; el.style.display = 'block'; }
+  if (el) { el.textContent = (window.authMsg ? authMsg(msg) : msg); el.style.display = 'block'; }
 }
 function authHideError(elId){
   var el = document.getElementById(elId);
@@ -9936,9 +9936,9 @@ async function authSignIn(){
   var password = (document.getElementById('authPassword')||{}).value || '';
   if (!email || !password) { authShowError('authError', 'Please fill in all fields.'); return; }
   var btn = document.getElementById('authSignInBtn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Connexion...'; }
+  if (btn) { btn.disabled = true; btn.textContent = (window.authTxt ? authTxt('signing') : 'Connexion...'); }
   var res = await _sb.auth.signInWithPassword({ email: email, password: password });
-  if (btn) { btn.disabled = false; btn.textContent = 'Se connecter'; }
+  if (btn) { btn.disabled = false; btn.textContent = (window.authTxt ? authTxt('login') : 'Se connecter'); }
   if (res.error) {
     authShowError('authError', 'Incorrect email or password.');
     return;
@@ -9955,9 +9955,9 @@ async function authSignUp(){
   var _consent = document.getElementById('authConsentSignup');
   if (!_consent || !_consent.checked) { authShowError('authErrorSignup', 'Please accept the terms of use and the privacy policy to create an account. / Veuillez accepter les conditions générales d\u2019utilisation et la politique de confidentialité pour créer un compte.'); return; }
   var btn = document.getElementById('authSignUpBtn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Création...'; }
+  if (btn) { btn.disabled = true; btn.textContent = (window.authTxt ? authTxt('creating') : 'Création...'); }
   var res = await _sb.auth.signUp({ email: email, password: password });
-  if (btn) { btn.disabled = false; btn.textContent = 'Créer mon compte'; }
+  if (btn) { btn.disabled = false; btn.textContent = (window.authTxt ? authTxt('create') : 'Créer mon compte'); }
   if (res.error) {
     authShowError('authErrorSignup', res.error.message.indexOf('already') > -1 ? 'An account already exists with this email.' : 'Error: ' + res.error.message);
     return;
@@ -9980,9 +9980,9 @@ async function authSetNewPassword(){
   if (p1.length < 6) { authShowError('authErrorRecovery', 'Le mot de passe doit contenir au moins 6 caractères.'); return; }
   if (p1 !== p2) { authShowError('authErrorRecovery', 'Les deux mots de passe ne correspondent pas.'); return; }
   var btn = document.getElementById('authRecoveryBtn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement...'; }
+  if (btn) { btn.disabled = true; btn.textContent = (window.authTxt ? authTxt('saving') : 'Enregistrement...'); }
   var res = await _sb.auth.updateUser({ password: p1 });
-  if (btn) { btn.disabled = false; btn.textContent = 'Définir le mot de passe'; }
+  if (btn) { btn.disabled = false; btn.textContent = (window.authTxt ? authTxt('setpw') : 'Définir le mot de passe'); }
   if (res.error) {
     authShowError('authErrorRecovery', 'Erreur : ' + res.error.message);
     return;
@@ -20699,6 +20699,72 @@ setInterval(function(){
     else if(!es&&sp.getAttribute('data-es109')==='1'){ sp.innerHTML=sp.getAttribute('data-orig109'); sp.setAttribute('data-es109','0'); }
   }catch(e){}
 },600);
+})();
+</script>
+<script id="lang-es-data-29">
+/* es110 : pantalla de acceso segun el idioma (idempotent) */
+(function(){
+if(window.__es110) return; window.__es110=1;
+var T={
+ fr:{signing:'Connexion...',login:'Se connecter',creating:'Création...',create:'Créer mon compte',saving:'Enregistrement...',setpw:'Définir le mot de passe',
+  authLoginTitle:'Se connecter',authSignInBtn:'Se connecter',authNoAccountTxt:'Pas encore de compte ?',authSignupLink:'Créer un compte',authSignupTitle:'Créer un compte',
+  authSignUpBtn:'Créer mon compte',authBackToLogin:'← Retour à la connexion',authRecoveryTitle:'Nouveau mot de passe',authRecoveryTxt:'Choisissez un nouveau mot de passe pour votre compte.',authRecoveryBtn:'Définir le mot de passe',
+  authPendingTitle:'Compte en attente d’approbation',authPendingTxt:'Votre compte a bien été créé. Un administrateur doit encore approuver votre accès avant que vous puissiez utiliser l’application.',authPendingLogoutBtn:'Se déconnecter',
+  authDisabledTitle:'Compte désactivé',authDisabledTxt:'Votre accès a été désactivé. Contactez l’administrateur pour plus d’informations.',authDisabledLogoutBtn:'Se déconnecter',authLoadingTxt:'Connexion en cours...',
+  ph:{authEmail:'E-mail',authPassword:'Mot de passe',authEmailSignup:'E-mail',authPasswordSignup:'Mot de passe (6 caractères min.)',authRecoveryPassword:'Nouveau mot de passe (6 caractères min.)',authRecoveryPassword2:'Confirmer le mot de passe'}},
+ en:{signing:'Signing in...',login:'Log in',creating:'Creating...',create:'Create my account',saving:'Saving...',setpw:'Set new password',
+  authLoginTitle:'Log in',authSignInBtn:'Log in',authNoAccountTxt:'Don\'t have an account?',authSignupLink:'Create an account',authSignupTitle:'Create an account',
+  authSignUpBtn:'Create my account',authBackToLogin:'← Back to login',authRecoveryTitle:'New password',authRecoveryTxt:'Choose a new password for your account.',authRecoveryBtn:'Set new password',
+  authPendingTitle:'Account pending approval',authPendingTxt:'Your account was created successfully. An administrator still needs to approve your access before you can use the application.',authPendingLogoutBtn:'Log out',
+  authDisabledTitle:'Account disabled',authDisabledTxt:'Your access has been disabled. Contact the administrator for more information.',authDisabledLogoutBtn:'Log out',authLoadingTxt:'Signing in...',
+  ph:{authEmail:'Email',authPassword:'Password',authEmailSignup:'Email',authPasswordSignup:'Password (6 characters min.)',authRecoveryPassword:'New password (6 characters min.)',authRecoveryPassword2:'Confirm password'}},
+ es:{signing:'Iniciando sesión...',login:'Iniciar sesión',creating:'Creando...',create:'Crear mi cuenta',saving:'Guardando...',setpw:'Establecer la nueva contraseña',
+  authLoginTitle:'Iniciar sesión',authSignInBtn:'Iniciar sesión',authNoAccountTxt:'¿No tiene una cuenta?',authSignupLink:'Crear una cuenta',authSignupTitle:'Crear una cuenta',
+  authSignUpBtn:'Crear mi cuenta',authBackToLogin:'← Volver al inicio de sesión',authRecoveryTitle:'Nueva contraseña',authRecoveryTxt:'Elija una nueva contraseña para su cuenta.',authRecoveryBtn:'Establecer la nueva contraseña',
+  authPendingTitle:'Cuenta pendiente de aprobación',authPendingTxt:'Su cuenta se ha creado correctamente. Un administrador debe aún aprobar su acceso antes de que pueda usar la aplicación.',authPendingLogoutBtn:'Cerrar sesión',
+  authDisabledTitle:'Cuenta desactivada',authDisabledTxt:'Su acceso ha sido desactivado. Póngase en contacto con el administrador para obtener más información.',authDisabledLogoutBtn:'Cerrar sesión',authLoadingTxt:'Iniciando sesión...',
+  ph:{authEmail:'Correo electrónico',authPassword:'Contraseña',authEmailSignup:'Correo electrónico',authPasswordSignup:'Contraseña (6 caracteres mín.)',authRecoveryPassword:'Nueva contraseña (6 caracteres mín.)',authRecoveryPassword2:'Confirmar contraseña'}}
+};
+var M=[
+ {en:'Please fill in all fields.',fr:'Veuillez remplir tous les champs.',es:'Rellene todos los campos.'},
+ {en:'Incorrect email or password.',fr:'E-mail ou mot de passe incorrect.',es:'Correo electrónico o contraseña incorrectos.'},
+ {en:'Password must be at least 6 characters.',fr:'Le mot de passe doit contenir au moins 6 caractères.',es:'La contraseña debe tener al menos 6 caracteres.'},
+ {en:'An account already exists with this email.',fr:'Un compte existe déjà avec cet e-mail.',es:'Ya existe una cuenta con este correo electrónico.'},
+ {en:'Please fill in both fields.',fr:'Veuillez remplir les deux champs.',es:'Rellene los dos campos.'},
+ {en:'The two passwords do not match.',fr:'Les deux mots de passe ne correspondent pas.',es:'Las dos contraseñas no coinciden.'},
+ {en:'Please accept the terms of use and the privacy policy to create an account. / Veuillez accepter les conditions générales d’utilisation et la politique de confidentialité pour créer un compte.',es:'Acepte las condiciones de uso y la política de privacidad para crear una cuenta.'}
+];
+function L(){ try{ if(window.I18N3&&I18N3.get&&I18N3.get()==='es') return 'es'; }catch(e){} return window.lang==='fr'?'fr':'en'; }
+window.authTxt=function(k){ return T[L()][k]; };
+window.authMsg=function(m){ var l=L(), a;
+  for(var i=0;i<M.length;i++){ var r=M[i]; if(m===r.en||m===r.fr||m===r.es||(r.fr&&m===r.fr)){ var o=r[l]||r.en||m; return o; } }
+  if((a=/^Unable to verify your account \(error (.+)\)\. Please try again or contact the administrator\.$/.exec(m))){ return l==='fr'?'Impossible de vérifier votre compte (erreur '+a[1]+'). Réessayez ou contactez l’administrateur.':l==='es'?'No se pudo verificar su cuenta (error '+a[1]+'). Inténtelo de nuevo o póngase en contacto con el administrador.':m; }
+  if((a=/^(?:Erreur : |Error: )(.+)$/.exec(m))){ return (l==='fr'?'Erreur : ':'Error: ')+a[1]; }
+  return m; };
+var A='style="color:#7fa8c9;text-decoration:underline"';
+var ESH='He leído y acepto las <a href="#" onclick="showTerms();return false;" '+A+'>condiciones de uso</a> y la <a href="#" onclick="showPrivacyPolicy();return false;" '+A+'>política de privacidad</a>.';
+var last=null;
+function set(id,t){ var e=document.getElementById(id); if(e&&e.textContent!==t) e.textContent=t; }
+function apply(){
+  try{
+    if(!document.getElementById('authGate')) return;
+    var l=L(), d=T[l];
+    var c=document.getElementById('authConsentSignup'), sp=c&&c.nextElementSibling;
+    if(sp&&sp.tagName==='SPAN'){ var isEs=sp.getAttribute('data-es110')==='1';
+      if(l==='es'&&!isEs){ sp.setAttribute('data-orig110',sp.getAttribute('data-orig109')||sp.innerHTML); sp.innerHTML=ESH; sp.setAttribute('data-es110','1'); }
+      else if(l!=='es'&&isEs){ sp.innerHTML=sp.getAttribute('data-orig110'); sp.setAttribute('data-es110','0'); } }
+    if(l===last) return; last=l;
+    ['authLoginTitle','authNoAccountTxt','authSignupTitle','authBackToLogin','authRecoveryTitle','authRecoveryTxt','authPendingTitle','authPendingTxt','authDisabledTitle','authDisabledTxt'].forEach(function(id){ set(id,d[id]); });
+    var sb=document.getElementById('authSignInBtn'); if(sb&&!sb.disabled) sb.textContent=d.authSignInBtn;
+    var ub=document.getElementById('authSignUpBtn'); if(ub&&!ub.disabled) ub.textContent=d.authSignUpBtn;
+    var rb=document.getElementById('authRecoveryBtn'); if(rb&&!rb.disabled) rb.textContent=d.authRecoveryBtn;
+    set('authPendingLogoutBtn',d.authPendingLogoutBtn); set('authDisabledLogoutBtn',d.authDisabledLogoutBtn);
+    var lk=document.querySelector('#authLoginForm a[onclick*="authShowSignup"]'); if(lk) lk.textContent=d.authSignupLink;
+    var ld=document.querySelector('#authLoading div'); if(ld) ld.textContent=d.authLoadingTxt;
+    for(var k in d.ph){ var e=document.getElementById(k); if(e) e.placeholder=d.ph[k]; }
+  }catch(e){}
+}
+setInterval(apply,500); apply();
 })();
 </script>
 </body>
