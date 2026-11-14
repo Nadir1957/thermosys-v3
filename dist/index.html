@@ -12035,11 +12035,11 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
 
 
   var CDEF = [['Salle de production', 'gB', 50, 40, 3, 50, 0.005, 0, 0.015], ['Sas personnel', 'gC', 37.5, 6, 3, 30, 0.005, 0, 0.015], ['Couloir propre', 'gC', 25, 15, 3, 30, 0.005, 0, 0.015], ['Entrée (grade D)', 'gD', 12.5, 20, 3, 20, 0.005, 0, 0.02], ['Local 5', 'gD', 12.5, 20, 3, 20, 0.005, 0, 0.02], ['Local 6', 'gD', 12.5, 20, 3, 20, 0.005, 0, 0.02]];
-  function roomBox(i) {
+  function nmT(s) { var m = { 'Salle de production': 'Production room', 'Sas personnel': 'Personnel airlock', 'Couloir propre': 'Clean corridor', 'Entrée (grade D)': 'Entrance (grade D)', 'Local 5': 'Room 5', 'Local 6': 'Room 6' }; return (EN() && m[s]) ? m[s] : s; } function roomBox(i) {
     var d = CDEF[i - 1], id = function (k) { return 'at_r' + i + '_' + k; };
     var ni = function (k, v, st) { return '<input class="fi" id="' + id(k) + '" type="number" value="' + v + '" step="' + st + '" style="max-width:96px" oninput="atDeb()">'; };
     return '<details class="atsec" id="at_rbox' + i + '"' + (i <= 4 ? '' : ' style="display:none"') + '><summary data-cfr="Local ' + i + '" data-cen="Room ' + i + '">Local ' + i + '</summary>' +
-      row('Nom :', 'Name:', '<input class="fi" id="' + id('nm') + '" type="text" maxlength="40" value="' + q(d[0]) + '" style="max-width:100%;flex:1 1 55%" oninput="atDeb()">') +
+      row('Nom :', 'Name:', '<input class="fi" id="' + id('nm') + '" type="text" maxlength="40" value="' + q(nmT(d[0])) + '" style="max-width:100%;flex:1 1 55%" oninput="atDeb()">') +
       row('Classe :', 'Class:', '<select class="fsel" id="' + id('cls') + '" onchange="atRoomCls(' + i + ')" style="max-width:100%">' + CLSOPT.map(function (o) { return '<option value="' + o.id + '"' + (o.id === d[1] ? ' selected' : '') + ' data-cfr="' + q(o.fr) + '" data-cen="' + q(o.en) + '">' + o.fr + '</option>'; }).join('') + '</select>') +
       row('Pression par rapport à l\'extérieur (Pa) :', 'Pressure relative to outside (Pa):', ni('P', d[2], '0.5')) +
       row('Surface (m²) :', 'Area (m²):', ni('area', d[3], '0.5')) + row('Hauteur (m) :', 'Height (m):', ni('h', d[4], '0.1')) +
@@ -12250,7 +12250,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
 
   var SRC = [
     ['ISO 14644-1:2015', T0('Limites de particules par classe', 'Particle limits per class'), 'pub'],
-    ['EU GMP Annexe 1 (2022) §4.14, §4.29, §4.30, tableau 1', T0('10 Pa, < 20 min, 0,36–0,54 m/s, limites des grades A à D', '10 Pa, < 20 min, 0.36–0.54 m/s, grade A–D limits'), 'ver'],
+    ['EU GMP Annexe 1 (2022) §4.14, §4.29, §4.30, tableau 1', T0('10 Pa, < 20 min, 0,36–0,54 m/s, limites des grades A à D', '10 Pa, &lt; 20 min, 0.36–0.54 m/s, grade A–D limits'), 'ver'],
     ['FDA 2004 (production aseptique)', T0('20 vol/h acceptable en ISO 8 ; 10–15 Pa ; 0,45 m/s ± 20 %', '20 ACH acceptable for ISO 8; 10–15 Pa; 0.45 m/s ± 20 %'), 'ver'],
     ['OMS TRS 1010 annexe 8 (6.2, 6.5, 6.7)', T0('HEPA ≥ H13 ; pas de recyclage d\'air dangereux ; roues de récupération', 'HEPA ≥ H13; no recirculation of hazardous air; recovery wheels'), 'ver'],
     ['EN 1822', T0('Classes de filtres E10 à U17 (efficacité à la particule la plus pénétrante)', 'Filter classes E10 to U17 (efficiency at most penetrating particle size)'), 'sec'],
@@ -14301,7 +14301,7 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
   }
   var WARN = {
     dT: ['La température extérieure de base est supérieure ou égale à la température intérieure d\'un local : aucune déperdition de transmission.', 'The outdoor design temperature is not below the indoor temperature of a room: no transmission loss.'],
-    empty: ['Un local n\'a aucune paroi : seule la ventilation est comptée.', 'A room has no surfaces: only ventilation is counted.'],
+    empty: ['Au moins un local n\'a aucune paroi : seule la ventilation est comptée.', 'At least one room has no surfaces: only ventilation is counted.'],
     adj: ['Un local chauffé voisin est plus chaud que le local étudié : l\'échange interne est un apport, il réduit la charge du local.', 'An adjacent heated room is warmer than this room: the internal exchange is a gain and reduces its load.'],
     per: ['Un plancher sur terre-plein est présent sans périmètre extérieur : le calcul suppose un local carré dont tous les côtés donnent sur l\'extérieur (résultat prudent).', 'A ground floor is present without an exposed perimeter: the calculation assumes a square room exposed on all sides (conservative).'],
     tme: ['La température moyenne annuelle est supérieure à la température intérieure : vérifiez la saisie.', 'The annual mean temperature is above the indoor temperature: check the entry.'],
@@ -20602,6 +20602,45 @@ function wrapCode(){
   w.__es107=1; window.mcCode=w; return true;
 }
 if(!wrapCode()){ var n=0,iv=setInterval(function(){ if(wrapCode()||++n>60) clearInterval(iv); },500); }
+})();
+</script>
+<script id="lang-es-data-27">
+(window.I18N3=window.I18N3||{dict:{}});
+/* es108 : nombres por defecto, miles, aviso (idempotent) */
+(function(){
+var I=window.I18N3; if(!I||window.__es108) return; window.__es108=1;
+var D={
+"Production room":"Sala de producción",
+"Personnel airlock":"Esclusa de personal",
+"Clean corridor":"Pasillo limpio",
+"Entrance (grade D)":"Entrada (grado D)",
+"Room 5":"Local 5",
+"Room 6":"Local 6",
+"At least one room has no surfaces: only ventilation is counted.":"Al menos un local no tiene superficies: solo se cuenta la ventilación.",
+"10 Pa, &lt; 20 min, 0.36–0.54 m/s, grade A–D limits":"10 Pa, &lt; 20 min, 0,36–0,54 m/s, límites de grado A–D",
+"Salle de production":"Sala de producción",
+"Sas personnel":"Esclusa de personal",
+"Couloir propre":"Pasillo limpio",
+"Entrée (grade D)":"Entrada (grado D)",
+"Fan laws: 10 kW, 1,000 → 1,500 rpm":"Leyes del ventilador: 10 kW, 1\u00a0000 → 1\u00a0500 rpm",
+"Fresh air latent, 1,000 m³/h, ΔW = 2.7 g/kg":"Aire exterior latente, 1\u00a0000 m³/h, ΔW = 2,7 g/kg"
+};
+var E=(I.dict&&I.dict.es)||{};
+var re=/(^|[^\d.,])([1-9])\.(\d{3})(?= m(?:³\/h|(?![²³\w])))/g;
+for(var k in E){ var v=E[k]; if(typeof v!=='string') continue; var w=v.replace(re,'$1$2 $3'); if(w!==v) D[k]=w; }
+if(I.add) I.add('es',D);
+/* valores por defecto en campos de texto (los campos no pasan por el traductor) */
+var SEL='#ht_rname,input[id^="at_r"][id$="_nm"],input[oninput^="elC(\'name\'"]';
+setInterval(function(){
+  try{
+    if(!I.get||I.get()!=='es') return;
+    var els=document.querySelectorAll(SEL);
+    for(var i=0;i<els.length;i++){ var el=els[i]; if(el===document.activeElement||el.offsetParent===null) continue;
+      var t=I.x(el.value); if(t&&I.num) t=I.num(t);
+      if(t&&t!==el.value){ el.value=t; el.dispatchEvent(new Event('input',{bubbles:true})); }
+    }
+  }catch(e){}
+},700);
 })();
 </script>
 </body>
