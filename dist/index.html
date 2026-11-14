@@ -20946,6 +20946,75 @@ setInterval(function(){ var h=document.getElementById('bomPanel'); if(h&&h.getAt
 })();
 
 </script>
+<script id="bal-module">
+
+(function(){
+if(window.__bal123) return; window.__bal123=1;
+function L(){ try{ if(window.I18N3&&I18N3.get&&I18N3.get()==='es') return 'es'; }catch(e){} return (typeof lang!=='undefined'&&lang==='fr')?'fr':'en'; }
+var T={
+ fr:{title:'ÉQUILIBRAGE DES BRANCHES',br:'Branche (extrémité)',q:'Q (m³/h)',dp:'ΔP circuit (Pa)',ex:'Excédent (Pa)',kv:'Kv vanne (m³/h)',
+     crit:'Circuit critique : vanne de réglage ouverte en grand',none:'Aucune vanne nécessaire',
+     note:'Circuit de chaque branche = somme des pertes de charge des tronçons, de la source à l’extrémité. L’excédent par rapport au circuit critique est à absorber par une vanne d’équilibrage placée sur la branche : Kv = Q × √[(ρ/1000) ÷ ΔP en bar]. Calcul aux débits de conception. Organes terminaux (batterie, vanne de régulation) à inclure dans le dernier tronçon. Choisissez dans la documentation du fabricant une vanne dont le préréglage donne ce Kv.',dec:','},
+ en:{title:'BRANCH BALANCING',br:'Branch (end point)',q:'Q (m³/h)',dp:'Circuit ΔP (Pa)',ex:'Excess (Pa)',kv:'Valve Kv (m³/h)',
+     crit:'Critical circuit: balancing valve fully open',none:'No valve needed',
+     note:'Each branch circuit = sum of the segment pressure drops, from the source to the end point. The excess relative to the critical circuit is to be absorbed by a balancing valve on the branch: Kv = Q × √[(ρ/1000) ÷ ΔP in bar]. Calculated at design flows. Terminal devices (coil, control valve) must be included in the last segment. Choose from the manufacturer documentation a valve whose pre-setting gives this Kv.',dec:'.'},
+ es:{title:'EQUILIBRADO DE RAMALES',br:'Ramal (extremo)',q:'Q (m³/h)',dp:'ΔP circuito (Pa)',ex:'Exceso (Pa)',kv:'Kv válvula (m³/h)',
+     crit:'Circuito crítico: válvula de equilibrado totalmente abierta',none:'No se necesita válvula',
+     note:'Circuito de cada ramal = suma de las pérdidas de carga de los tramos, desde el origen hasta el extremo. El exceso respecto al circuito crítico debe absorberlo una válvula de equilibrado situada en el ramal: Kv = Q × √[(ρ/1000) ÷ ΔP en bar]. Cálculo con los caudales de diseño. Los elementos terminales (batería, válvula de regulación) deben incluirse en el último tramo. Elija en la documentación del fabricante una válvula cuyo preajuste dé este Kv.',dec:','}
+};
+function compute(){
+  var segs=(typeof reseauSegments!=='undefined'&&reseauSegments)||[];
+  if(!segs.length) return null;
+  var byId={}; segs.forEach(function(s){ byId[s.id]=s; });
+  var par={}; segs.forEach(function(s){ if(s.parentId!=null) par[s.parentId]=true; });
+  var leaves=segs.filter(function(s){ return !par[s.id]; });
+  var rows=leaves.map(function(lf){
+    var cum=0, cur=lf, g=0, names=[];
+    while(cur&&g<1000){ cum+=cur.dP; names.unshift(cur.name); cur=cur.parentId!=null?byId[cur.parentId]:null; g++; }
+    return {leaf:lf, total:cum, names:names};
+  });
+  var max=0; rows.forEach(function(r){ if(r.total>max) max=r.total; });
+  rows.forEach(function(r){
+    r.excess=max-r.total;
+    if(r.excess>=1 && r.leaf.Q>0){ r.kv=r.leaf.Q*Math.sqrt(((r.leaf.fluid||1000)/1000)/(r.excess/100000)); } else r.kv=null;
+  });
+  return {rows:rows,max:max};
+}
+function esc(x){ return String(x).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function nf(v,d,dec){ return v.toFixed(d).replace('.',dec); }
+function host(){
+  var h=document.getElementById('balPanel'); if(h) return h;
+  var b=document.getElementById('bomPanel')||document.getElementById('rsSvgWrap'); if(!b||!b.parentNode) return null;
+  h=document.createElement('div'); h.id='balPanel'; h.style.marginTop='12px';
+  b.parentNode.insertBefore(h,document.getElementById('bomPanel')||b.nextSibling);
+  return h;
+}
+function render(){
+  var h=host(); if(!h) return;
+  var l=L(), t=T[l], c=compute();
+  h.setAttribute('data-ballang',l);
+  if(!c){ h.innerHTML=''; return; }
+  var body=c.rows.map(function(r){
+    var isCrit=r.excess<1;
+    var last=esc(r.leaf.name);
+    var kvCell=isCrit?'<span style="color:var(--ts)">'+t.crit+'</span>':nf(r.kv,r.kv<100?1:0,t.dec);
+    return '<tr'+(isCrit?' style="background:rgba(0,229,255,.07)"':'')+'><td>'+last+'<div style="font-size:8.5px;color:var(--ts)">'+r.names.map(esc).join(' → ')+'</div></td>'
+      +'<td>'+nf(r.leaf.Q,1,t.dec)+'</td><td>'+Math.round(r.total)+'</td><td>'+(isCrit?'—':Math.round(r.excess))+'</td><td>'+kvCell+'</td></tr>';
+  }).join('');
+  h.innerHTML='<div style="font-size:10px;font-weight:700;color:var(--ac3);margin-bottom:4px">'+t.title+'</div>'
+   +'<div class="tw"><table class="tbl"><thead><tr><th>'+t.br+'</th><th>'+t.q+'</th><th>'+t.dp+'</th><th>'+t.ex+'</th><th>'+t.kv+'</th></tr></thead><tbody>'+body+'</tbody></table></div>'
+   +'<div style="font-size:9px;color:var(--ts);margin:6px 0">'+t.note+'</div>';
+}
+window.__balCompute=compute;
+if(typeof window.renderReseau==='function'){
+  var orig=window.renderReseau;
+  window.renderReseau=function(){ var r=orig.apply(this,arguments); try{ render(); }catch(e){} return r; };
+}
+render();
+setInterval(function(){ var h=document.getElementById('balPanel'); if(h&&h.getAttribute('data-ballang')&&h.getAttribute('data-ballang')!==L()) render(); },1000);
+})();
+
+</script>
 </body>
 </html>
 
