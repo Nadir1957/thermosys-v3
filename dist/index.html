@@ -31,6 +31,7 @@
 
 
 
+<style id="authflash">#authGate,#landingPage{visibility:hidden;animation:authShow 0s linear 1.5s forwards}@keyframes authShow{to{visibility:visible}}</style>
 </head>
 <body>
 <div id="landingPage" style="display:none;position:fixed;inset:0;background:#0a1420;z-index:100001;align-items:center;justify-content:center;padding:20px;font-family:sans-serif;text-align:center;overflow-y:auto">
@@ -20734,7 +20735,7 @@ var M=[
  {en:'The two passwords do not match.',fr:'Les deux mots de passe ne correspondent pas.',es:'Las dos contraseñas no coinciden.'},
  {en:'Please accept the terms of use and the privacy policy to create an account. / Veuillez accepter les conditions générales d’utilisation et la politique de confidentialité pour créer un compte.',es:'Acepte las condiciones de uso y la política de privacidad para crear una cuenta.'}
 ];
-function L(){ try{ if(window.I18N3&&I18N3.get&&I18N3.get()==='es') return 'es'; }catch(e){} return window.lang==='fr'?'fr':'en'; }
+function L(){ try{ if(window.I18N3&&I18N3.get&&I18N3.get()==='es') return 'es'; }catch(e){} try{ if(localStorage.getItem('thermosys_es')==='1'&&localStorage.getItem('thermosys_lang3')==='es') return 'es'; }catch(e){} return window.lang==='fr'?'fr':'en'; } window.authLang=L;
 window.authTxt=function(k){ return T[L()][k]; };
 window.authMsg=function(m){ var l=L(), a;
   for(var i=0;i<M.length;i++){ var r=M[i]; if(m===r.en||m===r.fr||m===r.es||(r.fr&&m===r.fr)){ var o=r[l]||r.en||m; return o; } }
@@ -20765,6 +20766,33 @@ function apply(){
   }catch(e){}
 }
 setInterval(apply,500); apply();
+})();
+</script>
+<script id="lang-es-data-30">
+/* es111 : pagina de bienvenida y subtitulos segun el idioma (idempotent) */
+(function(){
+if(window.__es111) return; window.__es111=1;
+var M={
+ 'HVAC WORKSTATION':{fr:'STATION DE TRAVAIL HVAC',es:'ESTACIÓN DE TRABAJO HVAC'},
+ 'Professional HVAC engineering calculations, in one bilingual tool. Load, ductwork, piping, and code compliance.':{fr:'Calculs professionnels de génie climatique dans un seul outil bilingue : charges thermiques, réseaux aérauliques, tuyauteries et conformité réglementaire.',es:'Cálculos profesionales de ingeniería HVAC en una sola herramienta trilingüe. Cargas térmicas, conductos, tuberías y cumplimiento normativo.'},
+ '20+ calculation modules':{fr:'Plus de 20 modules de calcul',es:'Más de 20 módulos de cálculo'},
+ 'Bilingual French/English':{fr:'Bilingue français/anglais',es:'Trilingüe francés/inglés/español'},
+ 'PDF reports and quotes':{fr:'Rapports et devis PDF',es:'Informes y presupuestos en PDF'},
+ 'Get started':{fr:'Commencer',es:'Comenzar'}
+};
+function lang(){ return (window.authLang?authLang():(window.lang==='fr'?'fr':'en')); }
+function walk(root,l){
+  if(!root) return; var els=root.getElementsByTagName('*');
+  for(var i=0;i<els.length;i++){ var e=els[i]; if(e.children.length) continue;
+    var o=e.getAttribute('data-o111'); var k=o||e.textContent.trim();
+    var r=M[k]; if(!r) continue;
+    if(!o) e.setAttribute('data-o111',k);
+    var t=(l==='en')?k:(r[l]||k);
+    if(e.textContent!==t) e.textContent=t;
+  }
+}
+function run(){ try{ var l=lang(); var lp=document.getElementById('landingPage'), ag=document.getElementById('authGate'); walk(lp,l); walk(ag,l); if(lp) lp.style.visibility='visible'; if(ag) ag.style.visibility='visible'; }catch(e){} }
+setInterval(run,500); run();
 })();
 </script>
 </body>
