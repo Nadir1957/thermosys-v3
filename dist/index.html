@@ -21037,6 +21037,102 @@ setInterval(function(){
 })();
 
 </script>
+<script id="net-pdf-module">
+
+(function(){
+if(window.__pdf125) return; window.__pdf125=1;
+function L(){ try{ if(window.I18N3&&I18N3.get&&I18N3.get()==='es') return 'es'; }catch(e){} return (typeof lang!=='undefined'&&lang==='fr')?'fr':'en'; }
+var T={
+ fr:{doc:'ÉQUILIBRAGE ET NOMENCLATURE',bal:'ÉQUILIBRAGE DES BRANCHES',bom:'NOMENCLATURE DU RÉSEAU',br:'Branche (extrémité)',q:'Q (m³/h)',dp:'ΔP circuit (Pa)',ex:'Excédent (Pa)',kv:'Kv vanne (m³/h)',
+     crit:'Circuit critique (vanne ouverte en grand)',item:'Désignation',qty:'Quantité',unit:'Unité',m:'m',pc:'pcs',pipe:'Tube',elbow:'Coude 90°',tee:'Té',valve:'Vanne',dec:',',
+     note:'Excédent de pression par rapport au circuit critique, à absorber par une vanne d’équilibrage sur la branche : Kv = Q × √[(ρ/1000) ÷ ΔP en bar]. Calcul aux débits de conception ; organes terminaux à inclure dans le dernier tronçon.',
+     note2:'Quantités déduites des tronçons saisis, sans chutes ni coupes.',foot:'Calcul indicatif, à vérifier avant exécution.'},
+ en:{doc:'BALANCING AND BILL OF MATERIALS',bal:'BRANCH BALANCING',bom:'NETWORK BILL OF MATERIALS',br:'Branch (end point)',q:'Q (m³/h)',dp:'Circuit ΔP (Pa)',ex:'Excess (Pa)',kv:'Valve Kv (m³/h)',
+     crit:'Critical circuit (balancing valve fully open)',item:'Item',qty:'Quantity',unit:'Unit',m:'m',pc:'pcs',pipe:'Pipe',elbow:'90° elbow',tee:'Tee',valve:'Valve',dec:'.',
+     note:'Pressure excess relative to the critical circuit, to be absorbed by a balancing valve on the branch: Kv = Q × √[(ρ/1000) ÷ ΔP in bar]. Calculated at design flows; terminal devices to be included in the last segment.',
+     note2:'Quantities derived from the entered segments, without cutting allowance or waste.',foot:'Indicative calculation, verify before construction.'},
+ es:{doc:'EQUILIBRADO Y NOMENCLATURA',bal:'EQUILIBRADO DE RAMALES',bom:'NOMENCLATURA DE LA RED',br:'Ramal (extremo)',q:'Q (m³/h)',dp:'ΔP circuito (Pa)',ex:'Exceso (Pa)',kv:'Kv válvula (m³/h)',
+     crit:'Circuito crítico (válvula de equilibrado totalmente abierta)',item:'Designación',qty:'Cantidad',unit:'Unidad',m:'m',pc:'uds.',pipe:'Tubo',elbow:'Codo 90°',tee:'Te',valve:'Válvula',dec:',',
+     note:'Exceso de presión respecto al circuito crítico, que debe absorber una válvula de equilibrado en el ramal: Kv = Q × √[(ρ/1000) ÷ ΔP en bar]. Cálculo con los caudales de diseño; los elementos terminales deben incluirse en el último tramo.',
+     note2:'Cantidades deducidas de los tramos introducidos, sin recortes ni mermas.',foot:'Cálculo indicativo, verificar antes de la ejecución.'}
+};
+function esc(x){ return String(x).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function nf(v,d,dec){ return v.toFixed(d).replace('.',dec); }
+function bomItems(){
+  var segs=(typeof reseauSegments!=='undefined'&&reseauSegments)||[];
+  var pipes={},el={},te={},va={};
+  segs.forEach(function(s){ var d=s.D; if(!(d>0)) return; pipes[d]=(pipes[d]||0)+(+s.L||0); if(s.coudes>0) el[d]=(el[d]||0)+s.coudes; if(s.tes>0) te[d]=(te[d]||0)+s.tes; if(s.vannes>0) va[d]=(va[d]||0)+s.vannes; });
+  var out=[];
+  function add(map,kind,u){ Object.keys(map).map(Number).sort(function(a,b){return a-b;}).forEach(function(d){ if(map[d]>0) out.push({kind:kind,d:d,q:map[d],u:u}); }); }
+  add(pipes,'pipe','m'); add(el,'elbow','pc'); add(te,'tee','pc'); add(va,'valve','pc');
+  return out;
+}
+var TD='padding:5px 8px;border:1pt solid #dde;font-size:9pt;';
+function page2(){
+  var l=L(), t=T[l];
+  var c=(typeof window.__balCompute==='function')?window.__balCompute():null;
+  var items=bomItems();
+  if(!c&&!items.length) return '';
+  var h='<div class="page">'
+   +'<div class="hdr"><div><div class="logo">THERMOSYS</div><div style="font-size:7pt;color:#4a6a8a;letter-spacing:3px;margin-top:2mm">HVAC WORKSTATION v3</div></div>'
+   +'<div><div class="doc-type" style="font-size:10.5pt;max-width:78mm;text-align:center">'+t.doc+'</div></div></div>';
+  if(c){
+    h+='<div class="info-title" style="margin-bottom:2mm">'+t.bal+'</div><table><thead><tr><th>'+t.br+'</th><th>'+t.q+'</th><th>'+t.dp+'</th><th>'+t.ex+'</th><th>'+t.kv+'</th></tr></thead><tbody>'
+     +c.rows.map(function(r){
+        var crit=r.excess<1;
+        return '<tr style="'+(crit?'background:#fdecea':'background:#fff')+'"><td style="'+TD+'">'+esc(r.leaf.name)+(crit?' ★':'')+'</td>'
+         +'<td style="'+TD+'text-align:center">'+nf(r.leaf.Q,1,t.dec)+'</td><td style="'+TD+'text-align:center">'+Math.round(r.total)+'</td>'
+         +'<td style="'+TD+'text-align:center">'+(crit?'—':Math.round(r.excess))+'</td>'
+         +'<td style="'+TD+'text-align:center;font-weight:700">'+(crit?'<span style="font-weight:400;font-size:7.5pt">'+t.crit+'</span>':nf(r.kv,r.kv<100?1:0,t.dec))+'</td></tr>';
+      }).join('')+'</tbody></table>'
+     +'<div style="font-size:7pt;color:#555;margin:-3mm 0 6mm">'+t.note+'</div>';
+  }
+  if(items.length){
+    h+='<div class="info-title" style="margin-bottom:2mm">'+t.bom+'</div><table><thead><tr><th>'+t.item+'</th><th>'+t.qty+'</th><th>'+t.unit+'</th></tr></thead><tbody>'
+     +items.map(function(it){
+        var q=it.u==='m'?(Math.round(it.q*10)/10):Math.round(it.q);
+        return '<tr><td style="'+TD+'">'+t[it.kind]+' Ø'+it.d+' mm</td><td style="'+TD+'text-align:center">'+String(q).replace('.',t.dec)+'</td><td style="'+TD+'text-align:center">'+t[it.u]+'</td></tr>';
+      }).join('')+'</tbody></table>'
+     +'<div style="font-size:7pt;color:#555;margin:-3mm 0 6mm">'+t.note2+'</div>';
+  }
+  h+='<div class="footer">Thermosys HVAC Workstation v3 — '+t.foot+'</div></div>';
+  return h;
+}
+var DL='function _rspdfDownload(){var els=document.querySelectorAll(".page");if(!els.length||!window.html2canvas){_rspdfPrint();return;}var jsPDFlib=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;if(!jsPDFlib){_rspdfPrint();return;}var doc=new jsPDFlib({orientation:"portrait",unit:"mm",format:"a4"});var i=0;function nx(){if(i>=els.length){doc.save("__NAME__.pdf");return;}html2canvas(els[i],{scale:2,useCORS:true,backgroundColor:"#ffffff"}).then(function(canvas){if(i>0)doc.addPage();var img=canvas.toDataURL("image/jpeg",0.95);var h=canvas.height*210/canvas.width;doc.addImage(img,"JPEG",0,0,210,Math.min(h,297));i++;nx();}).catch(function(e){_rspdfPrint();});}nx();}';
+function transform(h){
+  try{
+    if(typeof h!=='string'||h.indexOf('function _rspdfDownload(){var el=document.querySelector(".page");')<0) return h;
+    var p2=page2(); if(!p2) return h;
+    var a=h.indexOf('function _rspdfDownload(){'), b=h.indexOf('}window.onload=function(){Promise.all([_rspdfLoad(',a);
+    if(a<0||b<0) return h;
+    var seg=h.slice(a,b+1);
+    var m=seg.match(/doc\.save\("([^"]*)\.pdf"\)/); var nm=m?m[1]:'Thermosys_Network';
+    h=h.slice(0,a)+DL.replace('__NAME__',nm)+h.slice(b+1);
+    var k=h.indexOf('<script>function _rspdfLoad(');
+    if(k<0) return h;
+    h=h.slice(0,k)+p2+h.slice(k);
+    h=h.replace('</style>','.page+.page{margin-top:10mm}@media print{.page+.page{page-break-before:always;margin-top:0!important}}</style>');
+  }catch(e){}
+  return h;
+}
+if(typeof window.exportReseau==='function'){
+  var orig=window.exportReseau;
+  window.exportReseau=function(){
+    var oo=window.open;
+    window.open=function(){
+      var w=oo.apply(this,arguments);
+      try{
+        window.open=oo;
+        if(w&&w.document){ var ow=w.document.write.bind(w.document); w.document.write=function(h){ return ow(transform(h)); }; }
+      }catch(e){}
+      return w;
+    };
+    try{ return orig.apply(this,arguments); } finally { window.open=oo; }
+  };
+}
+})();
+
+</script>
 </body>
 </html>
 
