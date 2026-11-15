@@ -20048,7 +20048,7 @@ function ex85(k){
   if(m(/^Do not oversize: a valve that is too large lowers its authority \(a = ΔPvalve \/ \(ΔPvalve \+ ΔPcircuit\), at least (\S+), (\S+) recommended\)\. Manufacturer ranges differ: check the real Kvs of the chosen model\.$/)) return lead+'No sobredimensionar: una válvula demasiado grande reduce su autoridad (a = ΔPválvula / (ΔPválvula + ΔPcircuito), como mínimo '+dc(a[1].replace(/,$/,''))+'; se recomienda '+dc(a[2])+'). Los rangos de los fabricantes difieren: compruebe el Kvs real del modelo elegido.';
   /* red de tuberias */
   if(m(/^Number of segments \(full network\)(\s*): (.+)$/)) return lead+'Número de tramos (red completa)'+a[1]+': '+a[2];
-  if(m(/^Most unfavorable circuit(\s*): (?:Segment|Tramo) (\d+)$/)) return lead+'Circuito más desfavorable'+a[1]+': Tramo '+a[2];
+  if(m(/^Most unfavorable circuit(\s*): (.+)$/)) return lead+'Circuito más desfavorable'+a[1]+': '+a[2].replace(/\bSegment (\d+)/g,'Tramo $1');
   if(m(/^Circuit length(\s*): (.+)$/)) return lead+'Longitud del circuito'+a[1]+': '+dc(a[2]);
   if(m(/^(\s*)incl\. linear losses(\s*): (.+)$/)) return lead+a[1]+'incl. pérdidas lineales'+a[2]+': '+dc(a[3]);
   if(m(/^(\s*)incl\. singular losses(\s*): (.+)$/)) return lead+a[1]+'incl. pérdidas singulares'+a[2]+': '+dc(a[3]);
@@ -21012,6 +21012,28 @@ if(typeof window.renderReseau==='function'){
 }
 render();
 setInterval(function(){ var h=document.getElementById('balPanel'); if(h&&h.getAttribute('data-ballang')&&h.getAttribute('data-ballang')!==L()) render(); },1000);
+})();
+
+</script>
+<script id="net-lang-module">
+
+(function(){
+if(window.__net124) return; window.__net124=1;
+function L(){ try{ if(window.I18N3&&I18N3.get&&I18N3.get()==='es') return 'es'; }catch(e){} return (typeof lang!=='undefined'&&lang==='fr')?'fr':'en'; }
+var last=L();
+setInterval(function(){
+  var c=L(); if(c===last) return;
+  last=c;
+  setTimeout(function(){
+    try{
+      if(L()!==c) return;
+      if(typeof reseauSegments!=='undefined'&&reseauSegments.length&&typeof renderReseau==='function'){
+        var lh=window.logHist; window.logHist=function(){};
+        try{ renderReseau(); } finally { window.logHist=lh; }
+      }
+    }catch(e){}
+  },1500);
+},500);
 })();
 
 </script>
