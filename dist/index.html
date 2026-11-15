@@ -21316,6 +21316,124 @@ setInterval(function(){ try{ ensure(); }catch(e){} },800);
 })();
 
 </script>
+<script id="dxf-module">
+
+(function(){
+if(window.__dxf127) return; window.__dxf127=1;
+function L(){ try{ if(window.I18N3&&I18N3.get&&I18N3.get()==='es') return 'es'; }catch(e){} return (typeof lang!=='undefined'&&lang==='fr')?'fr':'en'; }
+var T={
+ fr:{title:'EXPORT CAO (DXF)',btn:'⬇ Exporter en DXF',note:'Schéma développé : chaque tronçon est tracé à sa longueur réelle (1 unité = 1 m), les branches sont empilées. Ce n’est pas un plan géométrique : à utiliser comme base de schéma dans AutoCAD, BricsCAD, DraftSight ou LibreCAD. Calques : RESEAU, CRITIQUE, TEXTES. Les lettres accentuées sont converties en lettres simples ; les caractères non latins (arabe, par exemple) ne sont pas conservés dans le DXF.',none:'Aucun tronçon à exporter',file:'Thermosys_Reseau',
+     head:'RESEAU HYDRAULIQUE - SCHEMA DEVELOPPE',sc:'Longueurs reelles en metres (1 unite = 1 m) - schema non geometrique',crit:'Circuit critique en rouge'},
+ en:{title:'CAD EXPORT (DXF)',btn:'⬇ Export DXF',note:'Developed diagram: each segment is drawn at its real length (1 unit = 1 m), branches are stacked. This is not a geometric plan: use it as a diagram base in AutoCAD, BricsCAD, DraftSight or LibreCAD. Layers: RESEAU, CRITIQUE, TEXTES. Accented letters are converted to plain letters; non-Latin characters (Arabic, for example) are not kept in the DXF.',none:'No segment to export',file:'Thermosys_Network',
+     head:'HYDRAULIC NETWORK - DEVELOPED DIAGRAM',sc:'Real lengths in metres (1 unit = 1 m) - non-geometric diagram',crit:'Critical circuit in red'},
+ es:{title:'EXPORTACIÓN CAD (DXF)',btn:'⬇ Exportar a DXF',note:'Esquema desarrollado: cada tramo se dibuja con su longitud real (1 unidad = 1 m), los ramales se apilan. No es un plano geométrico: úselo como base de esquema en AutoCAD, BricsCAD, DraftSight o LibreCAD. Capas: RESEAU, CRITIQUE, TEXTES. Las letras acentuadas se convierten en letras simples; los caracteres no latinos (árabe, por ejemplo) no se conservan en el DXF.',none:'Ningún tramo que exportar',file:'Thermosys_Red',
+     head:'RED HIDRAULICA - ESQUEMA DESARROLLADO',sc:'Longitudes reales en metros (1 unidad = 1 m) - esquema no geometrico',crit:'Circuito critico en rojo'}
+};
+var SPEC={'ø':'o','Ø':'O','œ':'oe','Œ':'OE','æ':'ae','Æ':'AE','ß':'ss','đ':'d','Đ':'D','ł':'l','Ł':'L','ı':'i'};
+function asc(x){ return String(x==null?'':x).replace(/[øØœŒæÆßđĐłŁı]/g,function(c){ return SPEC[c]; }).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\x20-\x7e]/g,'?'); }
+function num(v){ return (Math.round(v*10000)/10000).toString(); }
+function build(){
+  var segs=(typeof reseauSegments!=='undefined'&&reseauSegments)||[];
+  if(!segs.length) return null;
+  var l=L(), t=T[l];
+  var byId={}; segs.forEach(function(s){ byId[s.id]=s; });
+  var kids={}; var roots=[];
+  segs.forEach(function(s){ if(s.parentId!=null&&byId[s.parentId]){ (kids[s.parentId]=kids[s.parentId]||[]).push(s); } else roots.push(s); });
+  var critIds={};
+  try{ computeCriticalPath().path.forEach(function(s){ critIds[s.id]=1; }); }catch(e){}
+  var pos={}, row=0, maxX=0, guard=0;
+  function place(s,x0,d){
+    if(++guard>5000) return;
+    var len=Math.max(0.1,+s.L||0.1);
+    var ks=kids[s.id]||[];
+    var info={x0:x0,x1:x0+len,y:0,d:d||0};
+    pos[s.id]=info;
+    if(x0+len>maxX) maxX=x0+len;
+    if(!ks.length){ info.y=row; row++; }
+    else { ks.forEach(function(k){ place(k,x0+len,(d||0)+1); }); info.y=pos[ks[0].id].y; }
+  }
+  roots.forEach(function(r){ place(r,0,0); });
+  var rows=Math.max(1,row);
+  var th=Math.max(0.25,maxX/70);          // hauteur de texte
+  var gap=th*10;                            // interligne entre branches
+  var E=[];
+  function put(a){ E.push(a.join('\r\n')); }
+  function line(layer,x1,y1,x2,y2){ put(['0','LINE','8',layer,'10',num(x1),'20',num(y1),'30','0','11',num(x2),'21',num(y2),'31','0']); }
+  function circle(layer,x,y,r){ put(['0','CIRCLE','8',layer,'10',num(x),'20',num(y),'30','0','40',num(r)]); }
+  function text(layer,x,y,h,str,center){
+    var a=['0','TEXT','8',layer,'10',num(x),'20',num(y),'30','0','40',num(h),'1',asc(str)];
+    if(center){ a=a.concat(['72','1','11',num(x),'21',num(y),'31','0']); }
+    put(a);
+  }
+  function Y(s){ return -pos[s.id].y*gap; }
+  segs.forEach(function(s){
+    var p=pos[s.id]; if(!p) return;
+    var ly=critIds[s.id]?'CRITIQUE':'RESEAU';
+    var y=Y(s);
+    if(s.parentId!=null&&pos[s.parentId]){ var py=Y(byId[s.parentId]); if(Math.abs(py-y)>1e-9) line(ly,p.x0,py,p.x0,y); }
+    line(ly,p.x0,y,p.x1,y);
+    circle(ly,p.x1,y,th*0.35);
+    var cx=(p.x0+p.x1)/2;
+    text('TEXTES',cx,y+th*0.9,th,s.name,true);
+    var q=(s.Q!=null&&isFinite(s.Q))?(' Q='+(+s.Q).toFixed(1)+'m3/h'):'';
+    var up=((p.x1-p.x0)<th*11)&&(p.d%2===1);
+    text('TEXTES',cx,up?y+th*3.7:y-th*1.9,th*0.7,'DN'+s.D+' L='+(+s.L||0)+'m'+q,true);
+    text('TEXTES',cx,up?y+th*2.7:y-th*3.0,th*0.7,(+s.dP||0).toFixed(0)+' Pa',true);
+  });
+  var nm=((document.getElementById('rsNetworkName')||{}).value||'').trim();
+  var top=th*4;
+  text('TEXTES',0,top+th*3,th*1.4,t.head+(nm?' - '+nm:''),false);
+  text('TEXTES',0,top+th*1.2,th*0.8,t.sc,false);
+  text('TEXTES',0,top,th*0.8,t.crit+' - Thermosys v3',false);
+  var layers=[['RESEAU',4],['CRITIQUE',1],['TEXTES',7]];
+  var H=['0','SECTION','2','HEADER','9','$ACADVER','1','AC1009','0','ENDSEC'];
+  var TB=['0','SECTION','2','TABLES',
+    '0','TABLE','2','LTYPE','70','1','0','LTYPE','2','CONTINUOUS','70','0','3','Solid line','72','65','73','0','40','0.0','0','ENDTAB',
+    '0','TABLE','2','LAYER','70',String(layers.length)];
+  layers.forEach(function(a){ TB=TB.concat(['0','LAYER','2',a[0],'70','0','62',String(a[1]),'6','CONTINUOUS']); });
+  TB=TB.concat(['0','ENDTAB','0','ENDSEC']);
+  var out=H.join('\r\n')+'\r\n'+TB.join('\r\n')+'\r\n0\r\nSECTION\r\n2\r\nENTITIES\r\n'+E.join('\r\n')+'\r\n0\r\nENDSEC\r\n0\r\nEOF\r\n';
+  return {dxf:out,count:E.length};
+}
+window.__dxfBuild=build;
+window.dxfExport=function(){
+  var l=L(), t=T[l], r=build();
+  if(!r){ try{ showToast(t.none,'w'); }catch(e){} return; }
+  var nm=((document.getElementById('rsNetworkName')||{}).value||'');
+  nm=nm.replace(/[^A-Za-z0-9À-ÿ _-]/g,'').trim().replace(/\s+/g,'_').slice(0,40);
+  var d=new Date(), ds=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([r.dxf],{type:'application/dxf'}));
+  a.download=t.file+(nm?'_'+nm:'')+'_'+ds+'.dxf';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ try{ URL.revokeObjectURL(a.href); document.body.removeChild(a); }catch(e){} },500);
+};
+function host(){
+  var h=document.getElementById('dxfPanel'); if(h) return h;
+  var b=document.getElementById('balPanel')||document.getElementById('bomPanel')||document.getElementById('rsSvgWrap'); if(!b||!b.parentNode) return null;
+  h=document.createElement('div'); h.id='dxfPanel'; h.style.marginTop='12px';
+  b.parentNode.insertBefore(h,b);
+  return h;
+}
+function render(){
+  var h=host(); if(!h) return;
+  var l=L(), t=T[l];
+  h.setAttribute('data-dxflang',l);
+  var segs=(typeof reseauSegments!=='undefined'&&reseauSegments)||[];
+  if(!segs.length){ h.innerHTML=''; return; }
+  h.innerHTML='<div style="font-size:10px;font-weight:700;color:var(--ac3);margin-bottom:4px">'+t.title+'</div>'
+   +'<div style="font-size:9px;color:var(--ts);margin:0 0 6px">'+t.note+'</div>'
+   +'<div class="frow" style="gap:6px"><button class="btn bp" style="flex:1" onclick="dxfExport()">'+t.btn+'</button></div>';
+}
+if(typeof window.renderReseau==='function'){
+  var orig=window.renderReseau;
+  window.renderReseau=function(){ var r=orig.apply(this,arguments); try{ render(); }catch(e){} return r; };
+}
+render();
+setInterval(function(){ var h=document.getElementById('dxfPanel'); if(h&&h.getAttribute('data-dxflang')&&h.getAttribute('data-dxflang')!==L()) render(); },1000);
+})();
+
+</script>
 </body>
 </html>
 
