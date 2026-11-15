@@ -21434,6 +21434,379 @@ setInterval(function(){ var h=document.getElementById('dxfPanel'); if(h&&h.getAt
 })();
 
 </script>
+<script id="mesh-module">
+(function(){
+if(window.__mesh128) return; window.__mesh128=1;
+function L(){ try{ if(window.I18N3&&I18N3.get&&I18N3.get()==='es') return 'es'; }catch(e){} return (typeof lang!=='undefined'&&lang==='fr')?'fr':'en'; }
+var T={
+ fr:{tab:'Réseau maillé',title:'RÉSEAU MAILLÉ — DÉBITS ET PRESSIONS',
+  intro:'Réseau bouclé (anneaux) : saisissez les nœuds et les conduites. Le calcul répartit les débits entre les chemins par l’algorithme du gradient global (Todini-Pilati), celui d’EPANET. Il donne la même solution physique que la méthode de Hardy Cross, avec une convergence beaucoup plus rapide. Pertes de charge : Darcy-Weisbach, Swamee-Jain, transition laminaire/turbulent comme EPANET. Pressions relatives, sans effet d’altitude.',
+  fluid:'Fluide :',w:'Eau 20 °C',g30:'Glycol 30 %',g40:'Glycol 40 %',
+  nodesT:'NŒUDS',pipesT:'CONDUITES',addNode:'+ Nœud',addPipe:'+ Conduite',example:'Exemple',clear:'Effacer',
+  name:'Nom',type:'Type',val:'Valeur',dem:'Demande',src:'Source',uDem:'m³/h',uSrc:'kPa',
+  from:'De',to:'Vers',len:'L (m)',dia:'D int. (mm)',rough:'ε (mm)',k:'K accessoires',
+  resT:'RÉSULTATS',pipeRes:'Conduites',nodeRes:'Nœuds',pipe:'Conduite',dir:'Sens',q:'Q (m³/h)',v:'v (m/s)',dp:'ΔP (kPa)',node:'Nœud',pr:'Pression (kPa)',hd:'Charge (m)',dm:'Demande (m³/h)',
+  s_loops:'Boucles indépendantes',s_it:'Itérations',s_mass:'Écart de débit max (m³/h)',s_en:'Écart d’énergie max (Pa)',s_src:'Débit fourni par les sources (m³/h)',s_vmax:'Vitesse max (m/s)',s_pmin:'Pression min (kPa)',
+  eNoSrc:'Ajoutez au moins un nœud « Source » (pression imposée).',eNoPipe:'Ajoutez des conduites pour lancer le calcul.',eUnreach:'Nœud(s) non relié(s) à une source : ',eBad:'Données invalides (longueur, diamètre, rugosité, K ou nœuds) : ',eConv:'Le calcul n’a pas convergé : vérifiez les données.',eSingular:'Système singulier : vérifiez que le réseau est relié aux sources.',
+  crit:'Critère de contrôle :',crA:'ASHRAE (4 ft/s ; 4 ft/100 ft)',crC:'Vitesse limite personnalisée',vlim:'Vitesse limite (m/s) :',colL:'ΔP/L (Pa/m)',colC:'Contrôle',cV:'Vitesse > limite',cDp:'ΔP/L > limite',cMin:'Sous le minimum (purge d’air)',ok:'OK',lgGood:'conforme',lgMid:'sous le minimum',lgBad:'au-dessus de la limite',
+  note:'Débit positif = sens De → Vers ; le sens réel calculé est indiqué. Un nœud Source impose sa pression ; plusieurs sources de pressions différentes sont admises. Critère ASHRAE (Fundamentals, chap. 22, circuits hydrauliques fermés) : v ≤ 4 ft/s (1,22 m/s) pour les tubes jusqu’à 2 po (ici D int. ≤ 53 mm) ; au-delà, perte de charge linéique ≤ 4 ft d’eau/100 ft (≈ 0,39 kPa/m pour l’eau) ; minimum 2 ft/s (0,61 m/s), ou 0,75 ft/100 ft au-delà de 2 po, pour entraîner l’air vers les purgeurs. Ce sont des recommandations, non des obligations ; certains fabricants préconisent moins en habitat (par ex. 0,8 m/s en distribution). Les données ne sont pas enregistrées : exportez le CSV pour les conserver.',
+  csv:'⬇ Exporter en CSV',file:'Thermosys_ReseauMaille',dec:','},
+ en:{tab:'Looped network',title:'LOOPED NETWORK — FLOWS AND PRESSURES',
+  intro:'Looped (ring) network: enter nodes and pipes. The calculation shares the flows between paths with the global gradient algorithm (Todini-Pilati), the one used by EPANET. It gives the same physical solution as the Hardy Cross method, with much faster convergence. Head loss: Darcy-Weisbach, Swamee-Jain, laminar/turbulent transition as in EPANET. Relative pressures, no elevation effect.',
+  fluid:'Fluid:',w:'Water 20 °C',g30:'Glycol 30%',g40:'Glycol 40%',
+  nodesT:'NODES',pipesT:'PIPES',addNode:'+ Node',addPipe:'+ Pipe',example:'Example',clear:'Clear',
+  name:'Name',type:'Type',val:'Value',dem:'Demand',src:'Source',uDem:'m³/h',uSrc:'kPa',
+  from:'From',to:'To',len:'L (m)',dia:'Int. D (mm)',rough:'ε (mm)',k:'Fittings K',
+  resT:'RESULTS',pipeRes:'Pipes',nodeRes:'Nodes',pipe:'Pipe',dir:'Direction',q:'Q (m³/h)',v:'v (m/s)',dp:'ΔP (kPa)',node:'Node',pr:'Pressure (kPa)',hd:'Head (m)',dm:'Demand (m³/h)',
+  s_loops:'Independent loops',s_it:'Iterations',s_mass:'Max flow imbalance (m³/h)',s_en:'Max energy imbalance (Pa)',s_src:'Flow supplied by sources (m³/h)',s_vmax:'Max velocity (m/s)',s_pmin:'Min pressure (kPa)',
+  eNoSrc:'Add at least one “Source” node (fixed pressure).',eNoPipe:'Add pipes to run the calculation.',eUnreach:'Node(s) not connected to a source: ',eBad:'Invalid data (length, diameter, roughness, K or nodes): ',eConv:'The calculation did not converge: check the data.',eSingular:'Singular system: check that the network is connected to the sources.',
+  crit:'Check criterion:',crA:'ASHRAE (4 ft/s; 4 ft/100 ft)',crC:'Custom velocity limit',vlim:'Velocity limit (m/s):',colL:'ΔP/L (Pa/m)',colC:'Check',cV:'Velocity > limit',cDp:'ΔP/L > limit',cMin:'Below minimum (air removal)',ok:'OK',lgGood:'compliant',lgMid:'below minimum',lgBad:'above the limit',
+  note:'Positive flow = From → To direction; the actual calculated direction is shown. A Source node fixes its pressure; several sources with different pressures are allowed. ASHRAE criterion (Fundamentals, ch. 22, closed hydronic systems): v ≤ 4 ft/s (1.22 m/s) for pipes up to 2 in. (here int. D ≤ 53 mm); above that, friction loss ≤ 4 ft of water/100 ft (≈ 0.39 kPa/m for water); minimum 2 ft/s (0.61 m/s), or 0.75 ft/100 ft above 2 in., to carry air to the separators. These are recommendations, not requirements; some manufacturers advise lower values in housing (e.g. 0.8 m/s in distribution). Data are not saved: export the CSV to keep them.',
+  csv:'⬇ Export CSV',file:'Thermosys_LoopedNetwork',dec:'.'},
+ es:{tab:'Red mallada',title:'RED MALLADA — CAUDALES Y PRESIONES',
+  intro:'Red en anillos: introduzca los nudos y las tuberías. El cálculo reparte los caudales entre los caminos con el algoritmo del gradiente global (Todini-Pilati), el de EPANET. Da la misma solución física que el método de Hardy Cross, con una convergencia mucho más rápida. Pérdidas de carga: Darcy-Weisbach, Swamee-Jain, transición laminar/turbulento como en EPANET. Presiones relativas, sin efecto de altitud.',
+  fluid:'Fluido:',w:'Agua 20 °C',g30:'Glicol 30 %',g40:'Glicol 40 %',
+  nodesT:'NUDOS',pipesT:'TUBERÍAS',addNode:'+ Nudo',addPipe:'+ Tubería',example:'Ejemplo',clear:'Borrar',
+  name:'Nombre',type:'Tipo',val:'Valor',dem:'Demanda',src:'Fuente',uDem:'m³/h',uSrc:'kPa',
+  from:'De',to:'A',len:'L (m)',dia:'D int. (mm)',rough:'ε (mm)',k:'K accesorios',
+  resT:'RESULTADOS',pipeRes:'Tuberías',nodeRes:'Nudos',pipe:'Tubería',dir:'Sentido',q:'Q (m³/h)',v:'v (m/s)',dp:'ΔP (kPa)',node:'Nudo',pr:'Presión (kPa)',hd:'Altura (m)',dm:'Demanda (m³/h)',
+  s_loops:'Anillos independientes',s_it:'Iteraciones',s_mass:'Desequilibrio de caudal máx. (m³/h)',s_en:'Desequilibrio de energía máx. (Pa)',s_src:'Caudal aportado por las fuentes (m³/h)',s_vmax:'Velocidad máx. (m/s)',s_pmin:'Presión mín. (kPa)',
+  eNoSrc:'Añada al menos un nudo « Fuente » (presión impuesta).',eNoPipe:'Añada tuberías para iniciar el cálculo.',eUnreach:'Nudo(s) no conectado(s) a una fuente: ',eBad:'Datos no válidos (longitud, diámetro, rugosidad, K o nudos): ',eConv:'El cálculo no ha convergido: revise los datos.',eSingular:'Sistema singular: compruebe que la red está conectada a las fuentes.',
+  crit:'Criterio de control:',crA:'ASHRAE (4 ft/s; 4 ft/100 ft)',crC:'Velocidad límite personalizada',vlim:'Velocidad límite (m/s):',colL:'ΔP/L (Pa/m)',colC:'Control',cV:'Velocidad > límite',cDp:'ΔP/L > límite',cMin:'Bajo el mínimo (purga de aire)',ok:'OK',lgGood:'conforme',lgMid:'bajo el mínimo',lgBad:'por encima del límite',
+  note:'Caudal positivo = sentido De → A; se indica el sentido real calculado. Un nudo Fuente impone su presión; se admiten varias fuentes con presiones distintas. Criterio ASHRAE (Fundamentals, cap. 22, circuitos hidrónicos cerrados): v ≤ 4 ft/s (1,22 m/s) en tubos hasta 2 pulg. (aquí D int. ≤ 53 mm); por encima, pérdida de carga lineal ≤ 4 ft de agua/100 ft (≈ 0,39 kPa/m para agua); mínimo 2 ft/s (0,61 m/s), o 0,75 ft/100 ft por encima de 2 pulg., para arrastrar el aire hacia los purgadores. Son recomendaciones, no obligaciones; algunos fabricantes aconsejan menos en vivienda (p. ej. 0,8 m/s en distribución). Los datos no se guardan: exporte el CSV para conservarlos.',
+  csv:'⬇ Exportar a CSV',file:'Thermosys_RedMallada',dec:','}
+};
+var FL={w:{rho:1000,mu:0.001},g30:{rho:1040,mu:0.0028},g40:{rho:1060,mu:0.0038}};
+var G=9.80665;
+
+/* ---------- Noyau hydraulique : algorithme du gradient global (Todini-Pilati) ---------- */
+function sjF(Re,e){
+  var y=e+5.74*Math.pow(Re,-0.9), lg=Math.log10(y);
+  var f=0.25/(lg*lg);
+  var df=0.5*0.9*5.74*Math.pow(Re,-1.9)/(y*Math.LN10*lg*lg*lg);
+  return {f:f,df:df};
+}
+function prep(p,fl){
+  var A=Math.PI*p.D*p.D/4;
+  p.A=A; p.c=fl.rho/(2*A*A); p.LD=p.L/p.D; p.e=p.eps/(3.7*p.D);
+  p.kRe=4*fl.rho/(Math.PI*p.D*fl.mu);
+  var s4=sjF(4000,p.e); var FA=s4.f, FB=2*(2000*s4.df+FA);
+  p.X1=7*FA-FB; p.X2=0.128-17*FA+2.5*FB; p.X3=-0.128+13*FA-2*FB; p.X4=0.032-3*FA+0.5*FB;
+}
+function loss(p,q){
+  var aq=Math.abs(q), Re=p.kRe*aq, sg=q<0?-1:1, f, df;
+  if(Re<=2000){
+    var lam=64*p.LD*p.c/p.kRe;
+    return {dp:lam*q+p.K*p.c*q*aq, g:lam+2*p.K*p.c*aq, Re:Re, f:(Re>0?64/Re:0)};
+  }
+  if(Re>=4000){ var s=sjF(Re,p.e); f=s.f; df=s.df; }
+  else { var R=Re/2000; f=p.X1+R*(p.X2+R*(p.X3+R*p.X4)); df=(p.X2+R*(2*p.X3+3*R*p.X4))/2000; }
+  var S=f*p.LD+p.K;
+  return {dp:sg*p.c*S*aq*aq, g:p.c*(2*S*aq+p.LD*df*p.kRe*aq*aq), Re:Re, f:f};
+}
+function chol(A,b,n){
+  for(var j=0;j<n;j++){
+    var s=A[j][j]; for(var k=0;k<j;k++) s-=A[j][k]*A[j][k];
+    if(!(s>0)) return null;
+    var d=Math.sqrt(s); A[j][j]=d;
+    for(var i=j+1;i<n;i++){ var t=A[i][j]; for(k=0;k<j;k++) t-=A[i][k]*A[j][k]; A[i][j]=t/d; }
+  }
+  var y=new Float64Array(n), x=new Float64Array(n), i2, k2, t2;
+  for(i2=0;i2<n;i2++){ t2=b[i2]; for(k2=0;k2<i2;k2++) t2-=A[i2][k2]*y[k2]; y[i2]=t2/A[i2][i2]; }
+  for(i2=n-1;i2>=0;i2--){ t2=y[i2]; for(k2=i2+1;k2<n;k2++) t2-=A[k2][i2]*x[k2]; x[i2]=t2/A[i2][i2]; }
+  return x;
+}
+/* net : {fluid:{rho,mu}, nodes:[{type:'d'|'s', dem (m3/s), P (Pa)}], pipes:[{a,b (index), L,D,eps (m), K}]} */
+function solve(net){
+  var fl=net.fluid, N=net.nodes.length, M=net.pipes.length, i, k;
+  var P=new Float64Array(N), free=[], pos=new Int32Array(N).fill(-1);
+  for(i=0;i<N;i++){ if(net.nodes[i].type==='s') P[i]=net.nodes[i].P; else { pos[i]=free.length; free.push(i); } }
+  var n=free.length;
+  net.pipes.forEach(function(p){ if(!p.lossFn) prep(p,fl); });
+  var q=new Float64Array(M);
+  for(k=0;k<M;k++) q[k]=net.pipes[k].q0!=null?net.pipes[k].q0:0.3048*net.pipes[k].A;
+  var it=0, conv=false, err=1;
+  while(it<200){
+    it++;
+    var Am=[], rhs=new Float64Array(n);
+    for(i=0;i<n;i++) Am.push(new Float64Array(n));
+    for(i=0;i<n;i++) rhs[i]=-net.nodes[free[i]].dem;
+    var cs=new Float64Array(M), ws=new Float64Array(M);
+    for(k=0;k<M;k++){
+      var p=net.pipes[k], ls=p.lossFn?p.lossFn(q[k]):loss(p,q[k]), g=Math.max(ls.g,1e-9), w=1/g, c=q[k]-ls.dp*w;
+      cs[k]=c; ws[k]=w;
+      var ia=pos[p.a], ib=pos[p.b];
+      if(ia>=0){ Am[ia][ia]+=w; rhs[ia]-=c; }
+      if(ib>=0){ Am[ib][ib]+=w; rhs[ib]+=c; }
+      if(ia>=0&&ib>=0){ Am[ia][ib]-=w; Am[ib][ia]-=w; }
+      else if(ia>=0) rhs[ia]+=w*P[p.b];
+      else if(ib>=0) rhs[ib]+=w*P[p.a];
+    }
+    var x=n?chol(Am,rhs,n):new Float64Array(0);
+    if(!x) return {error:'singular'};
+    for(i=0;i<n;i++) P[free[i]]=x[i];
+    var sd=0, sq=0, al=it>60?0.6:1;
+    for(k=0;k<M;k++){
+      var pp=net.pipes[k], qn=cs[k]+ws[k]*(P[pp.a]-P[pp.b]);
+      qn=q[k]+al*(qn-q[k]);
+      sd+=Math.abs(qn-q[k]); sq+=Math.abs(qn); q[k]=qn;
+    }
+    err=sq>0?sd/sq:0;
+    if(err<1e-9){ conv=true; break; }
+  }
+  if(!conv) return {error:'conv', iter:it, err:err};
+  var out={iter:it, P:P, q:q, pipes:[], balance:0, energy:0, supplied:0, vmax:0, pmin:Infinity};
+  var bal=new Float64Array(N);
+  for(k=0;k<M;k++){
+    var p2=net.pipes[k], ls2=p2.lossFn?p2.lossFn(q[k]):loss(p2,q[k]);
+    out.pipes.push({q:q[k], v:p2.A?Math.abs(q[k])/p2.A:0, dp:ls2.dp, Re:ls2.Re, f:ls2.f, fric:p2.lossFn?0:ls2.f*p2.LD*p2.c*q[k]*Math.abs(q[k])});
+    bal[p2.b]+=q[k]; bal[p2.a]-=q[k];
+    var en=Math.abs(P[p2.a]-P[p2.b]-ls2.dp); if(en>out.energy) out.energy=en;
+    if(p2.A&&Math.abs(q[k])/p2.A>out.vmax) out.vmax=Math.abs(q[k])/p2.A;
+  }
+  for(i=0;i<N;i++){
+    if(net.nodes[i].type==='s'){ out.supplied-=bal[i]; }
+    else { var d=Math.abs(bal[i]-net.nodes[i].dem); if(d>out.balance) out.balance=d; if(P[i]<out.pmin) out.pmin=P[i]; }
+  }
+  if(out.pmin===Infinity) out.pmin=0;
+  return out;
+}
+window.__meshSolve=solve;
+
+/* ---------- État et interface ---------- */
+var st={nodes:[],pipes:[],fluid:'w',vlim:1.2,crit:'ashrae',nid:0,pid:0,res:null,err:null,lang:null};
+function num(v,d){ var x=parseFloat(String(v).replace(',','.')); return isFinite(x)?x:d; }
+function esc(x){ return String(x).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function nf(v,d,dec){ return (isFinite(v)?v:0).toFixed(d).replace('.',dec); }
+function addNode(t,name,val){ st.nid++; st.nodes.push({id:st.nid,name:name||('N'+st.nid),type:t||'d',val:val!=null?val:(t==='s'?300:10)}); return st.nid; }
+function addPipe(a,b,Lm,D,eps,K){
+  st.pid++; var nd=st.nodes;
+  st.pipes.push({id:st.pid,name:'C'+st.pid,a:a!=null?a:(nd[0]?nd[0].id:0),b:b!=null?b:(nd[1]?nd[1].id:(nd[0]?nd[0].id:0)),L:Lm!=null?Lm:100,D:D!=null?D:80,eps:eps!=null?eps:0.046,K:K!=null?K:0});
+}
+function example(){
+  st.nodes=[]; st.pipes=[]; st.nid=0; st.pid=0;
+  var S=addNode('s','S',300), A=addNode('d','A',0), B=addNode('d','B',20), C=addNode('d','C',25), D=addNode('d','D',15), E=addNode('d','E',10);
+  addPipe(S,A,300,150,0.046,2); addPipe(A,B,200,100,0.046,1); addPipe(A,C,250,100,0.046,1);
+  addPipe(B,D,250,80,0.046,1); addPipe(C,D,200,80,0.046,1); addPipe(B,C,150,65,0.046,0.5); addPipe(D,E,150,100,0.046,1);
+  buildTables(); recalc();
+}
+function netFromState(){
+  var idx={}; st.nodes.forEach(function(n,i){ idx[n.id]=i; });
+  var bad=[];
+  var nodes=st.nodes.map(function(n){ return n.type==='s'?{type:'s',dem:0,P:num(n.val,0)*1000}:{type:'d',dem:num(n.val,0)/3600,P:0}; });
+  var pipes=[];
+  st.pipes.forEach(function(p){
+    var a=idx[p.a], b=idx[p.b], Lm=num(p.L,0), D=num(p.D,0), e=num(p.eps,0), K=num(p.K,0);
+    if(a==null||b==null||a===b||!(Lm>0)||!(D>0)||e<0||K<0||e/1000>=D/1000*0.5){ bad.push(p.name); return; }
+    pipes.push({a:a,b:b,L:Lm,D:D/1000,eps:e/1000,K:K,ref:p});
+  });
+  return {nodes:nodes,pipes:pipes,bad:bad,idx:idx};
+}
+function reach(net){
+  var adj=net.nodes.map(function(){ return []; });
+  net.pipes.forEach(function(p){ adj[p.a].push(p.b); adj[p.b].push(p.a); });
+  var seen=new Array(net.nodes.length).fill(false), stack=[];
+  net.nodes.forEach(function(n,i){ if(n.type==='s'){ seen[i]=true; stack.push(i); } });
+  while(stack.length){ var u=stack.pop(); adj[u].forEach(function(v){ if(!seen[v]){ seen[v]=true; stack.push(v); } }); }
+  return seen;
+}
+var timer=null;
+function recalc(){ clearTimeout(timer); timer=setTimeout(doCalc,120); }
+function doCalc(){
+  var t=T[L()]; st.res=null; st.err=null; st.ctx=null;
+  if(!st.nodes.some(function(n){ return n.type==='s'; })){ st.err=t.eNoSrc; return renderResults(); }
+  var net=netFromState();
+  if(net.bad.length){ st.err=t.eBad+net.bad.map(esc).join(', '); return renderResults(); }
+  if(!net.pipes.length){ st.err=t.eNoPipe; return renderResults(); }
+  net.fluid=FL[st.fluid]||FL.w;
+  var seen=reach(net), un=[];
+  seen.forEach(function(s,i){ if(!s) un.push(st.nodes[i].name); });
+  if(un.length){ st.err=t.eUnreach+un.map(esc).join(', '); return renderResults(); }
+  var r=solve(net);
+  if(r.error){ st.err=r.error==='singular'?t.eSingular:t.eConv; return renderResults(); }
+  st.res=r; st.ctx=net; renderResults();
+}
+function ctl(tag,attrs,css){ var e=document.createElement(tag); for(var k in attrs) e.setAttribute(k,attrs[k]); if(css) e.style.cssText=css; return e; }
+function nodeOptions(sel){ return st.nodes.map(function(n){ return '<option value="'+n.id+'"'+(n.id===sel?' selected':'')+'>'+esc(n.name)+'</option>'; }).join(''); }
+function buildTables(){
+  var t=T[L()], nb=document.getElementById('meshNodes'), pb=document.getElementById('meshPipes');
+  if(!nb||!pb) return;
+  nb.innerHTML=''; pb.innerHTML='';
+  st.nodes.forEach(function(n){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td><input class="fi" data-f="name" value="'+esc(n.name)+'" style="width:84px"></td>'
+     +'<td><select class="fsel" data-f="type"><option value="d"'+(n.type==='d'?' selected':'')+'>'+t.dem+'</option><option value="s"'+(n.type==='s'?' selected':'')+'>'+t.src+'</option></select></td>'
+     +'<td style="white-space:nowrap"><input class="fi" data-f="val" type="number" step="any" value="'+n.val+'" style="width:84px"> <span style="font-size:9px;color:var(--ts)">'+(n.type==='s'?t.uSrc:t.uDem)+'</span></td>'
+     +'<td><button class="btn" data-f="del" style="padding:2px 8px">✕</button></td>';
+    tr.addEventListener('input',function(ev){ var f=ev.target.getAttribute('data-f'); if(f==='name'){ n.name=ev.target.value; refreshPipeSelects(); } else if(f==='val') n.val=ev.target.value; recalc(); });
+    tr.addEventListener('change',function(ev){ var f=ev.target.getAttribute('data-f'); if(f==='type'){ n.type=ev.target.value; n.val=n.type==='s'?300:0; buildTables(); recalc(); } });
+    tr.querySelector('[data-f=del]').addEventListener('click',function(){ st.nodes=st.nodes.filter(function(x){ return x!==n; }); st.pipes=st.pipes.filter(function(p){ return p.a!==n.id&&p.b!==n.id; }); buildTables(); recalc(); });
+    nb.appendChild(tr);
+  });
+  st.pipes.forEach(function(p){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td><input class="fi" data-f="name" value="'+esc(p.name)+'" style="width:60px"></td>'
+     +'<td><select class="fsel" data-f="a">'+nodeOptions(p.a)+'</select></td><td><select class="fsel" data-f="b">'+nodeOptions(p.b)+'</select></td>'
+     +['L','D','eps','K'].map(function(f){ return '<td><input class="fi" data-f="'+f+'" type="number" step="any" value="'+p[f]+'" style="width:70px"></td>'; }).join('')
+     +'<td><button class="btn" data-f="del" style="padding:2px 8px">✕</button></td>';
+    tr.addEventListener('input',function(ev){ var f=ev.target.getAttribute('data-f'); if(f==='name') p.name=ev.target.value; else if(['L','D','eps','K'].indexOf(f)>=0) p[f]=ev.target.value; recalc(); });
+    tr.addEventListener('change',function(ev){ var f=ev.target.getAttribute('data-f'); if(f==='a'||f==='b'){ p[f]=parseInt(ev.target.value); recalc(); } });
+    tr.querySelector('[data-f=del]').addEventListener('click',function(){ st.pipes=st.pipes.filter(function(x){ return x!==p; }); buildTables(); recalc(); });
+    pb.appendChild(tr);
+  });
+}
+function refreshPipeSelects(){
+  var pb=document.getElementById('meshPipes'); if(!pb) return;
+  [].forEach.call(pb.querySelectorAll('select'),function(s){
+    var f=s.getAttribute('data-f'); if(f!=='a'&&f!=='b') return;
+    var tr=s.closest('tr'), idx=[].indexOf.call(pb.children,tr), p=st.pipes[idx]; if(!p) return;
+    s.innerHTML=nodeOptions(p[f]);
+  });
+}
+function layout(nn,edges){
+  var X=[],Y=[],i,j,k,it;
+  for(i=0;i<nn;i++){ var a=2*Math.PI*i/nn; X.push(Math.cos(a)); Y.push(Math.sin(a)); }
+  var kk=Math.sqrt(4/Math.max(nn,1))*0.9, temp=0.3;
+  for(it=0;it<250;it++){
+    var dx=new Array(nn).fill(0), dy=new Array(nn).fill(0);
+    for(i=0;i<nn;i++) for(j=i+1;j<nn;j++){
+      var ex=X[i]-X[j], ey=Y[i]-Y[j], d=Math.sqrt(ex*ex+ey*ey)||0.01, f=kk*kk/d;
+      dx[i]+=ex/d*f; dy[i]+=ey/d*f; dx[j]-=ex/d*f; dy[j]-=ey/d*f;
+    }
+    edges.forEach(function(e){
+      var ex=X[e[0]]-X[e[1]], ey=Y[e[0]]-Y[e[1]], d=Math.sqrt(ex*ex+ey*ey)||0.01, f=d*d/kk;
+      dx[e[0]]-=ex/d*f; dy[e[0]]-=ey/d*f; dx[e[1]]+=ex/d*f; dy[e[1]]+=ey/d*f;
+    });
+    for(i=0;i<nn;i++){ var dl=Math.sqrt(dx[i]*dx[i]+dy[i]*dy[i])||0.01, s=Math.min(dl,temp); X[i]+=dx[i]/dl*s; Y[i]+=dy[i]/dl*s; }
+    temp*=0.985;
+  }
+  var x0=Math.min.apply(null,X), x1=Math.max.apply(null,X), y0=Math.min.apply(null,Y), y1=Math.max.apply(null,Y);
+  return X.map(function(x,i){ return [(x-x0)/((x1-x0)||1),(Y[i]-y0)/((y1-y0)||1)]; });
+}
+function svg(t){
+  var net=st.ctx, r=st.res, W=760, H=440, pad=54, dec=t.dec, HALO='paint-order:stroke;stroke:var(--bg,#0a1420);stroke-width:3px;stroke-linejoin:round';
+  var pos=layout(net.nodes.length,net.pipes.map(function(p){ return [p.a,p.b]; }));
+  function px(i){ return pad+pos[i][0]*(W-2*pad); } function py(i){ return pad+pos[i][1]*(H-2*pad); }
+  var qmax=Math.max.apply(null,r.q.map(Math.abs))||1, s=['<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;max-width:'+W+'px;height:auto" xmlns="http://www.w3.org/2000/svg"><defs></defs>'];
+  net.pipes.forEach(function(p,k){
+    var o=r.pipes[k], fw=o.q>=0, a=fw?p.a:p.b, b=fw?p.b:p.a;
+    var x1=px(a),y1=py(a),x2=px(b),y2=py(b), v=o.v, ck=chk(p,o,t), col=ck.lvl===2?'#ef4444':(ck.lvl===1?'#f59e0b':'#22c55e');
+    var w=1.5+4.5*Math.abs(o.q)/qmax;
+    var ang=Math.atan2(y2-y1,x2-x1), mx=x1+(x2-x1)*0.55, my=y1+(y2-y1)*0.55, ah=10;
+    s.push('<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+col+'" stroke-width="'+w.toFixed(1)+'" stroke-linecap="round" opacity="0.85"/>');
+    s.push('<polygon points="'+(mx+ah*Math.cos(ang)).toFixed(1)+','+(my+ah*Math.sin(ang)).toFixed(1)+' '+(mx+ah*0.7*Math.cos(ang+2.5)).toFixed(1)+','+(my+ah*0.7*Math.sin(ang+2.5)).toFixed(1)+' '+(mx+ah*0.7*Math.cos(ang-2.5)).toFixed(1)+','+(my+ah*0.7*Math.sin(ang-2.5)).toFixed(1)+'" fill="'+col+'"/>');
+    var lx=(x1+x2)/2-Math.sin(ang)*10, ly=(y1+y2)/2+Math.cos(ang)*10+3;
+    s.push('<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'" text-anchor="middle" font-size="9" fill="var(--ts)" style="'+HALO+'">'+esc(p.ref.name)+' · '+nf(Math.abs(o.q)*3600,1,dec)+'</text>');
+  });
+  net.nodes.forEach(function(n,i){
+    var x=px(i), y=py(i), nm=esc(st.nodes[i].name);
+    if(n.type==='s') s.push('<rect x="'+(x-7)+'" y="'+(y-7)+'" width="14" height="14" rx="2" fill="var(--ac)" stroke="var(--ac)"/>');
+    else s.push('<circle cx="'+x+'" cy="'+y+'" r="6" fill="var(--bg,#0a1420)" stroke="var(--ac)" stroke-width="2"/>');
+    s.push('<text x="'+x+'" y="'+(y-11)+'" text-anchor="middle" font-size="10" font-weight="700" fill="var(--tp)" style="'+HALO+'">'+nm+'</text>');
+    s.push('<text x="'+x+'" y="'+(y+21)+'" text-anchor="middle" font-size="8.5" fill="var(--ts)" style="'+HALO+'">'+nf(r.P[i]/1000,0,dec)+' kPa</text>');
+  });
+  s.push('</svg>');
+  s.push('<div style="font-size:9px;color:var(--ts);margin-top:4px"><span style="color:#22c55e">■</span> '+t.lgGood+' &nbsp; '+(st.crit==='custom'?'':'<span style="color:#f59e0b">■</span> '+t.lgMid+' &nbsp; ')+'<span style="color:#ef4444">■</span> '+t.lgBad+'</div>');
+  return s.join('');
+}
+function chk(p,o,t){
+  var rho=(st.ctx&&st.ctx.fluid||FL.w).rho, Dmm=p.D*1000;
+  if(st.crit==='custom'){ return o.v>Math.max(0.01,num(st.vlim,1.2))?{lvl:2,msg:t.cV}:{lvl:0,msg:t.ok}; }
+  var lin=Math.abs(o.fric)/p.L;
+  if(Dmm<=53){ if(o.v>1.2192) return {lvl:2,msg:t.cV}; if(o.v<0.6096) return {lvl:1,msg:t.cMin}; }
+  else { if(lin>0.04*rho*G) return {lvl:2,msg:t.cDp}; if(lin<0.0075*rho*G) return {lvl:1,msg:t.cMin}; }
+  return {lvl:0,msg:t.ok};
+}
+function renderResults(){
+  var box=document.getElementById('meshRes'); if(!box) return;
+  var t=T[L()], dec=t.dec;
+  if(st.err){ box.innerHTML='<div class="res" style="font-size:11px">'+st.err+'</div>'; return; }
+  var net=st.ctx, r=st.res; if(!net||!r){ box.innerHTML=''; return; }
+  var loops=net.pipes.length-net.nodes.length+1;
+  var card=function(l,v){ return '<div style="flex:1;min-width:120px;padding:6px 8px;border:1px solid var(--bd,#1c3a52);border-radius:6px"><div style="font-size:8.5px;color:var(--ts)">'+l+'</div><div style="font-size:13px;font-weight:700;color:var(--ac3)">'+v+'</div></div>'; };
+  var h='<div style="font-size:10px;font-weight:700;color:var(--ac3);margin:4px 0">'+t.resT+'</div>'
+   +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">'
+   +card(t.s_loops,Math.max(0,loops))+card(t.s_it,r.iter)+card(t.s_src,nf(r.supplied*3600,1,dec))+card(t.s_vmax,nf(r.vmax,2,dec))+card(t.s_pmin,nf(r.pmin/1000,0,dec))
+   +card(t.s_mass,r.balance*3600<0.0005?'< 0'+dec+'001':nf(r.balance*3600,3,dec))+card(t.s_en,r.energy<0.01?'< 0'+dec+'01':nf(r.energy,2,dec))+'</div>'
+   +'<div id="meshSvg" style="overflow-x:auto">'+svg(t)+'</div>';
+  h+='<div style="font-size:10px;font-weight:700;color:var(--ac3);margin:10px 0 4px">'+t.pipeRes+'</div><div class="tw"><table class="tbl"><thead><tr><th>'+t.pipe+'</th><th>'+t.dir+'</th><th>'+t.q+'</th><th>'+t.v+'</th><th>'+t.dp+'</th><th>'+t.colL+'</th><th>'+t.colC+'</th></tr></thead><tbody>'
+   +net.pipes.map(function(p,k){
+      var o=r.pipes[k], a=st.nodes[p.a].name, b=st.nodes[p.b].name, fw=o.q>=0, ck=chk(p,o,t), cc=ck.lvl===2?'#ef4444':(ck.lvl===1?'#f59e0b':'');
+      return '<tr><td>'+esc(p.ref.name)+'</td><td>'+esc(fw?a:b)+' → '+esc(fw?b:a)+'</td><td>'+nf(Math.abs(o.q)*3600,2,dec)+'</td><td>'+nf(o.v,2,dec)+'</td><td>'+nf(Math.abs(o.dp)/1000,2,dec)+'</td><td>'+nf(Math.abs(o.fric)/p.L,0,dec)+'</td><td'+(cc?' style="color:'+cc+';font-weight:700"':'')+'>'+ck.msg+'</td></tr>';
+    }).join('')+'</tbody></table></div>';
+  var rho=(net.fluid||FL.w).rho;
+  h+='<div style="font-size:10px;font-weight:700;color:var(--ac3);margin:10px 0 4px">'+t.nodeRes+'</div><div class="tw"><table class="tbl"><thead><tr><th>'+t.node+'</th><th>'+t.pr+'</th><th>'+t.hd+'</th><th>'+t.dm+'</th></tr></thead><tbody>'
+   +net.nodes.map(function(n,i){
+      return '<tr><td>'+esc(st.nodes[i].name)+(n.type==='s'?' ★':'')+'</td><td>'+nf(r.P[i]/1000,1,dec)+'</td><td>'+nf(r.P[i]/(rho*G),2,dec)+'</td><td>'+(n.type==='s'?'—':nf(n.dem*3600,2,dec))+'</td></tr>';
+    }).join('')+'</tbody></table></div>'
+   +'<div style="font-size:9px;color:var(--ts);margin:6px 0">'+t.note+'</div>'
+   +'<div class="frow"><button class="btn bp" id="meshCsv" style="flex:1">'+t.csv+'</button></div>';
+  box.innerHTML=h;
+  var b=document.getElementById('meshCsv'); if(b) b.addEventListener('click',exportCsv);
+}
+function exportCsv(){
+  var t=T[L()], net=st.ctx, r=st.res; if(!net||!r) return;
+  var dec=t.dec, q=function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; };
+  var rows=[[t.pipe,t.from,t.to,t.q,t.v,t.dp]];
+  net.pipes.forEach(function(p,k){ var o=r.pipes[k], fw=o.q>=0; rows.push([p.ref.name,st.nodes[fw?p.a:p.b].name,st.nodes[fw?p.b:p.a].name,nf(Math.abs(o.q)*3600,3,dec),nf(o.v,3,dec),nf(Math.abs(o.dp)/1000,3,dec)]); });
+  rows.push([]); rows.push([t.node,t.pr,t.dm]);
+  net.nodes.forEach(function(n,i){ rows.push([st.nodes[i].name,nf(r.P[i]/1000,2,dec),n.type==='s'?'':nf(n.dem*3600,3,dec)]); });
+  var csv='﻿'+rows.map(function(x){ return x.map(q).join(';'); }).join('\r\n');
+  var d=new Date(), ds=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);
+  var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download=t.file+'_'+ds+'.csv';
+  document.body.appendChild(a); a.click(); setTimeout(function(){ try{ URL.revokeObjectURL(a.href); document.body.removeChild(a); }catch(e){} },500);
+}
+function shell(){
+  var p=document.getElementById('hyd13'); if(!p) return;
+  var l=L(), t=T[l]; st.lang=l; p.setAttribute('data-meshlang',l);
+  p.innerHTML='<div class="panel"><div class="ph">'+t.title+'</div>'
+   +'<div style="font-size:10px;color:var(--ts);margin-bottom:8px">'+t.intro+'</div>'
+   +'<div class="frow"><span class="flb">'+t.fluid+'</span><select class="fsel" id="meshFluid"><option value="w">'+t.w+'</option><option value="g30">'+t.g30+'</option><option value="g40">'+t.g40+'</option></select></div>'
+   +'<div class="frow"><span class="flb">'+t.crit+'</span><select class="fsel" id="meshCrit"><option value="ashrae">'+t.crA+'</option><option value="custom">'+t.crC+'</option></select></div>'
+   +'<div class="frow" id="meshVrow" style="display:'+(st.crit==='custom'?'flex':'none')+'"><span class="flb">'+t.vlim+'</span><input class="fi" id="meshVlim" type="number" step="0.1" min="0.1" value="'+st.vlim+'" style="max-width:90px"></div>'
+   +'<div class="ph" style="font-size:9.5px;margin-top:8px">'+t.nodesT+'</div>'
+   +'<div class="tw"><table class="tbl"><thead><tr><th>'+t.name+'</th><th>'+t.type+'</th><th>'+t.val+'</th><th></th></tr></thead><tbody id="meshNodes"></tbody></table></div>'
+   +'<div class="ph" style="font-size:9.5px;margin-top:8px">'+t.pipesT+'</div>'
+   +'<div class="tw"><table class="tbl"><thead><tr><th>'+t.name+'</th><th>'+t.from+'</th><th>'+t.to+'</th><th>'+t.len+'</th><th>'+t.dia+'</th><th>'+t.rough+'</th><th>'+t.k+'</th><th></th></tr></thead><tbody id="meshPipes"></tbody></table></div>'
+   +'<div class="frow" style="gap:6px;margin-top:8px"><button class="btn bp" id="meshAddN" style="flex:1">'+t.addNode+'</button><button class="btn bp" id="meshAddP" style="flex:1">'+t.addPipe+'</button><button class="btn" id="meshEx" style="flex:1">'+t.example+'</button><button class="btn" id="meshClr" style="flex:1">'+t.clear+'</button></div>'
+   +'<div id="meshRes" style="margin-top:10px"></div></div>';
+  document.getElementById('meshFluid').value=st.fluid;
+  document.getElementById('meshFluid').addEventListener('change',function(e){ st.fluid=e.target.value; recalc(); });
+  document.getElementById('meshVlim').addEventListener('input',function(e){ st.vlim=e.target.value; recalc(); });
+  document.getElementById('meshCrit').value=st.crit;
+  document.getElementById('meshCrit').addEventListener('change',function(e){ st.crit=e.target.value; document.getElementById('meshVrow').style.display=st.crit==='custom'?'flex':'none'; recalc(); });
+  document.getElementById('meshAddN').addEventListener('click',function(){ if(st.nodes.length>=300) return; addNode('d'); buildTables(); recalc(); });
+  document.getElementById('meshAddP').addEventListener('click',function(){ if(st.pipes.length>=600||st.nodes.length<2) return; addPipe(); buildTables(); recalc(); });
+  document.getElementById('meshEx').addEventListener('click',example);
+  document.getElementById('meshClr').addEventListener('click',function(){ st.nodes=[]; st.pipes=[]; st.nid=0; st.pid=0; buildTables(); recalc(); });
+  buildTables(); doCalc();
+}
+function tabLabel(){
+  var b=document.getElementById('meshTabBtn'); if(b) b.textContent=T[L()].tab;
+}
+function init(){
+  var p12=document.getElementById('hyd12'); if(!p12||!p12.parentNode) return false;
+  if(!document.getElementById('hyd13')){
+    var p=document.createElement('div'); p.id='hyd13'; p.className='tp2';
+    p12.parentNode.insertBefore(p,p12.nextSibling);
+  }
+  if(!document.getElementById('meshTabBtn')){
+    var btns=document.querySelectorAll('button.tab'), ref=null;
+    for(var i=0;i<btns.length;i++){ var oc=btns[i].getAttribute('onclick')||''; if(oc.indexOf("showTab('hyd',12")>=0){ ref=btns[i]; break; } }
+    if(!ref) return false;
+    var nb=document.createElement('button'); nb.className='tab'; nb.id='meshTabBtn'; nb.setAttribute('onclick',"showTab('hyd',13,this)");
+    ref.parentNode.insertBefore(nb,ref.nextSibling);
+  }
+  tabLabel(); shell(); return true;
+}
+if(!init()){ var tries=0, iv=setInterval(function(){ if(init()||++tries>40) clearInterval(iv); },500); }
+setInterval(function(){
+  var p=document.getElementById('hyd13'); tabLabel();
+  if(p&&p.getAttribute('data-meshlang')&&p.getAttribute('data-meshlang')!==L()) shell();
+},700);
+})();
+
+</script>
 </body>
 </html>
 
