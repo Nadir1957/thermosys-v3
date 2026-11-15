@@ -14421,6 +14421,17 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
   function save() { try { var d = { f: {}, RM: RM, CUR: CUR }; document.querySelectorAll('#pg-heat input[id^="ht_"], #pg-heat select[id^="ht_"]').forEach(function (e) { if (e.type !== 'file') { d.f[e.id] = e.value; } }); localStorage.setItem(KEY, JSON.stringify(d)); } catch (e) { /* sans effet */ } }
   function restore() { try { var d = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!d) { return false; } RM = d.RM || []; CUR = Math.min(d.CUR || 0, Math.max(0, RM.length - 1)); Object.keys(d.f || {}).forEach(function (id) { var e = $(id); if (e) { e.value = d.f[id]; } }); return true; } catch (e) { return false; } }
   function put(id, v) { var e = $('ht_' + id); if (e) { e.value = v; } }
+  window.htImportRooms = function (list) {
+    if (!list || !list.length) { return 0; }
+    if (RM.length === 1 && !RM[0].elems.length) { RM = []; }
+    var first = RM.length;
+    list.forEach(function (x) {
+      var r = newRoom('other'); r.name = x.name; r.area = x.area; r.h = x.h; r.exposure = x.exposure; r.per = x.per;
+      r.elems = x.elems.map(function (e) { var n = newElem(e.kind); n.area = e.area; n.adj = e.adj; return n; });
+      RM.push(r);
+    });
+    CUR = first; drawRooms(); window.htDeb(); return list.length;
+  };
   window.htExample = function () {
     put('Te', 0); put('Tme', 14); put('n50', 3); put('n50p', 3); put('shield', 'moderate'); put('zc', 5); put('dutb', 0.1); put('frh', 0); put('gw', 1.0); put('margin', 10);
     var mk = function (name, type, area, h, ex, per, elems) { var r = newRoom(type); r.name = name; r.area = area; r.h = h; r.exposure = ex; r.per = per; r.elems = elems; return r; };
@@ -21130,6 +21141,178 @@ if(typeof window.exportReseau==='function'){
     try{ return orig.apply(this,arguments); } finally { window.open=oo; }
   };
 }
+})();
+
+</script>
+<script id="gbx-module">
+
+(function(){
+if(window.__gbx126) return; window.__gbx126=1;
+function L(){ try{ if(window.I18N3&&I18N3.get&&I18N3.get()==='es') return 'es'; }catch(e){} return (typeof lang!=='undefined'&&lang==='fr')?'fr':'en'; }
+var T={
+ fr:{title:'IMPORT gbXML (modèle de bâtiment)',intro:'Lisez un fichier .gbxml exporté d’un logiciel de dessin (Revit, ArchiCAD, SketchUp…) : le fichier est lu sur cet appareil, il n’est envoyé nulle part. Vérifiez le tableau, puis transférez les locaux.',
+  choose:'Choisir un fichier .gbxml',sp:'Local',a:'Surface (m²)',h:'Hauteur (m)',wl:'Murs ext. (m²)',gl:'Vitrages (m²)',dr:'Portes (m²)',rf:'Toiture (m²)',fl:'Plancher bas (m²)',nt:'Remarques',
+  go:'Transférer les locaux cochés vers CHAUFFAGE',unit:'Unités du fichier',cons:'Les constructions (valeurs U) ne sont pas importées : choisissez-les ensuite dans chaque local. Seules les parois donnant sur l’extérieur, le sol, les toitures et les ouvertures sont transférées ; les parois intérieures et enterrées sont à ajouter à la main.',
+  heated:'local(aux) chauffé(s)',skipped:'non chauffé(s) (ignoré(s))',err:'Fichier illisible : ce n’est pas un gbXML valide.',none:'Aucun local chauffé trouvé dans ce fichier.',done:' local(aux) transféré(s) vers CHAUFFAGE',
+  hEst:'hauteur estimée',noArea:'surface absente',perim:'périmètre dalle estimé',intNeigh:'paroi(s) vers local non chauffé non transférée(s)',ug:'paroi(s) enterrée(s) non transférée(s)',dec:','},
+ en:{title:'gbXML IMPORT (building model)',intro:'Read a .gbxml file exported from a drawing tool (Revit, ArchiCAD, SketchUp…): the file is read on this device and is not sent anywhere. Check the table, then transfer the rooms.',
+  choose:'Choose a .gbxml file',sp:'Room',a:'Area (m²)',h:'Height (m)',wl:'Ext. walls (m²)',gl:'Glazing (m²)',dr:'Doors (m²)',rf:'Roof (m²)',fl:'Floor (m²)',nt:'Remarks',
+  go:'Transfer the ticked rooms to HEATING',unit:'File units',cons:'Constructions (U values) are not imported: choose them afterwards in each room. Only envelope surfaces facing outdoors, ground, roofs and openings are transferred; interior and underground walls must be added by hand.',
+  heated:'heated room(s)',skipped:'unheated (ignored)',err:'Unreadable file: not a valid gbXML.',none:'No heated room found in this file.',done:' room(s) transferred to HEATING',
+  hEst:'height estimated',noArea:'area missing',perim:'slab perimeter estimated',intNeigh:'surface(s) to an unheated room not transferred',ug:'underground surface(s) not transferred',dec:'.'},
+ es:{title:'IMPORTACIÓN gbXML (modelo del edificio)',intro:'Lea un archivo .gbxml exportado desde un programa de dibujo (Revit, ArchiCAD, SketchUp…): el archivo se lee en este dispositivo y no se envía a ninguna parte. Revise la tabla y transfiera los locales.',
+  choose:'Elegir un archivo .gbxml',sp:'Local',a:'Superficie (m²)',h:'Altura (m)',wl:'Muros ext. (m²)',gl:'Acristalamiento (m²)',dr:'Puertas (m²)',rf:'Cubierta (m²)',fl:'Suelo (m²)',nt:'Observaciones',
+  go:'Transferir los locales marcados a CALEFACCIÓN',unit:'Unidades del archivo',cons:'Las construcciones (valores U) no se importan: elíjalas después en cada local. Solo se transfieren los cerramientos que dan al exterior, al terreno, las cubiertas y los huecos; los cerramientos interiores y enterrados deben añadirse a mano.',
+  heated:'local(es) calefactado(s)',skipped:'sin calefacción (ignorado(s))',err:'Archivo ilegible: no es un gbXML válido.',none:'No se encontró ningún local calefactado en este archivo.',done:' local(es) transferido(s) a CALEFACCIÓN',
+  hEst:'altura estimada',noArea:'superficie ausente',perim:'perímetro de la solera estimado',intNeigh:'cerramiento(s) hacia local sin calefacción no transferido(s)',ug:'cerramiento(s) enterrado(s) no transferido(s)',dec:','}
+};
+var LEN={meters:1,feet:0.3048,inches:0.0254,millimeters:0.001,centimeters:0.01,kilometers:1000};
+var ARE={squaremeters:1,squarefeet:0.09290304,squareinches:0.00064516,squaremillimeters:1e-6,squarecentimeters:1e-4};
+var VOL={cubicmeters:1,cubicfeet:0.028316846592,cubicinches:0.000016387064,liters:0.001,cubicmillimeters:1e-9,cubiccentimeters:1e-6};
+function kids(el,name){ var o=[]; for(var c=el.firstElementChild;c;c=c.nextElementSibling){ if(c.localName===name) o.push(c); } return o; }
+function kid(el,name){ return kids(el,name)[0]||null; }
+function num(el){ if(!el) return NaN; return parseFloat(String(el.textContent).trim().replace(',','.')); }
+function polyArea(loop,lf){
+  var pts=kids(loop,'CartesianPoint').map(function(p){ return kids(p,'Coordinate').map(num); });
+  if(pts.length<3) return NaN;
+  var sx=0,sy=0,sz=0;
+  for(var i=0;i<pts.length;i++){ var a=pts[i],b=pts[(i+1)%pts.length];
+    sx+=a[1]*b[2]-a[2]*b[1]; sy+=a[2]*b[0]-a[0]*b[2]; sz+=a[0]*b[1]-a[1]*b[0]; }
+  return 0.5*Math.sqrt(sx*sx+sy*sy+sz*sz)*lf*lf;
+}
+function polyPerim(loop,lf){
+  var pts=kids(loop,'CartesianPoint').map(function(p){ return kids(p,'Coordinate').map(num); });
+  var P=0; for(var i=0;i<pts.length;i++){ var a=pts[i],b=pts[(i+1)%pts.length]; P+=Math.sqrt(Math.pow(a[0]-b[0],2)+Math.pow(a[1]-b[1],2)+Math.pow(a[2]-b[2],2)); }
+  return P*lf;
+}
+function geoArea(el,lf){
+  var pg=kid(el,'PlanarGeometry'); if(pg){ var lp=kid(pg,'PolyLoop'); if(lp){ var a=polyArea(lp,lf); if(a>0) return a; } }
+  var rg=kid(el,'RectangularGeometry'); if(rg){ var w=num(kid(rg,'Width')),h=num(kid(rg,'Height')); if(w>0&&h>0) return w*h*lf*lf; }
+  return NaN;
+}
+function parse(txt){
+  var doc=new DOMParser().parseFromString(txt,'application/xml');
+  if(doc.getElementsByTagName('parsererror').length||!doc.documentElement||doc.documentElement.localName!=='gbXML') throw new Error('bad');
+  var root=doc.documentElement;
+  var lu=(root.getAttribute('lengthUnit')||'Meters'), au=(root.getAttribute('areaUnit')||'SquareMeters'), vu=(root.getAttribute('volumeUnit')||'CubicMeters');
+  var lf=LEN[lu.toLowerCase()], af=ARE[au.toLowerCase()], vf=VOL[vu.toLowerCase()];
+  if(!(lf>0)||!(af>0)||!(vf>0)) throw new Error('unit');
+  var spaces={}, order=[];
+  var sp=doc.getElementsByTagName('Space');
+  for(var i=0;i<sp.length;i++){
+    var e=sp[i]; if(e.parentNode&&e.parentNode.localName==='Zone') continue;
+    var id=e.getAttribute('id'); if(!id) continue;
+    var cond=e.getAttribute('conditionType')||'';
+    var nm=(kid(e,'Name')?kid(e,'Name').textContent.trim():'')||id;
+    var area=num(kid(e,'Area')), vol=num(kid(e,'Volume'));
+    spaces[id]={id:id,name:nm,heated:(cond===''||cond==='HeatedAndCooled'||cond==='Heated'),
+      area:area>0?area*af:NaN, vol:vol>0?vol*vf:NaN, wall:0,glaz:0,door:0,roof:0,floorExt:0,floorGnd:0,per:0,az:{},intN:0,ug:0};
+    order.push(id);
+  }
+  var surf=doc.getElementsByTagName('Surface');
+  for(var j=0;j<surf.length;j++){
+    var s0=surf[j], type=s0.getAttribute('surfaceType')||'';
+    var adj=kids(s0,'AdjacentSpaceId').map(function(a){ return a.getAttribute('spaceIdRef'); }).filter(Boolean);
+    var gross=geoArea(s0,lf); if(!(gross>0)) continue;
+    var ops=kids(s0,'Opening'), wA=0, dA=0, oth=0;
+    ops.forEach(function(o){ var t=(o.getAttribute('openingType')||''), a=geoArea(o,lf); if(!(a>0)) return;
+      if(/Window|Skylight/i.test(t)) wA+=a; else if(/Door/i.test(t)) dA+=a; else if(/Air/i.test(t)) { /* ouverture libre : ignoree */ } else oth+=a; });
+    var net=Math.max(0,gross-wA-dA-oth);
+    var ext=/^(ExteriorWall|Roof|ExposedFloor|RaisedFloor|SlabOnGrade|UndergroundSlab|UndergroundWall|UndergroundCeiling)$/.test(type);
+    if(!ext){
+      // paroi interieure : comptee si exactement un des deux locaux est chauffe et l'autre non
+      if(/^(InteriorWall|InteriorFloor|Ceiling)$/.test(type)&&adj.length===2){
+        var h1=spaces[adj[0]]&&spaces[adj[0]].heated, h2=spaces[adj[1]]&&spaces[adj[1]].heated;
+        if(h1&&!h2&&spaces[adj[0]]) spaces[adj[0]].intN++; else if(h2&&!h1&&spaces[adj[1]]) spaces[adj[1]].intN++;
+      }
+      continue;
+    }
+    var S=spaces[adj[0]]; if(!S) continue;
+    if(type==='ExteriorWall'){ S.wall+=net; S.glaz+=wA; S.door+=dA; var az=num(kid(s0,'Azimuth')); if(isFinite(az)) S.az[Math.round(((az%360)+360)%360/90)%4]=1; }
+    else if(type==='Roof'){ S.roof+=net; S.glaz+=wA; S.door+=dA; }
+    else if(type==='ExposedFloor'||type==='RaisedFloor'){ S.floorExt+=net; S.glaz+=wA; S.door+=dA; }
+    else if(type==='SlabOnGrade'||type==='UndergroundSlab'){ S.floorGnd+=gross; var pg=kid(s0,'PlanarGeometry'); var lp=pg&&kid(pg,'PolyLoop'); if(lp){ var pp=polyPerim(lp,lf); if(pp>0) S.per+=pp; } }
+    else { S.ug++; }
+  }
+  return {spaces:spaces,order:order,units:lu+' / '+au+' / '+vu};
+}
+var DATA=null;
+function fmt(v,t,d){ return (isFinite(v)?v.toFixed(d===undefined?1:d):'—').replace('.',t.dec); }
+function roomOf(S){
+  var warns=[], area=S.area;
+  if(!(area>0)){ area=S.floorGnd+S.floorExt; }
+  var h=2.7, hEst=true;
+  if(S.vol>0&&area>0){ h=S.vol/area; hEst=false; }
+  return {S:S,area:area,h:Math.min(8,Math.max(1.5,h)),hEst:hEst};
+}
+function renderTable(){
+  var host=document.getElementById('gbxOut'); if(!host) return;
+  var t=T[L()];
+  if(!DATA){ host.innerHTML=''; return; }
+  var rows=DATA.order.map(function(id){ return DATA.spaces[id]; });
+  var heated=rows.filter(function(S){ return S.heated; });
+  var html='<div style="font-size:9.5px;color:var(--ts);margin:6px 0">'+t.unit+' : '+DATA.units+' — '+heated.length+' '+t.heated+', '+(rows.length-heated.length)+' '+t.skipped+'</div>';
+  if(!heated.length){ host.innerHTML=html+'<div style="color:var(--wn);font-size:11px">'+t.none+'</div>'; return; }
+  html+='<div class="tw"><table class="cptb"><thead><tr><th></th><th>'+t.sp+'</th><th>'+t.a+'</th><th>'+t.h+'</th><th>'+t.wl+'</th><th>'+t.gl+'</th><th>'+t.dr+'</th><th>'+t.rf+'</th><th>'+t.fl+'</th><th>'+t.nt+'</th></tr></thead><tbody>';
+  heated.forEach(function(S,i){
+    var r=roomOf(S), notes=[];
+    if(!(S.area>0)) notes.push(t.noArea);
+    if(r.hEst) notes.push(t.hEst);
+    if(S.floorGnd>0&&S.per>0) notes.push(t.perim);
+    if(S.intN>0) notes.push(S.intN+' '+t.intNeigh);
+    if(S.ug>0) notes.push(S.ug+' '+t.ug);
+    var ok=r.area>0;
+    html+='<tr><td style="text-align:left"><input type="checkbox" class="gbxChk" data-id="'+String(S.id).replace(/"/g,'&quot;')+'"'+(ok?' checked':' disabled')+'></td><td style="text-align:left">'+esc(S.name)+'</td><td>'+fmt(r.area,t)+'</td><td>'+fmt(r.h,t)+'</td><td>'+fmt(S.wall,t)+'</td><td>'+fmt(S.glaz,t)+'</td><td>'+fmt(S.door,t)+'</td><td>'+fmt(S.roof,t)+'</td><td>'+fmt(S.floorGnd+S.floorExt,t)+'</td><td style="text-align:left;font-size:9px;color:var(--ts)">'+notes.join(' · ')+'</td></tr>';
+  });
+  html+='</tbody></table></div><div style="font-size:9.5px;color:var(--ts);margin:6px 0">'+t.cons+'</div>'
+    +'<button class="btn bp" onclick="gbxTransfer()">'+t.go+'</button>';
+  host.innerHTML=html;
+}
+function esc(x){ return String(x).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+window.gbxTransfer=function(){
+  var t=T[L()]; if(!DATA||typeof window.htImportRooms!=='function') return;
+  var ids=[].slice.call(document.querySelectorAll('.gbxChk')).filter(function(c){ return c.checked; }).map(function(c){ return c.getAttribute('data-id'); });
+  var list=[];
+  ids.forEach(function(id){
+    var S=DATA.spaces[id]; if(!S) return; var r=roomOf(S);
+    var els=[];
+    function add(kind,area,adj){ if(area>0.005) els.push({kind:kind,area:Math.round(area*100)/100,adj:adj}); }
+    add('wall',S.wall,'ext'); add('glaz',S.glaz,'ext'); add('door',S.door,'ext'); add('roof',S.roof,'ext'); add('floor',S.floorExt,'ext'); add('floor',S.floorGnd,'gnd');
+    var nsec=Object.keys(S.az).length;
+    list.push({name:S.name,area:Math.round(r.area*100)/100,h:Math.round(r.h*100)/100,exposure:nsec>1?'more':'one',per:Math.round(S.per*10)/10,elems:els});
+  });
+  var n=window.htImportRooms(list);
+  try{ showToast(n+t.done,'s'); }catch(e){}
+  try{ logHist('gbXML -> Chauffage: '+n); }catch(e){}
+};
+window.gbxFile=function(inp){
+  var t=T[L()], f=inp&&inp.files&&inp.files[0]; if(!f) return;
+  var fr=new FileReader();
+  fr.onload=function(){ try{ DATA=parse(String(fr.result)); }catch(e){ DATA=null; var h=document.getElementById('gbxOut'); if(h) h.innerHTML='<div style="color:var(--dn);font-size:11px">'+T[L()].err+'</div>'; return; } renderTable(); };
+  fr.onerror=function(){ var h=document.getElementById('gbxOut'); if(h) h.innerHTML='<div style="color:var(--dn);font-size:11px">'+T[L()].err+'</div>'; };
+  fr.readAsText(f);
+};
+window.__gbxParse=parse;
+function panelHtml(){
+  var t=T[L()];
+  return '<div style="font-size:10px;font-weight:700;color:var(--ac3);margin-bottom:4px">'+t.title+'</div>'
+   +'<div style="font-size:10px;color:var(--ts);margin-bottom:6px">'+t.intro+'</div>'
+   +'<label class="btn" style="display:inline-block;cursor:pointer">'+t.choose+'<input type="file" accept=".gbxml,.xml" style="display:none" onchange="gbxFile(this)"></label>'
+   +'<div id="gbxOut"></div>';
+}
+var lastLang=null;
+function ensure(){
+  var pg=document.getElementById('pg-heat'); if(!pg) return;
+  var p=document.getElementById('gbxPanel');
+  if(!p){
+    var m=pg.querySelector('.cpmain'); if(!m||!m.parentNode) return;
+    p=document.createElement('div'); p.id='gbxPanel'; p.className='panel'; p.style.margin='0 0 10px';
+    m.parentNode.insertBefore(p,m); lastLang=null;
+  }
+  var l=L();
+  if(lastLang!==l){ lastLang=l; var keep=document.getElementById('gbxOut'); var had=!!DATA; p.innerHTML=panelHtml(); if(had) renderTable(); }
+}
+setInterval(function(){ try{ ensure(); }catch(e){} },800);
 })();
 
 </script>
