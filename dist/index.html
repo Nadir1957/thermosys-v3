@@ -21807,6 +21807,476 @@ setInterval(function(){
 })();
 
 </script>
+<script id="hourly-module">
+(function(){
+'use strict';
+if(typeof window==='undefined'||window.__hourly129) return; window.__hourly129=1;
+/* ===== Moteur d'estimation horaire (zone unique, reseau RC, noeud air + noeud etoile) ===== */
+var SIG = 5.670374e-8, PI = Math.PI;
+/* Perez 1990 (coefficients 'allsitescomposite1990', verifies contre pvlib : ecart max 0,5 W/m2) */
+var PZ = [[1.065, -0.0083, 0.5877, -0.0621, -0.0596, 0.0721, -0.0220], [1.230, 0.1296, 0.6826, -0.1514, -0.0189, 0.0660, -0.0289], [1.500, 0.3299, 0.4869, -0.2211, 0.0554, -0.0640, -0.0261], [1.950, 0.5682, 0.1875, -0.2951, 0.1089, -0.1519, -0.0140], [2.800, 0.8730, -0.3920, -0.3616, 0.2256, -0.4620, 0.0012], [4.500, 1.1320, -1.2370, -0.4118, 0.2878, -0.8230, 0.0559], [6.200, 1.0600, -1.6000, -0.3589, 0.2642, -1.1270, 0.1311], [1e9, 0.6780, -0.3273, -0.2504, 0.1561, -1.3770, 0.2506]];
+function parseEPW(txt) {
+  var L = txt.split(/\r?\n/), head = L[0].split(','), i0 = -1, i;
+  for (i = 0; i < Math.min(L.length, 40); i++) { if (L[i].indexOf('DATA PERIODS') === 0) { i0 = i + 1; break; } }
+  if (i0 < 0 || head[0] !== 'LOCATION') { throw new Error('epw'); }
+  var loc = { name: head[1], country: head[3], lat: +head[6], lon: +head[7], tz: +head[8], alt: +head[9] }, rows = [];
+  for (i = i0; i < L.length; i++) {
+    var c = L[i].split(','); if (c.length < 16) { continue; }
+    var r = { mo: +c[1], d: +c[2], h: +c[3], Te: +c[6], I0n: +c[11], ghi: +c[13], dni: +c[14], dhi: +c[15] };
+    if (!(r.Te > -90 && r.Te < 70) || !(r.ghi >= 0) || r.ghi > 1500 || !(r.dni >= 0) || r.dni > 1500 || !(r.dhi >= 0) || r.dhi > 1500) { throw new Error('epwdata'); }
+    if (!(r.I0n > 0)) { r.I0n = 1367; }
+    rows.push(r);
+  }
+  if (rows.length !== 8760) { throw new Error('epw8760'); }
+  return { loc: loc, rows: rows };
+}
+function sunPos(loc, mo, d, h) {
+  var dm = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31], n = d, i; for (i = 0; i < mo - 1; i++) { n += dm[i]; }
+  var B = 2 * PI * (n - 1) / 365;
+  var dec = 0.006918 - 0.399912 * Math.cos(B) + 0.070257 * Math.sin(B) - 0.006758 * Math.cos(2 * B) + 0.000907 * Math.sin(2 * B) - 0.002697 * Math.cos(3 * B) + 0.00148 * Math.sin(3 * B);
+  var eot = 229.18 * (0.000075 + 0.001868 * Math.cos(B) - 0.032077 * Math.sin(B) - 0.014615 * Math.cos(2 * B) - 0.04089 * Math.sin(2 * B));
+  var solar = (h - 0.5) + (4 * (loc.lon - 15 * loc.tz) + eot) / 60;
+  var ha = (solar - 12) * 15 * PI / 180, lat = loc.lat * PI / 180;
+  var cz = Math.sin(lat) * Math.sin(dec) + Math.cos(lat) * Math.cos(dec) * Math.cos(ha), sz = Math.sqrt(Math.max(0, 1 - cz * cz)), az = 0;
+  if (sz > 1e-6) { var ca = (Math.sin(dec) - cz * Math.sin(lat)) / (sz * Math.cos(lat)); az = PI - Math.acos(Math.max(-1, Math.min(1, ca))); }
+  return { cz: cz, az: az * (ha >= 0 ? 1 : -1) };   /* azimut : 0 = sud, positif vers l'ouest */
+}
+function perezDiffuse(w, sp, beta, cth) {
+  var dhi = w.dhi; if (!(dhi > 0) || !(sp.cz > 0)) { return 0; }
+  var Z = Math.acos(Math.min(1, sp.cz)), z3 = 1.041 * Z * Z * Z, eps = ((dhi + w.dni) / dhi + z3) / (1 + z3);
+  var m = 1 / (sp.cz + 0.15 * Math.pow(93.9 - Z * 180 / PI, -1.253)), del = dhi * m / w.I0n, k = 0; while (eps > PZ[k][0]) { k++; }
+  var c = PZ[k], F1 = Math.max(0, c[1] + c[2] * del + c[3] * Z), F2 = c[4] + c[5] * del + c[6] * Z;
+  var a = Math.max(0, cth), b = Math.max(Math.cos(85 * PI / 180), sp.cz);
+  return dhi * ((1 - F1) * (1 + Math.cos(beta)) / 2 + F1 * a / b + F2 * Math.sin(beta));
+}
+function tilted(w, sp, beta, gam, rhog) {
+  var cb = Math.cos(beta), cth = sp.cz * cb + Math.sqrt(Math.max(0, 1 - sp.cz * sp.cz)) * Math.sin(beta) * Math.cos(sp.az - gam);
+  if (sp.cz <= 0 || cth < 0) { cth = 0; }
+  var beam = sp.cz > 0.02 ? w.dni * cth : 0;
+  return { beam: beam, dif: perezDiffuse(w, sp, beta, cth), gr: w.ghi * rhog * (1 - cb) / 2, cth: cth, tot: 0 };
+}
+/* Fenetre : tables angulaires de la norme ASHRAE 140-2020 (tableau 5-12), normalisees ; 80 degres deduit pour retrouver SHGC hemispherique 0,670 */
+var TAU0 = [0.703, 0.702, 0.699, 0.692, 0.678, 0.646, 0.577, 0.438], SH0 = [0.769, 0.768, 0.766, 0.761, 0.748, 0.718, 0.651, 0.509];
+function hemi(arr) { var s = 0, n = 1000, k; for (k = 0; k < n; k++) { var th = (k + 0.5) / n * PI / 2, d = th * 180 / PI, i = Math.min(8, Math.floor(d / 10)), f = (d - 10 * i) / 10; s += (arr[i] + (arr[i + 1] - arr[i]) * f) * Math.cos(th) * Math.sin(th); } return 2 * s * (PI / 2) / n; }
+var ANGN = (function () { var lo = 0, hi = 0.5, s80 = 0.3, k; for (k = 0; k < 50; k++) { s80 = (lo + hi) / 2; if (hemi(SH0.concat([s80, 0])) > 0.670) { hi = s80; } else { lo = s80; } }
+  var sh = SH0.concat([s80, 0]).map(function (x) { return x / 0.769; }), ta = TAU0.concat([Math.max(0, s80 - 0.05), 0]).map(function (x) { return x / 0.703; });
+  return { tau: ta, shgc: sh, tauH: hemi(ta.map(function (x) { return x * 0.703; })) / 0.703, shgcH: hemi(sh.map(function (x) { return x * 0.769; })) / 0.769 }; })();
+function layersToSlices(layers, dxmax) {
+  var sl = [];
+  layers.forEach(function (l) {
+    if (!(l.d > 0)) { sl.push({ R: l.R, C: 0 }); return; }
+    var m = Math.max(2, Math.ceil(l.d / (l.dx || dxmax))), dx = l.d / m, i; for (i = 0; i < m; i++) { sl.push({ R: dx / l.k, C: l.rho * l.cp * dx }); }
+  });
+  return sl;
+}
+function thomasFactor(a, b, c, n) { var cp = new Float64Array(n), den = new Float64Array(n), i; den[0] = b[0]; cp[0] = c[0] / b[0]; for (i = 1; i < n; i++) { den[i] = b[i] - a[i] * cp[i - 1]; cp[i] = c[i] / den[i]; } return { a: a, cp: cp, den: den, n: n }; }
+function thomasSolve(F, d) { var n = F.n, dp = new Float64Array(n), x = new Float64Array(n), i; dp[0] = d[0] / F.den[0]; for (i = 1; i < n; i++) { dp[i] = (d[i] - F.a[i] * dp[i - 1]) / F.den[i]; } x[n - 1] = dp[n - 1]; for (i = n - 2; i >= 0; i--) { x[i] = dp[i] - F.cp[i] * x[i + 1]; } return x; }
+/* cfg : { elements:[{type:'opaque'|'window', area, layers(interieur -> exterieur), tilt, az, hci, hri, hce, hre, absSol, Fsky, bc:'air'|'soil', Tsoil, Uext, overhang:{P,top,h}, ang:{...}, solFrac}], V, nInf, rhoAir, cpAir, Qgain, frad, gainSched(h), sp(h) -> {heat,cool}, rhog } */
+function simulate(wx, cfg, opts) {
+  opts = opts || {}; var dt = opts.dt || 900, sub = 3600 / dt, passes = opts.passes || 2, rhoA = cfg.rhoAir, cpA = cfg.cpAir, Ca = cfg.V * rhoA * cpA, Hinf = cfg.V * cfg.nInf / 3600 * rhoA * cpA;
+  var els = cfg.elements.map(function (e) {
+    var o = {}, k; for (k in e) { o[k] = e[k]; }
+    var A = e.area, n, C = [0], G = [], Ge;
+    if (e.type === 'window') { n = 1; Ge = e.Uext * A; }
+    else { var sl = layersToSlices(e.layers, 0.02); n = sl.length + 1; var i; for (i = 0; i < sl.length; i++) { C.push(sl[i].C); } G.push(1 / (sl[0].R / 2)); for (i = 0; i < sl.length - 1; i++) { G.push(1 / (sl[i].R / 2 + sl[i + 1].R / 2)); } Ge = A / (sl[sl.length - 1].R / 2 + 1 / (e.hce + e.hre)); }
+    var a = new Float64Array(n), b = new Float64Array(n), c = new Float64Array(n), j;
+    for (j = 0; j < n; j++) { var dg = C[j] * A / dt; if (j > 0) { dg += G[j - 1] * A; a[j] = -G[j - 1] * A; } if (j < n - 1) { dg += G[j] * A; c[j] = -G[j] * A; } b[j] = dg; }
+    o.Gc = e.hci * A; o.Gr = e.hri * A; b[0] += o.Gc + o.Gr; b[n - 1] += Ge;
+    o.F = thomasFactor(a, b, c, n); o.n = n; o.C = C; o.Ge = Ge; o.CA = C.map(function (x) { return x * A / dt; }); o.T = new Float64Array(n).fill(20);
+    var d1 = new Float64Array(n), d2 = new Float64Array(n); d1[0] = o.Gc; d2[0] = o.Gr; o.x1 = thomasSolve(o.F, d1); o.x2 = thomasSolve(o.F, d2); o.d0 = new Float64Array(n);
+    return o;
+  });
+  var Atot = 0, Aop = 0, Sc1 = 0, Sc2 = 0, Sr1 = 0, Sr2 = 0, GcS = 0, GrS = 0;
+  els.forEach(function (e) { Atot += e.area; if (e.type !== 'window') { Aop += e.area; } Sc1 += e.Gc * e.x1[0]; Sc2 += e.Gc * e.x2[0]; Sr1 += e.Gr * e.x1[0]; Sr2 += e.Gr * e.x2[0]; GcS += e.Gc; GrS += e.Gr; });
+  var A11c = Ca / dt - Sc1 + GcS, A12 = -Sc2, A21 = Sr1, A22 = Sr2 - GrS, Ta = 20, out = null, frc = els.map(function () { return {}; }), p;
+  var nH = wx.rows.length, tMean = 0; wx.rows.forEach(function (w) { tMean += w.Te / nH; });
+  for (p = 0; p < passes; p++) {
+    var QH = new Float64Array(nH), QC = new Float64Array(nH), TA = new Float64Array(nH), k;
+    for (k = 0; k < nH; k++) {
+      var w = wx.rows[k], sp = sunPos(wx.loc, w.mo, w.d, w.h), sch = cfg.sp(w.h), Tsky = w.Te - 11, Qg = cfg.Qgain * (cfg.gainSched ? cfg.gainSched(w.h) : 1), Qrad = Qg * cfg.frad, Qconv = Qg - Qrad, Qtr = 0, ie;
+      for (ie = 0; ie < els.length; ie++) {
+        var e = els[ie], f = frc[ie], beta = e.tilt * PI / 180, gam = e.az * PI / 180, it = tilted(w, sp, beta, gam, cfg.rhog);
+        if (e.type === 'window') {
+          var th = Math.acos(Math.min(1, Math.max(0, it.cth))) * 180 / PI, i0 = Math.min(8, Math.floor(th / 10)), fr = (th - 10 * i0) / 10, fb = 1, fdif = 1;
+          if (e.overhang) { var oh = e.overhang, alt = Math.asin(Math.min(1, Math.max(0, sp.cz))), cdg = Math.cos(sp.az - gam);
+            if (cdg > 1e-3 && alt > 0) { var dsh = oh.P * Math.tan(alt) / cdg, shd = Math.min(oh.h, Math.max(0, dsh - oh.top)); fb = 1 - shd / oh.h; }
+            fdif = Math.sin(Math.atan((oh.top + oh.h / 2) / oh.P)); }
+          var A = ANGN, tauT = e.tau0 * (A.tau[i0] + (A.tau[i0 + 1] - A.tau[i0]) * fr), shT = e.shgc0 * (A.shgc[i0] + (A.shgc[i0 + 1] - A.shgc[i0]) * fr), bm = it.cth > 0 ? it.beam * fb : 0, df = it.dif * fdif + it.gr;
+          f.tr = e.area * (tauT * bm + e.tau0 * A.tauH * df); f.ab = e.area * (Math.max(0, shT - tauT) * bm + Math.max(0, e.shgc0 * A.shgcH - e.tau0 * A.tauH) * df); f.Teq = w.Te; Qtr += f.tr;
+        } else {
+          it.tot = it.beam + it.dif + it.gr; var Tr = w.Te - e.Fsky * (w.Te - Tsky), he = e.hce + e.hre;
+          f.Teq = e.bc === 'soil' ? e.Tsoil : (e.hce * w.Te + e.hre * Tr + e.absSol * it.tot) / he; f.tr = 0; f.ab = 0;
+        }
+      }
+      var Hv = Hinf, Hh = sch.heat, Hc = sch.cool, s;
+      for (s = 0; s < sub; s++) {
+        var Sc0 = 0, Sr0 = 0;
+        for (ie = 0; ie < els.length; ie++) {
+          var e2 = els[ie], f2 = frc[ie], n = e2.n, d0 = e2.d0, j;
+          for (j = 0; j < n; j++) { d0[j] = e2.CA[j] * e2.T[j]; }
+          d0[n - 1] += e2.Ge * f2.Teq;
+          d0[0] += Qrad * e2.area / Atot + (e2.type === 'window' ? f2.ab : Qtr * e2.solFrac);
+          e2.x0 = thomasSolve(e2.F, d0); Sc0 += e2.Gc * e2.x0[0]; Sr0 += e2.Gr * e2.x0[0];
+        }
+        var A11 = A11c + Hv, B1 = Ca / dt * Ta + Sc0 + Hv * w.Te + Qconv, B2 = -Sr0, det = A11 * A22 - A12 * A21;
+        var ta = (B1 * A22 - A12 * B2) / det, ts = (A11 * B2 - A21 * B1) / det, Q = 0, spt = ta < Hh ? Hh : (ta > Hc ? Hc : null);
+        if (spt !== null) { ts = -(Sr0 + Sr1 * spt) / (Sr2 - GrS); Q = A11 * spt + A12 * ts - B1; ta = spt; }
+        Ta = ta;
+        for (ie = 0; ie < els.length; ie++) { var e3 = els[ie], x0 = e3.x0, x1 = e3.x1, x2 = e3.x2, T = e3.T, jj; for (jj = 0; jj < e3.n; jj++) { T[jj] = x0[jj] + Ta * x1[jj] + ts * x2[jj]; } }
+        TA[k] += Ta / sub; if (Q > 0) { QH[k] += Q * dt / 3600; } else { QC[k] += -Q * dt / 3600; }
+      }
+    }
+    out = { QH: QH, QC: QC, TA: TA };
+  }
+  return out;
+}
+function summarize(wx, out) {
+  var mH = new Array(12).fill(0), mC = new Array(12).fill(0), tH = 0, tC = 0, pH = 0, pC = 0, iH = 0, iC = 0, hH = 0, hC = 0, k;
+  for (k = 0; k < wx.rows.length; k++) { var m = wx.rows[k].mo - 1, h = out.QH[k], c = out.QC[k]; mH[m] += h; mC[m] += c; tH += h; tC += c; if (h > pH) { pH = h; iH = k; } if (c > pC) { pC = c; iC = k; } if (h > 1) { hH++; } if (c > 1) { hC++; } }
+  var at = function (i) { var r = wx.rows[i]; return { mo: r.mo, d: r.d, h: r.h }; };
+  return { mH: mH.map(function (x) { return x / 1000; }), mC: mC.map(function (x) { return x / 1000; }), tH: tH / 1000, tC: tC / 1000, pH: pH / 1000, pC: pC / 1000, atH: at(iH), atC: at(iC), hH: hH, hC: hC };
+}
+
+/* ===== Interface : page ESTIMATION HORAIRE ===== */
+var KEY = 'thermosys_hourly_v1', pgId = 'pg-hourly';
+var LN = { fr: 0, en: 1, es: 2 };
+function L() { try { if (window.I18N3 && I18N3.get && I18N3.get() === 'es') { return 'es'; } } catch (e) { } return (typeof lang !== 'undefined' && lang === 'fr') ? 'fr' : 'en'; }
+var D = {
+  menu: ['ESTIMATION HORAIRE', 'HOURLY ESTIMATE', 'ESTIMACIÓN HORARIA'],
+  title: ['ESTIMATION HORAIRE DES BESOINS — CHAUFFAGE ET REFROIDISSEMENT', 'HOURLY ESTIMATE OF HEATING AND COOLING NEEDS', 'ESTIMACIÓN HORARIA DE LAS NECESIDADES DE CALEFACCIÓN Y REFRIGERACIÓN'],
+  intro: ['Simulation heure par heure sur une année météo complète, pour un bâtiment à une seule zone thermique (réseau de résistances et capacités, inspiré de l’EN ISO 52016-1). Elle donne les besoins annuels et les pointes horaires, en tenant compte de l’inertie, du soleil et de la température de l’air. Estimation d’ingénieur : ce n’est pas un calcul réglementaire ni un logiciel certifié.',
+    'Hour-by-hour simulation over a full weather year for a single-zone building (resistance-capacitance network, inspired by EN ISO 52016-1). It gives annual needs and hourly peaks, accounting for thermal mass, sun and air temperature. Engineering estimate: not a regulatory calculation and not certified software.',
+    'Simulación hora a hora durante un año meteorológico completo, para un edificio de una sola zona térmica (red de resistencias y capacidades, inspirada en la EN ISO 52016-1). Da las necesidades anuales y las puntas horarias, teniendo en cuenta la inercia, el sol y la temperatura del aire. Estimación de ingeniería: no es un cálculo reglamentario ni un programa certificado.'],
+  s1: ['1. MÉTÉO (fichier EPW)', '1. WEATHER (EPW file)', '1. METEOROLOGÍA (archivo EPW)'],
+  wxhelp: ['Chargez un fichier météo annuel .epw (ou son archive .zip) de la ville du projet : 8 760 heures de température et de rayonnement solaire.', 'Load an annual .epw weather file (or its .zip) for the project city: 8,760 hours of temperature and solar radiation.', 'Cargue un archivo meteorológico anual .epw (o su .zip) de la ciudad del proyecto: 8 760 horas de temperatura y radiación solar.'],
+  wxsite: ['Ouvrir le site des fichiers météo', 'Open the weather file site', 'Abrir el sitio de archivos meteorológicos'],
+  s2: ['2. BÂTIMENT', '2. BUILDING', '2. EDIFICIO'],
+  len: ['Longueur de la façade 1 (m)', 'Length of façade 1 (m)', 'Longitud de la fachada 1 (m)'], dep: ['Profondeur (m)', 'Depth (m)', 'Profundidad (m)'], hgt: ['Hauteur sous plafond (m)', 'Ceiling height (m)', 'Altura libre (m)'],
+  az0: ['Orientation de la façade 1 (° depuis le sud, + vers l’ouest)', 'Orientation of façade 1 (° from south, + towards west)', 'Orientación de la fachada 1 (° desde el sur, + hacia el oeste)'],
+  azhelp: ['0 = vers le sud, 90 = ouest, 180 = nord, −90 = est. Les autres façades suivent à 90°.', '0 = facing south, 90 = west, 180 = north, −90 = east. The other façades follow at 90°.', '0 = hacia el sur, 90 = oeste, 180 = norte, −90 = este. Las demás fachadas siguen a 90°.'],
+  facade: ['Façade', 'Façade', 'Fachada'], winarea: ['Surface de fenêtres (m²)', 'Window area (m²)', 'Superficie de ventanas (m²)'],
+  s3: ['3. CONSTRUCTION', '3. CONSTRUCTION', '3. CONSTRUCCIÓN'],
+  wall: ['Murs', 'Walls', 'Muros'], roof: ['Toiture', 'Roof', 'Cubierta'], floor: ['Plancher bas', 'Ground floor', 'Suelo'],
+  ins: ['Isolant ajouté (cm)', 'Added insulation (cm)', 'Aislante añadido (cm)'], absn: ['Absorption solaire', 'Solar absorptance', 'Absorción solar'],
+  abl: ['Claire (0,4)', 'Light (0.4)', 'Clara (0,4)'], abm: ['Moyenne (0,6)', 'Medium (0.6)', 'Media (0,6)'], abd: ['Foncée (0,8)', 'Dark (0.8)', 'Oscura (0,8)'],
+  win: ['Vitrage', 'Glazing', 'Acristalamiento'], winU: ['U fenêtre (W/m²K)', 'Window U (W/m²K)', 'U ventana (W/m²K)'], winG: ['Facteur solaire g', 'Solar factor g', 'Factor solar g'],
+  cstnote: ['Valeurs usuelles indicatives (épaisseurs et conductivités courantes) : remplacez-les par celles de votre projet. L’isolant ajouté est du polystyrène (λ = 0,036 W/mK) placé côté extérieur.', 'Typical indicative values (usual thicknesses and conductivities): replace with your project values. Added insulation is polystyrene (λ = 0.036 W/mK) on the outside.', 'Valores usuales indicativos (espesores y conductividades habituales): sustitúyalos por los de su proyecto. El aislante añadido es poliestireno (λ = 0,036 W/mK) en el exterior.'],
+  s4: ['4. USAGE ET RÉGLAGES', '4. USE AND SETPOINTS', '4. USO Y CONSIGNAS'],
+  inf: ['Renouvellement d’air (vol/h)', 'Air change rate (ACH)', 'Renovación de aire (ren/h)'],
+  gb: ['Apports internes permanents (W)', 'Continuous internal gains (W)', 'Aportes internos permanentes (W)'], go: ['Apports en plus, pendant l’occupation (W)', 'Extra gains while occupied (W)', 'Aportes adicionales durante la ocupación (W)'],
+  of: ['Occupation : de (h)', 'Occupied from (h)', 'Ocupación: desde (h)'], ot: ['à (h)', 'to (h)', 'hasta (h)'],
+  heatT: ['Consigne de chauffage (°C)', 'Heating setpoint (°C)', 'Consigna de calefacción (°C)'], sb: ['Réduit la nuit', 'Night setback', 'Reducida por la noche'], sbT: ['Consigne réduite (°C)', 'Setback temperature (°C)', 'Consigna reducida (°C)'], sbF: ['Réduit de (h)', 'Setback from (h)', 'Reducida desde (h)'], sbTo: ['à (h)', 'to (h)', 'hasta (h)'],
+  cool: ['Refroidissement actif', 'Active cooling', 'Refrigeración activa'], coolT: ['Consigne de refroidissement (°C)', 'Cooling setpoint (°C)', 'Consigna de refrigeración (°C)'],
+  yes: ['Oui', 'Yes', 'Sí'], no: ['Non (flottement libre)', 'No (free-floating)', 'No (flotación libre)'],
+  run: ['CALCULER', 'CALCULATE', 'CALCULAR'], busy: ['Calcul en cours…', 'Calculating…', 'Calculando…'], ex: ['Exemple', 'Example', 'Ejemplo'], print: ['Note imprimable', 'Printable note', 'Nota imprimable'],
+  stale: ['Les données ont changé : relancez le calcul.', 'Inputs changed: run the calculation again.', 'Los datos han cambiado: vuelva a calcular.'],
+  nowx: ['Chargez d’abord un fichier météo .epw.', 'Load a .epw weather file first.', 'Cargue primero un archivo meteorológico .epw.'],
+  bad: ['Valeur incorrecte : ', 'Invalid value: ', 'Valor incorrecto: '],
+  wxbadfile: ['Fichier météo non reconnu (8 760 lignes EPW attendues).', 'Weather file not recognised (8,760 EPW rows expected).', 'Archivo meteorológico no reconocido (se esperan 8 760 líneas EPW).'],
+  wxbadzip: ['Archive .zip illisible : décompressez-la et chargez le fichier .epw.', 'Unreadable .zip: unzip it and load the .epw file.', 'Archivo .zip ilegible: descomprímalo y cargue el archivo .epw.'],
+  wxbig: ['Fichier trop volumineux.', 'File too large.', 'Archivo demasiado grande.'],
+  wxmean: ['Température moyenne', 'Mean temperature', 'Temperatura media'], wxrad: ['Rayonnement global horizontal', 'Global horizontal radiation', 'Radiación global horizontal'],
+  rh: ['Chauffage', 'Heating', 'Calefacción'], rc: ['Refroidissement', 'Cooling', 'Refrigeración'], kwhm2: ['kWh/m²·an', 'kWh/m²·yr', 'kWh/m²·año'], kwhy: ['kWh/an', 'kWh/yr', 'kWh/año'],
+  peakh: ['Pointe horaire de chauffage', 'Hourly heating peak', 'Punta horaria de calefacción'], peakc: ['Pointe horaire de froid', 'Hourly cooling peak', 'Punta horaria de refrigeración'],
+  tin: ['Température intérieure', 'Indoor temperature', 'Temperatura interior'], hot28: ['heures au-dessus de 28 °C', 'hours above 28 °C', 'horas por encima de 28 °C'], minmax: ['min / max', 'min / max', 'mín / máx'],
+  monthly: ['Besoins mensuels (kWh)', 'Monthly needs (kWh)', 'Necesidades mensuales (kWh)'], month: ['Mois', 'Month', 'Mes'],
+  floora: ['Surface au sol', 'Floor area', 'Superficie en planta'], ctot: ['Total', 'Total', 'Total'],
+  peaknote: ['La pointe horaire de cette simulation est une valeur d’estimation sur l’année météo type : elle ne remplace pas le calcul de dimensionnement (EN 12831 pour le chauffage), qui se fait à la température de base.', 'The hourly peak of this simulation is an estimate on the typical weather year: it does not replace the design calculation (EN 12831 for heating) made at the design temperature.', 'La punta horaria de esta simulación es una estimación sobre el año meteorológico tipo: no sustituye el cálculo de dimensionado (EN 12831 para calefacción), que se hace a la temperatura de base.'],
+  vtitle: ['VALIDATION ET LIMITES', 'VALIDATION AND LIMITS', 'VALIDACIÓN Y LÍMITES'],
+  v1: ['Vérifié : le moteur reproduit les 28 résultats de référence de la norme ASHRAE 140 (cas 600 à 985, 12 cas chauffés/refroidis et 2 cas en flottement libre) comparés aux six programmes publiés : 27 sur 28 dans la fourchette, avec la température de ciel prise égale à la température extérieure − 11 K. Ces fourchettes sont des résultats d’exemple, pas des critères d’acceptation officiels.', 'Checked: the engine reproduces the 28 ASHRAE 140 reference results (cases 600 to 985: 12 heated/cooled cases and 2 free-floating cases) against the six published programs: 27 of 28 inside the range, with sky temperature taken as outdoor temperature − 11 K. These ranges are example results, not official acceptance criteria.', 'Verificado: el motor reproduce los 28 resultados de referencia de la norma ASHRAE 140 (casos 600 a 985: 12 casos calefactados/refrigerados y 2 en flotación libre) comparados con los seis programas publicados: 27 de 28 dentro del rango, con la temperatura de cielo igual a la temperatura exterior − 11 K. Estos rangos son resultados de ejemplo, no criterios de aceptación oficiales.'],
+  v2: ['Non vérifié : le choix du modèle de ciel influence fortement les résultats (avec l’infrarouge du fichier météo, seulement 5 résultats sur 28 sont dans la fourchette) ; la pointe de froid et de chauffage n’a été comparée qu’à une seule source ; le cas 640 (chauffage avec réduction nocturne) dépasse de 5 %.', 'Not verified: the sky model strongly affects results (with the weather-file infrared, only 5 of 28 results are in range); heating and cooling peaks were compared with a single source only; case 640 (heating with night setback) is 5 % above range.', 'No verificado: el modelo de cielo influye mucho en los resultados (con el infrarrojo del archivo meteorológico, solo 5 de 28 resultados están en el rango); las puntas de calefacción y refrigeración se compararon con una sola fuente; el caso 640 (calefacción con reducción nocturna) supera el rango en un 5 %.'],
+  v3: ['Hypothèses de ce module : une seule zone à température uniforme ; régulation idéale (la puissance demandée est toujours fournie, sans limite) ; pas d’humidité ni de chaleur latente ; pas de ponts thermiques ; sol représenté par une température fixe égale à la moyenne annuelle de l’air et une couche de terre de 1 m (approximation de l’EN ISO 13370) ; pas de débords ni de protections solaires mobiles ; forme angulaire du verre double clair de la norme ASHRAE 140 appliquée à tous les vitrages ; apports solaires intérieurs répartis 64 % sol, 17 % toit, 19 % murs.', 'Assumptions of this module: a single zone at uniform temperature; ideal control (requested power is always delivered, no limit); no humidity or latent load; no thermal bridges; ground represented by a fixed temperature equal to the annual mean air temperature plus a 1 m soil layer (approximation of EN ISO 13370); no overhangs or movable solar shading; the angular response of ASHRAE 140 clear double glazing applied to all glazing; interior solar gains split 64 % floor, 17 % roof, 19 % walls.', 'Hipótesis de este módulo: una sola zona a temperatura uniforme; regulación ideal (la potencia pedida siempre se entrega, sin límite); sin humedad ni carga latente; sin puentes térmicos; suelo representado por una temperatura fija igual a la media anual del aire más una capa de tierra de 1 m (aproximación de la EN ISO 13370); sin voladizos ni protecciones solares móviles; respuesta angular del doble acristalamiento claro de ASHRAE 140 aplicada a todos los vidrios; aportes solares interiores repartidos 64 % suelo, 17 % cubierta, 19 % muros.'],
+  v4: ['Cette méthode est « inspirée de » l’EN ISO 52016-1 : le texte de la norme n’a pas été consulté (accès payant) et la conformité n’est pas revendiquée. Les résultats sont des estimations d’aide à la décision ; ils doivent être confrontés à un calcul réglementaire et au jugement d’un ingénieur.', 'This method is “inspired by” EN ISO 52016-1: the standard’s text was not consulted (paid access) and conformity is not claimed. Results are decision-support estimates and must be checked against a regulatory calculation and engineering judgement.', 'Este método está «inspirado en» la EN ISO 52016-1: no se ha consultado el texto de la norma (acceso de pago) y no se declara conformidad. Los resultados son estimaciones de ayuda a la decisión y deben contrastarse con un cálculo reglamentario y el criterio de un ingeniero.'],
+  chk: ['Vérification interne (cas ASHRAE 140 n° 600 et 900)', 'Internal check (ASHRAE 140 cases 600 and 900)', 'Verificación interna (casos ASHRAE 140 n.º 600 y 900)'],
+  chkhelp: ['Nécessite le fichier météo Denver TMY3 (le fichier de la norme). Les valeurs de référence sont les résultats d’exemple des six programmes.', 'Requires the Denver TMY3 weather file (the standard’s file). Reference values are the example results of the six programs.', 'Requiere el archivo meteorológico Denver TMY3 (el de la norma). Los valores de referencia son los resultados de ejemplo de los seis programas.'],
+  chkno: ['Chargez le fichier Denver TMY3 pour lancer cette vérification.', 'Load the Denver TMY3 file to run this check.', 'Cargue el archivo Denver TMY3 para ejecutar esta verificación.'],
+  chkc: ['Cas', 'Case', 'Caso'], chkq: ['Grandeur', 'Quantity', 'Magnitud'], chkv: ['Calculé', 'Computed', 'Calculado'], chkr: ['Fourchette de référence', 'Reference range', 'Rango de referencia'], chks: ['Statut', 'Status', 'Estado'],
+  q1: ['Chauffage (MWh)', 'Heating (MWh)', 'Calefacción (MWh)'], q2: ['Froid (MWh)', 'Cooling (MWh)', 'Refrigeración (MWh)'], q3: ['Pointe chauffage (kW)', 'Heating peak (kW)', 'Punta calefacción (kW)'], q4: ['Pointe froid (kW)', 'Cooling peak (kW)', 'Punta refrigeración (kW)'],
+  inr: ['dans la fourchette', 'in range', 'en el rango'], outr: ['hors fourchette', 'out of range', 'fuera del rango'],
+  lblsrc: ['Sources : ASHRAE Standard 140 (spécification et résultats d’exemple des programmes), EN ISO 52016-1 (principe), EN ISO 13370 (sol), EN ISO 10456 (propriétés des matériaux), Perez et al. 1990 (rayonnement diffus incliné).', 'Sources: ASHRAE Standard 140 (specification and example program results), EN ISO 52016-1 (principle), EN ISO 13370 (ground), EN ISO 10456 (material properties), Perez et al. 1990 (tilted diffuse radiation).', 'Fuentes: ASHRAE Standard 140 (especificación y resultados de ejemplo de los programas), EN ISO 52016-1 (principio), EN ISO 13370 (suelo), EN ISO 10456 (propiedades de los materiales), Perez et al. 1990 (radiación difusa inclinada).'],
+  repT: ['NOTE — ESTIMATION HORAIRE DES BESOINS', 'NOTE — HOURLY ESTIMATE OF NEEDS', 'NOTA — ESTIMACIÓN HORARIA DE LAS NECESIDADES'],
+  rprint: ['Imprimer / enregistrer en PDF', 'Print / save as PDF', 'Imprimir / guardar como PDF'], rpop: ['Fenêtre bloquée par le navigateur.', 'Window blocked by the browser.', 'Ventana bloqueada por el navegador.'],
+  hyp: ['1. Hypothèses', '1. Assumptions', '1. Hipótesis'], res: ['2. Résultats', '2. Results', '2. Resultados'], lim: ['3. Validation et limites', '3. Validation and limits', '3. Validación y límites'],
+  N: ['N', 'N', 'N'], S: ['S', 'S', 'S'], E: ['E', 'E', 'E'], W: ['O', 'W', 'O'], ang: ['Angle', 'Angle', 'Ángulo']
+};
+function t(k) { var v = D[k]; return v ? v[LN[L()]] : k; }
+var MON = { fr: ['jan', 'fév', 'mar', 'avr', 'mai', 'juin', 'juil', 'août', 'sep', 'oct', 'nov', 'déc'], en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], es: ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'] };
+function fmt(v, d) { if (!isFinite(v)) { return '–'; } var s = v.toFixed(d), p = s.split('.'), neg = p[0].charAt(0) === '-'; var ip = p[0].replace('-', '').replace(/\B(?=(\d{3})+(?!\d))/g, ' '); return (neg ? '−' : '') + ip + (p.length > 1 ? (L() === 'en' ? '.' : ',') + p[1] : ''); }
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function $(id) { return document.getElementById(id); }
+/* ---- matériaux (interieur -> exterieur) ---- */
+function Ly(d, k, rho, cp, dx) { return { d: d, k: k, rho: rho, cp: cp, dx: dx }; }
+var PW = {
+  dbl: { n: ['Double mur en brique creuse 10 + lame d’air + 15', 'Double hollow-brick wall 10 + air gap + 15', 'Doble muro de ladrillo hueco 10 + cámara + 15'], ly: [Ly(0.015, 0.57, 1150, 1000), Ly(0.10, 0.40, 900, 900), { R: 0.18 }, Ly(0.15, 0.40, 900, 900), Ly(0.020, 1.0, 1800, 1000)] },
+  blk: { n: ['Bloc de béton creux de 20 cm enduit', 'Rendered 20 cm hollow concrete block', 'Bloque de hormigón hueco de 20 cm enlucido'], ly: [Ly(0.015, 0.57, 1150, 1000), Ly(0.20, 1.0, 1300, 1000), Ly(0.020, 1.0, 1800, 1000)] },
+  rc: { n: ['Béton armé de 20 cm enduit', 'Rendered 20 cm reinforced concrete', 'Hormigón armado de 20 cm enlucido'], ly: [Ly(0.015, 0.57, 1150, 1000), Ly(0.20, 2.0, 2400, 1000), Ly(0.020, 1.0, 1800, 1000)] },
+  lt: { n: ['Léger : plaque de plâtre, isolant 6,6 cm, bardage bois (ASHRAE 140)', 'Light: plasterboard, 6.6 cm insulation, wood siding (ASHRAE 140)', 'Ligero: yeso laminado, aislante 6,6 cm, revestimiento de madera (ASHRAE 140)'], ly: [Ly(0.012, 0.16, 950, 840), Ly(0.066, 0.04, 12, 840), Ly(0.009, 0.14, 530, 900)] },
+  hv: { n: ['Lourd : béton 10 cm, isolant 6 cm, bardage bois (ASHRAE 140)', 'Heavy: 10 cm concrete, 6 cm insulation, wood siding (ASHRAE 140)', 'Pesado: hormigón 10 cm, aislante 6 cm, revestimiento de madera (ASHRAE 140)'], ly: [Ly(0.100, 0.51, 1400, 1000), Ly(0.0615, 0.04, 10, 1400), Ly(0.009, 0.14, 530, 900)] }
+};
+var PR = {
+  slab: { n: ['Terrasse : dalle hourdis 20 cm, forme de pente, étanchéité', 'Flat roof: 20 cm ribbed slab, screed to falls, waterproofing', 'Terraza: forjado 20 cm, formación de pendientes, impermeabilización'], ly: [Ly(0.015, 0.57, 1150, 1000), Ly(0.20, 1.2, 1500, 1000), Ly(0.06, 1.15, 1800, 1000), Ly(0.012, 0.23, 1100, 1000)] },
+  rc: { n: ['Dalle béton armé 20 cm, étanchéité', '20 cm reinforced concrete slab, waterproofing', 'Losa de hormigón armado 20 cm, impermeabilización'], ly: [Ly(0.015, 0.57, 1150, 1000), Ly(0.20, 2.0, 2400, 1000), Ly(0.012, 0.23, 1100, 1000)] },
+  lt: { n: ['Léger : plaque de plâtre, isolant 11 cm, bois (ASHRAE 140)', 'Light: plasterboard, 11 cm insulation, wood (ASHRAE 140)', 'Ligero: yeso laminado, aislante 11 cm, madera (ASHRAE 140)'], ly: [Ly(0.010, 0.16, 950, 840), Ly(0.1118, 0.04, 12, 840), Ly(0.019, 0.14, 530, 900)] }
+};
+var PF = {
+  slab: { n: ['Dalle sur terre-plein 12 cm', '12 cm slab on ground', 'Solera sobre terreno 12 cm'], ly: [Ly(0.12, 1.4, 2000, 1000)], soil: true },
+  lt: { n: ['Plancher léger sur vide (ASHRAE 140)', 'Light floor over open air (ASHRAE 140)', 'Suelo ligero sobre espacio abierto (ASHRAE 140)'], ly: [Ly(0.025, 0.14, 650, 1200), Ly(1.003, 0.04, 0, 0)], soil: false },
+  hv: { n: ['Plancher lourd sur vide (ASHRAE 140)', 'Heavy floor over open air (ASHRAE 140)', 'Suelo pesado sobre espacio abierto (ASHRAE 140)'], ly: [Ly(0.080, 1.13, 1400, 1000), Ly(1.007, 0.04, 0.001, 1000)], soil: false }
+};
+var PG = {
+  sgl: { n: ['Simple vitrage', 'Single glazing', 'Vidrio simple'], U: 5.7, g: 0.85 },
+  dbl: { n: ['Double vitrage clair', 'Clear double glazing', 'Doble acristalamiento claro'], U: 2.8, g: 0.75 },
+  lowe: { n: ['Double vitrage à faible émissivité', 'Low-e double glazing', 'Doble acristalamiento de baja emisividad'], U: 1.6, g: 0.60 },
+  cus: { n: ['Valeurs personnalisées', 'Custom values', 'Valores personalizados'] }
+};
+var ROW = Math.PI;
+function defaults() { return { W: 10, D: 8, H: 2.7, az0: 0, aw0: 8, aw1: 3, aw2: 3, aw3: 3, wall: 'dbl', wins: 0, wabs: 0.6, roof: 'slab', rins: 0, rabs: 0.6, floor: 'slab', fins: 0, glz: 'dbl', U: 2.8, g: 0.75, inf: 0.5, gb: 200, go: 300, of: 17, ot: 23, heatT: 20, sb: 1, sbT: 16, sbF: 23, sbTo: 6, cool: 1, coolT: 26 }; }
+var S = defaults(), WX = null, WXERR = '', R = null, STALE = false, BUSY = false, MSG = '';
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } }
+function restore() { try { var o = JSON.parse(localStorage.getItem(KEY) || 'null'); if (o && typeof o === 'object') { var d = defaults(), k; for (k in d) { if (o[k] !== undefined && typeof o[k] === typeof d[k]) { d[k] = o[k]; } } S = d; } } catch (e) { } }
+function normAz(a) { a = ((a + 180) % 360 + 360) % 360 - 180; return a; }
+function compass(az) { var a = normAz(az), b = Math.abs(a), s; if (b <= 22.5) { s = t('S'); } else if (b <= 67.5) { s = t('S') + (a > 0 ? t('W') : t('E')); } else if (b <= 112.5) { s = a > 0 ? t('W') : t('E'); } else if (b <= 157.5) { s = t('N') + (a > 0 ? t('W') : t('E')); } else { s = t('N'); } return s; }
+function inRange(h, a, b) { var hh = h - 1; return a < b ? (hh >= a && hh < b) : (hh >= a || hh < b); }
+/* ---- construction de la configuration du moteur ---- */
+function withIns(ly, cm, pos) { var o = ly.slice(); if (cm > 0) { var ins = Ly(cm / 100, 0.036, 20, 1450); if (pos === 'ext') { o.push(ins); } else { o.splice(pos, 0, ins); } } return o; }
+function buildCfg(s, meanT) {
+  var W = s.W, Dp = s.D, H = s.H, els = [], aw = [s.aw0, s.aw1, s.aw2, s.aw3], k, wl = withIns(PW[s.wall].ly, s.wins, 'ext'), rl = withIns(PR[s.roof].ly, s.rins, 'ext'), fp = PF[s.floor], fl;
+  var wallA = [];
+  for (k = 0; k < 4; k++) {
+    var a = (k % 2 === 0 ? W : Dp) * H - aw[k]; wallA.push(a);
+    els.push({ type: 'opaque', area: a, layers: wl, tilt: 90, az: normAz(s.az0 + 90 * k), hci: 2.2, hri: 5.13, hce: 11.9, hre: 9.7, absSol: s.wabs, Fsky: 0.5 });
+  }
+  els.push({ type: 'opaque', area: W * Dp, layers: rl, tilt: 0, az: 0, hci: 1.8, hri: 5.13, hce: 14.4, hre: 7.4, absSol: s.rabs, Fsky: 1.0 });
+  if (fp.soil) { fl = withIns(fp.ly, s.fins, 1); fl.push(Ly(1.0, 1.5, 1800, 1000, 0.1)); els.push({ type: 'opaque', area: W * Dp, layers: fl, tilt: 180, az: 0, hci: 2.2, hri: 5.13, hce: 1e4, hre: 0, absSol: 0, Fsky: 0, bc: 'soil', Tsoil: meanT }); }
+  else { fl = withIns(fp.ly, s.fins, 'ext'); els.push({ type: 'opaque', area: W * Dp, layers: fl, tilt: 180, az: 0, hci: 2.2, hri: 5.13, hce: 0.8, hre: 4.4, absSol: 0, Fsky: 0 }); }
+  var wsum = wallA[0] + wallA[1] + wallA[2] + wallA[3];
+  for (k = 0; k < 4; k++) { els[k].solFrac = 0.19 * wallA[k] / wsum; } els[4].solFrac = 0.17; els[5].solFrac = 0.64;
+  var Uext = 1 / (1 / Math.min(7, s.U) - 1 / 7.69);
+  for (k = 0; k < 4; k++) { if (aw[k] > 0) { els.push({ type: 'window', area: aw[k], tilt: 90, az: normAz(s.az0 + 90 * k), hci: 3.0, hri: 4.69, hce: 8, hre: 9.8, Fsky: 0.5, Uext: Uext, tau0: 0.9139 * s.g, shgc0: s.g, solFrac: 0 }); } }
+  var hasSB = s.sb === 1, coolOn = s.cool === 1;
+  return { elements: els, V: W * Dp * H, nInf: s.inf, rhoAir: 1.2, cpAir: 1006, Qgain: 1, frad: 0.6, rhog: 0.2,
+    gainSched: function (h) { return s.gb + (inRange(h, s.of, s.ot) ? s.go : 0); },
+    sp: function (h) { var ht = (hasSB && inRange(h, s.sbF, s.sbTo)) ? Math.min(s.sbT, s.heatT) : s.heatT; return { heat: ht, cool: coolOn ? s.coolT : 1e9 }; } };
+}
+function bestestCfg(heavy) {
+  var Wd = 8, Dd = 6, Hd = 2.7, els = [], rev = function (a) { return a.slice().reverse(); };
+  var lw = [Ly(0.009, 0.14, 530, 900), Ly(0.066, 0.04, 12, 840), Ly(0.012, 0.16, 950, 840)], hw = [Ly(0.009, 0.14, 530, 900), Ly(0.0615, 0.04, 10, 1400), Ly(0.100, 0.51, 1400, 1000)];
+  var rf = [Ly(0.019, 0.14, 530, 900), Ly(0.1118, 0.04, 12, 840), Ly(0.010, 0.16, 950, 840)], fLt = [Ly(0.025, 0.14, 650, 1200), Ly(1.003, 0.04, 0, 0)], fHv = [Ly(0.080, 1.13, 1400, 1000), Ly(1.007, 0.04, 0, 0)];
+  var wl = rev(heavy ? hw : lw), mk = function (area, ly, tilt, az, hc, hce, hre, Fs, ab) { return { type: 'opaque', area: area, layers: ly, tilt: tilt, az: az, hci: hc, hri: 5.13, hce: hce, hre: hre, absSol: ab, Fsky: Fs }; };
+  els.push(mk(Wd * Hd - 12, wl, 90, 0, 2.2, 11.9, 9.7, 0.5, 0.6)); els.push(mk(Wd * Hd, wl, 90, 180, 2.2, 11.9, 9.7, 0.5, 0.6)); els.push(mk(Dd * Hd, wl, 90, 90, 2.2, 11.9, 9.7, 0.5, 0.6)); els.push(mk(Dd * Hd, wl, 90, -90, 2.2, 11.9, 9.7, 0.5, 0.6));
+  els.push(mk(Wd * Dd, rev(rf), 0, 0, 1.8, 14.4, 7.4, 1.0, 0.6)); els.push(mk(Wd * Dd, heavy ? fHv : fLt, 180, 0, 2.2, 0.8, 4.4, 0, 0));
+  els.push({ type: 'window', area: 12, tilt: 90, az: 0, hci: 2.4, hri: 2.1, hce: 8, hre: 9.8, Fsky: 0.5, Uext: 1 / (1 / 5.208 + 1 / 17.8), tau0: 0.703, shgc0: 0.769 });
+  var sf = [0.027, 0.053, 0.038, 0.038, 0.167, 0.642, 0]; els.forEach(function (e, i) { e.solFrac = sf[i]; });
+  return { elements: els, V: Wd * Dd * Hd, nInf: 0.5, rhoAir: 1.0156, cpAir: 1015, Qgain: 200, frad: 0.6, rhog: 0.2, sp: function () { return { heat: 20, cool: 27 }; } };
+}
+var CHK = { '600': { h: [3.993, 4.504], c: [5.432, 6.162], ph: [3.020, 3.359], pc: [5.422, 6.481] }, '900': { h: [1.379, 1.814], c: [2.267, 2.714], ph: [2.443, 2.778], pc: [2.556, 3.376] } };
+/* ---- météo ---- */
+function readZip(buf) {
+  var dv = new DataView(buf), u8 = new Uint8Array(buf), i, eocd = -1, bad = function () { return Promise.reject(new Error('zip')); };
+  for (i = buf.byteLength - 22; i >= Math.max(0, buf.byteLength - 65557); i--) { if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; } }
+  if (eocd < 0) { return bad(); }
+  var n = dv.getUint16(eocd + 10, true), p = dv.getUint32(eocd + 16, true), ent = null;
+  for (i = 0; i < n; i++) {
+    if (p + 46 > buf.byteLength || dv.getUint32(p, true) !== 0x02014b50) { break; }
+    var meth = dv.getUint16(p + 10, true), cs = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), lo = dv.getUint32(p + 42, true), nm = new TextDecoder().decode(u8.subarray(p + 46, p + 46 + nl));
+    if (/\.epw$/i.test(nm)) { ent = { meth: meth, cs: cs, lo: lo }; break; }
+    p += 46 + nl + el + cl;
+  }
+  if (!ent || dv.getUint32(ent.lo, true) !== 0x04034b50) { return bad(); }
+  var ds = ent.lo + 30 + dv.getUint16(ent.lo + 26, true) + dv.getUint16(ent.lo + 28, true), data = u8.subarray(ds, ds + ent.cs);
+  if (ent.meth === 0) { return Promise.resolve(new TextDecoder().decode(data)); }
+  if (ent.meth === 8 && typeof DecompressionStream === 'function') {
+    var d = new DecompressionStream('deflate-raw'), w = d.writable.getWriter(); w.write(data); w.close();
+    return new Response(d.readable).arrayBuffer().then(function (b) { return new TextDecoder().decode(b); });
+  }
+  return bad();
+}
+function wxStats(w) { var s = 0, mn = 99, mx = -99, g = 0, i; for (i = 0; i < w.rows.length; i++) { var r = w.rows[i]; s += r.Te; if (r.Te < mn) { mn = r.Te; } if (r.Te > mx) { mx = r.Te; } g += r.ghi; } return { mean: s / w.rows.length, min: mn, max: mx, ghi: g / 1000 }; }
+function loadWx(file) {
+  WXERR = ''; WX = null; R = null; STALE = false;
+  if (file.size > 20 * 1024 * 1024) { WXERR = t('wxbig'); render(); return; }
+  var rd = new FileReader();
+  rd.onload = function () {
+    var buf = rd.result, u = new Uint8Array(buf), isZip = u[0] === 0x50 && u[1] === 0x4b, pr = isZip ? readZip(buf) : Promise.resolve(new TextDecoder('utf-8').decode(buf));
+    pr.then(function (txt) { try { WX = parseEPW(txt); WX.st = wxStats(WX); } catch (e) { WXERR = t('wxbadfile'); } render(); }, function () { WXERR = t('wxbadzip'); render(); });
+  };
+  rd.readAsArrayBuffer(file);
+}
+/* ---- calcul ---- */
+var LIM = { W: [2, 100], D: [2, 100], H: [2, 10], az0: [-360, 360], aw0: [0, 1e3], aw1: [0, 1e3], aw2: [0, 1e3], aw3: [0, 1e3], wins: [0, 40], rins: [0, 40], fins: [0, 40], U: [0.5, 7], g: [0.05, 0.95], inf: [0, 10], gb: [0, 1e5], go: [0, 1e5], of: [0, 24], ot: [0, 24], heatT: [5, 30], sbT: [5, 30], sbF: [0, 24], sbTo: [0, 24], coolT: [18, 35] };
+function validate() {
+  var k, s = S; for (k in LIM) { if (typeof s[k] !== 'number' || !isFinite(s[k]) || s[k] < LIM[k][0] || s[k] > LIM[k][1]) { return k; } }
+  var fa = [s.W * s.H, s.D * s.H, s.W * s.H, s.D * s.H], aw = [s.aw0, s.aw1, s.aw2, s.aw3];
+  for (k = 0; k < 4; k++) { if (aw[k] > 0.9 * fa[k]) { return 'aw' + k; } }
+  if (s.cool === 1 && s.coolT <= s.heatT + 1) { return 'coolT'; }
+  return null;
+}
+function lblOf(k) { var m = { W: 'len', D: 'dep', H: 'hgt', az0: 'az0', aw0: 'winarea', aw1: 'winarea', aw2: 'winarea', aw3: 'winarea', wins: 'ins', rins: 'ins', fins: 'ins', U: 'winU', g: 'winG', inf: 'inf', gb: 'gb', go: 'go', of: 'of', ot: 'ot', heatT: 'heatT', sbT: 'sbT', sbF: 'sbF', sbTo: 'sbTo', coolT: 'coolT' }; return t(m[k] || k); }
+function run() {
+  MSG = '';
+  if (!WX) { MSG = t('nowx'); render(); return; }
+  var bad = validate(); if (bad) { MSG = t('bad') + lblOf(bad); render(); return; }
+  BUSY = true; render();
+  setTimeout(function () {
+    try {
+      var cfg = buildCfg(S, WX.st.mean), out = simulate(WX, cfg, { dt: 900, passes: 2 }), sm = summarize(WX, out), i, hot = 0, tmn = 99, tmx = -99;
+      for (i = 0; i < out.TA.length; i++) { var x = out.TA[i]; if (x > 28) { hot++; } if (x < tmn) { tmn = x; } if (x > tmx) { tmx = x; } }
+      R = { sm: sm, hot: hot, tmn: tmn, tmx: tmx, area: S.W * S.D, s: JSON.parse(JSON.stringify(S)), wx: { name: WX.loc.name, country: WX.loc.country }, when: new Date() };
+      STALE = false;
+    } catch (e) { MSG = 'Error: ' + (e && e.message); R = null; }
+    BUSY = false; render();
+  }, 40);
+}
+var CHKR = null;
+function runCheck() {
+  if (!WX || !/denver/i.test(WX.loc.name)) { CHKR = 'no'; render(); return; }
+  BUSY = true; CHKR = null; render();
+  setTimeout(function () {
+    var rows = [];
+    ['600', '900'].forEach(function (c) { var o = simulate(WX, bestestCfg(c === '900'), { dt: 900, passes: 2 }), sm = summarize(WX, o), rf = CHK[c];
+      rows.push([c, 'q1', sm.tH / 1e3, rf.h], [c, 'q2', sm.tC / 1e3, rf.c], [c, 'q3', sm.pH, rf.ph], [c, 'q4', sm.pC, rf.pc]); });
+    CHKR = rows; BUSY = false; render();
+  }, 40);
+}
+/* ---- rendu ---- */
+function fld(k, lab, step, unit) { return '<label class="hzl"><span>' + lab + '</span><input class="fi" type="number" step="' + step + '" data-k="' + k + '" value="' + S[k] + '">' + (unit ? '<i>' + unit + '</i>' : '') + '</label>'; }
+function sel(k, lab, opts) { return '<label class="hzl"><span>' + lab + '</span><select class="fi" data-k="' + k + '">' + opts.map(function (o) { return '<option value="' + o[0] + '"' + (String(S[k]) === String(o[0]) ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select></label>'; }
+function presetOpts(P) { var o = [], k; for (k in P) { o.push([k, P[k].n[LN[L()]]]); } return o; }
+function absOpts() { return [[0.4, t('abl')], [0.6, t('abm')], [0.8, t('abd')]]; }
+function yn(k, yes, no) { return [[1, yes], [0, no]]; }
+function sec(title, body, open) { return '<details class="hzsec"' + (open ? ' open' : '') + '><summary>' + title + '</summary>' + body + '</details>'; }
+function buildForm() {
+  var f = '';
+  f += sec(t('s1'), '<div class="hzn">' + t('wxhelp') + '</div><div style="margin:4px 0"><a class="btn" target="_blank" rel="noopener noreferrer" href="https://climate.onebuilding.org/default.html">' + t('wxsite') + '</a></div><input type="file" id="hr_file" accept=".epw,.zip" style="width:100%;font-size:11px;margin:4px 0"><div id="hr_wx"></div>', true);
+  f += sec(t('s2'), fld('W', t('len'), '0.5', 'm') + fld('D', t('dep'), '0.5', 'm') + fld('H', t('hgt'), '0.1', 'm') + fld('az0', t('az0'), '5', '°') + '<div class="hzn">' + t('azhelp') + '</div>' +
+    [0, 1, 2, 3].map(function (k) { return fld('aw' + k, t('facade') + ' ' + (k + 1) + ' (' + compass(S.az0 + 90 * k) + ') — ' + t('winarea'), '0.5', 'm²'); }).join(''), true);
+  f += sec(t('s3'), sel('wall', t('wall'), presetOpts(PW)) + fld('wins', t('ins'), '1', 'cm') + sel('wabs', t('absn') + ' — ' + t('wall'), absOpts()) +
+    sel('roof', t('roof'), presetOpts(PR)) + fld('rins', t('ins'), '1', 'cm') + sel('rabs', t('absn') + ' — ' + t('roof'), absOpts()) +
+    sel('floor', t('floor'), presetOpts(PF)) + fld('fins', t('ins'), '1', 'cm') +
+    sel('glz', t('win'), presetOpts(PG)) + fld('U', t('winU'), '0.1', '') + fld('g', t('winG'), '0.05', '') + '<div class="hzn">' + t('cstnote') + '</div>', true);
+  f += sec(t('s4'), fld('inf', t('inf'), '0.1', '') + fld('gb', t('gb'), '10', 'W') + fld('go', t('go'), '10', 'W') + fld('of', t('of'), '1', 'h') + fld('ot', t('ot'), '1', 'h') +
+    fld('heatT', t('heatT'), '0.5', '°C') + sel('sb', t('sb'), yn('sb', t('yes'), t('no').replace(' (flottement libre)', '').replace(' (free-floating)', '').replace(' (flotación libre)', ''))) + fld('sbT', t('sbT'), '0.5', '°C') + fld('sbF', t('sbF'), '1', 'h') + fld('sbTo', t('sbTo'), '1', 'h') +
+    sel('cool', t('cool'), yn('cool', t('yes'), t('no'))) + fld('coolT', t('coolT'), '0.5', '°C'), true);
+  return f;
+}
+function barsSvg(sm, withC) {
+  var w = 560, h = 190, l = 44, b = 24, tp = 10, i, mx = 1; for (i = 0; i < 12; i++) { mx = Math.max(mx, sm.mH[i], withC ? sm.mC[i] : 0); }
+  var step = Math.pow(10, Math.floor(Math.log(mx) / Math.LN10)), top = Math.ceil(mx / step) * step; if (top / step < 2) { top = step * 2; }
+  var bw = (w - l - 6) / 12, y = function (v) { return tp + (h - tp - b) * (1 - v / top); }, s = '<svg viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;max-width:640px;height:auto;font-family:inherit" role="img">';
+  for (i = 0; i <= 4; i++) { var v = top * i / 4; s += '<line x1="' + l + '" x2="' + (w - 2) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="var(--border)" stroke-width="0.5"/><text x="' + (l - 4) + '" y="' + (y(v) + 3) + '" font-size="9" text-anchor="end" fill="var(--ts)">' + fmt(v, 0) + '</text>'; }
+  for (i = 0; i < 12; i++) { var x0 = l + i * bw + bw * 0.12, ww = bw * (withC ? 0.38 : 0.76);
+    s += '<rect x="' + x0 + '" y="' + y(sm.mH[i]) + '" width="' + ww + '" height="' + Math.max(0, y(0) - y(sm.mH[i])) + '" fill="#d1495b"/>';
+    if (withC) { s += '<rect x="' + (x0 + ww) + '" y="' + y(sm.mC[i]) + '" width="' + ww + '" height="' + Math.max(0, y(0) - y(sm.mC[i])) + '" fill="#2e86c1"/>'; }
+    s += '<text x="' + (l + i * bw + bw / 2) + '" y="' + (h - 8) + '" font-size="9" text-anchor="middle" fill="var(--ts)">' + MON[L()][i] + '</text>'; }
+  return s + '</svg><div style="font-size:10px;color:var(--ts)"><span style="color:#d1495b">■</span> ' + t('rh') + (withC ? ' &nbsp; <span style="color:#2e86c1">■</span> ' + t('rc') : '') + '</div>';
+}
+function p2(n) { return (n < 10 ? '0' : '') + n; }
+function atStr(a) { return a.d + ' ' + MON[L()][a.mo - 1] + ' ' + p2(a.h - 1) + ':00–' + p2(a.h) + ':00'; }
+function card(tt, v, sub) { return '<div class="hzcard"><div class="hzct">' + tt + '</div><div class="hzcv">' + v + '</div><div class="hzcs">' + sub + '</div></div>'; }
+function resultsHtml(r, forPrint) {
+  var sm = r.sm, A = r.area, cl = r.s.cool === 1, h = '';
+  h += '<div class="hzcards">' + card(t('rh'), fmt(sm.tH, 0) + ' kWh', fmt(sm.tH / A, 1) + ' ' + t('kwhm2')) + (cl ? card(t('rc'), fmt(sm.tC, 0) + ' kWh', fmt(sm.tC / A, 1) + ' ' + t('kwhm2')) : '') +
+    card(t('peakh'), fmt(sm.pH, 2) + ' kW', fmt(sm.pH * 1000 / A, 0) + ' W/m² · ' + atStr(sm.atH)) + (cl ? card(t('peakc'), fmt(sm.pC, 2) + ' kW', fmt(sm.pC * 1000 / A, 0) + ' W/m² · ' + atStr(sm.atC)) : '') +
+    card(t('tin'), fmt(r.tmn, 1) + ' / ' + fmt(r.tmx, 1) + ' °C', t('minmax') + ' · ' + fmt(r.hot, 0) + ' ' + t('hot28')) + '</div>';
+  h += '<div class="hzh">' + t('monthly') + '</div>' + barsSvg(sm, cl);
+  h += '<table class="hztb"><thead><tr><th>' + t('month') + '</th><th>' + t('rh') + '</th>' + (cl ? '<th>' + t('rc') + '</th>' : '') + '</tr></thead><tbody>';
+  var i; for (i = 0; i < 12; i++) { h += '<tr><td>' + MON[L()][i] + '</td><td>' + fmt(sm.mH[i], 0) + '</td>' + (cl ? '<td>' + fmt(sm.mC[i], 0) + '</td>' : '') + '</tr>'; }
+  h += '<tr class="hzsum"><td>' + t('ctot') + '</td><td>' + fmt(sm.tH, 0) + '</td>' + (cl ? '<td>' + fmt(sm.tC, 0) + '</td>' : '') + '</tr></tbody></table><div class="hzn">' + t('peaknote') + '</div>';
+  return h;
+}
+function limitsHtml() { return '<p class="hzp">' + t('v1') + '</p><p class="hzp">' + t('v2') + '</p><p class="hzp">' + t('v3') + '</p><p class="hzp">' + t('v4') + '</p><p class="hzn">' + t('lblsrc') + '</p>'; }
+function chkHtml() {
+  var h = '<div class="hzh">' + t('chk') + '</div><div class="hzn">' + t('chkhelp') + '</div><div style="margin:6px 0"><button class="btn" data-act="chk">' + t('chk') + '</button></div>';
+  if (CHKR === 'no') { h += '<div style="color:var(--wn);font-size:11px">' + t('chkno') + '</div>'; }
+  else if (CHKR) { h += '<table class="hztb"><thead><tr><th>' + t('chkc') + '</th><th>' + t('chkq') + '</th><th>' + t('chkv') + '</th><th>' + t('chkr') + '</th><th>' + t('chks') + '</th></tr></thead><tbody>' + CHKR.map(function (x) { var ok = x[2] >= x[3][0] - 0.0005 && x[2] <= x[3][1] + 0.0005; return '<tr><td>' + x[0] + '</td><td>' + t(x[1]) + '</td><td>' + fmt(x[2], 3) + '</td><td>' + fmt(x[3][0], 3) + ' – ' + fmt(x[3][1], 3) + '</td><td style="color:' + (ok ? 'var(--ok,#2a9d5c)' : 'var(--wn)') + '">' + (ok ? t('inr') : t('outr')) + '</td></tr>'; }).join('') + '</tbody></table>'; }
+  return h;
+}
+function wxBox() {
+  var b = $('hr_wx'); if (!b) { return; }
+  if (WXERR) { b.innerHTML = '<div style="color:var(--er);font-size:11px">' + esc(WXERR) + '</div>'; return; }
+  if (!WX) { b.innerHTML = ''; return; }
+  var st = WX.st; b.innerHTML = '<div style="font-size:11px"><b>' + esc(WX.loc.name) + '</b>, ' + esc(WX.loc.country) + ' · ' + fmt(WX.loc.lat, 2) + '°, ' + fmt(WX.loc.lon, 2) + '°</div><div style="font-size:10px;color:var(--ts)">' + t('wxmean') + ' ' + fmt(st.mean, 1) + ' °C (' + fmt(st.min, 1) + ' / ' + fmt(st.max, 1) + ') · ' + t('wxrad') + ' ' + fmt(st.ghi, 0) + ' kWh/m²</div>';
+}
+function renderOut() {
+  var o = $('hr_out'); if (!o) { return; }
+  var h = '';
+  if (MSG) { h += '<div style="color:var(--er);font-size:11px;margin:4px 0">' + esc(MSG) + '</div>'; }
+  if (BUSY) { h += '<div class="hzn">' + t('busy') + '</div>'; }
+  if (R) { if (STALE) { h += '<div style="color:var(--wn);font-size:11px;margin:4px 0">' + t('stale') + '</div>'; } h += resultsHtml(R); }
+  h += '<div class="hzh">' + t('vtitle') + '</div>' + limitsHtml() + chkHtml();
+  o.innerHTML = h;
+}
+function render() {
+  var root = $(pgId); if (!root) { return; }
+  var keep = root.querySelector('.hzin'), ofs = keep ? keep.scrollTop : 0;
+  if (!$('hr_form') || root.getAttribute('data-hl') !== L()) {
+    root.setAttribute('data-hl', L());
+    root.innerHTML = '<div class="ph" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px"><span>' + t('title') + '</span><span style="display:flex;gap:4px;flex-wrap:wrap"><button class="btn bp" data-act="run">' + t('run') + '</button><button class="btn" data-act="ex">' + t('ex') + '</button><button class="btn" data-act="print">' + t('print') + '</button></span></div>' +
+      '<div style="font-size:10.5px;color:var(--ts);margin:2px 0 8px">' + t('intro') + '</div><div class="hzmain"><div class="hzin" id="hr_form">' + buildForm() + '</div><div class="hzout" id="hr_out"></div></div>';
+    if (WXERR === '' && WX) { /* reste chargée */ }
+  }
+  var rb = root.querySelector('[data-act="run"]'); if (rb) { rb.disabled = BUSY; rb.textContent = BUSY ? t('busy') : t('run'); }
+  wxBox(); renderOut();
+}
+function syncInputs() { var root = $(pgId); root.querySelectorAll('[data-k]').forEach(function (e) { var k = e.getAttribute('data-k'); if (document.activeElement !== e) { e.value = S[k]; } }); }
+function onInput(e) {
+  var el = e.target, k = el.getAttribute && el.getAttribute('data-k'); if (!k) { return; }
+  if (el.tagName === 'SELECT') { S[k] = (k === 'sb' || k === 'cool' || k === 'wabs' || k === 'rabs') ? parseFloat(el.value) : el.value; }
+  else { var v = parseFloat(String(el.value).replace(',', '.')); S[k] = isFinite(v) ? v : NaN; }
+  if (k === 'glz' && PG[S.glz].U) { S.U = PG[S.glz].U; S.g = PG[S.glz].g; syncInputs(); }
+  if ((k === 'U' || k === 'g') && S.glz !== 'cus') { S.glz = 'cus'; var gs = document.querySelector('#' + pgId + ' [data-k="glz"]'); if (gs) { gs.value = 'cus'; } }
+  if (k === 'az0') { render0Labels(); }
+  save(); if (R) { STALE = true; renderOut(); }
+}
+function render0Labels() { var root = $(pgId); [0, 1, 2, 3].forEach(function (i) { var inp = root.querySelector('[data-k="aw' + i + '"]'); if (inp && inp.parentNode) { var sp = inp.parentNode.querySelector('span'); if (isFinite(S.az0)) { sp.textContent = t('facade') + ' ' + (i + 1) + ' (' + compass(S.az0 + 90 * i) + ') — ' + t('winarea'); } } }); }
+function example() { S = defaults(); save(); var root = $(pgId); root.removeAttribute('data-hl'); R = null; MSG = ''; render(); }
+/* ---- note imprimable ---- */
+var PCSS = '*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;background:#e8ecf0;padding:20px 0;color:#1a3a5a;font-size:9.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:A4;margin:12mm}@media print{.no-print{display:none!important}body{background:#fff!important;padding:0!important}.page{box-shadow:none!important;width:auto!important;margin:0!important;padding:0!important}}.bar{text-align:center;margin-bottom:10px}.bar button{padding:8px 16px;font-size:11pt;cursor:pointer}.page{width:210mm;margin:0 auto;background:#fff;padding:14mm 16mm;box-shadow:0 6px 30px rgba(0,0,0,.18)}.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6mm;border-bottom:2pt solid #1a3a5a;padding-bottom:4mm}.logo{font-size:22pt;font-weight:900;letter-spacing:5px}.sub{font-size:7pt;color:#4a6a8a;letter-spacing:3px;margin-top:1.5mm}.doc{font-size:11pt;font-weight:700;color:#fff;background:#1a3a5a;padding:2.5mm 5mm;border-radius:2pt;text-align:right}.ref{font-size:7.5pt;color:#555;margin-top:1.5mm;text-align:right}h2{font-size:10.5pt;margin:5mm 0 2mm;padding:1.5mm 3mm;background:#1a3a5a;color:#fff;page-break-after:avoid}table{width:100%;border-collapse:collapse;margin-bottom:2mm;page-break-inside:avoid}.kv td{padding:1.4mm 2mm;border-bottom:.5pt solid #d5deea;font-size:8.5pt}.kv td:first-child{color:#4a6a8a;width:55%}.kv td:last-child{font-weight:700;text-align:right}.tb th{background:#e3eaf3;padding:1.6mm 2mm;font-size:8pt;text-align:right}.tb td{padding:1.4mm 2mm;border-bottom:.5pt solid #d5deea;font-size:8.5pt;text-align:right}.tb td:first-child,.tb th:first-child{text-align:left}.two{display:grid;grid-template-columns:1fr 1fr;gap:4mm}.sum{display:grid;grid-template-columns:repeat(3,1fr);gap:3mm;margin-bottom:4mm}.sb{border:1pt solid #1a3a5a;border-radius:3pt;padding:3mm 4mm}.st{font-size:6.5pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}.sv{font-size:15pt;font-weight:800;margin:1mm 0}.ss{font-size:7.5pt;color:#4a6a8a}p{font-size:8.5pt;line-height:1.4;margin:1.5mm 0}.n{color:#4a6a8a}';
+function kvT(rows) { return '<table class="kv">' + rows.map(function (x) { return '<tr><td>' + x[0] + '</td><td>' + x[1] + '</td></tr>'; }).join('') + '</table>'; }
+function printNote() {
+  if (!R) { if (WX) { run(); } else { MSG = t('nowx'); render(); } return; }
+  var r = R, s = r.s, sm = r.sm, A = r.area, cl = s.cool === 1, now = r.when, pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  var ref = 'HS-' + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + '-' + pad(now.getHours()) + pad(now.getMinutes()), ds = pad(now.getDate()) + '/' + pad(now.getMonth() + 1) + '/' + now.getFullYear();
+  var box = function (a, b, c) { return '<div class="sb"><div class="st">' + a + '</div><div class="sv">' + b + '</div><div class="ss">' + c + '</div></div>'; };
+  var body = '<div class="sum">' + box(t('rh'), fmt(sm.tH, 0) + ' kWh', fmt(sm.tH / A, 1) + ' ' + t('kwhm2')) + box(t('peakh'), fmt(sm.pH, 2) + ' kW', fmt(sm.pH * 1000 / A, 0) + ' W/m²') + (cl ? box(t('rc'), fmt(sm.tC, 0) + ' kWh', fmt(sm.tC / A, 1) + ' ' + t('kwhm2')) : box(t('tin'), fmt(r.tmn, 1) + ' / ' + fmt(r.tmx, 1) + ' °C', fmt(r.hot, 0) + ' ' + t('hot28'))) + '</div>';
+  body += '<h2>' + t('hyp') + '</h2><div class="two">' + kvT([[t('s1').replace(/^\d\. /, ''), esc(r.wx.name) + ', ' + esc(r.wx.country)], [t('floora'), fmt(A, 1) + ' m² · ' + fmt(s.H, 1) + ' m'], [t('az0').split(' (')[0], fmt(s.az0, 0) + '°'], [t('wall'), esc(PW[s.wall].n[LN[L()]]) + (s.wins > 0 ? ' + ' + s.wins + ' cm' : '')], [t('roof'), esc(PR[s.roof].n[LN[L()]]) + (s.rins > 0 ? ' + ' + s.rins + ' cm' : '')], [t('floor'), esc(PF[s.floor].n[LN[L()]]) + (s.fins > 0 ? ' + ' + s.fins + ' cm' : '')]]) +
+    kvT([[t('winarea') + ' (1–4)', fmt(s.aw0, 1) + ' / ' + fmt(s.aw1, 1) + ' / ' + fmt(s.aw2, 1) + ' / ' + fmt(s.aw3, 1) + ' m²'], [t('winU') + ' / g', fmt(s.U, 2) + ' / ' + fmt(s.g, 2)], [t('inf'), fmt(s.inf, 2)], [t('gb') + ' / ' + t('go'), fmt(s.gb, 0) + ' / ' + fmt(s.go, 0) + ' W'], [t('heatT'), fmt(s.heatT, 1) + ' °C' + (s.sb === 1 ? ' (' + fmt(s.sbT, 1) + ' °C ' + s.sbF + '–' + s.sbTo + ' h)' : '')], [t('cool'), cl ? fmt(s.coolT, 1) + ' °C' : t('no')]]) + '</div>';
+  body += '<h2>' + t('res') + '</h2><table class="tb"><tr><th>' + t('month') + '</th><th>' + t('rh') + ' (kWh)</th>' + (cl ? '<th>' + t('rc') + ' (kWh)</th>' : '') + '</tr>' + sm.mH.map(function (v, i) { return '<tr><td>' + MON[L()][i] + '</td><td>' + fmt(v, 0) + '</td>' + (cl ? '<td>' + fmt(sm.mC[i], 0) + '</td>' : '') + '</tr>'; }).join('') + '<tr style="font-weight:700"><td>' + t('ctot') + '</td><td>' + fmt(sm.tH, 0) + '</td>' + (cl ? '<td>' + fmt(sm.tC, 0) + '</td>' : '') + '</tr></table>' +
+    '<div style="max-width:165mm;margin:2mm auto">' + barsSvg(sm, cl).replace(/var\(--border\)/g, '#d5deea').replace(/var\(--ts\)/g, '#4a6a8a') + '</div><p class="n">' + t('peakh') + ' : ' + atStr(sm.atH) + (cl ? ' · ' + t('peakc') + ' : ' + atStr(sm.atC) : '') + '</p><p class="n">' + t('peaknote') + '</p>';
+  body += '<h2>' + t('lim') + '</h2><p>' + t('v1') + '</p><p>' + t('v2') + '</p><p>' + t('v3') + '</p><p>' + t('v4') + '</p><p class="n">' + t('lblsrc') + '</p>';
+  var w = window.open('', '_blank', 'width=900,height=750'); if (!w) { MSG = t('rpop'); renderOut(); return; }
+  w.document.write('<!DOCTYPE html><html lang="' + L() + '"><head><meta charset="UTF-8"><title>' + ref + ' — THERMOSYS</title><style>' + PCSS + '</style></head><body><div class="bar no-print"><button onclick="window.print()">' + t('rprint') + '</button></div><div class="page"><div class="hdr"><div><div class="logo">THERMOSYS</div><div class="sub">' + ({ fr: 'POSTE DE TRAVAIL GÉNIE CLIMATIQUE', en: 'HVAC ENGINEERING WORKSTATION', es: 'ESTACIÓN DE TRABAJO DE CLIMATIZACIÓN' }[L()]) + '</div></div><div><div class="doc">' + t('repT') + '</div><div class="ref">' + ref + ' — ' + ds + '</div></div></div>' + body + '</div></body></html>');
+  w.document.close();
+}
+/* ---- installation ---- */
+function css() {
+  var st = document.createElement('style');
+  st.textContent = '#pg-hourly .hzmain{display:grid;grid-template-columns:minmax(300px,5fr) 6fr;gap:12px;align-items:start}@media(max-width:900px){#pg-hourly .hzmain{grid-template-columns:1fr}}#pg-hourly details.hzsec{border:1px solid var(--border);border-radius:6px;margin:0 0 8px;padding:0 8px 6px}#pg-hourly details.hzsec>summary{cursor:pointer;font-weight:700;font-size:11px;padding:7px 0;color:var(--ac);list-style:none}#pg-hourly details.hzsec>summary::-webkit-details-marker{display:none}' +
+    '#pg-hourly label.hzl{display:flex;align-items:center;gap:6px;margin:4px 0;font-size:11px}#pg-hourly label.hzl span{flex:1;color:var(--tp,inherit)}#pg-hourly label.hzl input,#pg-hourly label.hzl select{flex:0 0 46%;max-width:46%;min-width:0}#pg-hourly label.hzl i{font-style:normal;color:var(--ts);width:26px;font-size:10px}' +
+    '#pg-hourly .hzn{font-size:10px;color:var(--ts);margin:4px 0}#pg-hourly .hzp{font-size:11px;margin:5px 0;line-height:1.45}#pg-hourly .hzcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:6px;margin-bottom:8px}#pg-hourly .hzcard{border:1px solid var(--border);border-radius:6px;padding:7px 9px;background:var(--bgc)}#pg-hourly .hzct{font-size:9.5px;color:var(--ts)}#pg-hourly .hzcv{font-size:19px;font-weight:800;color:var(--ac);margin:2px 0}#pg-hourly .hzcs{font-size:10px;color:var(--ts)}' +
+    '#pg-hourly .hzh{font-size:11px;font-weight:700;color:var(--ac);margin:10px 0 4px;border-bottom:1px solid var(--border);padding-bottom:2px}#pg-hourly table.hztb{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px}#pg-hourly .hztb th{text-align:right;color:var(--ts);font-weight:600;padding:3px 4px;border-bottom:1px solid var(--border)}#pg-hourly .hztb th:first-child,#pg-hourly .hztb td:first-child{text-align:left}#pg-hourly .hztb td{padding:3px 4px;text-align:right;border-bottom:1px solid var(--border)}#pg-hourly .hztb tr.hzsum td{font-weight:700;border-top:1px solid var(--border)}';
+  document.head.appendChild(st);
+}
+function install() {
+  if ($(pgId)) { return true; }
+  var ref = $('pg-normes'), mnref = $('mn-heat') || $('mn-psy') || $('mn-chargepro') || $('mn-charge'), anyb = document.querySelector('button.mn');
+  if (!ref && !anyb) { return false; }
+  css(); restore();
+  var pg = document.createElement('div'); pg.className = 'page'; pg.id = pgId;
+  if (ref && ref.parentNode) { ref.parentNode.insertBefore(pg, ref); } else { document.body.appendChild(pg); }
+  var mn = document.createElement('button'); mn.className = 'mn'; mn.id = 'mn-hourly'; mn.setAttribute('onclick', "goPage('hourly')"); mn.innerHTML = '&#9201; <span id="mn_hourly"></span>';
+  if (mnref && mnref.parentNode) { mnref.parentNode.insertBefore(mn, mnref.nextSibling); } else if (anyb) { anyb.parentNode.appendChild(mn); }
+  pg.addEventListener('input', onInput); pg.addEventListener('change', function (e) { if (e.target && e.target.id === 'hr_file') { var f = e.target.files && e.target.files[0]; if (f) { loadWx(f); } return; } if (e.target.tagName === 'SELECT') { onInput(e); } });
+  pg.addEventListener('click', function (e) { var b = e.target.closest ? e.target.closest('[data-act]') : null; if (!b) { return; } var a = b.getAttribute('data-act'); if (a === 'run') { if (!BUSY) { run(); } } else if (a === 'ex') { example(); } else if (a === 'print') { printNote(); } else if (a === 'chk') { if (!BUSY) { runCheck(); } } });
+  mnLabel(); render(); return true;
+}
+function mnLabel() { var s = $('mn_hourly'); if (s) { s.textContent = t('menu'); } }
+var _og = window.goPage; window.goPage = function (p) { if (_og) { _og.apply(this, arguments); } if (p === 'hourly') { setTimeout(function () { render(); }, 30); } };
+if (!install()) { var tries = 0, iv = setInterval(function () { if (install() || ++tries > 40) { clearInterval(iv); } }, 500); }
+setInterval(function () { mnLabel(); var root = $(pgId); if (root && root.getAttribute('data-hl') && root.getAttribute('data-hl') !== L()) { render(); } }, 700);
+
+})();
+</script>
 </body>
 </html>
 
