@@ -13141,8 +13141,8 @@ window._zdef=function(v,d){return isFinite(v)?v:d;};
       // infiltration et air neuf (instantanes, convectifs)
       var fi = c.inf ? schedAt(c.inf.sched, t) : 0, fv = c.vent ? schedAt(c.vent.sched, t) : 0;
       var mInf = c.inf ? rhoA * (c.inf.ach || 0) * Vroom / 3600 * fi : 0, mVen = c.vent ? rhoA * (c.vent.flow || 0) / 3600 * fv : 0;
-      inf[0][s_] = mInf * cpA * (To - Ti); inf[1][s_] = mInf * hfg * (Wo - Wi);
-      vent[0][s_] = mVen * cpA * (To - Ti); vent[1][s_] = mVen * hfg * (Wo - Wi);
+      inf[0][s_] = mInf * cpA * (To - Ti); inf[1][s_] = mInf * hfg * Math.max(0, Wo - Wi);
+      vent[0][s_] = mVen * cpA * (To - Ti); vent[1][s_] = mVen * hfg * Math.max(0, Wo - Wi);
     }
     // ---- groupes de simulation
     var zero = function () { return new Float64Array(ns); };
