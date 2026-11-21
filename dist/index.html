@@ -231,7 +231,7 @@
 
 <!-- CATALOGUE -->
 <div class="page" id="pg-catalogue">
-<div class="ptitle"><span id="t_cat_title">CATALOGUE MULTI-MARQUES — 38 CONSTRUCTEURS — 80 EQUIPEMENTS 2024-2025</span></div>
+<div class="ptitle"><span id="t_cat_title">CATALOGUE MULTI-MARQUES — 38 CONSTRUCTEURS — 80 EQUIPEMENTS 2024-2025</span></div><div id="cat_indic_note" style="font-size:11px;line-height:1.5;margin:0 0 10px 0;padding:6px 10px;border-left:3px solid var(--ac);background:rgba(0,229,255,.06);color:var(--ac)">⚠ Données indicatives issues des fiches des constructeurs — vérifiez toujours la fiche officielle du modèle exact avant toute étude ou commande.</div>
 <div class="frow">
 <select class="fsel" id="prodBrand" onchange="renderProds()" style="min-width:160px"><option value="">Toutes marques</option></select>
 <select class="fsel" id="prodCat" onchange="renderProds()" style="min-width:140px"><option value="">Toutes categories</option><option value="vrf" id="t_cat_vrf">VRF / VRV</option><option value="split" id="t_cat_split">Split / Multi-split</option><option value="chiller" id="t_cat_chiller">Chillers</option><option value="rooftop" id="t_cat_rooftop">Rooftop</option><option value="ccu" id="t_cat_ccu">CCU / Precision</option><option value="pac" id="t_cat_pac">PAC Air/Eau</option><option value="ahu" id="t_cat_ahu">CTA / VMC</option><option value="compresseur" id="t_cat_comp">Compresseurs</option><option value="regulation" id="t_cat_reg">Regulation / GTB</option><option value="diffusion" id="t_cat_diff">Distribution air</option></select>
@@ -1125,7 +1125,7 @@
 
 <!-- VANNES -->
 <div class="page" id="pg-vannes">
-<div class="ptitle"><span id="t_van_title">Module Vannes Control — Diagnostic &amp; Audit RT2025</span></div>
+<div class="ptitle"><span id="t_van_title">Module Vannes Control — Diagnostic &amp; Audit RT2025</span></div><div id="van_indic_note" style="font-size:11px;line-height:1.5;margin:0 0 10px 0;padding:6px 10px;border-left:3px solid var(--ac);background:rgba(0,229,255,.06);color:var(--ac)">⚠ Données indicatives issues des fiches des constructeurs — vérifiez toujours la fiche officielle du modèle exact avant toute étude ou commande.</div>
 <div style="background:linear-gradient(135deg,rgba(0,120,180,.12),rgba(0,229,255,.06));border:1px solid rgba(0,229,255,.2);border-radius:8px;padding:10px 16px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
   <div>
     <div id="van_module_lbl" style="font-size:11px;font-weight:700;color:var(--ac);letter-spacing:2px">MODULE VANNES RÉGULATION</div>
@@ -22735,6 +22735,7 @@ function makeEngine(TAB) {
 })();
 
 </script>
+<script id="cat-indic-note-js">(function(){var T={"fr":"⚠ Données indicatives issues des fiches des constructeurs — vérifiez toujours la fiche officielle du modèle exact avant toute étude ou commande.","en":"⚠ Indicative data compiled from manufacturer datasheets — always check the official datasheet of the exact model before any design or order.","es":"⚠ Datos indicativos recopilados de las fichas de los fabricantes: compruebe siempre la ficha oficial del modelo exacto antes de cualquier estudio o pedido."};function L(){var l=null,g;try{l=localStorage.getItem("thermosys_lang3");}catch(e){}try{g=(typeof lang!=="undefined")?lang:window.lang;}catch(e){g=window.lang;}if(l==="es")return"es";if(g==="en")return"en";return"fr";}function p(){["cat_indic_note","van_indic_note"].forEach(function(id){var e=document.getElementById(id);if(e){var t=T[L()];if(e.textContent!==t)e.textContent=t;}});}setInterval(p,700);p();})();</script>
 </body>
 </html>
 
