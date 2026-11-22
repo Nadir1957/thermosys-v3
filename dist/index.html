@@ -22446,7 +22446,7 @@ function renderOut() {
   var h = '';
   if (MSG) { h += '<div style="color:var(--er);font-size:11px;margin:4px 0">' + esc(MSG) + '</div>'; }
   if (BUSY) { h += '<div class="hzn">' + t('busy') + '</div>'; }
-  if (R) { if (STALE) { h += '<div style="color:var(--wn);font-size:11px;margin:4px 0">' + t('stale') + '</div>'; } h += resultsHtml(R); }
+  if (R) { if (STALE) { h += '<div style="color:var(--wn);font-size:11px;margin:4px 0">' + t('stale') + '</div>'; } h += resultsHtml(R); h += '<div class="hz-warn-froid" style="color:var(--wn);font-size:11px;margin:6px 0">' + ({"fr":"⚠ Attention : sur 6 cas comparés à EnergyPlus, le froid sensible annuel est sous-estimé de 7 à 35 % et les pointes de puissance sont inférieures de 0 à 24 %. Prévoir une marge de sécurité sur le refroidissement. Non validé en climat méditerranéen ni algérien.","en":"⚠ Warning: in 6 cases compared with EnergyPlus, annual sensible cooling is underestimated by 7 to 35 % and power peaks are 0 to 24 % lower. Allow a safety margin on cooling. Not validated in Mediterranean or Algerian climate.","es":"⚠ Atención: en 6 casos comparados con EnergyPlus, el frío sensible anual está subestimado entre un 7 y un 35 % y las puntas de potencia son entre un 0 y un 24 % inferiores. Prever un margen de seguridad en la refrigeración. No validado en clima mediterráneo ni argelino."}[L()] || "⚠ Warning: in 6 cases compared with EnergyPlus, annual sensible cooling is underestimated by 7 to 35 % and power peaks are 0 to 24 % lower. Allow a safety margin on cooling. Not validated in Mediterranean or Algerian climate.") + '</div>'; }
   h += '<div class="hzh">' + t('vtitle') + '</div>' + limitsHtml() + chkHtml();
   o.innerHTML = h;
 }
