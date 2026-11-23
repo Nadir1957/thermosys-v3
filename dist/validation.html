@@ -74,7 +74,7 @@ a{color:var(--ac)}
 <h3>Limites connues</h3>
 <ul><li>EnergyPlus n’est pas une mesure : ce sont des comparaisons entre deux programmes. Le fichier EnergyPlus a été écrit par l’éditeur et peut contenir des erreurs.</li>
 <li>La convection intérieure et celle des fenêtres sont prises à coefficient fixe. Avec les options par défaut d’EnergyPlus (qui les calcule), le froid de Thermosys est plus élevé de 14 % dans un cas testé (Denver).</li>
-<li>Les climats sahariens (Ghardaïa, Ouargla) n’ont été comparés qu’à EnergyPlus, pas à des mesures. Aucune comparaison avec des mesures en climat méditerranéen ni algérien.</li>
+<li>Les climats méditerranéen (Alger), chaud et aride (Ghardaïa, Ouargla) et froid et sec (Denver) n’ont été comparés qu’à EnergyPlus, pas à des mesures. Les seules mesures réelles utilisées viennent de deux maisons d’essai en Allemagne (Holzkirchen, climat tempéré) ; aucune mesure en climat chaud, aride, humide ou tropical.</li>
 <li>Les options d’EnergyPlus (pluie, algorithmes) changent fortement les résultats : ces écarts dépendent des réglages choisis, indiqués dans le dossier de tests.</li></ul>
 <div class="warn">Prévoir une marge de sécurité sur le dimensionnement. Ce module estime des besoins, il ne remplace pas un calcul réglementaire.</div></div>
 <div class="t en"><h2>Hourly estimate (annual needs, hour by hour)</h2>
@@ -94,7 +94,7 @@ a{color:var(--ac)}
 <h3>Known limits</h3>
 <ul><li>EnergyPlus is not a measurement: these are comparisons between two programs. The EnergyPlus input file was written by the publisher and may contain errors.</li>
 <li>Interior and window convection use fixed coefficients. With EnergyPlus default options (which calculate them), Thermosys cooling is 14 % higher in one tested case (Denver).</li>
-<li>Saharan climates (Ghardaïa, Ouargla) were only compared with EnergyPlus, not with measurements. No comparison with measurements in Mediterranean or Algerian climate.</li>
+<li>Mediterranean (Algiers), hot-arid (Ghardaïa, Ouargla) and cold-dry (Denver) climates were only compared with EnergyPlus, not with measurements. The only real measurements used come from two test houses in Germany (Holzkirchen, temperate climate); no measurements in hot, arid, humid or tropical climates.</li>
 <li>EnergyPlus options (rain, algorithms) change results strongly: these differences depend on the settings chosen, which are documented in the test folder.</li></ul>
 <div class="warn">Allow a safety margin when sizing. This module estimates needs; it does not replace a regulatory calculation.</div></div>
 <div class="t es"><h2>Estimación horaria (necesidades anuales, hora a hora)</h2>
@@ -114,20 +114,20 @@ a{color:var(--ac)}
 <h3>Límites conocidos</h3>
 <ul><li>EnergyPlus no es una medición: son comparaciones entre dos programas. El archivo de EnergyPlus lo escribió el editor y puede contener errores.</li>
 <li>La convección interior y la de las ventanas usan coeficientes fijos. Con las opciones por defecto de EnergyPlus (que las calcula), el frío de Thermosys es un 14 % superior en un caso probado (Denver).</li>
-<li>Los climas saharianos (Ghardaïa, Ouargla) solo se compararon con EnergyPlus, no con mediciones. Sin comparación con mediciones en clima mediterráneo ni argelino.</li>
+<li>Los climas mediterráneo (Argel), cálido y árido (Ghardaïa, Ouargla) y frío y seco (Denver) solo se compararon con EnergyPlus, no con mediciones. Las únicas mediciones reales utilizadas proceden de dos casas de ensayo en Alemania (Holzkirchen, clima templado); ninguna medición en clima cálido, árido, húmedo o tropical.</li>
 <li>Las opciones de EnergyPlus (lluvia, algoritmos) cambian mucho los resultados: estas diferencias dependen de los ajustes elegidos, documentados en la carpeta de pruebas.</li></ul>
 <div class="warn">Prever un margen de seguridad en el dimensionamiento. Este módulo estima necesidades; no sustituye un cálculo reglamentario.</div></div>
 </section>
 
 <section class="c">
 <div class="t fr"><h2>SCOP / COP : tarifs et fournisseurs d’électricité par pays</h2>
-<p>Les textes de tarifs et de fournisseurs sont rattachés à des sources officielles (régulateurs, opérateurs, statistiques publiques). Plus de 140 pays sont renseignés. Quand aucune source fiable n’a été trouvée pour un pays, il n’est pas renseigné : aucune valeur n’est inventée. Certains pays n’ont donc pas de tarif d’électricité.</p>
+<p>Les textes de tarifs et de fournisseurs sont rattachés à des sources officielles (régulateurs, opérateurs, statistiques publiques). Plus de 140 pays sont renseignés. Quand aucune source fiable n’a été trouvée pour un pays, l’information est signalée comme manquante : aucune valeur n’est inventée. Le tarif d’électricité est donc manquant pour certains pays.</p>
 <p>Limite : les tarifs changent ; ils sont indicatifs et à vérifier auprès du fournisseur avant un devis.</p></div>
 <div class="t en"><h2>SCOP / COP: electricity tariffs and suppliers by country</h2>
-<p>Tariff and supplier texts are tied to official sources (regulators, operators, public statistics). More than 140 countries are covered. When no reliable source was found for a country, it is left blank: no value is invented. Some countries therefore have no electricity tariff.</p>
+<p>Tariff and supplier texts are tied to official sources (regulators, operators, public statistics). More than 140 countries are covered. When no reliable source was found for a country, the information is shown as missing: no value is invented. The electricity tariff is therefore missing for some countries.</p>
 <p>Limit: tariffs change; they are indicative and must be checked with the supplier before a quote.</p></div>
 <div class="t es"><h2>SCOP / COP: tarifas y proveedores de electricidad por país</h2>
-<p>Los textos de tarifas y proveedores están vinculados a fuentes oficiales (reguladores, operadores, estadísticas públicas). Se cubren más de 140 países. Cuando no se encontró una fuente fiable para un país, se deja sin rellenar: no se inventa ningún valor. Por eso algunos países no tienen tarifa de electricidad.</p>
+<p>Los textos de tarifas y proveedores están vinculados a fuentes oficiales (reguladores, operadores, estadísticas públicas). Se cubren más de 140 países. Cuando no se encontró una fuente fiable para un país, la información se señala como ausente: no se inventa ningún valor. Por eso falta la tarifa de electricidad en algunos países.</p>
 <p>Límite: las tarifas cambian; son indicativas y deben comprobarse con el proveedor antes de un presupuesto.</p></div>
 </section>
 
@@ -163,19 +163,19 @@ a{color:var(--ac)}
 
 <section class="c">
 <div class="t fr"><h2>Ce qui reste à faire</h2>
-<ul><li>Comparer l’estimation horaire à des mesures réelles en climat algérien.</li>
+<ul><li>Comparer l’estimation horaire à des mesures réelles dans des climats variés (chaud et aride, humide, tropical, froid).</li>
 <li>Étendre les tests automatiques aux autres modules.</li>
 <li>Confirmer les quatre fiches du catalogue encore signalées.</li>
 <li>Modéliser la convection intérieure et celle des fenêtres dans l’estimation horaire.</li></ul>
 <p>Une erreur constatée ? Écrivez via l’onglet CONTACT de l’application : elle sera vérifiée à la source et corrigée.</p></div>
 <div class="t en"><h2>What remains to be done</h2>
-<ul><li>Compare the hourly estimate with real measurements in Algerian climate.</li>
+<ul><li>Compare the hourly estimate with real measurements in varied climates (hot-arid, humid, tropical, cold).</li>
 <li>Extend the automated tests to the other modules.</li>
 <li>Confirm the four catalogue sheets still flagged.</li>
 <li>Model interior and window convection in the hourly estimate.</li></ul>
 <p>Found an error? Write through the CONTACT tab of the application: it will be checked at the source and corrected.</p></div>
 <div class="t es"><h2>Lo que queda por hacer</h2>
-<ul><li>Comparar la estimación horaria con mediciones reales en clima argelino.</li>
+<ul><li>Comparar la estimación horaria con mediciones reales en climas variados (cálido y árido, húmedo, tropical, frío).</li>
 <li>Ampliar las pruebas automáticas a los demás módulos.</li>
 <li>Confirmar las cuatro fichas del catálogo aún señaladas.</li>
 <li>Modelizar la convección interior y la de las ventanas en la estimación horaria.</li></ul>
