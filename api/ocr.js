@@ -6,15 +6,57 @@
 import https  from 'https';
 import sharp  from 'sharp';
 
+// ── Securite : session Supabase obligatoire, limites, origine ──────
+const SUPABASE_URL  = process.env.SUPABASE_URL      || 'https://qltwswtiyzhzwihzjkwb.supabase.co';
+const SUPABASE_ANON = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsdHdzd3RpeXpoendpaHpqa3diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4OTk1MzYsImV4cCI6MjEwMDQ3NTUzNn0.NapZil3VokS9h2c4D1acyr_aSKpV4oPvHvuyzTAZjB0'; // cle publique (role anon), deja presente dans la page
+const SITE_ORIGIN   = process.env.SITE_ORIGIN       || 'https://thermosys-v3.vercel.app';
+const MAX_BASE64    = 6000000;                  // ~4,5 Mo d'image
+const MODES_OK      = ['extract', 'diagnose', 'conform', 'translate', 'barcode', 'qrcode'];
+const MIMES_OK      = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'image/gif', 'application/pdf'];
+const LIMITE_N      = 20;                       // appels max par utilisateur
+const LIMITE_MS     = 10 * 60 * 1000;           // sur 10 minutes (par instance serveur : protection de base)
+const compteurs     = new Map();
+
+async function verifierSession(req) {
+  const m = /^Bearer\s+(.+)$/i.exec(req.headers['authorization'] || '');
+  if (!m) return null;
+  try {
+    const r = await fetch(SUPABASE_URL + '/auth/v1/user', {
+      headers: { apikey: SUPABASE_ANON, Authorization: 'Bearer ' + m[1] },
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!r.ok) return null;
+    const u = await r.json();
+    return (u && u.id) ? u : null;
+  } catch (e) { return null; }
+}
+
+function limiteAtteinte(id) {
+  const t = Date.now();
+  const l = (compteurs.get(id) || []).filter(x => t - x < LIMITE_MS);
+  if (l.length >= LIMITE_N) { compteurs.set(id, l); return true; }
+  l.push(t); compteurs.set(id, l);
+  if (compteurs.size > 5000) { compteurs.clear(); }
+  return false;
+}
+
 export default async function handler(req, res) {
 
   // ── Sécurité CORS ──────────────────────────────────────────────
-  res.setHeader('Access-Control-Allow-Origin',  '*');
+  res.setHeader('Access-Control-Allow-Origin',  SITE_ORIGIN);
+  res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST')
     return res.status(405).json({ error: 'Méthode non autorisée.' });
+
+  // ── Connexion obligatoire (jeton Supabase verifie cote serveur) ──
+  const utilisateur = await verifierSession(req);
+  if (!utilisateur)
+    return res.status(401).json({ error: 'Connexion requise : connectez-vous pour utiliser l\'OCR.' });
+  if (limiteAtteinte(utilisateur.id))
+    return res.status(429).json({ error: 'Trop de demandes : réessayez dans quelques minutes.' });
 
   try {
     // ── Clé API (variable Vercel — jamais exposée côté client) ────
@@ -27,6 +69,12 @@ export default async function handler(req, res) {
     const rawImage = imageBase64 || req.body.image;
     if (!rawImage)
       return res.status(400).json({ error: 'Aucune donnée image reçue.' });
+    if (typeof rawImage !== 'string' || rawImage.length > MAX_BASE64)
+      return res.status(413).json({ error: 'Image trop volumineuse (maximum environ 4,5 Mo).' });
+    if (mode !== undefined && MODES_OK.indexOf(mode) === -1)
+      return res.status(400).json({ error: 'Mode inconnu.' });
+    if (mimeType !== undefined && MIMES_OK.indexOf(mimeType) === -1)
+      return res.status(400).json({ error: 'Format d\'image non pris en charge.' });
 
     const base64Input = rawImage.includes(',') ? rawImage.split(',')[1] : rawImage;
     const inputBuffer = Buffer.from(base64Input, 'base64');
