@@ -181,7 +181,9 @@ export default async function handler(req, res) {
           if (gRes.statusCode >= 200 && gRes.statusCode < 300) {
             resolve(data);
           } else {
-            reject(new Error(`Gemini API Error (${gRes.statusCode}): ${data.substring(0, 200)}`));
+            const ge = new Error(`Gemini API Error (${gRes.statusCode}): ${data.substring(0, 200)}`);
+            ge.status = gRes.statusCode; ge.body = data;
+            reject(ge);
           }
         });
       });
@@ -199,12 +201,17 @@ export default async function handler(req, res) {
         break; // succès
       } catch (err) {
         lastError = err;
+        // quota journalier du palier gratuit atteint : inutile de reessayer
+        if (err.status === 429 && /PerDay|per day|daily/i.test(String(err.body || '')))
+          return res.status(429).json({ error: 'Limite journalière de l\'OCR atteinte, réessayez demain / Daily OCR limit reached, try again tomorrow.', code: 'quota_daily' });
         const is503 = err.message.indexOf('503') !== -1;
         const is429 = err.message.indexOf('429') !== -1;
         if ((is503 || is429) && attempt < 3) {
           console.log(`[THERMOSYS OCR] Tentative ${attempt}/3 échouée (${is503?'503':'429'}) — retry dans ${attempt * 2}s`);
           await sleep(attempt * 2000); // 2s, 4s
         } else {
+          if (err.status === 429)
+            return res.status(429).json({ error: 'Service OCR momentanément saturé, réessayez dans une minute / OCR service busy, try again in a minute.', code: 'quota_minute' });
           throw err;
         }
       }

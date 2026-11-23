@@ -4574,7 +4574,8 @@ async function runOCR() {
     if (!resp.ok) {
       var errorText = await resp.text();
       console.error("Erreur brute Vercel :", errorText);
-      throw new Error("Serveur Vercel (" + resp.status + ") : " + errorText.substring(0, 150));
+      /* THERMOSYS_OCR_QUOTA_V1 */ var _msg = null; try { var _j = JSON.parse(errorText); if (_j && _j.error && (resp.status === 401 || resp.status === 403 || resp.status === 413 || resp.status === 429)) { _msg = _j.error; } } catch (_e) {}
+      throw new Error(_msg || ("Serveur Vercel (" + resp.status + ") : " + errorText.substring(0, 150)));
     }
 
     var data = await resp.json();
