@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fr" data-l="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thermosys — Validation et limites</title>
+<meta name="description" content="Méthodes, sources, validations et limites connues des modules de Thermosys / Methods, sources, validations and known limits / Métodos, fuentes, validaciones y límites conocidos.">
+<style>
+:root{--bg:#f6f7f9;--fg:#15202b;--mut:#5a6775;--card:#fff;--bd:#d9dee5;--ac:#0b5cad;--wn:#9a5b00;--wnbg:#fff6e5}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1720;--fg:#e6ebf1;--mut:#9aa7b5;--card:#16212c;--bd:#2a3846;--ac:#6db3f2;--wn:#f0b45a;--wnbg:#2a2113}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:8px}
+h1{font-size:22px;margin:0}
+.lang button{border:1px solid var(--bd);background:var(--card);color:var(--fg);padding:4px 10px;border-radius:6px;cursor:pointer;font:inherit;font-size:13px}
+.lang button[aria-pressed="true"]{background:var(--ac);color:#fff;border-color:var(--ac)}
+.sub{color:var(--mut);margin:0 0 18px;font-size:13px}
+section.c{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;margin:14px 0}
+h2{font-size:17px;margin:0 0 8px}
+h3{font-size:14px;margin:12px 0 4px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+p,li{margin:6px 0}
+ul{padding-left:20px;margin:6px 0}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}
+th,td{border:1px solid var(--bd);padding:6px 8px;text-align:left;vertical-align:top}
+th{background:rgba(127,127,127,.1)}
+.num{overflow-wrap:anywhere}
+table{table-layout:auto}
+section.c{overflow-wrap:anywhere}
+.warn{border-left:4px solid var(--wn);background:var(--wnbg);padding:8px 12px;border-radius:4px;margin:10px 0}
+.t{display:none}
+html[data-l="fr"] .t.fr,html[data-l="en"] .t.en,html[data-l="es"] .t.es{display:block}
+html[data-l="fr"] span.t.fr,html[data-l="en"] span.t.en,html[data-l="es"] span.t.es{display:inline}
+footer{color:var(--mut);font-size:12px;margin-top:20px}
+a{color:var(--ac)}
+@media print{.lang{display:none}body{background:#fff;color:#000}section.c{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+ <h1><span class="t fr">Validation et limites</span><span class="t en">Validation and limits</span><span class="t es">Validación y límites</span></h1>
+ <div class="lang" role="group" aria-label="Language"><button data-set="fr">FR</button> <button data-set="en">EN</button> <button data-set="es">ES</button></div>
+</header>
+<p class="sub"><span class="t fr">THERMOSYS — Station de travail HVAC. Dernière mise à jour : 23 novembre 2026.</span><span class="t en">THERMOSYS — HVAC workstation. Last updated: 23 November 2026.</span><span class="t es">THERMOSYS — Estación de trabajo HVAC. Última actualización: 23 de noviembre de 2026.</span></p>
+
+<section class="c">
+<div class="t fr"><h2>Ce que cette page dit, et ne dit pas</h2>
+<p>Thermosys est un outil d’aide à la décision pour des professionnels HVAC qualifiés. Il n’émet aucune certification de conformité. Ses données techniques sont indicatives : elles ne remplacent ni la documentation officielle des constructeurs ni la validation par un ingénieur qualifié.</p>
+<p>Cette page indique, pour chaque sujet, ce qui a été contrôlé, avec quoi, et ce qui ne l’a pas été. Elle est mise à jour quand un contrôle change.</p></div>
+<div class="t en"><h2>What this page says, and does not say</h2>
+<p>Thermosys is a decision-support tool for qualified HVAC professionals. It issues no certificate of compliance. Its technical data is indicative: it does not replace official manufacturer documentation or validation by a qualified engineer.</p>
+<p>For each topic, this page states what was checked, against what, and what was not. It is updated when a check changes.</p></div>
+<div class="t es"><h2>Lo que esta página dice, y lo que no dice</h2>
+<p>Thermosys es una herramienta de ayuda a la decisión para profesionales HVAC cualificados. No emite ninguna certificación de conformidad. Sus datos técnicos son indicativos: no sustituyen la documentación oficial de los fabricantes ni la validación por un ingeniero cualificado.</p>
+<p>Para cada tema, esta página indica qué se ha comprobado, con qué, y qué no. Se actualiza cuando cambia una comprobación.</p></div>
+</section>
+
+<section class="c">
+<div class="t fr"><h2>Estimation horaire (besoins annuels, heure par heure)</h2>
+<h3>Méthode</h3>
+<p>Modèle à une zone, par réseau de résistances et capacités (RC), « inspiré de » l’EN ISO 52016-1 : le texte de la norme n’a pas été consulté. La régulation porte sur la température opérative (moyenne de l’air et des parois, comme dans l’EN 12831). La convection extérieure des murs et du toit dépend du vent du fichier météo (méthode DOE-2 d’EnergyPlus).</p>
+<h3>Comparaison avec EnergyPlus 23.2 (12 maisons types, 23/11/2026)</h3>
+<p>Maison de 10 × 8 × 2,7 m, avec ou sans isolation, grandes fenêtres à l’ouest et murs clairs, à Alger, Ghardaïa, Ouargla et Denver, avec les mêmes données d’entrée dans les deux programmes :</p>
+<table><tr><th>Grandeur</th><th>Écart de Thermosys par rapport à EnergyPlus</th></tr>
+<tr><td>Chauffage annuel</td><td class="num">+4 % à +11 % (+20 % à +29 % pour les 3 cas sous 1000 kWh/an)</td></tr>
+<tr><td>Froid annuel</td><td class="num">−2 % à +5 % (+14 % pour une maison isolée à faible quantité : 222 contre 194 kWh)</td></tr>
+<tr><td>Pointe de chauffage</td><td class="num">−13 % à +3 %</td></tr>
+<tr><td>Pointe de froid</td><td class="num">+4 % à +12 %</td></tr></table>
+<h3>Autres contrôles</h3>
+<ul><li>ASHRAE 140 : le moteur reproduit 27 des 28 résultats de référence testés (fourchettes d’exemple, pas des critères officiels). Les 8 résultats des cas 600 et 900 sont revérifiés automatiquement.</li>
+<li>Mesures réelles de deux maisons d’essai allemandes (Holzkirchen, projets AIE EBC Annexes 58 et 71, sans réglage sur ces mesures) : température à 0,4 à 0,9 K près ; chauffage entre −23 % et +13 % selon l’essai.</li>
+<li>Tests automatiques conservés avec le code (59 vérifications) : ils échouent si un calcul dérive.</li></ul>
+<h3>Limites connues</h3>
+<ul><li>EnergyPlus n’est pas une mesure : ce sont des comparaisons entre deux programmes. Le fichier EnergyPlus a été écrit par l’éditeur et peut contenir des erreurs.</li>
+<li>La convection intérieure et celle des fenêtres sont prises à coefficient fixe. Avec les options par défaut d’EnergyPlus (qui les calcule), le froid de Thermosys est plus élevé de 14 % dans un cas testé (Denver).</li>
+<li>Les climats sahariens (Ghardaïa, Ouargla) n’ont été comparés qu’à EnergyPlus, pas à des mesures. Aucune comparaison avec des mesures en climat méditerranéen ni algérien.</li>
+<li>Les options d’EnergyPlus (pluie, algorithmes) changent fortement les résultats : ces écarts dépendent des réglages choisis, indiqués dans le dossier de tests.</li></ul>
+<div class="warn">Prévoir une marge de sécurité sur le dimensionnement. Ce module estime des besoins, il ne remplace pas un calcul réglementaire.</div></div>
+<div class="t en"><h2>Hourly estimate (annual needs, hour by hour)</h2>
+<h3>Method</h3>
+<p>Single-zone model using a resistance–capacitance (RC) network, “inspired by” EN ISO 52016-1: the text of the standard was not consulted. Control uses operative temperature (mean of air and surfaces, as in EN 12831). External convection of walls and roof depends on the wind in the weather file (EnergyPlus DOE-2 method).</p>
+<h3>Comparison with EnergyPlus 23.2 (12 sample houses, 23/11/2026)</h3>
+<p>House of 10 × 8 × 2.7 m, with or without insulation, large west windows and light walls, in Algiers, Ghardaïa, Ouargla and Denver, with the same inputs in both programs:</p>
+<table><tr><th>Quantity</th><th>Thermosys difference from EnergyPlus</th></tr>
+<tr><td>Annual heating</td><td class="num">+4 % to +11 % (+20 % to +29 % for the 3 cases below 1000 kWh/year)</td></tr>
+<tr><td>Annual cooling</td><td class="num">−2 % to +5 % (+14 % for an insulated house with a small quantity: 222 vs 194 kWh)</td></tr>
+<tr><td>Heating peak</td><td class="num">−13 % to +3 %</td></tr>
+<tr><td>Cooling peak</td><td class="num">+4 % to +12 %</td></tr></table>
+<h3>Other checks</h3>
+<ul><li>ASHRAE 140: the engine reproduces 27 of the 28 reference results tested (example ranges, not official criteria). The 8 results of cases 600 and 900 are re-checked automatically.</li>
+<li>Measurements from two German test houses (Holzkirchen, IEA EBC Annexes 58 and 71, not tuned to these measurements): temperature within 0.4 to 0.9 K; heating between −23 % and +13 % depending on the test.</li>
+<li>Automated tests kept with the code (59 checks): they fail if a calculation drifts.</li></ul>
+<h3>Known limits</h3>
+<ul><li>EnergyPlus is not a measurement: these are comparisons between two programs. The EnergyPlus input file was written by the publisher and may contain errors.</li>
+<li>Interior and window convection use fixed coefficients. With EnergyPlus default options (which calculate them), Thermosys cooling is 14 % higher in one tested case (Denver).</li>
+<li>Saharan climates (Ghardaïa, Ouargla) were only compared with EnergyPlus, not with measurements. No comparison with measurements in Mediterranean or Algerian climate.</li>
+<li>EnergyPlus options (rain, algorithms) change results strongly: these differences depend on the settings chosen, which are documented in the test folder.</li></ul>
+<div class="warn">Allow a safety margin when sizing. This module estimates needs; it does not replace a regulatory calculation.</div></div>
+<div class="t es"><h2>Estimación horaria (necesidades anuales, hora a hora)</h2>
+<h3>Método</h3>
+<p>Modelo de una zona mediante una red de resistencias y capacidades (RC), « inspirado en » la EN ISO 52016-1: no se ha consultado el texto de la norma. La regulación se hace sobre la temperatura operativa (media del aire y de las paredes, como en la EN 12831). La convección exterior de muros y cubierta depende del viento del archivo meteorológico (método DOE-2 de EnergyPlus).</p>
+<h3>Comparación con EnergyPlus 23.2 (12 viviendas tipo, 23/11/2026)</h3>
+<p>Vivienda de 10 × 8 × 2,7 m, con o sin aislamiento, grandes ventanas al oeste y muros claros, en Argel, Ghardaïa, Ouargla y Denver, con los mismos datos de entrada en ambos programas:</p>
+<table><tr><th>Magnitud</th><th>Diferencia de Thermosys respecto a EnergyPlus</th></tr>
+<tr><td>Calefacción anual</td><td class="num">+4 % a +11 % (+20 % a +29 % en los 3 casos por debajo de 1000 kWh/año)</td></tr>
+<tr><td>Frío anual</td><td class="num">−2 % a +5 % (+14 % en una vivienda aislada con cantidad pequeña: 222 frente a 194 kWh)</td></tr>
+<tr><td>Punta de calefacción</td><td class="num">−13 % a +3 %</td></tr>
+<tr><td>Punta de frío</td><td class="num">+4 % a +12 %</td></tr></table>
+<h3>Otras comprobaciones</h3>
+<ul><li>ASHRAE 140: el motor reproduce 27 de los 28 resultados de referencia probados (rangos de ejemplo, no criterios oficiales). Los 8 resultados de los casos 600 y 900 se revisan automáticamente.</li>
+<li>Mediciones reales de dos casas de ensayo alemanas (Holzkirchen, proyectos AIE EBC Anexos 58 y 71, sin ajuste a estas mediciones): temperatura a 0,4–0,9 K; calefacción entre −23 % y +13 % según el ensayo.</li>
+<li>Pruebas automáticas conservadas con el código (59 comprobaciones): fallan si un cálculo se desvía.</li></ul>
+<h3>Límites conocidos</h3>
+<ul><li>EnergyPlus no es una medición: son comparaciones entre dos programas. El archivo de EnergyPlus lo escribió el editor y puede contener errores.</li>
+<li>La convección interior y la de las ventanas usan coeficientes fijos. Con las opciones por defecto de EnergyPlus (que las calcula), el frío de Thermosys es un 14 % superior en un caso probado (Denver).</li>
+<li>Los climas saharianos (Ghardaïa, Ouargla) solo se compararon con EnergyPlus, no con mediciones. Sin comparación con mediciones en clima mediterráneo ni argelino.</li>
+<li>Las opciones de EnergyPlus (lluvia, algoritmos) cambian mucho los resultados: estas diferencias dependen de los ajustes elegidos, documentados en la carpeta de pruebas.</li></ul>
+<div class="warn">Prever un margen de seguridad en el dimensionamiento. Este módulo estima necesidades; no sustituye un cálculo reglamentario.</div></div>
+</section>
+
+<section class="c">
+<div class="t fr"><h2>SCOP / COP : tarifs et fournisseurs d’électricité par pays</h2>
+<p>Les textes de tarifs et de fournisseurs sont rattachés à des sources officielles (régulateurs, opérateurs, statistiques publiques). Plus de 140 pays sont renseignés. Quand aucune source fiable n’a été trouvée pour un pays, il n’est pas renseigné : aucune valeur n’est inventée. Certains pays n’ont donc pas de tarif d’électricité.</p>
+<p>Limite : les tarifs changent ; ils sont indicatifs et à vérifier auprès du fournisseur avant un devis.</p></div>
+<div class="t en"><h2>SCOP / COP: electricity tariffs and suppliers by country</h2>
+<p>Tariff and supplier texts are tied to official sources (regulators, operators, public statistics). More than 140 countries are covered. When no reliable source was found for a country, it is left blank: no value is invented. Some countries therefore have no electricity tariff.</p>
+<p>Limit: tariffs change; they are indicative and must be checked with the supplier before a quote.</p></div>
+<div class="t es"><h2>SCOP / COP: tarifas y proveedores de electricidad por país</h2>
+<p>Los textos de tarifas y proveedores están vinculados a fuentes oficiales (reguladores, operadores, estadísticas públicas). Se cubren más de 140 países. Cuando no se encontró una fuente fiable para un país, se deja sin rellenar: no se inventa ningún valor. Por eso algunos países no tienen tarifa de electricidad.</p>
+<p>Límite: las tarifas cambian; son indicativas y deben comprobarse con el proveedor antes de un presupuesto.</p></div>
+</section>
+
+<section class="c">
+<div class="t fr"><h2>Catalogue d’équipements et de vannes</h2>
+<p>Les fiches ont été reprises une à une contre les documents officiels des constructeurs (fiches techniques, catalogues) en novembre 2026. Une fiche dont la référence n’a pas pu être confirmée affiche le statut « référence non confirmée » au lieu de valeurs. Le catalogue indique 38 constructeurs avec équipements. Quatre fiches restent à confirmer. Les données sont indicatives : seul le document du constructeur fait foi.</p></div>
+<div class="t en"><h2>Equipment and valve catalogue</h2>
+<p>Sheets were re-checked one by one against official manufacturer documents (datasheets, catalogues) in November 2026. A sheet whose reference could not be confirmed shows a “reference not confirmed” status instead of values. The catalogue lists 38 manufacturers with equipment. Four sheets remain to be confirmed. Data is indicative: only the manufacturer’s document is authoritative.</p></div>
+<div class="t es"><h2>Catálogo de equipos y válvulas</h2>
+<p>Las fichas se revisaron una por una frente a los documentos oficiales de los fabricantes (fichas técnicas, catálogos) en noviembre de 2026. Una ficha cuya referencia no pudo confirmarse muestra el estado « referencia no confirmada » en lugar de valores. El catálogo indica 38 fabricantes con equipos. Cuatro fichas siguen pendientes de confirmación. Los datos son indicativos: solo el documento del fabricante es vinculante.</p></div>
+</section>
+
+<section class="c">
+<div class="t fr"><h2>OCR + IA (plaques signalétiques)</h2>
+<p>La lecture est faite par un modèle d’intelligence artificielle (Gemini 2.5 Flash). Il peut se tromper, surtout sur des plaques abîmées, reflétantes ou en petits caractères : toute valeur lue doit être vérifiée sur la plaque avant usage. L’accès exige un compte approuvé. Le nombre d’analyses par jour est limité ; quand la limite est atteinte, un message l’indique.</p></div>
+<div class="t en"><h2>OCR + AI (nameplates)</h2>
+<p>Reading is done by an artificial-intelligence model (Gemini 2.5 Flash). It can make mistakes, especially on damaged, reflective or small-print plates: every value read must be checked against the plate before use. Access requires an approved account. The number of analyses per day is limited; a message appears when the limit is reached.</p></div>
+<div class="t es"><h2>OCR + IA (placas de características)</h2>
+<p>La lectura la realiza un modelo de inteligencia artificial (Gemini 2.5 Flash). Puede equivocarse, sobre todo en placas dañadas, con reflejos o de letra pequeña: todo valor leído debe comprobarse en la placa antes de usarlo. El acceso exige una cuenta aprobada. El número de análisis diarios es limitado; un mensaje avisa cuando se alcanza el límite.</p></div>
+</section>
+
+<section class="c">
+<div class="t fr"><h2>Autres modules</h2>
+<p>Les formules des modules suivants ont été revues une à une lors d’audits internes (juillet à novembre 2026), avec correction des erreurs trouvées : FLUIDES, VANNES (Kvs selon l’IEC 60534), SCOP, TEWI, RE2020, CHARGE et CHARGE PRO, DÉSENFUMAGE (panache thermique), PSYCHRO, CHAUFFAGE (EN 12831), ÉLECTRICITÉ (IEC 60364), MÉCATRONIQUE, CHAMBRE FROIDE, TRAITEMENT D’AIR, DEVIS, NORMES et CODES.</p>
+<p>Ces audits sont internes : ils n’ont pas été faits par un organisme indépendant, et ces modules n’ont pas été comparés à un logiciel de référence comme l’estimation horaire l’a été. Les méthodes s’appuient sur les normes citées dans l’application, sans que l’outil soit certifié.</p></div>
+<div class="t en"><h2>Other modules</h2>
+<p>The formulas of the following modules were reviewed one by one in internal audits (July to November 2026), with the errors found corrected: FLUIDS, VALVES (Kvs per IEC 60534), SCOP, TEWI, RE2020, CHARGE and CHARGE PRO, SMOKE EXTRACTION (thermal plume), PSYCHRO, HEATING (EN 12831), ELECTRICITY (IEC 60364), MECHATRONICS, COLD ROOM, AIR TREATMENT, QUOTES, STANDARDS and CODES.</p>
+<p>These audits are internal: they were not carried out by an independent body, and these modules have not been compared with a reference program as the hourly estimate has. The methods rely on the standards cited in the application, without the tool being certified.</p></div>
+<div class="t es"><h2>Otros módulos</h2>
+<p>Las fórmulas de los siguientes módulos se revisaron una por una en auditorías internas (de julio a noviembre de 2026), corrigiendo los errores encontrados: FLUIDOS, VÁLVULAS (Kvs según la IEC 60534), SCOP, TEWI, RE2020, CARGA y CARGA PRO, EXTRACCIÓN DE HUMOS (pluma térmica), PSYCHRO, CALEFACCIÓN (EN 12831), ELECTRICIDAD (IEC 60364), MECATRÓNICA, CÁMARA FRIGORÍFICA, TRATAMIENTO DE AIRE, PRESUPUESTOS, NORMAS y CÓDIGOS.</p>
+<p>Estas auditorías son internas: no las realizó un organismo independiente, y estos módulos no se han comparado con un programa de referencia como sí se hizo con la estimación horaria. Los métodos se apoyan en las normas citadas en la aplicación, sin que la herramienta esté certificada.</p></div>
+</section>
+
+<section class="c">
+<div class="t fr"><h2>Ce qui reste à faire</h2>
+<ul><li>Comparer l’estimation horaire à des mesures réelles en climat algérien.</li>
+<li>Étendre les tests automatiques aux autres modules.</li>
+<li>Confirmer les quatre fiches du catalogue encore signalées.</li>
+<li>Modéliser la convection intérieure et celle des fenêtres dans l’estimation horaire.</li></ul>
+<p>Une erreur constatée ? Écrivez via l’onglet CONTACT de l’application : elle sera vérifiée à la source et corrigée.</p></div>
+<div class="t en"><h2>What remains to be done</h2>
+<ul><li>Compare the hourly estimate with real measurements in Algerian climate.</li>
+<li>Extend the automated tests to the other modules.</li>
+<li>Confirm the four catalogue sheets still flagged.</li>
+<li>Model interior and window convection in the hourly estimate.</li></ul>
+<p>Found an error? Write through the CONTACT tab of the application: it will be checked at the source and corrected.</p></div>
+<div class="t es"><h2>Lo que queda por hacer</h2>
+<ul><li>Comparar la estimación horaria con mediciones reales en clima argelino.</li>
+<li>Ampliar las pruebas automáticas a los demás módulos.</li>
+<li>Confirmar las cuatro fichas del catálogo aún señaladas.</li>
+<li>Modelizar la convección interior y la de las ventanas en la estimación horaria.</li></ul>
+<p>¿Ha encontrado un error? Escriba desde la pestaña CONTACTO de la aplicación: se comprobará en la fuente y se corregirá.</p></div>
+</section>
+
+<footer><span class="t fr">© N. Mouissat — Thermosys. Document d’information : il ne constitue ni une garantie ni une certification.</span><span class="t en">© N. Mouissat — Thermosys. Information document: it is neither a warranty nor a certification.</span><span class="t es">© N. Mouissat — Thermosys. Documento informativo: no constituye garantía ni certificación.</span></footer>
+</div>
+<script>
+(function(){
+  var L=['fr','en','es'], cur=null;
+  try{var q=new URLSearchParams(location.search).get('l'); if(L.indexOf(q)>=0){cur=q;}}catch(e){}
+  if(!cur){try{var s=localStorage.getItem('thermosys_lang3'); if(L.indexOf(s)>=0){cur=s;}}catch(e){}}
+  if(!cur){try{var n=(navigator.language||'fr').slice(0,2); cur=(L.indexOf(n)>=0)?n:'fr';}catch(e){cur='fr';}}
+  function set(l){cur=l;document.documentElement.setAttribute('data-l',l);document.documentElement.lang=l;
+    var b=document.querySelectorAll('.lang button');for(var i=0;i<b.length;i++){b[i].setAttribute('aria-pressed',b[i].getAttribute('data-set')===l?'true':'false');}
+    var T={fr:'Thermosys — Validation et limites',en:'Thermosys — Validation and limits',es:'Thermosys — Validación y límites'};document.title=T[l];}
+  var bs=document.querySelectorAll('.lang button');for(var i=0;i<bs.length;i++){(function(b){b.addEventListener('click',function(){set(b.getAttribute('data-set'));});})(bs[i]);}
+  set(cur);
+})();
+</script>
+</body>
+</html>
