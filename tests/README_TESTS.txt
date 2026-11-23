@@ -72,3 +72,11 @@ Statut des references (rien n'est cache) :
  - Facteur B.52.18, 16 circuits a 0,5 m : 0,68 (Prysmian). Schneider imprime 0,38 (faute de frappe evidente).
  - Chauffage : aucun exemple chiffre officiel EN 12831-1 gratuit trouve ; les tests recalculent les formules a la main (detection de derive,
    pas preuve de conformite).
+
+=== RESEAU HYDRAULIQUE : COEFFICIENTS K (23/11/2026) ===
+Test :  node tests\network_k_regression.js     (47 verifications : K par accessoire, f_T selon le diametre, perte de charge lineaire)
+Reference : methode Crane TP-410 (K = n x f_T) reproduite par SimuPipe ; plausibilite contre Cengel & Cimbala (Purdue) et Neutrium.
+Le texte de Crane TP-410 lui-meme n'a pas ete consulte. Ancien comportement : K fixes 0,9 (coude), 1,0 (te), 0,2 (vanne).
+Constat : un K unique de 0,2 par vanne n'est valable que pour une vanne a opercule ou a boisseau ouverte ; une vanne globe vaut environ 6 a 10,
+un clapet a battant environ 2. Limites connues non corrigees : viscosite et masse volumique fixes a 20 C ; vannes d'equilibrage/regulation,
+filtres et echangeurs : saisir le K du fabricant (champ « K supplementaire »).
