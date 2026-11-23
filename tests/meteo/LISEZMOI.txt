@@ -1,0 +1,2 @@
+Placer ici les fichiers meteo .epw (decompresses) : Algiers, Ghardaia, Ouargla, Denver.
+Source : Climate.OneBuilding.Org. Voir ..\README_TESTS.txt.
