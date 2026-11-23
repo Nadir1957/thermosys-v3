@@ -60,3 +60,15 @@ Exemple : python3 mkidf.py c.idf fixed=inwin epw_mean=<temperature moyenne annue
 Limites
 -------
 Ces tests ne remplacent pas une comparaison avec des mesures reelles en climat algerien.
+
+=== MODULES ELECTRICITE ET CHAUFFAGE (23/11/2026) ===
+Tests :   node tests\electricity_regression.js     (37 verifications : tables IEC 60364-5-52, facteurs, cas calcules a la main, formules)
+          node tests\heating_regression.js         (22 verifications : formules EN 12831-1 methode simplifiee, sol EN ISO 13370)
+Statut des references (rien n'est cache) :
+ - Electricite : les tables PVC sont comparees a des reproductions publiques de l'IEC 60364-5-52 (Schneider, ecalpro) ; les tables PR/XLPE
+   viennent de deux fabricants concordants (Prysmian, EUPEN). Le texte officiel de la norme (payant) n'a pas pu etre consulte.
+ - Cas sans table sourcee (valeurs prudentes, signalees a l'ecran et dans la note imprimable) : aluminium PR/XLPE en modes A1 et A2 ;
+   circuits monophases en PR/XLPE.
+ - Facteur B.52.18, 16 circuits a 0,5 m : 0,68 (Prysmian). Schneider imprime 0,38 (faute de frappe evidente).
+ - Chauffage : aucun exemple chiffre officiel EN 12831-1 gratuit trouve ; les tests recalculent les formules a la main (detection de derive,
+   pas preuve de conformite).
