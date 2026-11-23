@@ -15,12 +15,13 @@ const path = require('path');
 const htmlFile = process.argv[2] || path.join('dist', 'index.html');
 let h; try { h = fs.readFileSync(htmlFile, 'utf8'); } catch (e) { console.error('Fichier illisible : ' + htmlFile); process.exit(2); }
 function cut(startMark, endMark) { const a = h.indexOf(startMark); const b = h.indexOf(endMark, a); if (a < 0 || b < 0) { console.error('Repere introuvable : ' + startMark); process.exit(2); } return h.slice(a, b + endMark.length); }
-let K, P;
+let K, P, W;
 try {
   const kSrc = cut('var RESEAU_N =', 'return { K: K, fT: fT };\n}');
-  const pSrc = cut('function calcSegmentPDC(Q, D, L, fluid){', 'return {v:v, Re:Re, f:f, dP:dP};\n}');
+  const pSrc = cut('/* THERMOSYS_RESEAU_T_V1', 'return {v:v, Re:Re, f:f, dP:dP, rho:rho, mu:mu};\n}');
   K = new Function(kSrc + '\nreturn { N: RESEAU_N, fT: reseauFT, sum: reseauKsum };')();
-  P = new Function(pSrc + '\nreturn calcSegmentPDC;')();
+  P = new Function(pSrc + '\nreturn { pdc: calcSegmentPDC, water: reseauWater };')();
+W = P.water; P = P.pdc;
 } catch (e) { console.error('Fonctions illisibles : ' + e.message); process.exit(2); }
 process.on('uncaughtException', e => { console.log('ECHEC : erreur ' + e.message); process.exit(1); });
 let ok = 0, ko = 0;
@@ -71,6 +72,21 @@ function colebrook(Re, rel) { let x = 0.02; for (let i = 0; i < 200; i++) { x = 
 })();
 // vitesse = Q / A
 (function () { const c = P(10, 40, 50, 1000); check('Vitesse 10 m3/h dans 40 mm = 2,2105 m/s', near(c.v, 10 / 3600 / (Math.PI * 0.04 * 0.04 / 4), 1e-9) && near(c.v, 2.2105, 0.0005), 'v = ' + c.v); })();
+
+console.log('7) Proprietes de l\'eau selon la temperature (IAPWS)');
+// Points a 10 C : London South Bank University, Anton Paar (IAPWS 2008), EngineersEdge. [T, rho, mu mPa.s] ; tolerance 1,5 % sur mu, 0,1 % sur rho
+[[0, 999.8, 1.792], [10, 999.7, 1.3059], [20, 998.2, 1.0016], [30, 995.7, 0.7972], [40, 992.2, 0.6527], [50, 988.0, 0.5465], [60, 983.2, 0.466], [70, 977.8, 0.4035], [80, 971.8, 0.354], [90, 965.4, 0.3146], [100, 958.4, 0.2822]].forEach(p => {
+  const w = W(p[0]); check('Eau ' + p[0] + ' C : rho = ' + p[1] + ', mu = ' + p[2] + ' mPa.s', Math.abs(w.rho / p[1] - 1) < 0.001 && Math.abs(w.mu * 1000 / p[2] - 1) < 0.015, 'rho ' + w.rho.toFixed(1) + ', mu ' + (w.mu * 1000).toFixed(4));
+});
+// Interpolation : valeurs au degre pres d'Anton Paar (IAPWS 2008) entre les points a 10 C ; tolerance 1 % sur mu
+[[5, 1.5182], [15, 1.1375], [25, 0.89], [35, 0.7191], [45, 0.5958], [55, 0.5036], [65, 0.4329], [75, 0.3774]].forEach(p => { const w = W(p[0]); check('Interpolation a ' + p[0] + ' C : mu = ' + p[1] + ' mPa.s', Math.abs(w.mu * 1000 / p[1] - 1) < 0.01, 'obtenu ' + (w.mu * 1000).toFixed(4)); });
+check('Hors plage : limite a 0 et 100 C', W(-20).mu === W(0).mu && W(150).rho === W(100).rho);
+// Effet sur la perte de charge : meme debit et meme tuyau, eau a 80 C contre 20 C
+(function () { const a = P(10, 50, 100, 1000, 20), b = P(10, 50, 100, 1000, 80); check('Eau chaude : Re plus eleve, perte de charge plus faible qu\'a 20 C', b.Re > 2.5 * a.Re && b.dP < a.dP && b.dP > 0.7 * a.dP, 'Re ' + a.Re.toFixed(0) + ' -> ' + b.Re.toFixed(0) + ', dP ' + a.dP.toFixed(0) + ' -> ' + b.dP.toFixed(0)); })();
+// Sans temperature (ancien appel) : 1000 kg/m3 et 0,001 Pa.s, comme avant ; avec glycol la temperature est ignoree
+(function () { const a = P(10, 50, 100, 1000), b = P(10, 50, 100, 1000, 20), g1 = P(10, 50, 100, 1040, 20), g2 = P(10, 50, 100, 1040, 80); check('Appel sans temperature : rho = 1000, mu = 0,001', a.rho === 1000 && a.mu === 0.001); check('Eau a 20 C proche de l\'ancien calcul (ecart < 1 %)', Math.abs(b.dP / a.dP - 1) < 0.01, 'ecart ' + ((b.dP / a.dP - 1) * 100).toFixed(2) + ' %'); check('Glycol 30 % : rho = 1040 et mu = 0,0028 Pa.s, inchanges quelle que soit la temperature', g1.rho === 1040 && g2.rho === 1040 && g1.mu === 0.0028 && g2.mu === 0.0028 && g1.dP === g2.dP); })();
+// Laminaire a 60 C : dP = 32 mu L v / D^2 (Hagen-Poiseuille) avec mu(60 C)
+(function () { const c = P(0.1, 50, 50, 1000, 60), v = 0.1 / 3600 / (Math.PI * 0.05 * 0.05 / 4), att = 32 * c.mu * 50 * v / (0.05 * 0.05); check('Laminaire a 60 C : Hagen-Poiseuille', c.Re < 2300 && Math.abs(c.dP / att - 1) < 1e-9, 'Re ' + c.Re.toFixed(0)); })();
 
 console.log('\n' + (ko === 0 ? 'TOUT EST BON' : 'ECHEC') + ' : ' + ok + ' verification(s) reussie(s), ' + ko + ' echec(s).');
 process.exit(ko === 0 ? 0 : 1);

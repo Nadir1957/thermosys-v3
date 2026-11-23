@@ -80,3 +80,10 @@ Le texte de Crane TP-410 lui-meme n'a pas ete consulte. Ancien comportement : K 
 Constat : un K unique de 0,2 par vanne n'est valable que pour une vanne a opercule ou a boisseau ouverte ; une vanne globe vaut environ 6 a 10,
 un clapet a battant environ 2. Limites connues non corrigees : viscosite et masse volumique fixes a 20 C ; vannes d'equilibrage/regulation,
 filtres et echangeurs : saisir le K du fabricant (champ « K supplementaire »).
+
+=== RESEAU HYDRAULIQUE : TEMPERATURE DU FLUIDE (23/11/2026) ===
+Test :  node tests\network_k_regression.js     (maintenant 72 verifications : K, perte de charge lineaire, proprietes de l'eau selon la temperature)
+Eau : masse volumique et viscosite selon la temperature, 0 a 100 C (tables au pas de 10 C de London South Bank University, Anton Paar d'apres
+IAPWS 2008 et EngineersEdge, concordantes a 1,5 % pres ; interpolation lineaire pour rho, logarithmique pour mu).
+Glycol : proprietes toujours fixees a 20 C (non corrigees) ; la base de calcul du pourcentage (masse ou volume) n'est pas precisee dans l'application
+et reste a verifier ; les valeurs de viscosite actuelles (2,8 et 3,8 mPa.s a 20 C) semblent superieures a celles d'Engineering ToolBox (cote prudent).
