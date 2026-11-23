@@ -22059,12 +22059,14 @@ function parseEPW(txt) {
   var loc = { name: head[1], country: head[3], lat: +head[6], lon: +head[7], tz: +head[8], alt: +head[9] }, rows = [];
   for (i = i0; i < L.length; i++) {
     var c = L[i].split(','); if (c.length < 16) { continue; }
-    var r = { mo: +c[1], d: +c[2], h: +c[3], Te: +c[6], I0n: +c[11], ir: +c[12], p: +c[9], ghi: +c[13], dni: +c[14], dhi: +c[15] };
+    var r = { mo: +c[1], d: +c[2], h: +c[3], Te: +c[6], I0n: +c[11], ir: +c[12], p: +c[9], ghi: +c[13], dni: +c[14], dhi: +c[15], ws: +c[21], wd: +c[20] };
     if (!(r.Te > -90 && r.Te < 70) || !(r.ghi >= 0) || r.ghi > 1500 || !(r.dni >= 0) || r.dni > 1500 || !(r.dhi >= 0) || r.dhi > 1500) { throw new Error('epwdata'); }
     if (!(r.I0n > 0)) { r.I0n = 1367; }
     rows.push(r);
   }
   if (rows.length !== 8760) { throw new Error('epw8760'); }
+  var wsS = 0, wsN = 0, q; for (q = 0; q < rows.length; q++) { if (rows[q].ws >= 0 && rows[q].ws < 50) { wsS += rows[q].ws; wsN++; } }
+  var wsM = wsN > 100 ? wsS / wsN : 2.5; for (q = 0; q < rows.length; q++) { if (!(rows[q].ws >= 0 && rows[q].ws < 50)) { rows[q].ws = wsM; } if (!(rows[q].wd >= 0 && rows[q].wd <= 360)) { rows[q].wd = 0; } }
   return { loc: loc, rows: rows };
 }
 function sunPos(loc, mo, d, h) {
@@ -22109,6 +22111,13 @@ function layersToSlices(layers, dxmax) {
 function thomasFactor(a, b, c, n) { var cp = new Float64Array(n), den = new Float64Array(n), i; den[0] = b[0]; cp[0] = c[0] / b[0]; for (i = 1; i < n; i++) { den[i] = b[i] - a[i] * cp[i - 1]; cp[i] = c[i] / den[i]; } return { a: a, cp: cp, den: den, n: n }; }
 function thomasSolve(F, d) { var n = F.n, dp = new Float64Array(n), x = new Float64Array(n), i; dp[0] = d[0] / F.den[0]; for (i = 1; i < n; i++) { dp[i] = (d[i] - F.a[i] * dp[i - 1]) / F.den[i]; } x[n - 1] = dp[n - 1]; for (i = n - 2; i >= 0; i--) { x[i] = dp[i] - F.cp[i] * x[i + 1]; } return x; }
 /* cfg : { elements:[{type:'opaque'|'window', area, layers(interieur -> exterieur), tilt, az, hci, hri, hce, hre, absSol, Fsky, bc:'air'|'soil', Tsoil, Uext, overhang:{P,top,h}, ang:{...}, solFrac}], V, nInf, rhoAir, cpAir, Qgain, frad, gainSched(h), sp(h) -> {heat,cool}, rhog } */
+/* Convection exterieure DOE-2 : hn = convection naturelle (vertical : 1,31|dT|^(1/3) ; toit chaud : 9,482|dT|^(1/3)/6,283 ; toit froid : 1,81|dT|^(1/3)/2,382), hc = hn + rf (sqrt(hn^2 + (a V^b)^2) - hn), vent face (3,26 ; 0,89) ou sous le vent (3,55 ; 0,617). dT = Tair - Tsurface. */
+function doe2hc(V, dT, tilt, azE, wdir, rf) {
+  var ad = Math.pow(Math.abs(dT), 1 / 3), hn;
+  if (tilt === 90 || dT === 0) { hn = 1.31 * ad; } else if (dT < 0) { hn = 9.482 * ad / 6.283; } else { hn = 1.81 * ad / 2.382; }
+  var df = Math.abs((((wdir - azE + 180) % 360) + 360) % 360 - 180), up = df <= 90, a = up ? 3.26 : 3.55, b = up ? 0.89 : 0.617;
+  var hg = Math.sqrt(hn * hn + Math.pow(a * Math.pow(V, b), 2)); return hn + rf * (hg - hn);
+}
 function pAtm(wx) { var t = 0, n = 0; wx.rows.forEach(function (w) { if (w.p > 30000 && w.p < 110000) { t += w.p; n++; } }); return n > 100 ? t / n : 101325; }
 function simulate(wx, cfg, opts) {
   opts = opts || {}; var dt = opts.dt || 900, sub = 3600 / dt, passes = opts.passes || 2, rhoA = cfg.rhoAir * (cfg.altP ? pAtm(wx) / 101325 : 1), cpA = cfg.cpAir, Ca = cfg.V * rhoA * cpA, Hinf = cfg.V * cfg.nInf / 3600 * rhoA * cpA;
@@ -22116,22 +22125,26 @@ function simulate(wx, cfg, opts) {
     var o = {}, k; for (k in e) { o[k] = e[k]; }
     var A = e.area, n, C = [0], G = [], Ge;
     if (e.type === 'window') { n = 1; Ge = e.Uext * A; }
-    else { var sl = layersToSlices(e.layers, 0.02); n = sl.length + 1; var i; for (i = 0; i < sl.length; i++) { C.push(sl[i].C); } G.push(1 / (sl[0].R / 2)); for (i = 0; i < sl.length - 1; i++) { G.push(1 / (sl[i].R / 2 + sl[i + 1].R / 2)); } Ge = A / (sl[sl.length - 1].R / 2 + 1 / (e.hce + e.hre)); }
+    else { var sl = layersToSlices(e.layers, 0.02); n = sl.length + 1; var i; for (i = 0; i < sl.length; i++) { C.push(sl[i].C); } G.push(1 / (sl[0].R / 2)); for (i = 0; i < sl.length - 1; i++) { G.push(1 / (sl[i].R / 2 + sl[i + 1].R / 2)); } o.Rl2 = sl[sl.length - 1].R / 2; Ge = A / (o.Rl2 + 1 / (e.hce + e.hre)); }
     var a = new Float64Array(n), b = new Float64Array(n), c = new Float64Array(n), j;
     for (j = 0; j < n; j++) { var dg = C[j] * A / dt; if (j > 0) { dg += G[j - 1] * A; a[j] = -G[j - 1] * A; } if (j < n - 1) { dg += G[j] * A; c[j] = -G[j] * A; } b[j] = dg; }
     o.Gc = e.hci * A; o.Gr = e.hri * A; b[0] += o.Gc + o.Gr; b[n - 1] += Ge;
-    o.F = thomasFactor(a, b, c, n); o.n = n; o.C = C; o.Ge = Ge; o.CA = C.map(function (x) { return x * A / dt; }); o.T = new Float64Array(n).fill(20);
+    o.a0 = a; o.c0 = c; o.b0 = Float64Array.from(b); o.Ge0 = Ge; o.hceCur = e.hce; o.F = thomasFactor(a, b, c, n); o.n = n; o.C = C; o.Ge = Ge; o.CA = C.map(function (x) { return x * A / dt; }); o.T = new Float64Array(n).fill(20);
     var d1 = new Float64Array(n), d2 = new Float64Array(n); d1[0] = o.Gc; d2[0] = o.Gr; o.x1 = thomasSolve(o.F, d1); o.x2 = thomasSolve(o.F, d2); o.d0 = new Float64Array(n);
     return o;
   });
   var Atot = 0, Aop = 0, Sc1 = 0, Sc2 = 0, Sr1 = 0, Sr2 = 0, GcS = 0, GrS = 0;
   els.forEach(function (e) { Atot += e.area; if (e.type !== 'window') { Aop += e.area; } Sc1 += e.Gc * e.x1[0]; Sc2 += e.Gc * e.x2[0]; Sr1 += e.Gr * e.x1[0]; Sr2 += e.Gr * e.x2[0]; GcS += e.Gc; GrS += e.Gr; });
   var A11c = Ca / dt - Sc1 + GcS, A12 = -Sc2, A21 = Sr1, A22 = Sr2 - GrS, Ta = 20, out = null, frc = els.map(function () { return {}; }), p;
+  var WC = !!cfg.windConv && !opts.noWind;
+  function recouple() { Sc1 = 0; Sc2 = 0; Sr1 = 0; Sr2 = 0; els.forEach(function (e) { Sc1 += e.Gc * e.x1[0]; Sc2 += e.Gc * e.x2[0]; Sr1 += e.Gr * e.x1[0]; Sr2 += e.Gr * e.x2[0]; }); A11c = Ca / dt - Sc1 + GcS; A12 = -Sc2; A21 = Sr1; A22 = Sr2 - GrS; }
+  function prepHce(e, hc) { var bn = Float64Array.from(e.b0), Gn = e.area / (e.Rl2 + 1 / (hc + e.hre)); bn[e.n - 1] += Gn - e.Ge0; e.F = thomasFactor(e.a0, bn, e.c0, e.n); e.Ge = Gn; var d1 = new Float64Array(e.n), d2 = new Float64Array(e.n); d1[0] = e.Gc; d2[0] = e.Gr; e.x1 = thomasSolve(e.F, d1); e.x2 = thomasSolve(e.F, d2); e.hceCur = hc; }
   var nH = wx.rows.length, tMean = 0; wx.rows.forEach(function (w) { tMean += w.Te / nH; });
   for (p = 0; p < passes; p++) {
     var QH = new Float64Array(nH), QC = new Float64Array(nH), TA = new Float64Array(nH), TR = new Float64Array(nH), AB = new Float64Array(nH), k;
     for (k = 0; k < nH; k++) {
       var w = wx.rows[k], sp = sunPos(wx.loc, w.mo, w.d, w.h), sch = cfg.sp(w.h), Tsky = (cfg.skyIR && w.ir > 150 && w.ir < 700) ? Math.pow(w.ir / 5.670374e-8, 0.25) - 273.15 : w.Te - 11, Qg = cfg.Qgain * (cfg.gainSched ? cfg.gainSched(w.h) : 1), Qrad = Qg * cfg.frad, Qconv = Qg - Qrad, Qtr = 0, ABs = 0, ie;
+      if (WC) { var chg = false, kv = Math.pow(27, 0.14); for (ie = 0; ie < els.length; ie++) { var ew = els[ie]; if (ew.wc) { var hcn = doe2hc(w.ws * kv * Math.pow(ew.wc.z / 370, 0.22), w.Te - ew.T[ew.n - 1], ew.tilt, ew.wc.azE, w.wd, ew.wc.rf); hcn = Math.min(60, Math.max(0.5, hcn)); if (Math.abs(hcn - ew.hceCur) > 0.02) { prepHce(ew, hcn); chg = true; } } } if (chg) { recouple(); } }
       for (ie = 0; ie < els.length; ie++) {
         var e = els[ie], f = frc[ie], beta = e.tilt * PI / 180, gam = e.az * PI / 180, it = tilted(w, sp, beta, gam, cfg.rhog);
         if (e.type === 'window') {
@@ -22142,8 +22155,8 @@ function simulate(wx, cfg, opts) {
           var A = ANGN, tauT = e.tau0 * (A.tau[i0] + (A.tau[i0 + 1] - A.tau[i0]) * fr), shT = e.shgc0 * (A.shgc[i0] + (A.shgc[i0 + 1] - A.shgc[i0]) * fr), bm = it.cth > 0 ? it.beam * fb : 0, df = it.dif * fdif + it.gr;
           f.tr = e.area * (tauT * bm + e.tau0 * A.tauH * df); f.ab = e.area * (Math.max(0, shT - tauT) * bm + Math.max(0, e.shgc0 * A.shgcH - e.tau0 * A.tauH) * df); f.Teq = w.Te; Qtr += f.tr; ABs += f.ab;
         } else {
-          it.tot = it.beam + it.dif + it.gr; var Tr = w.Te - e.Fsky * (w.Te - Tsky), he = e.hce + e.hre;
-          f.Teq = e.bc === 'soil' ? e.Tsoil : (e.hce * w.Te + e.hre * Tr + e.absSol * it.tot) / he; f.tr = 0; f.ab = 0;
+          it.tot = it.beam + it.dif + it.gr; var Tr = w.Te - e.Fsky * (w.Te - Tsky), he = e.hceCur + e.hre;
+          f.Teq = e.bc === 'soil' ? e.Tsoil : (e.hceCur * w.Te + e.hre * Tr + e.absSol * it.tot) / he; f.tr = 0; f.ab = 0;
         }
       }
       TR[k] = Qtr; AB[k] = ABs;
@@ -22288,9 +22301,9 @@ function buildCfg(s, meanT) {
   var wallA = [];
   for (k = 0; k < 4; k++) {
     var a = (k % 2 === 0 ? W : Dp) * H - aw[k]; wallA.push(a);
-    els.push({ type: 'opaque', area: a, layers: wl, tilt: 90, az: normAz(s.az0 + 90 * k), hci: 2.2, hri: 5.13, hce: 11.9, hre: 5.0, absSol: s.wabs, Fsky: 0.5 });
+    els.push({ type: 'opaque', area: a, layers: wl, tilt: 90, az: normAz(s.az0 + 90 * k), hci: 2.2, hri: 5.13, hce: 11.9, hre: 5.0, absSol: s.wabs, Fsky: 0.5, wc: { z: H / 2, rf: 1.52, azE: ((s.az0 + 90 * k + 180) % 360 + 360) % 360 } });
   }
-  els.push({ type: 'opaque', area: W * Dp, layers: rl, tilt: 0, az: 0, hci: 1.8, hri: 5.13, hce: 14.4, hre: 5.0, absSol: s.rabs, Fsky: 1.0 });
+  els.push({ type: 'opaque', area: W * Dp, layers: rl, tilt: 0, az: 0, hci: 1.8, hri: 5.13, hce: 14.4, hre: 5.0, absSol: s.rabs, Fsky: 1.0, wc: { z: H, rf: 1.52, azE: 0 } });
   if (fp.soil) { fl = withIns(fp.ly, s.fins, 1); fl.push(Ly(1.0, 1.5, 1800, 1000, 0.1)); els.push({ type: 'opaque', area: W * Dp, layers: fl, tilt: 180, az: 0, hci: 2.2, hri: 5.13, hce: 1e4, hre: 0, absSol: 0, Fsky: 0, bc: 'soil', Tsoil: meanT }); }
   else { fl = withIns(fp.ly, s.fins, 'ext'); els.push({ type: 'opaque', area: W * Dp, layers: fl, tilt: 180, az: 0, hci: 2.2, hri: 5.13, hce: 0.8, hre: 4.4, absSol: 0, Fsky: 0 }); }
   var wsum = wallA[0] + wallA[1] + wallA[2] + wallA[3];
@@ -22298,7 +22311,7 @@ function buildCfg(s, meanT) {
   var Uext = 1 / (1 / Math.min(7, s.U) - 1 / 7.69);
   for (k = 0; k < 4; k++) { if (aw[k] > 0) { els.push({ type: 'window', area: aw[k], tilt: 90, az: normAz(s.az0 + 90 * k), hci: 3.0, hri: 4.69, hce: 8, hre: 9.8, Fsky: 0.5, Uext: Uext, tau0: 0.9139 * s.g, shgc0: s.g, solFrac: 0 }); } }
   var hasSB = s.sb === 1, coolOn = s.cool === 1;
-  return { altP: true, skyIR: true, ctrl: s.ctl === 'air' ? 'air' : 'op', elements: els, V: W * Dp * H, nInf: s.inf, rhoAir: 1.2, cpAir: 1006, Qgain: 1, frad: 0.6, rhog: 0.2,
+  return { altP: true, skyIR: true, windConv: true, ctrl: s.ctl === 'air' ? 'air' : 'op', elements: els, V: W * Dp * H, nInf: s.inf, rhoAir: 1.2, cpAir: 1006, Qgain: 1, frad: 0.6, rhog: 0.2,
     gainSched: function (h) { return s.gb + (inRange(h, s.of, s.ot) ? s.go : 0); },
     sp: function (h) { var ht = (hasSB && inRange(h, s.sbF, s.sbTo)) ? Math.min(s.sbT, s.heatT) : s.heatT; return { heat: ht, cool: coolOn ? s.coolT : 1e9 }; } };
 }
