@@ -87,3 +87,10 @@ Eau : masse volumique et viscosite selon la temperature, 0 a 100 C (tables au pa
 IAPWS 2008 et EngineersEdge, concordantes a 1,5 % pres ; interpolation lineaire pour rho, logarithmique pour mu).
 Glycol : proprietes toujours fixees a 20 C (non corrigees) ; la base de calcul du pourcentage (masse ou volume) n'est pas precisee dans l'application
 et reste a verifier ; les valeurs de viscosite actuelles (2,8 et 3,8 mPa.s a 20 C) semblent superieures a celles d'Engineering ToolBox (cote prudent).
+
+
+[THERMOSYS_TEST_CYCLE_V1]
+CYCLE FRIGORIFIQUE : node tests\cycle_regression.js
+Compare 10 cas (R134a, R32, R290, R717, R1234yf, R410A, R404A, R407C, R600a) a des valeurs CoolProp 8.0.0 figees (tolerance 0,05 %),
+verifie les identites du cycle (q0, travail, debit, COP), le glissement et le sens des variations.
+Limite : les tables du module viennent de CoolProp ; ce test detecte les erreurs de transcription ou de formule, ce n'est pas une validation physique independante.
