@@ -110,3 +110,7 @@ Non couvert : eau glycolee (le module suppose de l'eau pure), texte de la norme 
 
 [THERMOSYS_TEST_VASE_GLYCOL_V1]
 VASE : eau glycolee ajoutee au test (node tests\vase_pompe_regression.js) : densites Melinder comparees a EngineeringToolBox (1-2 %), dilatation comparee a Reflex, cas de reference, limites de temperature.
+
+
+[THERMOSYS_TEST_PDC_GLYCOL_V1]
+EAU GLYCOLEE dans « Pertes de charge » et « Reseau » (node tests\glycol_pdc_regression.js) : interpolation comparee a CoolProp (viscosite <= 2 %), point de congelation, domaines, recalcul independant de la perte de charge (9 fluides x 4 temperatures x 3 cas), anciennes options inchangees. Un seul point publie independant (DOWCAL) ; propylene-glycol non compare a DOWFROST/ASHRAE ; les sources de viscosite different de 5 a 25 pour cent.
