@@ -17742,6 +17742,32 @@ if(typeof _d==='function') window.calcDewPoint=function(){
 })();
 
 </script>
+<script id="pdc-glycol-guard">
+/* THERMOSYS_PDC_GUARD_V1 - le changement de langue reconstruit la liste « Fluide » de Pertes de charge avec 3 options seulement (code protege) :
+   ce garde remet la liste complete (eau, ethylene-glycol, propylene-glycol, anciennes options) et la selection de l'utilisateur. */
+(function(){
+'use strict';
+var sel=document.getElementById('pdcFluid'); if(!sel||window.__pdcGlyGuard) return; window.__pdcGlyGuard=1;
+var last=sel.value||'1000', obs=null, busy=false;
+function isFr(){ var l=(typeof lang!=='undefined')?lang:window.lang; return (l||'fr')!=='en'; }
+function opts(){
+  var fr=isFr(), n={EG:fr?'Éthylène-glycol':'Ethylene glycol',PG:fr?'Propylène-glycol':'Propylene glycol'}, o='<option value="1000">'+(fr?'Eau':'Water')+'</option>';
+  ['EG','PG'].forEach(function(g){ [20,30,40,50].forEach(function(x){ o+='<option value="'+g+x+'">'+n[g]+' '+x+' %</option>'; }); });
+  return o+'<option value="1040">'+(fr?'Glycol 30 % (ancien : fixe à 20 °C)':'Glycol 30 % (legacy: fixed at 20 °C)')+'</option><option value="1060">'+(fr?'Glycol 40 % (ancien : fixe à 20 °C)':'Glycol 40 % (legacy: fixed at 20 °C)')+'</option>';
+}
+function fix(){
+  if(busy) return; if(sel.options.length>=11&&sel.querySelector('option[value="EG30"]')) return;
+  busy=true; try{
+    sel.innerHTML=opts();
+    var ok=false, i; for(i=0;i<sel.options.length;i++){ if(sel.options[i].value===last){ ok=true; break; } }
+    sel.value=ok?last:'1000';
+  }finally{ busy=false; }
+  try{ if(window.I18N3&&I18N3.html){ /* laisse le traducteur espagnol retraiter les textes */ } }catch(e){}
+}
+sel.addEventListener('change',function(){ last=sel.value; });
+if(typeof MutationObserver!=='undefined'){ obs=new MutationObserver(function(){ fix(); }); obs.observe(sel,{childList:true}); }
+})();
+</script>
 <script id="reseau-49-module">
 /* Thermosys etape 49 - RESEAUX HVAC / Calcul reseau : hypotheses affichees, HMT avec la masse volumique du fluide (idempotent) */
 (function(){
@@ -17763,7 +17789,7 @@ window.renderReseau=function(){
    for(i=txt.length-1;i>=0;i--){ if(/HMT pompe|Suggested pump head/.test(txt[i])){ txt[i]=L('HMT pompe suggérée (+10% marge)','Suggested pump head (+10% margin)')+' : '+hmt.toFixed(2)+' m ('+rho+' kg/m³)'; break; } }
   }
   txt.push('');
-  txt.push(L('Hypothèses : fluide à 20 °C, K coude 0,9 / té 1,0 / vanne 0,2, Ø intérieur ≈ DN. Réseau saisi dans un seul sens : pour un circuit fermé, saisir aussi le retour. Hors équipements (générateur, échangeurs, vannes de régulation, filtres) : ajouter leurs pertes de charge.','Assumptions: fluid at 20 °C, K elbow 0.9 / tee 1.0 / valve 0.2, inner Ø ≈ DN. Network entered one way only: for a closed loop, enter the return too. Equipment (generator, heat exchangers, control valves, strainers) excluded: add their pressure drops.'));
+  txt.push(L('Hypothèses : propriétés du fluide selon sa température (eau : IAPWS ; glycol : Melinder ; anciennes options glycol : fixes à 20 °C), K des accessoires = n × f_T (Crane TP-410), Ø intérieur ≈ DN. Réseau saisi dans un seul sens : pour un circuit fermé, saisir aussi le retour. Hors équipements (générateur, échangeurs, vannes de régulation, filtres) : ajouter leurs pertes de charge.','Assumptions: fluid properties depend on its temperature (water: IAPWS; glycol: Melinder; legacy glycol options: fixed at 20 °C), fitting K = n × f_T (Crane TP-410), inner Ø ≈ DN. Network entered one way only: for a closed loop, enter the return too. Equipment (generator, heat exchangers, control valves, strainers) excluded: add their pressure drops.'));
   el.textContent=txt.join('\n');
  }catch(e){}
  return r;
@@ -17959,7 +17985,7 @@ var REG=[
 {id:'hflow',page:'hydraulique',fr:'RÉSEAUX — débit d’eau et diamètre',en:'NETWORKS — water flow and diameter',inp:['hCap','hDt','hV'],res:['hydFlowResult'],
  f:[['Débit : Q = P / (ρ · cp · ΔT).','Flow: Q = P / (ρ · cp · ΔT).'],['Diamètre : D = √(4 · Q / (π · v)), puis diamètre normalisé (DN) et vitesse réelle.','Diameter: D = √(4 · Q / (π · v)), then standard diameter (DN) and actual velocity.']],r:['EN 12828','Guides de vitesses recommandées'],l:[['Eau à 20 °C ; vitesses recommandées indicatives.','Water at 20 °C; recommended velocities are indicative.']]},
 {id:'pdc',page:'hydraulique',fr:'RÉSEAUX — pertes de charge linéaires',en:'NETWORKS — linear pressure drop',inp:['pdcQ','pdcDN','pdcL','pdcFluid'],res:['pdcResult'],
- f:[['Darcy-Weisbach : ΔP = λ · (L / D) · ρ · v² / 2.','Darcy-Weisbach: ΔP = λ · (L / D) · ρ · v² / 2.'],['Coefficient de frottement λ par la formule de Swamee-Jain (approximation de Colebrook-White) ; régimes laminaire, transitoire et turbulent distingués.','Friction factor λ from the Swamee-Jain formula (Colebrook-White approximation); laminar, transitional and turbulent regimes distinguished.']],r:['Colebrook-White','Swamee-Jain'],l:[['Acier lisse, fluide à 20 °C, sans singularités.','Smooth steel, fluid at 20 °C, no fittings.']]},
+ f:[['Darcy-Weisbach : ΔP = λ · (L / D) · ρ · v² / 2.','Darcy-Weisbach: ΔP = λ · (L / D) · ρ · v² / 2.'],['Coefficient de frottement λ par la formule de Swamee-Jain (approximation de Colebrook-White) ; régimes laminaire, transitoire et turbulent distingués.','Friction factor λ from the Swamee-Jain formula (Colebrook-White approximation); laminar, transitional and turbulent regimes distinguished.']],r:['Colebrook-White','Swamee-Jain'],l:[['Acier lisse, propriétés du fluide selon la température saisie, sans singularités.','Smooth steel, fluid properties at the entered temperature, no fittings.']]},
 {id:'pump',page:'hydraulique',fr:'RÉSEAUX — pompe',en:'NETWORKS — pump',inp:['pompeQ','pompeHMT','pompeEta'],res:['pompeResult'],
  f:[['Puissance hydraulique : P = ρ · g · Q · H ; puissance absorbée = P / η.','Hydraulic power: P = ρ · g · Q · H; absorbed power = P / η.']],r:['—'],l:[['Rendement saisi par l’utilisateur ; sélection finale selon la courbe du constructeur.','Efficiency entered by the user; final selection according to the manufacturer’s curve.']]},
 {id:'vase',page:'hydraulique',fr:'RÉSEAUX — vase d’expansion',en:'NETWORKS — expansion vessel',inp:['vaseVol','vaseT1','vaseT2','vasePs','vasePmax','vaseFluid'],res:['vaseResult'],
@@ -20316,7 +20342,13 @@ function ex85(k){
   if(m(/^Actual velocity (DN\d+): (.+)$/)) return lead+'Velocidad real '+a[1]+': '+dc(a[2]);
   if(m(/^Assumption: water \(cp (\S+) kJ\/kg·K\), inner Ø ≈ DN\.$/)) return lead+'Hipótesis: agua (cp '+dc(a[1])+' kJ/kg·K), Ø interior ≈ DN.';
   if(m(/^v = (\S+) m\/s \| Re = (\d+) \((turbulent|laminar|transitional[^)]*)\)$/)) return lead+'v = '+dc(a[1])+' m/s | Re = '+a[2]+' ('+(a[3]==='turbulent'?'turbulento':a[3]==='laminar'?'laminar':'transitorio — incierto')+')';
-  if(m(/^Assumptions: smooth steel pipe \(ε = (\S+) mm\), fluid at 20 °C, straight length without fittings \(add elbows, valves\), inner Ø ≈ DN\.$/)) return lead+'Hipótesis: tubo de acero liso (ε = '+dc(a[1])+' mm), fluido a 20 °C, tramo recto sin accesorios (añada codos y válvulas), Ø interior ≈ DN.';
+  if(m(/^Assumptions: smooth steel pipe \(ε = (\S+) mm\), straight length without fittings \(add elbows, valves\), inner Ø ≈ DN\.$/)) return lead+'Hipótesis: tubo de acero liso (ε = '+dc(a[1])+' mm), tramo recto sin accesorios (añada codos y válvulas), Ø interior ≈ DN.';
+  if(m(/^Fluid: (.+), (-?[\d.]+) °C : ρ = (\S+) kg\/m³, μ = (\S+) mPa·s \(Melinder\)$/)) return lead+'Fluido: '+a[1]+', '+dc(a[2])+' °C : ρ = '+dc(a[3])+' kg/m³, μ = '+dc(a[4])+' mPa·s (Melinder)';
+  if(m(/^Fluid: water, (-?[\d.]+) °C : ρ = (\S+) kg\/m³, μ = (\S+) mPa·s$/)) return lead+'Fluido: agua, '+dc(a[1])+' °C : ρ = '+dc(a[2])+' kg/m³, μ = '+dc(a[3])+' mPa·s';
+  if(m(/^Fluid: glycol \(legacy option\), fixed properties at 20 °C: ρ = (\S+) kg\/m³$/)) return lead+'Fluido: glicol (opción antigua), propiedades fijas a 20 °C: ρ = '+dc(a[1])+' kg/m³';
+  if(em&&(a=/^Temperature outside the range for this mixture: from (-?[\d.]+) °C \(above the freezing point\) to 100 °C\.$/.exec(em[2]))) return lead+(em[1]||'')+'Temperatura fuera del rango de esta mezcla: de '+dc(a[1])+' °C (por encima del punto de congelación) a 100 °C.';
+  if(em&&/^Water: temperature from 0 to 100 °C\.$/.test(em[2])) return lead+(em[1]||'')+'Agua: temperatura de 0 a 100 °C.';
+  if(em&&(a=/^Temperature too low for this mixture \(minimum (-?[\d.]+) °C, above the freezing point\)\.$/.exec(em[2]))) return lead+(em[1]||'')+'Temperatura demasiado baja para esta mezcla (mínimo '+dc(a[1])+' °C, por encima del punto de congelación).';
   if(m(/^Hydraulic power: (\S+) kW(\s+)\(ρ = 1000 kg\/m³, cold water\)$/)) return lead+'Potencia hidráulica: '+dc(a[1])+' kW'+a[2]+'(ρ = 1000 kg/m³, agua fría)';
   if(m(/^Shaft power \(hyd\. \/ pump η\): (\S+) kW$/)) return lead+'Potencia en el eje (hidr. / η bomba): '+dc(a[1])+' kW';
   if(m(/^Electric input \(motor η (\S+) assumed\): (\S+) kW$/)) return lead+'Potencia eléctrica absorbida (η motor '+dc(a[1])+' supuesto): '+dc(a[2])+' kW';
@@ -20383,7 +20415,7 @@ function ex85(k){
   if(m(/^(\s*)incl\. singular losses(\s*): (.+)$/)) return lead+a[1]+'incl. pérdidas singulares'+a[2]+': '+dc(a[3]);
   if(m(/^Circuit pressure drop(\s*): (\S+) Pa \((\S+) mCE\)$/)) return lead+'Pérdida de carga del circuito'+a[1]+': '+a[2]+' Pa ('+dc(a[3])+' m.c.a.)';
   if(m(/^Suggested pump head \(\+10% margin\)(\s*): (.+)$/)) return lead+'Altura manométrica de la bomba sugerida (+10 % de margen)'+a[1]+': '+dc(a[2]);
-  if(m(/^Assumptions: fluid at 20 °C, K elbow (\S+) \/ tee (\S+) \/ valve (\S+), inner Ø ≈ DN\. Network entered one way only: for a closed loop, enter the return too\. Equipment \(generator, heat exchangers, control valves, strainers\) excluded: add their pressure drops\.$/)) return lead+'Hipótesis: fluido a 20 °C, K codo '+dc(a[1])+' / te '+dc(a[2])+' / válvula '+dc(a[3])+', Ø interior ≈ DN. Red introducida solo en un sentido: en un circuito cerrado, introduzca también el retorno. Equipos (generador, intercambiadores, válvulas de regulación, filtros) excluidos: añada sus pérdidas de carga.';
+  if(t==="Assumptions: fluid properties depend on its temperature (water: IAPWS; glycol: Melinder; legacy glycol options: fixed at 20 °C), fitting K = n × f_T (Crane TP-410), inner Ø ≈ DN. Network entered one way only: for a closed loop, enter the return too. Equipment (generator, heat exchangers, control valves, strainers) excluded: add their pressure drops.") return lead+"Hipótesis: propiedades del fluido según su temperatura (agua: IAPWS; glicol: Melinder; opciones antiguas de glicol: fijas a 20 °C), K de los accesorios = n × f_T (Crane TP-410), Ø interior ≈ DN. Red introducida solo en un sentido: en un circuito cerrado, introduzca también el retorno. Equipos (generador, intercambiadores, válvulas de regulación, filtros) excluidos: añada sus pérdidas de carga.";
   return null;
 }
 var RS=I.rxs||(I.rxs=[]);
@@ -20814,7 +20846,7 @@ var D={
 "Water at 20 °C; recommended velocities are indicative.": "Agua a 20 °C; las velocidades recomendadas son indicativas.",
 "NETWORKS — linear pressure drop": "REDES — pérdida de carga lineal",
 "Friction factor λ from the Swamee-Jain formula (Colebrook-White approximation); laminar, transitional and turbulent regimes distinguished.": "Factor de fricción λ según la fórmula de Swamee-Jain (aproximación de Colebrook-White); se distinguen los regímenes laminar, de transición y turbulento.",
-"Smooth steel, fluid at 20 °C, no fittings.": "Acero liso, fluido a 20 °C, sin accesorios.",
+"Smooth steel, fluid properties at the entered temperature, no fittings.": "Acero liso, propiedades del fluido a la temperatura introducida, sin accesorios.", "Smooth steel, fluid at 20 °C, no fittings.": "Acero liso, fluido a 20 °C, sin accesorios.",
 "NETWORKS — pump": "REDES — bomba",
 "Hydraulic power: P = ρ · g · Q · H; absorbed power = P / η.": "Potencia hidráulica: P = ρ · g · Q · H; potencia absorbida = P / η.",
 "Efficiency entered by the user; final selection according to the manufacturer’s curve.": "Rendimiento introducido por el usuario; selección final según la curva del fabricante.",
