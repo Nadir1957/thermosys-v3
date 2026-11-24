@@ -122,3 +122,7 @@ RESEAU MAILLE (node tests\mesh_regression.js) : solveur compare a Hagen-Poiseuil
 
 [THERMOSYS_TEST_MESH_GLYCOL_V1]
 RESEAU MAILLE : choix du fluide selon la temperature ajoute au test (node tests\mesh_regression.js) : proprietes = tables Melinder / IAPWS, refus hors domaine, anciennes options g30/g40 inchangees, perte de charge du solveur comparee a Swamee-Jain. Memes limites que le test des pertes de charge (un seul point publie independant, propylene-glycol non compare a DOWFROST/ASHRAE).
+
+
+[THERMOSYS_TEST_PSYCHRO_V1]
+PSYCHROMETRIE (node tests\psychro_regression.js) : 140 etats compares a CoolProp (4 pressions, -10 a 50 C), psat (liquide : IAPWS ; glace : Murphy-Koop), pression selon l'altitude (atmosphere standard), coherence des modes de saisie, procedes (batterie, humidification, melange, vapeur), copies du moteur dans traitement d'air / calcul horaire / chambre froide. ECARTS CONNUS NON CORRIGES : gaz parfaits (teneur en eau 0,3 a 0,6 % trop basse, enthalpie jusqu'a 1,6 kJ/kg trop basse a 50 C sature) ; chambre froide : point de rosee sur l'eau liquide quand il est sous 0 C (ecart jusqu'a 3,7 K).
