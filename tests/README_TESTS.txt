@@ -118,3 +118,7 @@ EAU GLYCOLEE dans « Pertes de charge » et « Reseau » (node tests\glycol_pdc_
 
 [THERMOSYS_TEST_MESH_V1]
 RESEAU MAILLE (node tests\mesh_regression.js) : solveur compare a Hagen-Poiseuille (laminaire), a Swamee-Jain (turbulent), a un 2e solveur nodal independant sur 40 reseaux aleatoires, bilans de debit, fermeture des mailles, vitesse de convergence. Zone de transition 2000-4000 : continuite seulement (loi non verifiee). Proprietes du fluide fixes (non testees en temperature).
+
+
+[THERMOSYS_TEST_MESH_GLYCOL_V1]
+RESEAU MAILLE : choix du fluide selon la temperature ajoute au test (node tests\mesh_regression.js) : proprietes = tables Melinder / IAPWS, refus hors domaine, anciennes options g30/g40 inchangees, perte de charge du solveur comparee a Swamee-Jain. Memes limites que le test des pertes de charge (un seul point publie independant, propylene-glycol non compare a DOWFROST/ASHRAE).

@@ -10,12 +10,13 @@
 //    elimination de Gauss) est compare au solveur du module sur 40 reseaux aleatoires a debits turbulents (graine fixe).
 //  - Zone de transition (2000 < Re < 4000) : le module utilise un raccord cubique entre les deux regimes ; ce n'est PAS une loi
 //    physique verifiee (l'ecoulement y est incertain). Le test verifie seulement la continuite et la monotonie.
-//  - Non teste ici : l'interface, les exports CSV, les textes, les proprietes du fluide (fixes : eau 1000/0,001 ; glycol 1040/0,0028 et 1060/0,0038).
+//  - Fluide : eau selon la temperature (IAPWS) et eau-glycol 20-50 % (Melinder) comme dans « Pertes de charge » ; anciennes options g30/g40 gardees fixes.
+//  - Non teste ici : l'interface, les exports CSV, les textes.
 'use strict';
 const fs = require('fs'), path = require('path');
 const htmlFile = process.argv[2] || path.join('dist', 'index.html');
 let h; try { h = fs.readFileSync(htmlFile, 'utf8').replace(/\r\n/g, '\n'); } catch (e) { console.error('Fichier illisible : ' + htmlFile); process.exit(2); }
-let S;
+let S, FF, GW, SF;
 try {
   const open = '<script id="mesh-module">', a = h.indexOf(open), b = h.indexOf('</script>', a);
   if (a < 0 || b < 0) { throw new Error('module reseau maille introuvable'); }
@@ -24,9 +25,13 @@ try {
   const el = () => ({ style: {}, setAttribute: noop, appendChild: noop, addEventListener: noop, classList: { add: noop, remove: noop }, querySelectorAll: () => [], querySelector: () => null, innerHTML: '', value: '' });
   const doc = { getElementById: () => null, querySelector: () => null, querySelectorAll: () => [], createElement: el, head: { appendChild: noop }, body: { appendChild: noop }, addEventListener: noop, documentElement: { getAttribute: () => 'fr' } };
   win.window = win; win.document = doc; win.localStorage = { getItem: () => null, setItem: noop };
+  const g0 = h.indexOf('/* THERMOSYS_PDC_GLYCOL_V1'), g1 = h.indexOf('var reseauSegments = [];', g0);
+  if (g0 < 0 || g1 < 0) { throw new Error('fonctions glycol/eau introuvables (appliquer patch_pdc_glycol_v1.js)'); }
+  new Function('window', h.slice(g0, g1) + '\nwindow.reseauWater = reseauWater;')(win);
   new Function('window', 'document', 'localStorage', 'setInterval', 'setTimeout', 'clearTimeout', 'navigator', 'lang', src)(win, doc, win.localStorage, noop, noop, noop, {}, 'fr');
-  S = win.__meshSolve;
+  S = win.__meshSolve; FF = win.__meshFluidFor; GW = win; SF = win.__meshStateFluid;
   if (typeof S !== 'function') { throw new Error('solveur absent'); }
+  if (typeof FF !== 'function') { throw new Error('selection du fluide absente (appliquer patch_mesh_glycol_v1.js)'); }
 } catch (e) { console.error('Module illisible : ' + e.message); process.exit(2); }
 process.on('uncaughtException', e => { console.log('ECHEC : erreur ' + e.message); process.exit(1); });
 let ok = 0, ko = 0;
@@ -142,6 +147,33 @@ console.log('6) Refus des cas singuliers');
 {
   const r = S(mk(FL.w, [{ type: 'd', P: 0, dem: 0.001 }, { type: 'd', P: 0, dem: 0.001 }], [[0, 1, 100, 50, 0.046, 0]]));
   check('reseau sans source : erreur signalee', !!r.error, JSON.stringify(Object.keys(r)));
+}
+
+console.log('7) Choix du fluide selon la temperature (eau, ethylene- et propylene-glycol)');
+{
+  const keys = ['EG20', 'EG30', 'EG40', 'EG50', 'PG20', 'PG30', 'PG40', 'PG50'];
+  keys.forEach(k => [-10, 5, 40, 90].forEach(T => {
+    const f = FF(k, T), g = GW.glyProps(k, T), sf = SF(k, T);
+    check(k + ' ' + T + ' C : l\'etat du module (fluide + temperature saisis) donne le meme fluide', g ? (!!sf && rel(sf.rho, g.rho) < 1e-9 && rel(sf.mu, g.mu) < 1e-9) : sf === null);
+    if (!g) { check(k + ' ' + T + ' C hors domaine -> refus', f === null); return; }
+    check(k + ' ' + T + ' C proprietes = tables', !!f && rel(f.rho, g.rho) < 1e-9 && rel(f.mu, g.mu) < 1e-9);
+  }));
+  [0, 20, 60, 100].forEach(T => { const f = FF('w', T), w = GW.reseauWater(T); check('eau ' + T + ' C', !!f && rel(f.rho, w.rho) < 1e-9 && rel(f.mu, w.mu) < 1e-9); });
+  check('eau a 20 C : 998,2 kg/m3 et 1,002 mPa.s', Math.abs(FF('w', 20).rho - 998.2) < 0.1 && Math.abs(FF('w', 20).mu * 1000 - 1.0016) < 0.001);
+  check('eau < 0 C ou > 100 C refusee', FF('w', -1) === null && FF('w', 101) === null && FF('w', NaN) === null);
+  check('anciennes options g30 / g40 inchangees (fixes, meme a -5 C)', FF('g30', -5).rho === 1040 && FF('g30', 80).mu === 0.0028 && FF('g40', 20).rho === 1060 && FF('g40', -5).mu === 0.0038);
+  check('cle inconnue -> eau fixe (comportement ancien)', FF('xyz', 20).rho === 1000);
+  // effet sur un tuyau : le solveur avec les proprietes choisies donne la perte de charge Swamee-Jain attendue
+  keys.concat(['w']).forEach(k => [0, 30, 70].forEach(T => {
+    const f = FF(k, T); if (!f) { return; }
+    const D = 0.065, L = 80, Q = 12 / 3600, v = Q / (Math.PI * D * D / 4), Re = v * D * f.rho / f.mu, fr = sj(Re, 0.000046, D);
+    const r = S({ fluid: f, nodes: [{ type: 's', P: 600000, dem: 0 }, { type: 'd', P: 0, dem: Q }], pipes: [{ a: 0, b: 1, L: L, D: D, eps: 0.000046, K: 1 }] });
+    const dp = (fr * L / D + 1) * f.rho * v * v / 2;
+    check(k + ' ' + T + ' C tuyau : dP du solveur = Swamee-Jain (0,05 %)', Re < 4000 ? true : rel(r.pipes[0].dp, dp) < 0.05, 'module ' + r.pipes[0].dp.toFixed(1) + ' ref ' + dp.toFixed(1));
+  }));
+  const dpAt = (k, T) => { const f = FF(k, T), Q = 12 / 3600, D = 0.065; return S({ fluid: f, nodes: [{ type: 's', P: 600000, dem: 0 }, { type: 'd', P: 0, dem: Q }], pipes: [{ a: 0, b: 1, L: 80, D: D, eps: 0.000046, K: 1 }] }).pipes[0].dp; };
+  keys.forEach(k => check(k + ' : plus froid -> plus de perte de charge dans le reseau', dpAt(k, 0) > dpAt(k, 40)));
+  check('glycol 40 % EG plus de perte que l\'eau a 20 C', dpAt('EG40', 20) > dpAt('w', 20));
 }
 console.log(ko === 0 ? 'OK : ' + ok + ' verifications reussies.' : 'ECHEC : ' + ko + ' erreur(s) sur ' + (ok + ko) + '.');
 process.exit(ko === 0 ? 0 : 1);

@@ -21759,7 +21759,7 @@ function L(){ try{ if(window.I18N3&&I18N3.get&&I18N3.get()==='es') return 'es'; 
 var T={
  fr:{tab:'Réseau maillé',title:'RÉSEAU MAILLÉ — DÉBITS ET PRESSIONS',
   intro:'Réseau bouclé (anneaux) : saisissez les nœuds et les conduites. Le calcul répartit les débits entre les chemins par l’algorithme du gradient global (Todini-Pilati), celui d’EPANET. Il donne la même solution physique que la méthode de Hardy Cross, avec une convergence beaucoup plus rapide. Pertes de charge : Darcy-Weisbach, Swamee-Jain, transition laminaire/turbulent comme EPANET. Pressions relatives, sans effet d’altitude.',
-  fluid:'Fluide :',w:'Eau 20 °C',g30:'Glycol 30 %',g40:'Glycol 40 %',
+  fluid:'Fluide :',w:'Eau',g30:'Glycol 30 % (ancien : fixe à 20 °C)',g40:'Glycol 40 % (ancien : fixe à 20 °C)',tT:'Température du fluide (°C) :',eT:'Température hors domaine pour ce fluide : de {min} à 100 °C. Pour un mélange glycolé, le minimum est juste au-dessus du point de congélation.',nEG:'Éthylène-glycol',nPG:'Propylène-glycol',
   nodesT:'NŒUDS',pipesT:'CONDUITES',addNode:'+ Nœud',addPipe:'+ Conduite',example:'Exemple',clear:'Effacer',
   name:'Nom',type:'Type',val:'Valeur',dem:'Demande',src:'Source',uDem:'m³/h',uSrc:'kPa',
   from:'De',to:'Vers',len:'L (m)',dia:'D int. (mm)',rough:'ε (mm)',k:'K accessoires',
@@ -21771,7 +21771,7 @@ var T={
   csv:'⬇ Exporter en CSV',file:'Thermosys_ReseauMaille',dec:','},
  en:{tab:'Looped network',title:'LOOPED NETWORK — FLOWS AND PRESSURES',
   intro:'Looped (ring) network: enter nodes and pipes. The calculation shares the flows between paths with the global gradient algorithm (Todini-Pilati), the one used by EPANET. It gives the same physical solution as the Hardy Cross method, with much faster convergence. Head loss: Darcy-Weisbach, Swamee-Jain, laminar/turbulent transition as in EPANET. Relative pressures, no elevation effect.',
-  fluid:'Fluid:',w:'Water 20 °C',g30:'Glycol 30%',g40:'Glycol 40%',
+  fluid:'Fluid:',w:'Water',g30:'Glycol 30% (legacy: fixed at 20 °C)',g40:'Glycol 40% (legacy: fixed at 20 °C)',tT:'Fluid temperature (°C):',eT:'Temperature outside the range for this fluid: from {min} to 100 °C. For a glycol mixture the minimum is just above the freezing point.',nEG:'Ethylene glycol',nPG:'Propylene glycol',
   nodesT:'NODES',pipesT:'PIPES',addNode:'+ Node',addPipe:'+ Pipe',example:'Example',clear:'Clear',
   name:'Name',type:'Type',val:'Value',dem:'Demand',src:'Source',uDem:'m³/h',uSrc:'kPa',
   from:'From',to:'To',len:'L (m)',dia:'Int. D (mm)',rough:'ε (mm)',k:'Fittings K',
@@ -21783,7 +21783,7 @@ var T={
   csv:'⬇ Export CSV',file:'Thermosys_LoopedNetwork',dec:'.'},
  es:{tab:'Red mallada',title:'RED MALLADA — CAUDALES Y PRESIONES',
   intro:'Red en anillos: introduzca los nudos y las tuberías. El cálculo reparte los caudales entre los caminos con el algoritmo del gradiente global (Todini-Pilati), el de EPANET. Da la misma solución física que el método de Hardy Cross, con una convergencia mucho más rápida. Pérdidas de carga: Darcy-Weisbach, Swamee-Jain, transición laminar/turbulento como en EPANET. Presiones relativas, sin efecto de altitud.',
-  fluid:'Fluido:',w:'Agua 20 °C',g30:'Glicol 30 %',g40:'Glicol 40 %',
+  fluid:'Fluido:',w:'Agua',g30:'Glicol 30 % (antiguo: fijo a 20 °C)',g40:'Glicol 40 % (antiguo: fijo a 20 °C)',tT:'Temperatura del fluido (°C):',eT:'Temperatura fuera del rango para este fluido: de {min} a 100 °C. Para una mezcla con glicol, el mínimo está justo por encima del punto de congelación.',nEG:'Etilenglicol',nPG:'Propilenglicol',
   nodesT:'NUDOS',pipesT:'TUBERÍAS',addNode:'+ Nudo',addPipe:'+ Tubería',example:'Ejemplo',clear:'Borrar',
   name:'Nombre',type:'Tipo',val:'Valor',dem:'Demanda',src:'Fuente',uDem:'m³/h',uSrc:'kPa',
   from:'De',to:'A',len:'L (m)',dia:'D int. (mm)',rough:'ε (mm)',k:'K accesorios',
@@ -21892,7 +21892,7 @@ function solve(net){
 window.__meshSolve=solve;
 
 /* ---------- État et interface ---------- */
-var st={nodes:[],pipes:[],fluid:'w',vlim:1.2,crit:'ashrae',nid:0,pid:0,res:null,err:null,lang:null};
+var st={nodes:[],pipes:[],fluid:'w',T:20,vlim:1.2,crit:'ashrae',nid:0,pid:0,res:null,err:null,lang:null};
 function num(v,d){ var x=parseFloat(String(v).replace(',','.')); return isFinite(x)?x:d; }
 function esc(x){ return String(x).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 function nf(v,d,dec){ return (isFinite(v)?v:0).toFixed(d).replace('.',dec); }
@@ -21930,13 +21930,28 @@ function reach(net){
 }
 var timer=null;
 function recalc(){ clearTimeout(timer); timer=setTimeout(doCalc,120); }
+/* THERMOSYS_MESH_GLYCOL_V1 - fluide selon la temperature : eau (IAPWS) ou melange eau-glycol (Melinder), via les fonctions globales du patch « Pertes de charge ». Anciennes options g30/g40 : proprietes fixes. */
+function fluidFor(key,Tm){
+  if(key==='w'){ if(!(Tm>=0&&Tm<=100)||!window.reseauWater){ return null; } var w=window.reseauWater(Tm); return {rho:w.rho,mu:w.mu}; }
+  if(window.glyOK&&window.glyOK(key)){ var g=window.glyProps(key,Tm); return g?{rho:g.rho,mu:g.mu}:null; }
+  return FL[key]||FL.w;
+}
+window.__meshFluidFor=fluidFor;
+function stFluid(){ return fluidFor(st.fluid,num(st.T,20)); }
+window.__meshStateFluid=function(k,T){ st.fluid=k; st.T=T; return stFluid(); };
+function fluidOpts(t){
+  var o='<option value="w">'+t.w+'</option>';
+  ['EG','PG'].forEach(function(g){ [20,30,40,50].forEach(function(x){ o+='<option value="'+g+x+'">'+t['n'+g]+' '+x+' %</option>'; }); });
+  return o+'<option value="g30">'+t.g30+'</option><option value="g40">'+t.g40+'</option>';
+}
 function doCalc(){
   var t=T[L()]; st.res=null; st.err=null; st.ctx=null;
   if(!st.nodes.some(function(n){ return n.type==='s'; })){ st.err=t.eNoSrc; return renderResults(); }
   var net=netFromState();
   if(net.bad.length){ st.err=t.eBad+net.bad.map(esc).join(', '); return renderResults(); }
   if(!net.pipes.length){ st.err=t.eNoPipe; return renderResults(); }
-  net.fluid=FL[st.fluid]||FL.w;
+  var flz=stFluid(); if(!flz){ st.err=t.eT.replace('{min}',st.fluid==='w'?0:window.glyMin(st.fluid)); return renderResults(); }
+  net.fluid=flz;
   var seen=reach(net), un=[];
   seen.forEach(function(s,i){ if(!s) un.push(st.nodes[i].name); });
   if(un.length){ st.err=t.eUnreach+un.map(esc).join(', '); return renderResults(); }
@@ -22079,7 +22094,8 @@ function shell(){
   var l=L(), t=T[l]; st.lang=l; p.setAttribute('data-meshlang',l);
   p.innerHTML='<div class="panel"><div class="ph">'+t.title+'</div>'
    +'<div style="font-size:10px;color:var(--ts);margin-bottom:8px">'+t.intro+'</div>'
-   +'<div class="frow"><span class="flb">'+t.fluid+'</span><select class="fsel" id="meshFluid"><option value="w">'+t.w+'</option><option value="g30">'+t.g30+'</option><option value="g40">'+t.g40+'</option></select></div>'
+   +'<div class="frow"><span class="flb">'+t.fluid+'</span><select class="fsel" id="meshFluid">'+fluidOpts(t)+'</select></div>'
+   +'<div class="frow"><span class="flb">'+t.tT+'</span><input class="fi" id="meshT" type="number" step="1" min="-20" max="100" value="'+st.T+'" style="max-width:90px"></div>'
    +'<div class="frow"><span class="flb">'+t.crit+'</span><select class="fsel" id="meshCrit"><option value="ashrae">'+t.crA+'</option><option value="custom">'+t.crC+'</option></select></div>'
    +'<div class="frow" id="meshVrow" style="display:'+(st.crit==='custom'?'flex':'none')+'"><span class="flb">'+t.vlim+'</span><input class="fi" id="meshVlim" type="number" step="0.1" min="0.1" value="'+st.vlim+'" style="max-width:90px"></div>'
    +'<div class="ph" style="font-size:9.5px;margin-top:8px">'+t.nodesT+'</div>'
@@ -22090,6 +22106,7 @@ function shell(){
    +'<div id="meshRes" style="margin-top:10px"></div></div>';
   document.getElementById('meshFluid').value=st.fluid;
   document.getElementById('meshFluid').addEventListener('change',function(e){ st.fluid=e.target.value; recalc(); });
+  document.getElementById('meshT').addEventListener('input',function(e){ st.T=e.target.value; recalc(); });
   document.getElementById('meshVlim').addEventListener('input',function(e){ st.vlim=e.target.value; recalc(); });
   document.getElementById('meshCrit').value=st.crit;
   document.getElementById('meshCrit').addEventListener('change',function(e){ st.crit=e.target.value; document.getElementById('meshVrow').style.display=st.crit==='custom'?'flex':'none'; recalc(); });
