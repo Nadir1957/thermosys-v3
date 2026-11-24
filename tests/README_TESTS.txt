@@ -94,3 +94,9 @@ CYCLE FRIGORIFIQUE : node tests\cycle_regression.js
 Compare 10 cas (R134a, R32, R290, R717, R1234yf, R410A, R404A, R407C, R600a) a des valeurs CoolProp 8.0.0 figees (tolerance 0,05 %),
 verifie les identites du cycle (q0, travail, debit, COP), le glissement et le sens des variations.
 Limite : les tables du module viennent de CoolProp ; ce test detecte les erreurs de transcription ou de formule, ce n'est pas une validation physique independante.
+
+
+[THERMOSYS_TEST_REFRIGPIPE_V1]
+TUYAUTERIE FRIGORIFIQUE : node tests\refrig_pipe_regression.js
+Proprietes des 5 fluides comparees a CoolProp 8.0.0 ; epaisseurs ACR comparees a ASTM B280 (1/4 a 4-1/8 pouce) ; plages de vitesse comparees a McQuay, DuPont, Lennox, Opteon ;
+160 cas recalcules (tube, vitesse, perte de charge par Colebrook-White). Non verifie : ASHRAE (non consulte), manuel Copeland (acces refuse).
