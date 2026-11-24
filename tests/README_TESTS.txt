@@ -114,3 +114,7 @@ VASE : eau glycolee ajoutee au test (node tests\vase_pompe_regression.js) : dens
 
 [THERMOSYS_TEST_PDC_GLYCOL_V1]
 EAU GLYCOLEE dans « Pertes de charge » et « Reseau » (node tests\glycol_pdc_regression.js) : interpolation comparee a CoolProp (viscosite <= 2 %), point de congelation, domaines, recalcul independant de la perte de charge (9 fluides x 4 temperatures x 3 cas), anciennes options inchangees. Un seul point publie independant (DOWCAL) ; propylene-glycol non compare a DOWFROST/ASHRAE ; les sources de viscosite different de 5 a 25 pour cent.
+
+
+[THERMOSYS_TEST_MESH_V1]
+RESEAU MAILLE (node tests\mesh_regression.js) : solveur compare a Hagen-Poiseuille (laminaire), a Swamee-Jain (turbulent), a un 2e solveur nodal independant sur 40 reseaux aleatoires, bilans de debit, fermeture des mailles, vitesse de convergence. Zone de transition 2000-4000 : continuite seulement (loi non verifiee). Proprietes du fluide fixes (non testees en temperature).
