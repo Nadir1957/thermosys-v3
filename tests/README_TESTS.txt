@@ -106,3 +106,7 @@ Proprietes des 5 fluides comparees a CoolProp 8.0.0 ; epaisseurs ACR comparees a
 VASE D'EXPANSION et POMPE / HMT : node tests\vase_pompe_regression.js
 Densite de l'eau comparee a IAPWS-95 (CoolProp), dilatation comparee a Reflex/Flamco, formule du vase comparee a Reflex/Caleffi/Flamco, 120 cas recalcules, puissance de pompe exacte.
 Non couvert : eau glycolee (le module suppose de l'eau pure), texte de la norme EN 12828 (non consulte).
+
+
+[THERMOSYS_TEST_VASE_GLYCOL_V1]
+VASE : eau glycolee ajoutee au test (node tests\vase_pompe_regression.js) : densites Melinder comparees a EngineeringToolBox (1-2 %), dilatation comparee a Reflex, cas de reference, limites de temperature.

@@ -14,8 +14,11 @@
 //    statique + 0,3 bar (Caleffi). Le module retient statique + 0,3 bar, minimum 1 bar (prudent).
 //  - Pompe : puissance hydraulique rho g Q H (formule exacte) ; marge moteur 25 % (KSB : 10 a 20 % suffisent pour l'eau claire ; le module est
 //    donc prudent) ; serie de moteurs IEC arrondie vers le haut.
-//  - NON couvert : eau glycolee (le module suppose de l'eau pure : le coefficient de dilatation avec antigel est 20 a 60 % plus fort) ;
-//    texte de la norme EN 12828 (non consulte).
+//  - Eau glycolee (ethylene / propylene glycol, 20 a 50 % EN MASSE) : masses volumiques de Melinder (IIR) evaluees avec CoolProp ; comparees aux
+//    tables d'EngineeringToolBox (ecart <= 2 % : l'ethylene glycol differe de 0,6 a 1,8 %, le propylene glycol de 0,6 % au plus) ; dilatation du
+//    melange a 20 % comparee au tableau Reflex (le module est de 0 a 8 % plus prudent). Les deux jeux de donnees ne sont pas identiques :
+//    pour l'ethylene glycol, la table d'EngineeringToolBox donne une dilatation 10 a 15 % plus faible ; le module garde la plus forte.
+//  - NON couvert : texte de la norme EN 12828 (non consulte) ; concentrations en volume (a convertir en masse) ; ASHRAE Fundamentals non consulte.
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -31,7 +34,7 @@ try {
   if (a0 < 0 || a1 < 0 || a1e < 0 || a2 < 0 || a2e < 0 || !(a1 < a2)) { throw new Error('reperes introuvables'); }
   const src = h.slice(a0, a0e) + '\n' + h.slice(a1, a1e + END.length) + '\n' + h.slice(a2, a2e + END.length);
   const els = {}; const get = id => els[id] || (els[id] = { value: '', textContent: '' });
-  const f = new Function('$', 'num', 'L', 'window', src + '\nreturn { pompe: window.calcPompe, vase: window.calcVase, RHO: RHO, VASES: VASES, MOT: MOT };');
+  const f = new Function('$', 'num', 'L', 'window', src + '\nreturn { pompe: window.calcPompe, vase: window.calcVase, RHO: RHO, VASES: VASES, MOT: MOT, VGLY: (typeof VGLY !== "undefined" ? VGLY : null) };');
   const win = {};
   const num = (id, def) => { const e = els[id]; if (!e) { return def; } const v = parseFloat(String(e.value).replace(',', '.')); return isFinite(v) ? v : def; };
   E = f(get, num, (fr, en) => fr, win);
@@ -113,5 +116,49 @@ let nbp = 0;
 check('18 cas de pompe', nbp === 18);
 check('exemple 10 m3/h, 15 m : 0,409 kW hydrauliques', Math.abs(pompe(10, 15, 65).ph - 0.409) < 0.001);
 check('entrees invalides refusees (rendement > 100)', /invalides/.test(pompe(10, 15, 120).txt));
+console.log('7) Eau glycolee : masses volumiques, dilatation, limites (patch glycol)');
+const ETB = {
+  EG20: { 20: 1030, 40: 1022, 60: 1014, 80: 1005, 100: 995 }, EG30: { 20: 1046, 40: 1037, 60: 1027, 80: 1017, 100: 1007 }, EG40: { 20: 1063, 40: 1052, 60: 1041, 80: 1030, 100: 1018 }, EG50: { 20: 1079, 40: 1067, 60: 1055, 80: 1042, 100: 1030 },
+  PG20: { 20: 1014, 40: 1004, 60: 992, 80: 980, 100: 967 }, PG30: { 20: 1022, 40: 1010, 60: 997, 80: 983, 100: 969 }, PG40: { 20: 1030, 40: 1016, 60: 1002, 80: 987, 100: 971 }, PG50: { 20: 1038, 40: 1023, 60: 1006, 80: 990, 100: 974 }
+};
+const FREEZE = { EG20: -7.9, EG30: -14.6, EG40: -23.8, EG50: -36.0, PG20: -7.2, PG30: -12.8, PG40: -20.6, PG50: -32.2 };
+if (!E.VGLY) { check('donnees glycol presentes (patch glycol applique)', false); }
+else {
+  const interp = (t, T) => { for (let i = 1; i < t.length; i++) { if (T <= t[i][0]) { const a = t[i - 1], b = t[i]; return a[1] + (b[1] - a[1]) * (T - a[0]) / (b[0] - a[0]); } } return t[t.length - 1][1]; };
+  check('8 melanges (EG et PG, 20 a 50 %)', Object.keys(E.VGLY).length === 8, Object.keys(E.VGLY).join(','));
+  Object.keys(ETB).forEach(k => {
+    const G = E.VGLY[k]; check(k + ' present', !!G); if (!G) { return; }
+    Object.keys(ETB[k]).forEach(T => check(k + ' masse volumique a ' + T + ' C (2 % de EngineeringToolBox)', rel(interp(G.t, +T), ETB[k][T]) < 2.0, interp(G.t, +T).toFixed(1) + ' vs ' + ETB[k][T]));
+    check(k + ' point de congelation', Math.abs(G.tf - FREEZE[k]) <= 0.2, G.tf + ' vs ' + FREEZE[k]);
+    check(k + ' table decroissante avec la temperature', G.t.every((p, i) => i === 0 || p[1] < G.t[i - 1][1]));
+    check(k + ' premiere temperature au-dessus du gel', G.t0 > G.tf && G.t[0][0] === G.t0);
+    check(k + ' masse volumique > eau pure a 20 C', interp(G.t, 20) > 998.2);
+  });
+  function vg(o) { E.set('vaseFluid', o.fl); const r = vase(o); E.set('vaseFluid', 'W'); return r; }
+  const REFLEX20 = { 60: 2.37, 80: 3.57, 100: 4.92 };
+  Object.keys(REFLEX20).forEach(T => { const b = (interp(E.VGLY.EG20.t, -5) / interp(E.VGLY.EG20.t, +T) - 1) * 100, q = b / REFLEX20[T]; check('EG 20 % : dilatation -5 -> ' + T + ' C comparee a Reflex ' + REFLEX20[T] + ' % (0,97 a 1,08)', q >= 0.97 && q <= 1.08, b.toFixed(2) + ' (rapport ' + q.toFixed(3) + ')'); });
+  let ng = 0;
+  Object.keys(E.VGLY).forEach(k => [[200, 10, 70, 1.0, 3], [2000, 10, 90, 1.5, 6]].forEach(c => {
+    const G = E.VGLY[k], o = { fl: k, V: c[0], T1: Math.max(10, G.t0), T2: c[2], Ps: c[3], Pm: c[4] }, r = vg(o), w = vase(o);
+    const beta = interp(G.t, o.T1) / interp(G.t, o.T2) - 1, bw = rhoMod(o.T1) / rhoMod(o.T2) - 1;
+    const Pi = Math.max(o.Ps + 0.3, 1) + 1, dp = o.Pm <= 5 ? 0.5 : 0.1 * o.Pm, Pf = o.Pm - dp + 1, Vn = (o.V * beta + Math.max(3, 0.005 * o.V)) / (1 - Pi / Pf), tag = k + ' V=' + o.V + ' T ' + o.T1 + '-' + o.T2 + ' : ';
+    check(tag + 'volume calcule', r.Vn === Math.ceil(Vn), r.Vn + ' vs ' + Math.ceil(Vn) + ' (exact ' + Vn.toFixed(2) + ')');
+    check(tag + 'ligne fluide affichee', /^Fluide : /m.test(r.txt) && r.txt.indexOf('point de congélation') > 0, r.txt.split('\n')[0]);
+    const mf = /point de congélation (-?[0-9.]+) °C/.exec(r.txt);
+    check(tag + 'point de congelation affiche', !!mf && Math.abs(parseFloat(mf[1]) - FREEZE[k]) <= 0.2, mf ? mf[1] : 'absent');
+    check(tag + 'texte « densite du melange » (et non de l\'eau)', r.txt.indexOf('du mélange interpolée') > 0 && r.txt.indexOf('de l\'eau interpolée') < 0);
+    check(tag + 'dilatation 10 a 100 % plus forte que l\'eau pure (observe : 14 a 89 %)', beta / bw > 1.10 && beta / bw < 2.0, (beta / bw).toFixed(3));
+    check(tag + 'vase au moins aussi grand que pour l\'eau', r.Vn >= w.Vn, r.Vn + ' vs ' + w.Vn);
+    ng++;
+  }));
+  check('16 cas glycol', ng === 16, String(ng));
+  const lim1 = vg({ fl: 'EG30', V: 500, T1: -12, T2: 80, Ps: 1.5, Pm: 3 }), lim2 = vg({ fl: 'EG30', V: 500, T1: -10, T2: 80, Ps: 1.5, Pm: 3 }), lim3 = vg({ fl: 'EG30', V: 500, T1: 10, T2: 105, Ps: 1.5, Pm: 3 });
+  check('T min sous le gel du melange : refus', /Eau glycolée/.test(lim1.txt) && lim1.Vn === null, lim1.txt.slice(0, 80));
+  check('T min -10 C acceptee pour EG 30 % (gel a -14,6 C)', lim2.Vn !== null);
+  check('T max 105 C refusee pour un melange glycole', /Eau glycolée/.test(lim3.txt) && lim3.Vn === null);
+  check('eau pure : T min negative toujours refusee', /invalides/.test(vase({ V: 500, T1: -5, T2: 80, Ps: 1.5, Pm: 3 }).txt));
+  check('eau pure : texte « densite de l\'eau »', vase({ V: 500, T1: 10, T2: 80, Ps: 1.5, Pm: 3 }).txt.indexOf('de l\'eau interpolée') > 0 && !/^Fluide/m.test(vase({ V: 500, T1: 10, T2: 80, Ps: 1.5, Pm: 3 }).txt));
+  check('eau pure inchangee apres le patch (500 L, 10-80 C, 1,5 bar, 3 bar : 87 L)', vase({ V: 500, T1: 10, T2: 80, Ps: 1.5, Pm: 3 }).Vn === 87);
+}
 console.log(ko === 0 ? 'OK : ' + ok + ' verifications reussies.' : 'ECHEC : ' + ko + ' erreur(s) sur ' + (ok + ko) + '.');
 process.exit(ko === 0 ? 0 : 1);
