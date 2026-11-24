@@ -16043,7 +16043,8 @@ window.calcVase=function(){
   var out=$('vaseResult'); if(!out) return;
   if(!(V>0)||T2<=T1||T2>120||T1<0){ out.textContent=L('Entrées invalides : volume > 0 et 0 ≤ T1 < T2 ≤ 120 °C.','Invalid inputs: volume > 0 and 0 ≤ T1 < T2 ≤ 120 °C.'); return; }
   var beta=lerp(RHO,T1)/lerp(RHO,T2)-1;
-  var Pi=Math.max(Ps+1,2);
+  /* THERMOSYS_VASE_P0_V1 - pression de gonflage = hauteur statique + 0,3 bar (Caleffi ; Reflex : +0,2 bar), minimum 1 bar relatif (Reflex, Caleffi) */
+  var Pi=Math.max(Ps+0.3,1)+1;
   var dp=Pm<=5?0.5:0.1*Pm;
   var Pf=Pm-dp+1;
   if(Pf<=Pi+0.2){ out.textContent=L('IMPOSSIBLE : la pression finale admissible ('+Pf.toFixed(2)+' bar abs) est trop proche de la pression de gonflage ('+Pi.toFixed(2)+' bar abs). Augmenter la pression de soupape ou réduire la hauteur statique.','IMPOSSIBLE: allowable final pressure ('+Pf.toFixed(2)+' bar abs) is too close to the pre-charge ('+Pi.toFixed(2)+' bar abs). Raise the relief valve pressure or reduce the static head.'); return; }

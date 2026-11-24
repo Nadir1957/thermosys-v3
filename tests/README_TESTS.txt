@@ -100,3 +100,9 @@ Limite : les tables du module viennent de CoolProp ; ce test detecte les erreurs
 TUYAUTERIE FRIGORIFIQUE : node tests\refrig_pipe_regression.js
 Proprietes des 5 fluides comparees a CoolProp 8.0.0 ; epaisseurs ACR comparees a ASTM B280 (1/4 a 4-1/8 pouce) ; plages de vitesse comparees a McQuay, DuPont, Lennox, Opteon ;
 160 cas recalcules (tube, vitesse, perte de charge par Colebrook-White). Non verifie : ASHRAE (non consulte), manuel Copeland (acces refuse).
+
+
+[THERMOSYS_TEST_VASE_POMPE_V1]
+VASE D'EXPANSION et POMPE / HMT : node tests\vase_pompe_regression.js
+Densite de l'eau comparee a IAPWS-95 (CoolProp), dilatation comparee a Reflex/Flamco, formule du vase comparee a Reflex/Caleffi/Flamco, 120 cas recalcules, puissance de pompe exacte.
+Non couvert : eau glycolee (le module suppose de l'eau pure), texte de la norme EN 12828 (non consulte).
