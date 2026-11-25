@@ -99,11 +99,27 @@ const AR4 = { R32: 675, R125: 3500, R134a: 1430, R143a: 4470, R1234yf: 4, R1234z
 const comp = { R410A: { R32: .5, R125: .5 }, R407C: { R32: .23, R125: .25, R134a: .52 }, R404A: { R125: .44, R143a: .52, R134a: .04 }, R454B: { R32: .689, R1234yf: .311 }, R452B: { R32: .67, R125: .07, R1234yf: .26 }, R448A: { R32: .26, R125: .26, R134a: .21, R1234yf: .20, R1234ze: .07 }, R449A: { R32: .24, R125: .25, R134a: .26, R1234yf: .25 } };
 for (const [n, c] of Object.entries(comp)) { let g = 0; for (const [f, x] of Object.entries(c)) g += AR4[f] * x; const o = opts.find(x => x[1].indexOf(n) === 0); chk(o && Math.abs(o[0] - g) <= 0.012 * g, 'melange ' + n + ' : somme AR4 ' + g.toFixed(0) + ' vs liste ' + (o && o[0])); }
 
-// ---- facteurs d'emission des reseaux : coherence seulement (NON verifies)
-const gs = /<select class="fsel" id="tewi_grid"[^>]*>([\s\S]*?)<\/select>/.exec(html), grids = [];
-if (gs) { const re = /<option value="([^"]+)">([^<]*)<\/option>/g; let m; while ((m = re.exec(gs[1]))) if (m[1] !== 'custom') grids.push([parseFloat(m[1]), m[2]]); }
-chk(grids.length === 17, '17 pays attendus : ' + grids.length);
-for (const g of grids) chk(isFinite(g[0]) && g[0] > 0.01 && g[0] < 1.0, 'facteur plausible ' + g[1]);
+// ---- facteurs d'emission des reseaux : table AIE 2025 (production, combustion, hors pertes reseau) reproduite par ABB ; gel des valeurs
+const IEA = {"Algeria": 500.1, "France": 41.3, "Saudi Arabia": 596.7, "UAE": 358.2, "Qatar": 460.6, "Turkey": 414.2, "Germany": 331.3, "Italy": 257.4, "Spain": 132.7, "United Kingdom": 175.0, "USA": 330.8, "Canada": 119.0, "China": 589.2, "Japan": 448.2, "Egypt": 400.0, "South Africa": 872.6, "Nigeria": 403.5, "Norway": 5.5, "Sweden": 9.9, "Finland": 41.5, "Denmark": 62.0, "Netherlands": 233.3, "Belgium": 141.4, "Switzerland": 21.3, "Austria": 99.9, "Greece": 294.7, "Poland": 543.8, "Czech Republic": 390.3, "Romania": 225.3, "Hungary": 152.9, "Croatia": 148.3, "Slovakia": 97.2, "Serbia": 669.3, "South Korea": 455.7, "India": 747.3, "Australia": 583.4, "New Zealand": 89.9, "Indonesia": 752.8, "Malaysia": 615.4, "Thailand": 432.4, "Vietnam": 558.4, "Philippines": 770.2, "Singapore": 377.6, "Taiwan": 554.1, "Brazil": 65.8, "Mexico": 420.5, "Argentina": 257.5, "Chile": 221.0, "Colombia": 210.4, "Peru": 221.3};
+const UNV = ["Morocco", "Tunisia", "Libya", "Kuwait", "Bahrain", "Oman", "Jordan", "Lebanon", "Iraq", "Iran", "Syria", "Yemen", "Kenya", "Ghana", "Ethiopia", "Tanzania", "Cameroon", "Senegal", "Ivory Coast", "EU-27 avg.", "Ukraine", "Pakistan", "Bangladesh"];
+const gsrc = /id="tewi-grid-v1"[\s\S]*?var GRID=(\[\[[\s\S]*?\]\]);/.exec(html); chk(!!gsrc, 'table GRID presente');
+let GR = []; if (gsrc) GR = JSON.parse(gsrc[1]);
+const gnames = GR.filter(x => x[0] !== 'custom');
+chk(gnames.length === 73, '73 pays attendus : ' + gnames.length);
+let nv = 0;
+for (const [v, lab] of gnames) {
+  const nm = lab.replace(/ \(.*$/, ''), val = parseFloat(v);
+  chk(isFinite(val) && val > 0.001 && val < 1.0, 'facteur plausible ' + lab);
+  if (IEA[nm] !== undefined) { chk(Math.abs(val - IEA[nm] / 1000) < 0.0006, 'AIE ' + nm + ' attendu ' + IEA[nm] / 1000 + ' trouve ' + val); chk(lab.indexOf('non v') < 0, 'pas de mention non verifie : ' + nm); }
+  else { nv++; chk(UNV.indexOf(nm) >= 0, 'pays hors AIE attendu : ' + nm); chk(lab.indexOf('non v') >= 0, 'mention non verifie manquante : ' + nm); }
+}
+chk(nv === UNV.length, 'pays non verifies : ' + nv + ' attendus ' + UNV.length);
+chk(new Set(gnames.map(x => x[1].replace(/ \(.*$/, ''))).size === 73, 'pas de doublon de pays');
+const gs = /<select class="fsel" id="tewi_grid"[^>]*>([\s\S]*?)<\/select>/.exec(html), sg = [];
+if (gs) { const re = /<option value="([^"]+)">([^<]*)<\/option>/g; let m; while ((m = re.exec(gs[1]))) if (m[1] !== 'custom') sg.push([parseFloat(m[1]), m[2]]); }
+chk(sg.length === 17, 'liste statique : 17 pays : ' + sg.length);
+for (const g of sg) { chk(g[1].indexOf('(' + g[0].toFixed(3)) > 0, 'libelle coherent : ' + g[1]); const w = gnames.find(x => parseFloat(x[0]) === g[0]); chk(!!w, 'valeur statique presente dans la table : ' + g[1]); }
+chk(/id="tewi_grid_note"/.test(html) && /AIE 2025/.test(html), 'note de source des facteurs');
 
 // ---- seuils F-gas (Reglement UE 2024/573, art. 5) dans l'enveloppe d'affichage
 const W = html.indexOf('6. TEWI (wrapper'); chk(W > 0, 'enveloppe F-gas presente');
