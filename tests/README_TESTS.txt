@@ -138,3 +138,5 @@ coldroom_regression.js : chambre froide (bilan frigorifique CR_ENGINE) : psychro
 
 chargepro_regression.js : CHARGE PRO (moteur CLE) : conduction comparee a la solution analytique EN ISO 13786, geometrie solaire, ciel clair de Hottel, psychrometrie (CoolProp), conservation de l'energie en enceinte adiabatique, 18 mutations ; CHARGE (estimation rapide) recalculee a la main. NON verifie : comparaison avec un logiciel de reference (ASHRAE RTS/CLTD, EnergyPlus) ou un exemple publie, bibliotheques de materiaux et de vitrages, interface.
   Lancer : node tests\chargepro_regression.js
+
+gaines_regression.js : gaines d'air (dimensionnement par la vitesse, diametre equivalent de Huebscher) : 73 verifications dont 25 mutations. Commande : node tests\gaines_regression.js
