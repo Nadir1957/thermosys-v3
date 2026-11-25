@@ -129,3 +129,6 @@ PSYCHROMETRIE (node tests\psychro_regression.js) : 140 etats compares a CoolProp
 
 tewi_regression.js : calcul TEWI (formule EN 378, 200 cas, 6 mutations), liste des PRG (AR4 / Reglement UE 517/2014, melanges recalcules), seuils F-gas 5/50/500 t. Les facteurs d'emission par pays ne sont PAS verifies (coherence seulement).
   Lancer : node tests\tewi_regression.js
+
+heating_regression.js v2 : chauffage EN 12831 (methode classique 2003) : 53 verifications, 2e implementation independante, 300 locaux aleatoires, 14 mutations. Coefficients e et epsilon confrontes a l'implementation AixLib (tiers). Aucun exemple officiel de la norme n'a pu etre consulte ; l'edition 2017 n'est pas verifiee.
+  Lancer : node tests\heating_regression.js
