@@ -140,3 +140,5 @@ chargepro_regression.js : CHARGE PRO (moteur CLE) : conduction comparee a la sol
   Lancer : node tests\chargepro_regression.js
 
 gaines_regression.js : gaines d'air (dimensionnement par la vitesse, diametre equivalent de Huebscher) : 73 verifications dont 25 mutations. Commande : node tests\gaines_regression.js
+
+airtreat_regression.js : traitement d'air (moteur) : psychrometrie contre CoolProp (390 points), batterie / humidification / recuperateur / roue (bilans), debits EN 16798-1, cascade de pression, donnees ISO 14644-1 / EN 1822 / EN 13053, fichier EPW, energie annuelle : 124 verifications dont 37 mutations. Commande : node tests\airtreat_regression.js
