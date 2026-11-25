@@ -132,3 +132,6 @@ tewi_regression.js : calcul TEWI (formule EN 378, 200 cas, 6 mutations), liste d
 
 heating_regression.js v2 : chauffage EN 12831 (methode classique 2003) : 53 verifications, 2e implementation independante, 300 locaux aleatoires, 14 mutations. Coefficients e et epsilon confrontes a l'implementation AixLib (tiers). Aucun exemple officiel de la norme n'a pu etre consulte ; l'edition 2017 n'est pas verifiee.
   Lancer : node tests\heating_regression.js
+
+coldroom_regression.js : chambre froide (bilan frigorifique CR_ENGINE) : psychrometrie vs CoolProp, tableaux de renouvellement d'air ASHRAE (via Krack), chaleur du produit (Siebel), modele de porte, 2e implementation sur 200 chambres, 16 mutations. Non verifie : donnees des 40 produits, interface, cycle/tuyauterie/charge.
+  Lancer : node tests\coldroom_regression.js
