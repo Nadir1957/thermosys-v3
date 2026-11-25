@@ -135,3 +135,6 @@ heating_regression.js v2 : chauffage EN 12831 (methode classique 2003) : 53 veri
 
 coldroom_regression.js : chambre froide (bilan frigorifique CR_ENGINE) : psychrometrie vs CoolProp, tableaux de renouvellement d'air ASHRAE (via Krack), chaleur du produit (Siebel), modele de porte, 2e implementation sur 200 chambres, 16 mutations. Non verifie : donnees des 40 produits, interface, cycle/tuyauterie/charge.
   Lancer : node tests\coldroom_regression.js
+
+chargepro_regression.js : CHARGE PRO (moteur CLE) : conduction comparee a la solution analytique EN ISO 13786, geometrie solaire, ciel clair de Hottel, psychrometrie (CoolProp), conservation de l'energie en enceinte adiabatique, 18 mutations ; CHARGE (estimation rapide) recalculee a la main. NON verifie : comparaison avec un logiciel de reference (ASHRAE RTS/CLTD, EnergyPlus) ou un exemple publie, bibliotheques de materiaux et de vitrages, interface.
+  Lancer : node tests\chargepro_regression.js
