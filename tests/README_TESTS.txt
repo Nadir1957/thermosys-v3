@@ -125,7 +125,7 @@ RESEAU MAILLE : choix du fluide selon la temperature ajoute au test (node tests\
 
 
 [THERMOSYS_TEST_PSYCHRO_V1]
-PSYCHROMETRIE (node tests\psychro_regression.js) : 140 etats compares a CoolProp (4 pressions, -10 a 50 C), psat (liquide : IAPWS ; glace : Murphy-Koop), pression selon l'altitude (atmosphere standard), coherence des modes de saisie, procedes (batterie, humidification, melange, vapeur), copies du moteur dans traitement d'air / calcul horaire / chambre froide. ECARTS CONNUS NON CORRIGES : gaz parfaits (teneur en eau 0,3 a 0,6 % trop basse, enthalpie jusqu'a 1,6 kJ/kg trop basse a 50 C sature) ; chambre froide : point de rosee sur l'eau liquide quand il est sous 0 C (ecart jusqu'a 3,7 K).
+PSYCHROMETRIE (node tests\psychro_regression.js) : 140 etats compares a CoolProp (4 pressions, -10 a 50 C), psat (liquide : IAPWS ; glace : Murphy-Koop), pression selon l'altitude (atmosphere standard), coherence des modes de saisie, procedes (batterie, humidification, melange, vapeur), copies du moteur dans traitement d'air / calcul horaire / chambre froide. ECARTS CONNUS NON CORRIGES : gaz parfaits (teneur en eau 0,3 a 0,6 % trop basse, enthalpie jusqu'a 1,6 kJ/kg trop basse a 50 C sature) ; chambre froide : sous 0 C le point de rosee est un point de givre (calcule sur la glace, comme CoolProp ; ecart <= 0,01 K controle de -30 a 5 C ; l'ancienne mention de 3,7 K etait perimee).
 
 tewi_regression.js : calcul TEWI (formule EN 378, 200 cas, 6 mutations), liste des PRG (AR4 / Reglement UE 517/2014, melanges recalcules), seuils F-gas 5/50/500 t. Les facteurs d'emission par pays ne sont PAS verifies (coherence seulement).
   Lancer : node tests\tewi_regression.js

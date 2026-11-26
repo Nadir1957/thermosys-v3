@@ -31,12 +31,13 @@ V.V.forEach(function (x) {
     ok(x.n[i] && x.c[i] && x.l[i], x.id + ' texte manquant langue ' + i);
     ok(x.l[i].length > 20, x.id + ' limites vides langue ' + i);
   });
-  ok(/non v[ée]rifi|not verified|no verificado|ne sont pas|not |No |non corrig|sin corregir|uncorrected/i.test(x.l[0] + x.l[1] + x.l[2]), x.id + ' doit dire ce qui n\'est pas verifie');
+  ok(/non v[ée]rifi|not verified|no verificado|ne sont pas|not |No |non corrig|sin corregir|uncorrected|\u00e9cart|deviation|desviaci/i.test(x.l[0] + x.l[1] + x.l[2]), x.id + ' doit dire ce qui n\'est pas verifie');
   if (x.k) { const r = new RegExp(x.t.replace('.', '\\.') + '[^\\n]*?' + x.k[0] + '[^\\n]*?' + x.k[1]); ok(readme === '' || r.test(readme), x.id + ' comptes ' + x.k + ' differents du README'); }
 });
 ok(V.V.some(x => x.id === 'gaines_ef' && /13 %/.test(x.l[0])), 'gaines_ef : limite honnete presente');
 ok(!/Pas de perte de charge/.test(JSON.stringify(V.V)), 'gaines : ancienne limite retiree');
 ok(V.V.some(x => x.id === 'psychro' && /0,7 %/.test(x.l[0]) && /0\.7 %/.test(x.l[1]) && /0,7 %/.test(x.l[2]) && /Kuehn/.test(x.l[0])), 'psychro : choix gaz parfait documente avec la source ASHRAE');
+ok(V.V.some(x => x.id === 'psychro' && x.l.every(z => !/3,7 K|3\.7 K/.test(z)) && /givre/.test(x.l[0]) && /frost/.test(x.l[1]) && /escarcha/.test(x.l[2])), 'psychro : point de givre documente, ancienne limite 3,7 K retiree');
 // phrases interdites (chiffres non mesures)
 const all = JSON.stringify(V.V) + JSON.stringify(sandbox.window.__val46.render(0));
 ['0,6 % contre EnergyPlus', '0.6 % vs EnergyPlus', 'certifié conforme', 'validé à 0,6'].forEach(function (b) { ok(all.indexOf(b) < 0, 'phrase interdite : ' + b); });
