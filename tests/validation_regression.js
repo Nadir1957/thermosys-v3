@@ -38,6 +38,7 @@ ok(V.V.some(x => x.id === 'gaines_ef' && /13 %/.test(x.l[0])), 'gaines_ef : limi
 ok(!/Pas de perte de charge/.test(JSON.stringify(V.V)), 'gaines : ancienne limite retiree');
 ok(V.V.some(x => x.id === 'psychro' && /0,7 %/.test(x.l[0]) && /0\.7 %/.test(x.l[1]) && /0,7 %/.test(x.l[2]) && /Kuehn/.test(x.l[0])), 'psychro : choix gaz parfait documente avec la source ASHRAE');
 ok(V.V.some(x => x.id === 'psychro' && x.l.every(z => !/3,7 K|3\.7 K/.test(z)) && /givre/.test(x.l[0]) && /frost/.test(x.l[1]) && /escarcha/.test(x.l[2])), 'psychro : point de givre documente, ancienne limite 3,7 K retiree');
+ok(V.V.some(x => x.id === 'airtreat' && /Lois de COP/.test(x.c[0]) && /COP laws/.test(x.c[1]) && /Leyes de COP/.test(x.c[2]) && /dégivrage non modélisé/i.test(x.l[0]) && /not modelled/.test(x.l[1]) && /no modelado/.test(x.l[2]) && /deux étages/.test(x.l[0]) && /two-stage/.test(x.l[1]) && /dos etapas/.test(x.l[2]) && /non vérifiée/.test(x.l[0]) && /not verified/.test(x.l[1]) && /no verificada/.test(x.l[2])), 'airtreat : lois de COP comparees, limites honnetes x3');
 // phrases interdites (chiffres non mesures)
 const all = JSON.stringify(V.V) + JSON.stringify(sandbox.window.__val46.render(0));
 ['0,6 % contre EnergyPlus', '0.6 % vs EnergyPlus', 'certifié conforme', 'validé à 0,6'].forEach(function (b) { ok(all.indexOf(b) < 0, 'phrase interdite : ' + b); });

@@ -160,3 +160,5 @@ gaines_ef_regression.js : gaines d air a frottement constant (Colebrook, 2e impl
 tewi_grid_regression.js : facteurs d emission du reseau par pays (50 pays contre le tableau AIE 2025, 21 contre ADEME 2011, Iran non verifie) : une mutation par pays. Commande : node tests\tewi_grid_regression.js
 
 isolation_regression.js : calcul d epaisseur d isolant anti-condensation (point de rosee CoolProp, convection naturelle Churchill-Chu, bilan thermique, 2e methode) : suite complete et 26 mutations. Commande : node tests\isolation_regression.js
+
+cop_lois_regression.js : lois de COP (pompe a chaleur air-air en chauffage, groupe froid en refroidissement) comparees aux tableaux publies de deux familles de rooftops Carrier (taille 36) et, pour l air-eau, a Wolf FHA et Stiebel Eltron WPL 25 : suite complete et 15 mutations (chauffage, froid, charge partielle). Commande : node tests\cop_lois_regression.js
