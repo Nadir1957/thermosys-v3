@@ -17408,6 +17408,42 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
   };
 })();
 </script>
+<script id="acoustique-45-module">
+/* THERMOSYS_ACOUSTIQUE_V1 */
+(function () {
+  'use strict';
+  if (window.__ac45) { return; }
+  window.__ac45 = 1;
+  function isFr() { var l = (typeof lang !== 'undefined') ? lang : window.lang; return (l || 'fr') === 'fr'; }
+  function T(a, b) { return isFr() ? a : b; }
+  function val(id) { var e = document.getElementById(id); var s = e && e.value != null ? String(e.value).replace(',', '.').trim() : ''; return s === '' ? NaN : Number(s); }
+  function f(x, d) { var s = x.toFixed(d); return isFr() ? s.replace('.', ',') : s; }
+  function sx(x) { return typeof __sxl === 'function' ? __sxl(x) : x; }
+  /* Lp = Lw + 10 log10(n) - 20 log10(r) - k ; k = 11 (propagation spherique, champ libre) ou 8 (demi-sphere : plan reflechissant) ; ISO 9613-2 : Adiv = 20 log10(d/d0) + 11 dB, directivite +3 dB sur un plan */
+  window.calcAcoustic = function () {
+    var el = document.getElementById('acResult');
+    if (!el) { return; }
+    var lw = val('acLw'), dist = val('acDist'), n = val('acN');
+    var type = (document.getElementById('acType') || {}).value || 'free';
+    if (!(lw > 0) || !(dist > 0) || !(n >= 1 && Math.floor(n) === n)) {
+      el.innerHTML = '<div style="color:#ff6b6b;font-size:12px">' + T('Veuillez saisir une puissance acoustique > 0, une distance > 0 et un nombre d’unités entier ≥ 1.', 'Please enter a sound power > 0, a distance > 0 and a whole number of units ≥ 1.') + '</div>';
+      return;
+    }
+    var k = (type === 'wall') ? 8 : 11;
+    var lwTotal = lw + 10 * Math.log10(n);
+    var lp = lwTotal - 20 * Math.log10(dist) - k;
+    var lines = [
+      [T('Puissance acoustique totale', 'Total sound power'), f(lwTotal, 1) + ' dB(A)'],
+      [T('Niveau perçu à ' + f(dist, 1) + ' m', 'Level perceived at ' + f(dist, 1) + ' m'), f(lp, 1) + ' dB(A)'],
+      [T('Type d\'implantation', 'Installation type'), (type === 'wall') ? T('Contre mur / sol', 'Against wall / ground') : T('Champ libre', 'Free field')]
+    ];
+    var html = lines.map(function (p) { return '<div class="frow"><span class="flb">' + p[0] + ' :</span><b>' + sx(p[1]) + '</b></div>'; }).join('');
+    html += '<div style="font-size:9.5px;color:var(--ts);margin-top:8px">' + T('Formule : Lp = Lw + 10·log(n) − 20·log(r) − ' + k + ' (' + (k === 11 ? 'propagation sphérique' : 'demi-sphère, un plan réfléchissant') + '). Les n unités sont supposées identiques et à la même distance. Champ lointain seulement, sans absorption de l’air, écran, ni bruit de fond. À vérifier avec un acousticien qualifié pour toute étude réglementaire.', 'Formula: Lp = Lw + 10·log(n) − 20·log(r) − ' + k + ' (' + (k === 11 ? 'spherical propagation' : 'hemisphere, one reflecting plane') + '). The n units are assumed identical and at the same distance. Far field only, with no air absorption, barrier or background noise. Verify with a qualified acoustic engineer for any regulatory study.') + '</div>';
+    el.innerHTML = html;
+    if (typeof logHist === 'function') { logHist(T('Acoustique : ', 'Acoustic: ') + f(lp, 1) + ' dB(A) @ ' + f(dist, 1) + ' m'); }
+  };
+})();
+</script>
 <script id="normes-44-module">
 /* Thermosys etape 44 - NORMES : references corrigees + libelles sans valeur reglementaire (idempotent) */
 (function(){
