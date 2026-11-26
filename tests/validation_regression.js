@@ -21,7 +21,7 @@ pg.appendChild = function (c) { els[c.id] = c; origAppend(c); };
 Object.defineProperty(sandbox, 'lang', { get() { return langV; } });
 new Function('window', 'document', 'setInterval', 'lang', m[1])(sandbox.window, sandbox.document, sandbox.setInterval, undefined);
 const V = sandbox.window.__val46;
-ok(V && V.V.length >= 18, 'au moins 18 modules listes');
+ok(V && V.V.length >= 19, 'au moins 19 modules listes');
 // source de verite : README_TESTS.txt
 let readme = '';
 try { readme = fs.readFileSync(path.join('tests', 'README_TESTS.txt'), 'utf8'); } catch (e) { /* ignore */ }
@@ -34,6 +34,8 @@ V.V.forEach(function (x) {
   ok(/non v[ée]rifi|not verified|no verificado|ne sont pas|not |No |non corrig|sin corregir|uncorrected/i.test(x.l[0] + x.l[1] + x.l[2]), x.id + ' doit dire ce qui n\'est pas verifie');
   if (x.k) { const r = new RegExp(x.t.replace('.', '\\.') + '[^\\n]*?' + x.k[0] + '[^\\n]*?' + x.k[1]); ok(readme === '' || r.test(readme), x.id + ' comptes ' + x.k + ' differents du README'); }
 });
+ok(V.V.some(x => x.id === 'gaines_ef' && /13 %/.test(x.l[0])), 'gaines_ef : limite honnete presente');
+ok(!/Pas de perte de charge/.test(JSON.stringify(V.V)), 'gaines : ancienne limite retiree');
 // phrases interdites (chiffres non mesures)
 const all = JSON.stringify(V.V) + JSON.stringify(sandbox.window.__val46.render(0));
 ['0,6 % contre EnergyPlus', '0.6 % vs EnergyPlus', 'certifié conforme', 'validé à 0,6'].forEach(function (b) { ok(all.indexOf(b) < 0, 'phrase interdite : ' + b); });
