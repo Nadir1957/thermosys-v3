@@ -152,3 +152,5 @@ vannes_dh_regression.js : Confort ete / degres-heures (DH, seuils indicatifs, li
 re2020_regression.js : RE2020 (seuils moyens Ic / Cep,nr, verification, rapport d'audit, debit Carrier, adresse CCN, volume R290) : 122 verifications dont 38 mutations. Commande : node tests\re2020_regression.js
 
 acoustique_regression.js : calcul acoustique (niveau sonore a distance) : 31 verifications dont 21 mutations. Commande : node tests\acoustique_regression.js
+
+validation_regression.js : page Validation et references (contenu, trois langues, absence de chiffre non mesure) : verifications automatiques. Commande : node tests\validation_regression.js
