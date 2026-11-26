@@ -17561,7 +17561,7 @@ window.calcSCOP=function(){
  if(err.length){ out.textContent='⚠ '+err.join('\n⚠ '); return; }
  var c=cityOf()||{l:'?',hdd:2900,cdd:0,T_ext:0}, f=factor(c.hdd), est=cop*f, used=(fiche>0)?fiche:est;
  var etas=used/CC*100-3;
- var ct=($('scopCountry')||{}).value||'', gf={DZ:0.587,FR:0.084}[ct], E=cap*2000/used;
+ var ct=($('scopCountry')||{}).value||'', gf={DZ:0.500,FR:0.041}[ct], E=cap*2000/used; /* THERMOSYS_SCOP_V1 : memes facteurs que le module TEWI (IEA 2025) */
  var co2=gf?(L('CO₂ : ','CO₂: ')+fmt(E*gf)+' kg ('+gf+' kg/kWh)'):L('CO₂ : voir le module TEWI (facteur réseau du pays)','CO₂: see TEWI module (country grid factor)');
  var lines=[
   L('Zone : ','Zone: ')+c.l+'  |  '+L('Facteur climat (estimé) : ','Climate factor (estimated): ')+f.toFixed(2),
@@ -17569,7 +17569,7 @@ window.calcSCOP=function(){
   '─────────────────────────────',
   L('COP nominal (A7/W35) : ','Nominal COP (A7/W35): ')+cop,
   (fiche>0?L('SCOP (fiche constructeur) : ','SCOP (manufacturer datasheet): '):L('SCOP estimé : ','Estimated SCOP: '))+used.toFixed(2)+'   (ηs = '+etas.toFixed(0)+' %)',
-  L('Classe énergétique à 35 °C (UE 811/2013) : ','Energy class at 35 °C (EU 811/2013): ')+cls(etas,T35),
+  L('Classe énergétique à 35 °C (UE 811/2013) : ','Energy class at 35 °C (EU 811/2013): ')+cls(Math.round(etas),T35),
   L('Énergie/an (≈2000 h équivalent pleine charge) : ','Energy/year (≈2000 full-load-equivalent h): ')+fmt(E)+' kWh — '+co2
  ];
  if(c.hdd<300) lines.push(L('ℹ️ Climat sans besoin de chauffage significatif : le SCOP a peu de sens ici ; voir plutôt EER/SEER (mode froid).','ℹ️ Climate with little heating demand: SCOP is of limited use here; see EER/SEER (cooling).'));
