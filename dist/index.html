@@ -16538,6 +16538,162 @@ if(typeof _sc==='function') window.calcSCOP=function(){
 })();
 
 </script>
+<script id="vannes38-module">
+/* THERMOSYS_VANNES_V1 */
+(function () {
+  'use strict';
+  if (window.__vn38) { return; }
+  window.__vn38 = true;
+  function en() { return window.lang === 'en'; }
+  function fr() { return !en(); }
+  var KVS = [0.16, 0.25, 0.4, 0.63, 1, 1.6, 2.5, 4, 6.3, 10, 16, 25, 40, 63, 100, 160, 250, 400, 630, 1000];
+  var DN = [15, 20, 25, 32, 40, 50, 65, 80, 100, 125, 150];
+  var CP_WATER = 4.186;
+  var MEANT = { '80_60': 70, '60_40': 50, '45_35': 40, '7_12': 9.5, '14_18': 16 };
+  function f(x, d) { return en() ? x.toFixed(d) : x.toFixed(d).replace('.', ','); }
+  function val(id) { var e = document.getElementById(id); var s = e && e.value != null ? String(e.value).replace(',', '.').trim() : ''; return s === '' ? NaN : Number(s); }
+  function setTxt(id, t) { var e = document.getElementById(id); if (e) { e.textContent = t; } }
+  function setHtml(id, t) { var e = document.getElementById(id); if (e) { e.innerHTML = t; } }
+  function nextKvs(kv) { for (var i = 0; i < KVS.length; i++) { if (KVS[i] >= kv * 0.999999) { return KVS[i]; } } return null; }
+  /* Kv = Q * racine(rho / (10 * dP)) ; Q en m3/h, dP en kPa, rho en kg/m3 */
+  function kvOf(q, dp, rho) { return q * Math.sqrt(rho / (10 * dp)); }
+  /* kv = q*sqrt(rho/(10 dp)) => dp = rho * (q/kv)^2 / 10 */
+  function dpKPa(q, kv, rho) { return rho * Math.pow(q / kv, 2) / 10; }
+  function auth(dpv, dpc) { return dpv / (dpv + dpc); }
+  /* perte de charge lineique : Swamee-Jain (Colebrook explicite), rugosite 0,046 mm (acier commercial), Re < 2300 : 64/Re */
+  function friction(q, dmm, rho, mu) {
+    var d = dmm / 1000, A = Math.PI * d * d / 4, v = q / 3600 / A, Re = v * d * rho / mu;
+    var lam = Re < 2300 ? 64 / Re : 0.25 / Math.pow(Math.log10(0.000046 / (3.7 * d) + 5.74 / Math.pow(Re, 0.9)), 2);
+    return { v: v, Re: Re, lam: lam, R: lam / d * rho * v * v / 2 };
+  }
+  function water(T) { return (typeof window.reseauWater === 'function' ? window.reseauWater : (typeof reseauWater === 'function' ? reseauWater : null))(T); }
+  function msg(id, txt) { setTxt(id, txt); }
+
+  /* --- Kvs : plus aucune valeur par defaut silencieuse --- */
+  window.calcKvs = function () {
+    var q = val('kvsQ'), dp = val('kvsDp'), rho = val('kvsRho'), el = document.getElementById('kvsResult');
+    if (!el) { return; }
+    if (!(q > 0) || !(dp > 0) || !(rho >= 500 && rho <= 1500)) {
+      el.textContent = en() ? 'Enter a flow rate > 0 m³/h, a valve ΔP > 0 kPa and a density between 500 and 1500 kg/m³.' : 'Saisir un débit > 0 m³/h, une ΔP de vanne > 0 kPa et une masse volumique comprise entre 500 et 1500 kg/m³.';
+      return;
+    }
+    var kv = kvOf(q, dp, rho), nx = nextKvs(kv), t;
+    if (en()) {
+      t = 'Kv at design flow: ' + f(kv, 3) + ' m³/h\n';
+      t += nx ? 'Next standard Kvs above (R5 series): ' + f(nx, 2) + ' m³/h\nValve ΔP when fully open at this flow: ' + f(dpKPa(q, nx, rho), 1) + ' kPa\n' : 'Kv above the standard series: choose a larger valve or split the flow.\n';
+      t += 'Design ΔP: ' + dp + ' kPa | Density: ' + rho + ' kg/m³\n\nDo not oversize: a valve that is too large lowers its authority (a = ΔPvalve / (ΔPvalve + ΔPcircuit), at least 0.3, 0.5 recommended). Check the Kvs on the manufacturer datasheet.';
+    } else {
+      t = 'Kv au débit de calcul : ' + f(kv, 3) + ' m³/h\n';
+      t += nx ? 'Kvs normalisé immédiatement supérieur (série R5) : ' + f(nx, 2) + ' m³/h\nΔP de la vanne pleine ouverture à ce débit : ' + f(dpKPa(q, nx, rho), 1) + ' kPa\n' : 'Kv supérieur à la série normalisée : choisir une vanne plus grande ou répartir le débit.\n';
+      t += 'ΔP de calcul : ' + dp + ' kPa | Masse volumique : ' + rho + ' kg/m³\n\nNe pas surdimensionner : une vanne trop grande réduit son autorité (a = ΔPvanne / (ΔPvanne + ΔPcircuit), au moins 0,3 ; 0,5 recommandé). Vérifier le Kvs sur la fiche du constructeur.';
+    }
+    el.textContent = t;
+  };
+
+  /* --- Calculateur DP / debit (eau uniquement, proprietes de l'eau a la temperature moyenne du regime) --- */
+  window.calcPrereglDP = function () {
+    var kw = val('pr-kw'), dt = val('pr-dt'), L = val('pr-l'), fl = val('pr-fluid'), reg = (document.getElementById('pr-regime') || {}).value || '45_35', kvsU = val('pr-kvs');
+    if (!document.getElementById('preregl-result')) { return; }
+    setHtml('preregl-table-cont', '');
+    if (!(kw > 0) || !(dt > 0) || !(L > 0)) { msg('preregl-result', en() ? 'Enter a power > 0 kW, a ΔT > 0 K and an equivalent length > 0 m.' : 'Saisir une puissance > 0 kW, un ΔT > 0 K et une longueur équivalente > 0 m.'); return; }
+    if (fl !== 1000) { msg('preregl-result', en() ? 'Glycol mixtures: this quick tool is limited to water (heat capacity of the mixture not sourced here). Use the network sizing tool, which has sourced glycol properties.' : 'Mélanges glycolés : cet outil rapide est limité à l’eau (chaleur massique du mélange non sourcée ici). Utiliser l’outil de dimensionnement réseau, qui contient des propriétés glycolées sourcées.'); return; }
+    var Tm = MEANT[reg] != null ? MEANT[reg] : 40, w = water(Tm);
+    var mdot = kw / (CP_WATER * dt), q = mdot * 3600 / w.rho;
+    var rows = DN.map(function (d) { var r = friction(q, d, w.rho, w.mu); return { dn: d, v: r.v, R: r.R, dp: r.R * L / 1000 }; });
+    var best = null; rows.forEach(function (r) { if (best === null || Math.abs(r.v - 1) < Math.abs(best.v - 1)) { best = r; } });
+    var dpc = best.dp, kv = kvOf(q, dpc, w.rho), nx = nextKvs(kv);
+    var h = '<table class="tbl"><thead><tr><th>DN</th><th>' + (en() ? 'Velocity (m/s)' : 'Vitesse (m/s)') + '</th><th>R (Pa/m)</th><th>ΔP (kPa)</th></tr></thead><tbody>' + rows.map(function (r) { return '<tr' + (r === best ? ' style="background:rgba(0,229,255,.1)"' : '') + '><td>' + r.dn + '</td><td>' + f(r.v, 2) + '</td><td>' + f(r.R, 0) + '</td><td>' + f(r.dp, 1) + '</td></tr>'; }).join('') + '</tbody></table>';
+    setHtml('preregl-table-cont', h);
+    var L1 = [];
+    L1.push((en() ? 'Circuit: ' : 'Circuit : ') + f(kw, 1) + ' kW | ΔT ' + f(dt, 1) + ' K | ' + (en() ? 'mean water temperature ' : 'température moyenne de l’eau ') + f(Tm, 1) + ' °C');
+    L1.push((en() ? 'Flow: ' : 'Débit : ') + f(q, 3) + ' m³/h (' + f(mdot, 3) + ' kg/s = ' + f(mdot * 1000, 1) + ' g/s)');
+    L1.push((en() ? 'Selected pipe: DN' : 'Tuyauterie retenue : DN') + best.dn + ' | ' + (en() ? 'velocity ' : 'vitesse ') + f(best.v, 2) + ' m/s | R = ' + f(best.R, 0) + ' Pa/m' + (best.v < 0.5 || best.v > 2 ? (en() ? ' ⚠️ outside the usual 0.5–2 m/s range' : ' ⚠️ hors de la plage usuelle 0,5–2 m/s') : ''));
+    L1.push((en() ? 'Circuit ΔP (equivalent length ' : 'ΔP du circuit (longueur équivalente ') + f(L, 0) + ' m) : ' + f(dpc, 1) + ' kPa');
+    L1.push(en() ? 'Valve ΔP chosen equal to the circuit ΔP (authority 0.5)' : 'ΔP de la vanne prise égale à celle du circuit (autorité 0,5)');
+    L1.push((en() ? 'Required Kv: ' : 'Kv requis : ') + f(kv, 3) + ' m³/h');
+    if (nx) { var dv = dpKPa(q, nx, w.rho); L1.push((en() ? 'Next standard Kvs (R5): ' : 'Kvs normalisé supérieur (R5) : ') + f(nx, 2) + ' m³/h → ΔP ' + f(dv, 1) + ' kPa, ' + (en() ? 'authority ' : 'autorité ') + f(auth(dv, dpc), 2) + (auth(dv, dpc) < 0.3 ? ' ⚠️ < ' + f(0.3, 1) : '')); }
+    if (kvsU > 0) { var dv2 = dpKPa(q, kvsU, w.rho); L1.push((en() ? 'Your valve Kvs ' : 'Votre vanne Kvs ') + f(kvsU, 2) + ' → Kv ' + (en() ? 'required' : 'requis') + ' = ' + f(100 * kv / kvsU, 0) + ' % ' + (en() ? 'of Kvs' : 'du Kvs') + ', ΔP ' + f(dv2, 1) + ' kPa, ' + (en() ? 'authority ' : 'autorité ') + f(auth(dv2, dpc), 2) + (auth(dv2, dpc) < 0.3 ? ' ⚠️ < ' + f(0.3, 1) : '') + (kv > kvsU ? ' ⚠️ Kvs ' + (en() ? 'too small' : 'insuffisant') : '')); }
+    L1.push(en() ? 'Assumptions: inner diameter ≈ DN, steel roughness 0.046 mm, cp 4.186 kJ/(kg·K); fittings are included in the equivalent length. Indicative: the pre-setting position comes from the manufacturer chart.' : 'Hypothèses : diamètre intérieur ≈ DN, rugosité acier 0,046 mm, cp 4,186 kJ/(kg·K) ; les singularités sont comprises dans la longueur équivalente. Indicatif : la position de préréglage se lit sur l’abaque du constructeur.');
+    msg('preregl-result', L1.join('\n'));
+  };
+
+  /* --- Table de lecture du Kvs (sans table de constructeur inventee) --- */
+  window.genPaliers = function () {
+    var q = val('pal-q'), dp = val('pal-dp'), kvs = val('pal-kvs'), cont = document.getElementById('palier-table-cont');
+    if (!cont) { return; }
+    if (!(q > 0) || !(dp > 0) || !(kvs > 0)) { cont.innerHTML = ''; setTxt('palier-result', en() ? 'Enter a flow > 0 m³/h, an available ΔP > 0 kPa and a valve Kvs > 0 m³/h.' : 'Saisir un débit > 0 m³/h, une ΔP disponible > 0 kPa et un Kvs de vanne > 0 m³/h.'); return; }
+    var rho = 1000, kv = kvOf(q, dp, rho), pct = 100 * kv / kvs, dpFull = dpKPa(q, kvs, rho);
+    var fr = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1].map(function (x) {
+      var k = kvs * x, dv = dpKPa(q, k, rho), hit = Math.abs(x * 100 - pct) <= 5;
+      return '<tr' + (hit ? ' style="background:rgba(0,229,255,.1)"' : '') + '><td>' + f(x * 100, 0) + ' %</td><td>' + f(k, 2) + '</td><td>' + f(dv, 1) + '</td><td>' + (hit ? '⭐' : '') + '</td></tr>';
+    }).join('');
+    cont.innerHTML = '<table class="tbl"><thead><tr><th>' + (en() ? '% of Kvs' : '% du Kvs') + '</th><th>Kv (m³/h)</th><th>' + (en() ? 'Valve ΔP at design flow (kPa)' : 'ΔP vanne au débit de calcul (kPa)') + '</th><th></th></tr></thead><tbody>' + fr + '</tbody></table>';
+    var t = (en() ? 'Required Kv: ' : 'Kv requis : ') + f(kv, 3) + ' m³/h | ' + (en() ? 'available ΔP: ' : 'ΔP disponible : ') + f(dp, 1) + ' kPa | ' + (en() ? 'nominal flow: ' : 'Q nominal : ') + f(q, 2) + ' m³/h\n';
+    t += (en() ? 'Required Kv = ' : 'Kv requis = ') + f(pct, 0) + ' % ' + (en() ? 'of the valve Kvs' : 'du Kvs de la vanne') + '. ';
+    if (kv > kvs) { t += en() ? '⚠️ Kvs too small: the valve cannot pass the flow at this ΔP (full-open ΔP ' + f(dpFull, 1) + ' kPa).' : '⚠️ Kvs insuffisant : la vanne ne passe pas le débit sous cette ΔP (ΔP pleine ouverture ' + f(dpFull, 1) + ' kPa).'; }
+    else if (pct < 20) { t += en() ? '⚠️ Valve oversized: it would work below 20 % of its Kvs, poor control and low authority.' : '⚠️ Vanne surdimensionnée : elle travaillerait sous 20 % de son Kvs, réglage médiocre et autorité faible.'; }
+    t += '\n' + (en() ? 'Reading: Kv = Kvs × fraction assumes a linear relation between setting and Kv, which is not true for most balancing valves. The setting number must be read on the manufacturer’s pre-setting chart.' : 'Lecture : Kv = Kvs × fraction suppose un lien linéaire entre réglage et Kv, ce qui est faux pour la plupart des vannes d’équilibrage. Le numéro de préréglage se lit sur l’abaque du constructeur.');
+    setTxt('palier-result', t);
+  };
+
+  /* --- interface : retrait des tables de constructeurs non sourcees --- */
+  function ui() {
+    try {
+      var p = document.getElementById('prc-palier');
+      if (p && p.querySelectorAll && !p.__vn38) {
+        p.__vn38 = true;
+        var hs = p.querySelectorAll('.ph');
+        for (var i = 0; i < hs.length; i++) {
+          if (/PALIERS DE RÉFÉRENCE CONSTRUCTEUR|MANUFACTURER REFERENCE SETTINGS/.test(hs[i].textContent || '')) {
+            hs[i].setAttribute('data-fr', 'PALIERS CONSTRUCTEUR : NON FOURNIS'); hs[i].setAttribute('data-en', 'MANUFACTURER SETTINGS: NOT PROVIDED');
+            hs[i].textContent = en() ? 'MANUFACTURER SETTINGS: NOT PROVIDED' : 'PALIERS CONSTRUCTEUR : NON FOURNIS';
+            var nx = hs[i].nextElementSibling; if (nx) { nx.innerHTML = '<div style="font-size:11px;color:var(--wn);padding:6px">' + (en() ? 'No manufacturer table is shown: the settings depend on each valve model. Read them on the manufacturer’s chart.' : 'Aucune table de constructeur n’est affichée : les paliers dépendent de chaque modèle de vanne. Les lire sur l’abaque du constructeur.') + '</div>'; }
+          }
+        }
+        var b = document.getElementById('pal-brand'); if (b && b.parentNode) { b.parentNode.style.display = 'none'; }
+      }
+      var vb = document.getElementById('pr-valve-brand'); if (vb && vb.parentNode) { vb.parentNode.style.display = 'none'; }
+      var kr = document.getElementById('kvs-manual-row'); if (kr && kr.style) { kr.style.display = 'flex'; var ki = document.getElementById('pr-kvs'); if (ki && !ki.__vn38) { ki.__vn38 = true; ki.value = ''; ki.placeholder = 'optionnel'; } }
+    } catch (e) { /* sans effet */ }
+  }
+  ui(); if (typeof setInterval === 'function') { setInterval(ui, 700); }
+
+  /* --- catalogue : donnees indicatives, non verifiees constructeur par constructeur --- */
+  var DAMPER = /^(LM24A-SR|NM24A-SR|AM24A-SR|GM24A-SR)$/;
+  var UNVER_FR = '⚠ Fiche indicative : la référence et les valeurs de ce catalogue n’ont pas toutes été vérifiées sur la documentation du constructeur. Contrôler la fiche officielle avant toute commande.';
+  var UNVER_EN = '⚠ Indicative sheet: the reference and values of this catalogue have not all been checked against the manufacturer’s documentation. Check the official datasheet before ordering.';
+  var DAMP_FR = '⚠ Servomoteur de clapets d’air (aéraulique), vérifié sur la fiche Belimo : il ne convient pas à une vanne d’eau. Pour les vannes à boisseau, voir la série Belimo LR (fiche LR24A-SR : 5 Nm, 90 s/90°).';
+  var DAMP_EN = '⚠ Air-damper actuator (checked on the Belimo datasheet): not suitable for a water valve. For ball valves see the Belimo LR series (LR24A-SR datasheet: 5 Nm, 90 s/90°).';
+  var INVENTED = ['Référence', 'Compatibilité vannes', 'Applications', 'Options', 'Câble', 'Consommation', 'Poids', 'Couple limite'];
+  function patchData() {
+    try {
+      if (typeof ACTUATORS === 'undefined' || !ACTUATORS || ACTUATORS.__vn38) { return; }
+      ACTUATORS.__vn38 = true;
+      ACTUATORS.forEach(function (a) {
+        var m = a.m || a.model || '', br = a.br || a.brand || '';
+        if (br === 'Belimo' && DAMPER.test(m)) {
+          a.cat = 'Clapet d’air (pas vanne d’eau)'; a.note = 'Servomoteur de clapets d’air';
+          if (a.detail) { INVENTED.forEach(function (k) { delete a.detail[k]; }); a.detail['Type'] = 'Servomoteur de clapets d’air, rotatif 90°'; a.detail['Temps rotation'] = '150 s pour 90° (fiche Belimo LM24A-SR)'; a.detail['Applications'] = 'Clapets d’air : voir la fiche Belimo'; }
+        }
+      });
+    } catch (e) { /* sans effet */ }
+  }
+  function fixUnits(id) { var e = document.getElementById(id); if (e && e.innerHTML) { var n = e.innerHTML.replace(/(\bN|\bNm) Nm\b/g, '$1'); if (n !== e.innerHTML) { e.innerHTML = n; } } }
+  function banner(bodyId, idx, list) {
+    var b = document.getElementById(bodyId); if (!b || !list) { return; }
+    var a = list[idx], m = a && (a.m || a.model) || '', br = a && (a.br || a.brand) || '';
+    var damper = br === 'Belimo' && DAMPER.test(m);
+    var t = damper ? (en() ? DAMP_EN : DAMP_FR) : (en() ? UNVER_EN : UNVER_FR);
+    b.innerHTML = '<div style="margin-bottom:8px;padding:8px 12px;border:1px solid var(--wn);border-radius:4px;font-size:11px;color:var(--wn)">' + t + '</div>' + b.innerHTML;
+  }
+  patchData();
+  var oRA = window.renderActuators, oSA = window.showActDetail, oSV = window.showValveDetail, oRV = window.renderValves;
+  if (typeof oRA === 'function') { window.renderActuators = function () { patchData(); var r = oRA.apply(this, arguments); fixUnits('actGrid'); return r; }; }
+  if (typeof oSA === 'function') { window.showActDetail = function (i) { patchData(); var r = oSA.apply(this, arguments); fixUnits('actuatorBody'); banner('actuatorBody', i, typeof ACTUATORS !== 'undefined' ? ACTUATORS : null); return r; }; }
+  if (typeof oSV === 'function') { window.showValveDetail = function (i) { var r = oSV.apply(this, arguments); banner('valveBody', i, typeof VALVES !== 'undefined' ? VALVES : null); return r; }; }
+  setTimeout(function () { if (typeof window.renderActuators === 'function' && document.getElementById('actGrid')) { try { window.renderActuators(); } catch (e) { /* sans effet */ } } }, 0);
+})();
+</script>
 <script id="fluides38-module">
 (function () {
   'use strict';
