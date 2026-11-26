@@ -154,3 +154,5 @@ re2020_regression.js : RE2020 (seuils moyens Ic / Cep,nr, verification, rapport 
 acoustique_regression.js : calcul acoustique (niveau sonore a distance) : 31 verifications dont 21 mutations. Commande : node tests\acoustique_regression.js
 
 validation_regression.js : page Validation et references (contenu, trois langues, absence de chiffre non mesure) : verifications automatiques. Commande : node tests\validation_regression.js
+
+gaines_ef_regression.js : gaines d air a frottement constant (Colebrook, 2e implementation independante, coherence avec la formule d ajustement ASHRAE a 3,5 % pres) : suite complete et 24 mutations. Commande : node tests\gaines_ef_regression.js

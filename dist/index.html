@@ -17561,6 +17561,121 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
   if (typeof setInterval === 'function') { setInterval(install, 600); }
 })();
 </script>
+<script id="gaines-47-module">
+/* THERMOSYS_GAINES_EF_V1 */
+(function () {
+  'use strict';
+  if (window.__gef) { return; }
+  /* Hypotheses (ASHRAE Handbook Fundamentals 2017 ch.21) : air standard 1,2 kg/m3, rugosite moyenne tole galvanisee 0,0003 ft = 0,09144 mm, Colebrook, viscosite dynamique 1,81e-5 Pa.s (20 C). */
+  var RHO = 1.2, MU = 1.81e-5, EPS = 0.00009144;
+  var DN_STD = [80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250];
+  var R_MIN = 0.408, R_MAX = 1.634; /* 0,05 et 0,20 po d'eau / 100 pi en Pa/m */
+  function colebrook(Re, D) {
+    var f = 0.02, i, g;
+    for (i = 0; i < 100; i++) { g = Math.pow(-2 * Math.log10(EPS / (3.7 * D) + 2.51 / (Re * Math.sqrt(f))), -2); if (Math.abs(g - f) < 1e-13) { f = g; break; } f = g; }
+    return f;
+  }
+  function frict(Q, D) { /* Pa/m, Q en m3/s, D en m */
+    var A = Math.PI * D * D / 4, v = Q / A, Re = RHO * v * D / MU, f = Re < 2300 ? 64 / Re : colebrook(Re, D);
+    return f / D * RHO * v * v / 2;
+  }
+  function solveD(Q, R) { var lo = 0.01, hi = 5, m, i; for (i = 0; i < 200; i++) { m = (lo + hi) / 2; if (frict(Q, m) > R) { lo = m; } else { hi = m; } } return (lo + hi) / 2; }
+  function huebscher(W, H) { return 1.30 * Math.pow(W * H, 0.625) / Math.pow(W + H, 0.25); } /* mm */
+  function compute(p) {
+    var o = { err: null, warn: [] };
+    if (!(p.q > 0)) { o.err = 'q'; return o; }
+    if (!(p.r > 0) || p.r > 50) { o.err = 'r'; return o; }
+    if (p.l !== undefined && !(p.l >= 0)) { o.err = 'l'; return o; }
+    if (p.c !== undefined && !(p.c >= 0)) { o.err = 'c'; return o; }
+    var Q = p.q / 3600, Dm = solveD(Q, p.r), Dmm = Dm * 1000, L = p.l || 0, C = p.c || 0, Dstd, De, Dh;
+    o.dExact = Dmm; o.rect = p.rect === true;
+    if (!o.rect) {
+      Dstd = DN_STD.filter(function (d) { return d >= Dmm - 1e-9; })[0];
+      if (!Dstd) { o.err = 'big'; return o; }
+      o.dStd = Dstd; Dh = Dstd / 1000;
+    } else {
+      if (!(p.h > 0)) { o.err = 'h'; return o; }
+      var lo = 1, hi = 100000, m, i;
+      for (i = 0; i < 200; i++) { m = (lo + hi) / 2; if (huebscher(m, p.h) < Dmm) { lo = m; } else { hi = m; } }
+      o.h = p.h; o.w = Math.ceil(hi / 10 - 1e-9) * 10; De = huebscher(o.w, p.h); o.de = De; Dh = De / 1000;
+      o.ratio = Math.max(o.w, p.h) / Math.min(o.w, p.h);
+      o.area = o.w * p.h / 1e6;
+    }
+    var A = o.rect ? o.area : Math.PI * Dh * Dh / 4;
+    o.v = Q / A; o.rAct = frict(Q, Dh); o.pdyn = RHO * o.v * o.v / 2;
+    o.dpF = o.rAct * L; o.dpS = C * o.pdyn; o.dpT = o.dpF + o.dpS;
+    if (p.r < R_MIN || p.r > R_MAX) { o.warn.push('range'); }
+    if (o.rect && o.ratio > 4) { o.warn.push('ratio'); }
+    return o;
+  }
+  var T = {
+    title: ['GAINES — PERTE DE CHARGE (frottement constant)', 'DUCTS — PRESSURE LOSS (equal friction)', 'CONDUCTOS — PÉRDIDA DE CARGA (fricción constante)'],
+    q: ['Débit (m³/h)', 'Airflow (m³/h)', 'Caudal (m³/h)'], r: ['Frottement visé (Pa/m)', 'Target friction (Pa/m)', 'Fricción objetivo (Pa/m)'],
+    l: ['Longueur de gaine (m)', 'Duct length (m)', 'Longitud de conducto (m)'], c: ['Σ coefficients des singularités (coudes, tés…)', 'Σ fitting loss coefficients (elbows, tees…)', 'Σ coeficientes de singularidades (codos, tes…)'],
+    f: ['Forme', 'Shape', 'Forma'], circ: ['Circulaire', 'Round', 'Circular'], rect: ['Rectangulaire', 'Rectangular', 'Rectangular'], h: ['Hauteur (mm)', 'Height (mm)', 'Altura (mm)'],
+    go: ['Calculer', 'Calculate', 'Calcular'],
+    e_q: ['Entrez un débit supérieur à 0.', 'Enter an airflow greater than 0.', 'Introduzca un caudal superior a 0.'],
+    e_r: ['Frottement visé : valeur supérieure à 0 et au plus 50 Pa/m.', 'Target friction: value above 0 and at most 50 Pa/m.', 'Fricción objetivo: valor superior a 0 y como máximo 50 Pa/m.'],
+    e_l: ['La longueur ne peut pas être négative.', 'Length cannot be negative.', 'La longitud no puede ser negativa.'],
+    e_c: ['La somme des coefficients ne peut pas être négative.', 'The sum of coefficients cannot be negative.', 'La suma de coeficientes no puede ser negativa.'],
+    e_h: ['Entrez une hauteur supérieure à 0 mm.', 'Enter a height greater than 0 mm.', 'Introduzca una altura superior a 0 mm.'],
+    e_big: ['Diamètre supérieur à Ø 1250 mm : choisissez un frottement plus élevé ou la forme rectangulaire.', 'Diameter above Ø 1250 mm: choose a higher friction or the rectangular shape.', 'Diámetro superior a Ø 1250 mm: elija una fricción mayor o la forma rectangular.'],
+    w_range: ['⚠️ Frottement hors de la plage ASHRAE 0,05–0,20 po d’eau/100 pi (0,41–1,63 Pa/m) pour les réseaux basse pression.', '⚠️ Friction outside the ASHRAE range 0.05–0.20 in. of water/100 ft (0.41–1.63 Pa/m) for low-pressure systems.', '⚠️ Fricción fuera del rango ASHRAE 0,05–0,20 pulg. de agua/100 pies (0,41–1,63 Pa/m) para sistemas de baja presión.'],
+    w_ratio: ['⚠️ Rapport des côtés supérieur à 4 : plus de pertes et de bruit, préférez une section plus carrée.', '⚠️ Aspect ratio above 4: more losses and noise, prefer a squarer section.', '⚠️ Relación de lados superior a 4: más pérdidas y ruido, prefiera una sección más cuadrada.'],
+    note: ['Hypothèses : air standard 1,2 kg/m³, tôle galvanisée (rugosité moyenne 0,09 mm, ASHRAE Fundamentals 2017 ch. 21), équation de Colebrook ; section rectangulaire par le diamètre équivalent de Huebscher. Le frottement calculé peut différer de 10 % d’un abaque ou d’un outil qui suppose une autre rugosité. Les coefficients des singularités sont à saisir d’après ASHRAE DFDB ou le fabricant : le module ne les fournit pas. Valeurs à vérifier par le bureau d’études.', 'Assumptions: standard air 1.2 kg/m³, galvanized steel (average roughness 0.09 mm, ASHRAE Fundamentals 2017 ch. 21), Colebrook equation; rectangular section by the Huebscher equivalent diameter. The computed friction may differ by 10 % from a chart or tool assuming another roughness. Fitting coefficients must be entered from the ASHRAE DFDB or the manufacturer: the module does not supply them. Values to be checked by the design office.', 'Hipótesis: aire estándar 1,2 kg/m³, chapa galvanizada (rugosidad media 0,09 mm, ASHRAE Fundamentals 2017 cap. 21), ecuación de Colebrook; sección rectangular por el diámetro equivalente de Huebscher. La fricción calculada puede diferir un 10 % de un ábaco o herramienta que suponga otra rugosidad. Los coeficientes de singularidades deben introducirse según el ASHRAE DFDB o el fabricante: el módulo no los proporciona. Valores a verificar por la oficina técnica.'],
+    lb: { d: ['Diamètre calculé', 'Calculated diameter', 'Diámetro calculado'], ds: ['Diamètre normalisé (au moins égal)', 'Standard diameter (at least equal)', 'Diámetro normalizado (como mínimo igual)'],
+      w: ['Dimensions (l×h)', 'Size (w×h)', 'Dimensiones (a×h)'], de: ['Diamètre équivalent (Huebscher)', 'Equivalent diameter (Huebscher)', 'Diámetro equivalente (Huebscher)'],
+      v: ['Vitesse', 'Velocity', 'Velocidad'], r: ['Frottement réel', 'Actual friction', 'Fricción real'], pd: ['Pression dynamique', 'Dynamic pressure', 'Presión dinámica'],
+      df: ['Perte par frottement', 'Friction loss', 'Pérdida por fricción'], ds2: ['Perte des singularités', 'Fitting loss', 'Pérdida de singularidades'], dt: ['Perte de charge totale', 'Total pressure loss', 'Pérdida de carga total'] }
+  };
+  function lg() { try { if (window.I18N3 && window.I18N3.ov && window.I18N3.ov()) { return 2; } } catch (e) { /* sans effet */ } var l = (typeof lang !== 'undefined') ? lang : window.lang; return l === 'en' ? 1 : 0; }
+  function num(x, d, i) { var s = x.toFixed(d); return i === 1 ? s : s.replace('.', ','); }
+  function render(o, i) {
+    if (o.err) { return '<div style="color:var(--wn);font-size:11px">' + T['e_' + o.err][i] + '</div>'; }
+    var rows = [];
+    if (o.rect) { rows.push([T.lb.d[i], num(o.dExact, 0, i) + ' mm'], [T.lb.w[i], o.w + ' × ' + o.h + ' mm'], [T.lb.de[i], num(o.de, 0, i) + ' mm']); }
+    else { rows.push([T.lb.d[i], num(o.dExact, 0, i) + ' mm'], [T.lb.ds[i], 'Ø ' + o.dStd + ' mm']); }
+    rows.push([T.lb.v[i], num(o.v, 2, i) + ' m/s'], [T.lb.r[i], num(o.rAct, 3, i) + ' Pa/m'], [T.lb.pd[i], num(o.pdyn, 1, i) + ' Pa'],
+      [T.lb.df[i], num(o.dpF, 1, i) + ' Pa'], [T.lb.ds2[i], num(o.dpS, 1, i) + ' Pa'], [T.lb.dt[i], num(o.dpT, 1, i) + ' Pa']);
+    var h = rows.map(function (p) { return '<div class="frow"><span class="flb">' + p[0] + ' :</span><b>' + p[1] + '</b></div>'; }).join('');
+    o.warn.forEach(function (w) { h += '<div style="margin-top:6px;color:var(--wn);font-size:11px">' + T['w_' + w][i] + '</div>'; });
+    return h + '<div style="margin-top:8px;font-size:10px;color:var(--ts);line-height:1.6">' + T.note[i] + '</div>';
+  }
+  function val(id) { var e = document.getElementById(id); return e ? e.value : ''; }
+  function read() {
+    var h = val('gef-h'), l = val('gef-l'), c = val('gef-c');
+    return { q: parseFloat(String(val('gef-q')).replace(',', '.')), r: parseFloat(String(val('gef-r')).replace(',', '.')), rect: val('gef-f') === 'rect',
+      h: parseFloat(String(h).replace(',', '.')), l: l === '' ? 0 : parseFloat(String(l).replace(',', '.')), c: c === '' ? 0 : parseFloat(String(c).replace(',', '.')) };
+  }
+  window.calcGaineEF = function () { var el = document.getElementById('gef-res'); if (el) { el.innerHTML = render(compute(read()), lg()); } };
+  function field(id, label, v, extra) { return '<div style="margin-bottom:6px"><label style="font-size:11px">' + label + '</label><input class="fi" id="' + id + '" type="text" inputmode="decimal" value="' + (v || '') + '" ' + (extra || '') + ' style="width:100%"></div>'; }
+  function build(i) {
+    return '<div class="ph">🌬️ ' + T.title[i] + '</div>' + field('gef-q', T.q[i], '') + field('gef-r', T.r[i], '1') +
+      '<div style="margin-bottom:6px"><label style="font-size:11px">' + T.f[i] + '</label><select class="fi" id="gef-f" style="width:100%"><option value="circ">' + T.circ[i] + '</option><option value="rect">' + T.rect[i] + '</option></select></div>' +
+      field('gef-h', T.h[i], '300') + field('gef-l', T.l[i], '10') + field('gef-c', T.c[i], '0') +
+      '<button class="btn bp" style="width:100%;margin-top:4px" onclick="calcGaineEF()">' + T.go[i] + '</button><div id="gef-res" style="margin-top:8px"></div>';
+  }
+  function install() {
+    try {
+      var i = lg(), p = document.getElementById('gef-panel');
+      if (p && p.__lg === i) { return; }
+      var keep = null;
+      if (p) { keep = {}; ['gef-q', 'gef-r', 'gef-f', 'gef-h', 'gef-l', 'gef-c'].forEach(function (k) { keep[k] = val(k); }); }
+      if (!p) {
+        var ref = document.getElementById('gaineResult'); if (!ref) { return; }
+        var host = ref; while (host.parentNode && !/(^|\s)panel(\s|$)/.test(host.className || '') && host.parentNode.id !== 'pg-hyd' && host.parentNode.tagName !== 'BODY') { host = host.parentNode; }
+        p = document.createElement('div'); p.id = 'gef-panel'; p.className = 'panel'; p.style.marginTop = '10px';
+        if (host.parentNode) { host.parentNode.insertBefore(p, host.nextSibling); } else { return; }
+      }
+      p.innerHTML = build(i); p.__lg = i;
+      if (keep) { Object.keys(keep).forEach(function (k) { var e = document.getElementById(k); if (e) { e.value = keep[k]; } }); }
+    } catch (e) { /* sans effet */ }
+  }
+  window.__gef = { compute: compute, render: render, frict: frict, install: install, consts: { RHO: RHO, MU: MU, EPS: EPS } };
+  install();
+  if (typeof setInterval === 'function') { setInterval(install, 700); }
+})();
+</script>
 <script id="normes-44-module">
 /* Thermosys etape 44 - NORMES : references corrigees + libelles sans valeur reglementaire (idempotent) */
 (function(){
