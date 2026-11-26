@@ -148,3 +148,5 @@ scop_regression.js : SCOP / COP (estimation du SCOP, eta s, classe a 35 C du reg
 vannes_regression.js : VANNES (Kvs, calculateur dP / debit, lecture du Kvs, avertissements du catalogue) : 133 verifications dont 35 mutations. Commande : node tests\vannes_regression.js
 
 vannes_dh_regression.js : Confort ete / degres-heures (DH, seuils indicatifs, limites EN 16798-1) : 70 verifications dont 26 mutations. Commande : node tests\vannes_dh_regression.js
+
+re2020_regression.js : RE2020 (seuils moyens Ic / Cep,nr, verification, rapport d'audit, debit Carrier, adresse CCN, volume R290) : 122 verifications dont 38 mutations. Commande : node tests\re2020_regression.js

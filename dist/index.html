@@ -17375,6 +17375,39 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 })();
 
 </script>
+<script id="re2020-44-module">
+/* THERMOSYS_RE2020_V1 */
+(function () {
+  'use strict';
+  if (window.__re44) { return; }
+  window.__re44 = 1;
+  function isFr() { var l = (typeof lang !== 'undefined') ? lang : window.lang; return (l || 'fr') === 'fr'; }
+  function T(a, b) { return isFr() ? a : b; }
+  function val(id) { var e = document.getElementById(id); var s = e && e.value != null ? String(e.value).replace(',', '.').trim() : ''; return s === '' ? NaN : Number(s); }
+  var oC = window.calcCarrierFlow, oN = window.calcCCN, oR = window.calcR290Max;
+  /* Debit Carrier : plus de valeurs par defaut cachees (100 kW, 5 K) */
+  window.calcCarrierFlow = function () {
+    var P = val('carr-kw'), dt = val('carr-dt'), out = document.getElementById('carrier-result');
+    if (!out) { return; }
+    if (!(P > 0) || !(dt > 0)) { out.textContent = T('Saisir une puissance > 0 kW et un ΔT > 0 K.', 'Enter a power > 0 kW and a ΔT > 0 K.'); return; }
+    return typeof oC === 'function' ? oC.apply(this, arguments) : undefined;
+  };
+  /* Adresse CCN : entier de 1 a 239 (avant : 0 ou vide devenait 1, 1,5 devenait 1) */
+  window.calcCCN = function () {
+    var a = val('ccn-addr'), out = document.getElementById('ccn-result');
+    if (!out) { return; }
+    if (!(Math.floor(a) === a && a >= 1 && a <= 239)) { out.textContent = T('Adresse invalide : entier de 1 à 239.', 'Invalid address: integer from 1 to 239.'); return; }
+    return typeof oN === 'function' ? oN.apply(this, arguments) : undefined;
+  };
+  /* R290 : plus de volume par defaut cache (20 m3) */
+  window.calcR290Max = function () {
+    var V = val('r290-vol'), out = document.getElementById('r290-result');
+    if (!out) { return; }
+    if (!(V > 0)) { out.textContent = T('Volume invalide : saisir un volume du local > 0 m³.', 'Invalid volume: enter a room volume > 0 m³.'); return; }
+    return typeof oR === 'function' ? oR.apply(this, arguments) : undefined;
+  };
+})();
+</script>
 <script id="normes-44-module">
 /* Thermosys etape 44 - NORMES : references corrigees + libelles sans valeur reglementaire (idempotent) */
 (function(){
