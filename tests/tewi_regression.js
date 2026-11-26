@@ -101,23 +101,27 @@ for (const [n, c] of Object.entries(comp)) { let g = 0; for (const [f, x] of Obj
 
 // ---- facteurs d'emission des reseaux : table AIE 2025 (production, combustion, hors pertes reseau) reproduite par ABB ; gel des valeurs
 const IEA = {"Algeria": 500.1, "France": 41.3, "Saudi Arabia": 596.7, "UAE": 358.2, "Qatar": 460.6, "Turkey": 414.2, "Germany": 331.3, "Italy": 257.4, "Spain": 132.7, "United Kingdom": 175.0, "USA": 330.8, "Canada": 119.0, "China": 589.2, "Japan": 448.2, "Egypt": 400.0, "South Africa": 872.6, "Nigeria": 403.5, "Norway": 5.5, "Sweden": 9.9, "Finland": 41.5, "Denmark": 62.0, "Netherlands": 233.3, "Belgium": 141.4, "Switzerland": 21.3, "Austria": 99.9, "Greece": 294.7, "Poland": 543.8, "Czech Republic": 390.3, "Romania": 225.3, "Hungary": 152.9, "Croatia": 148.3, "Slovakia": 97.2, "Serbia": 669.3, "South Korea": 455.7, "India": 747.3, "Australia": 583.4, "New Zealand": 89.9, "Indonesia": 752.8, "Malaysia": 615.4, "Thailand": 432.4, "Vietnam": 558.4, "Philippines": 770.2, "Singapore": 377.6, "Taiwan": 554.1, "Brazil": 65.8, "Mexico": 420.5, "Argentina": 257.5, "Chile": 221.0, "Colombia": 210.4, "Peru": 221.3};
-const UNV = ["Morocco", "Tunisia", "Libya", "Kuwait", "Bahrain", "Oman", "Jordan", "Lebanon", "Iraq", "Iran", "Syria", "Yemen", "Kenya", "Ghana", "Ethiopia", "Tanzania", "Cameroon", "Senegal", "Ivory Coast", "EU-27 avg.", "Ukraine", "Pakistan", "Bangladesh"];
+const ADEME = {"Morocco":0.718,"Tunisia":0.463,"Libya":0.885,"Kuwait":0.842,"Bahrain":0.64,"Oman":0.794,"Jordan":0.566,"Lebanon":0.709,"Iraq":1.003,"Syria":0.594,"Yemen":0.655,"Kenya":0.274,"Ghana":0.259,"Ethiopia":0.007,"Tanzania":0.329,"Cameroon":0.207,"Senegal":0.637,"Ivory Coast":0.445,"Ukraine":0.419,"Pakistan":0.425,"Bangladesh":0.593};
+const UNV = ["Iran"];
 const gsrc = /id="tewi-grid-v1"[\s\S]*?var GRID=(\[\[[\s\S]*?\]\]);/.exec(html); chk(!!gsrc, 'table GRID presente');
 let GR = []; if (gsrc) GR = JSON.parse(gsrc[1]);
 const gnames = GR.filter(x => x[0] !== 'custom');
-chk(gnames.length === 73, '73 pays attendus : ' + gnames.length);
+chk(gnames.length === 72, '72 pays attendus : ' + gnames.length);
 let nv = 0;
 for (const [v, lab] of gnames) {
   const nm = lab.replace(/ \(.*$/, ''), val = parseFloat(v);
-  chk(isFinite(val) && val > 0.001 && val < 1.0, 'facteur plausible ' + lab);
+  chk(isFinite(val) && val > 0.001 && val < 1.1, 'facteur plausible ' + lab);
   if (IEA[nm] !== undefined) { chk(Math.abs(val - IEA[nm] / 1000) < 0.0006, 'AIE ' + nm + ' attendu ' + IEA[nm] / 1000 + ' trouve ' + val); chk(lab.indexOf('non v') < 0, 'pas de mention non verifie : ' + nm); }
-  else { nv++; chk(UNV.indexOf(nm) >= 0, 'pays hors AIE attendu : ' + nm); chk(lab.indexOf('non v') >= 0, 'mention non verifie manquante : ' + nm); }
+  else if (ADEME[nm] !== undefined) { chk(Math.abs(val - ADEME[nm]) < 0.0006, 'ADEME ' + nm + ' attendu ' + ADEME[nm] + ' trouve ' + val); chk(lab.indexOf('ADEME 2011') > 0, 'mention ADEME 2011 manquante : ' + nm); chk(lab.indexOf('non v') < 0, 'pas de mention non verifie (source ADEME) : ' + nm); }
+  else { nv++; chk(UNV.indexOf(nm) >= 0, 'pays hors AIE et ADEME attendu : ' + nm); chk(lab.indexOf('non v') >= 0, 'mention non verifie manquante : ' + nm); }
 }
 chk(nv === UNV.length, 'pays non verifies : ' + nv + ' attendus ' + UNV.length);
-chk(new Set(gnames.map(x => x[1].replace(/ \(.*$/, ''))).size === 73, 'pas de doublon de pays');
+chk(!gnames.some(x => /EU-27/.test(x[1])), 'moyenne UE-27 retiree (aucune source)');
+chk(Object.keys(IEA).length === 50 && Object.keys(ADEME).length === 21, 'sources : 50 AIE + 21 ADEME');
+chk(new Set(gnames.map(x => x[1].replace(/ \(.*$/, ''))).size === 72, 'pas de doublon de pays');
 const gs = /<select class="fsel" id="tewi_grid"[^>]*>([\s\S]*?)<\/select>/.exec(html), sg = [];
 if (gs) { const re = /<option value="([^"]+)">([^<]*)<\/option>/g; let m; while ((m = re.exec(gs[1]))) if (m[1] !== 'custom') sg.push([parseFloat(m[1]), m[2]]); }
-chk(sg.length === 17, 'liste statique : 17 pays : ' + sg.length);
+chk(sg.length === 16, 'liste statique : 16 pays : ' + sg.length);
 for (const g of sg) { chk(g[1].indexOf('(' + g[0].toFixed(3)) > 0, 'libelle coherent : ' + g[1]); const w = gnames.find(x => parseFloat(x[0]) === g[0]); chk(!!w, 'valeur statique presente dans la table : ' + g[1]); }
 chk(/id="tewi_grid_note"/.test(html) && /AIE 2025/.test(html), 'note de source des facteurs');
 
