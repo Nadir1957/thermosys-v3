@@ -17454,7 +17454,7 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 })();
 </script>
 <script id="validation-46-module">
-/* THERMOSYS_VALIDATION_V4 */
+/* THERMOSYS_VALIDATION_V6 */
 (function () {
   'use strict';
   if (window.__val46) { return; }
@@ -17520,6 +17520,10 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
       n: ['GAINES — PERTE DE CHARGE (frottement constant)', 'DUCTS — PRESSURE LOSS (equal friction)', 'CONDUCTOS — PÉRDIDA DE CARGA (fricción constante)'],
       c: ['Équation de Colebrook avec les hypothèses du manuel ASHRAE Fundamentals 2017 ch. 21 (rugosité moyenne 0,0003 ft, air standard) ; 2e implémentation indépendante sur 400 cas ; cohérence avec la formule d’ajustement usuelle à 1,6–2,2 % sur le diamètre ; 24 mutations détectées.', 'Colebrook equation with the ASHRAE Fundamentals 2017 ch. 21 assumptions (average roughness 0.0003 ft, standard air); 2nd independent implementation on 400 cases; consistency with the usual fitted formula within 1.6–2.2 % on the diameter; 24 mutations detected.', 'Ecuación de Colebrook con las hipótesis del manual ASHRAE Fundamentals 2017 cap. 21 (rugosidad media 0,0003 ft, aire estándar); 2.ª implementación independiente en 400 casos; coherencia con la fórmula de ajuste habitual al 1,6–2,2 % en el diámetro; 24 mutaciones detectadas.'],
       l: ['Aucun point numérique précis de l’abaque ASHRAE n’a pu être comparé : une lecture d’abaque publiée donne 0,23 po d’eau/100 pi contre 0,20 calculé (4000 cfm, Ø 20 po), soit environ 13 %. Le frottement peut différer d’environ 10 % d’un outil qui suppose une autre rugosité. Coefficients des singularités non fournis (base ASHRAE DFDB payante) : à saisir par l’utilisateur. Gaines flexibles, isolées intérieurement et rugosités autres que la tôle galvanisée non traitées.', 'No precise numerical point of the ASHRAE chart could be compared: a published chart reading gives 0.23 in. of water/100 ft versus 0.20 calculated (4000 cfm, 20 in. dia.), about 13 %. Friction may differ by about 10 % from a tool assuming another roughness. Fitting coefficients not supplied (ASHRAE DFDB is paid): to be entered by the user. Flexible ducts, internally lined ducts and roughness other than galvanized steel not covered.', 'No se pudo comparar ningún punto numérico preciso del ábaco ASHRAE: una lectura de ábaco publicada da 0,23 pulg. de agua/100 pies frente a 0,20 calculado (4000 cfm, Ø 20 pulg.), es decir, un 13 % aproximadamente. La fricción puede diferir en torno a un 10 % de una herramienta que suponga otra rugosidad. Coeficientes de singularidades no suministrados (la base ASHRAE DFDB es de pago): los introduce el usuario. Conductos flexibles, con aislamiento interior y rugosidades distintas de la chapa galvanizada no tratados.'] },
+    { id: 'isolation', t: 'isolation_regression.js',
+      n: ['ISOLATION ANTI-CONDENSATION (point de rosée)', 'ANTI-CONDENSATION INSULATION (dew point)', 'AISLAMIENTO ANTICONDENSACIÓN (punto de rocío)'],
+      c: ['Point de rosée comparé à CoolProp (45 états de 5 à 45 °C, écart ≤ 0,013 K) ; convection naturelle de Churchill et Chu (1974) comparée au même calcul avec les propriétés de l’air de CoolProp (3 %) ; surface exactement au point de rosée, bilan thermique fermé, 2e méthode de résolution sur 150 cas aléatoires ; tableau publié d’un fabricant (die Kälte / Armacell : tuyau 33,7 mm, fluide 6 °C, air 22 °C, 55 à 85 % d’humidité, coefficient d’échange total 9 W/m²K) retrouvé à 15 % près avec λ = 0,040 W/mK, valeur supposée car non indiquée ; 26 mutations détectées.', 'Dew point compared with CoolProp (45 states from 5 to 45 °C, deviation ≤ 0.013 K); Churchill and Chu (1974) natural convection compared with the same calculation using CoolProp air properties (3 %); surface exactly at the dew point, closed heat balance, 2nd solution method on 150 random cases; a manufacturer’s published table (die Kälte / Armacell: 33.7 mm pipe, fluid 6 °C, air 22 °C, 55 to 85 % humidity, total surface coefficient 9 W/m²K) reproduced within 15 % with λ = 0.040 W/mK, an assumed value as the source does not state it; 26 mutations detected.', 'Punto de rocío comparado con CoolProp (45 estados de 5 a 45 °C, desviación ≤ 0,013 K); convección natural de Churchill y Chu (1974) comparada con el mismo cálculo con las propiedades del aire de CoolProp (3 %); superficie exactamente en el punto de rocío, balance térmico cerrado, 2.º método de resolución en 150 casos aleatorios; tabla publicada de un fabricante (die Kälte / Armacell: tubo de 33,7 mm, fluido 6 °C, aire 22 °C, 55 a 85 % de humedad, coeficiente de intercambio total 9 W/m²K) reproducida al 15 % con λ = 0,040 W/mK, valor supuesto porque la fuente no lo indica; 26 mutaciones detectadas.'],
+      l: ['Correction faite : l’ancien calcul utilisait par défaut 9 W/m²K comme coefficient de convection en y ajoutant le rayonnement, ce qui sous-estimait l’épaisseur (6,3 mm au lieu de 9,8 mm pour 60,3 mm, fluide à 7 °C, air à 30 °C et 70 %) ; la convection naturelle est maintenant calculée. Non vérifié : la norme EN ISO 12241 (texte non consulté) et aucun logiciel de référence. Épaisseur théorique sans marge de sécurité ; ne traite ni la diffusion de vapeur d’eau, ni les ponts thermiques, ni le vent ou l’air pulsé.', 'Fixed: the previous calculation used 9 W/m²K by default as the convection coefficient and added radiation on top, which underestimated the thickness (6.3 mm instead of 9.8 mm for 60.3 mm, fluid at 7 °C, air at 30 °C and 70 %); natural convection is now calculated. Not verified: the EN ISO 12241 standard (text not consulted) and no reference software. Theoretical thickness without safety margin; does not cover water-vapour diffusion, thermal bridges, wind or forced air.', 'Corregido: el cálculo anterior usaba por defecto 9 W/m²K como coeficiente de convección y añadía además la radiación, lo que subestimaba el espesor (6,3 mm en lugar de 9,8 mm para 60,3 mm, fluido a 7 °C, aire a 30 °C y 70 %); ahora se calcula la convección natural. No verificado: la norma EN ISO 12241 (texto no consultado) y ningún programa de referencia. Espesor teórico sin margen de seguridad; no trata la difusión de vapor de agua, los puentes térmicos, el viento ni el aire forzado.'] },
     { id: 'scop', t: 'scop_regression.js', k: [79, 27],
       n: ['SCOP / COP', 'SCOP / COP', 'SCOP / COP'],
       c: ['Classes énergétiques à 35 °C du règlement (UE) 811/2013, η s = SCOP/2,5 − 3 %, énergie annuelle, CO₂, rentabilité PAC/gaz recalculés.', 'Energy classes at 35 °C of Regulation (EU) 811/2013, η s = SCOP/2.5 − 3 %, annual energy, CO₂, heat pump/gas payback recalculated.', 'Clases energéticas a 35 °C del Reglamento (UE) 811/2013, η s = SCOP/2,5 − 3 %, energía anual, CO₂, rentabilidad bomba de calor/gas recalculados.'],
@@ -17687,6 +17691,93 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
   window.__gef = { compute: compute, render: render, frict: frict, install: install, consts: { RHO: RHO, MU: MU, EPS: EPS } };
   install();
   if (typeof setInterval === 'function') { setInterval(install, 700); }
+})();
+</script>
+<script id="isolation-48-module">
+/* THERMOSYS_ISOLATION_V1 */
+(function () {
+  'use strict';
+  if (window.__di48) { return; }
+  /* Moteur d'air humide : memes equations que le module PSY (ASHRAE Fundamentals ch.1, Hyland-Wexler), ecart au point de rosee de CoolProp <= 0,013 K entre 5 et 45 C. */
+  function psat(T) {
+    var K = T + 273.15;
+    if (T >= 0) { return Math.exp(-5.8002206e3 / K + 1.3914993 - 4.8640239e-2 * K + 4.1764768e-5 * K * K - 1.4452093e-8 * K * K * K + 6.5459673 * Math.log(K)); }
+    return Math.exp(-5.6745359e3 / K + 6.3925247 - 9.677843e-3 * K + 6.2215701e-7 * K * K + 2.0747825e-9 * K * K * K - 9.484024e-13 * K * K * K * K + 4.1635019 * Math.log(K));
+  }
+  function dewOfPv(pv) {
+    var g = Math.log(pv / 610.94), T = 243.04 * g / (17.625 - g), k, f, d, lp = Math.log(pv);
+    for (k = 0; k < 6; k++) { f = Math.log(psat(T)) - lp; d = (Math.log(psat(T + 0.01)) - Math.log(psat(T))) / 0.01; if (!(d > 0)) { break; } T -= f / d; }
+    return T;
+  }
+  /* convection naturelle autour d'un cylindre horizontal : Churchill et Chu (1974), air a la temperature de film, Sutherland pour mu et k, gaz parfait pour rho, Pr = 0,71 */
+  function hNat(D, Ts, Ta) {
+    var K = (Ts + Ta) / 2 + 273.15, mu = 1.458e-6 * Math.pow(K, 1.5) / (K + 110.4), kk = 2.334e-3 * Math.pow(K, 1.5) / (K + 164.54), rho = 101325 / (287.05 * K), nu = mu / rho, Pr = 0.71;
+    var Ra = 9.81 * (1 / K) * Math.abs(Ta - Ts) * D * D * D / (nu / Pr * nu);
+    var Nu = Math.pow(0.60 + 0.387 * Math.pow(Ra, 1 / 6) / Math.pow(1 + Math.pow(0.559 / Pr, 9 / 16), 8 / 27), 2);
+    return Nu * kk / D;
+  }
+  function hRad(Ts, Ta, e) { var s = 5.67e-8, a = Ts + 273.15, b = Ta + 273.15; return e * s * (a + b) * (a * a + b * b); }
+  function tsOf(D1, D2, lam, h, Ta, Tf) { var Ri = Math.log(D2 / D1) / (2 * Math.PI * lam), Ra = 1 / (h * Math.PI * D2), q = (Ta - Tf) / (Ri + Ra); return Ta - q * Ra; }
+  function compute(p) {
+    var o = { err: null };
+    var ok = function (x) { return typeof x === 'number' && isFinite(x); };
+    if (!(ok(p.d) && p.d > 0 && ok(p.tf) && ok(p.ta) && ok(p.rh) && p.rh > 0 && p.rh <= 100 && ok(p.lam) && p.lam > 0 && ok(p.em) && p.em > 0 && p.em <= 1)) { o.err = 'in'; return o; }
+    if (p.hc !== undefined && p.hc !== null && !(ok(p.hc) && p.hc >= 0)) { o.err = 'h'; return o; }
+    if (p.ta < -40 || p.ta > 60 || p.tf < -100) { o.err = 'T'; return o; }
+    if (p.tf >= p.ta) { o.err = 'tf'; return o; }
+    var auto = !(p.hc > 0), D1 = p.d / 1000, Td = dewOfPv(psat(p.ta) * p.rh / 100), hr = hRad(Td, p.ta, p.em);
+    function hc(D2) { return auto ? hNat(D2, Td, p.ta) : p.hc; }
+    function ts(D2) { return tsOf(D1, D2, p.lam, hc(D2) + hr, p.ta, p.tf); }
+    var lo = D1 * 1.001, hi = D1 + 0.5, i, D2, m;
+    o.td = Td; o.hr = hr; o.auto = auto;
+    if (ts(lo) >= Td) { o.t = 0; o.d2 = lo; o.ts = ts(lo); o.hc = hc(lo); return o; }
+    if (ts(hi) < Td) { o.err = 'range'; return o; }
+    for (i = 0; i < 100; i++) { m = (lo + hi) / 2; if (ts(m) < Td) { lo = m; } else { hi = m; } }
+    D2 = (lo + hi) / 2; o.d2 = D2; o.t = (D2 - D1) / 2 * 1000; o.ts = ts(D2); o.hc = hc(D2);
+    return o;
+  }
+  var T = {
+    e_in: ['Saisissez des valeurs valides : diamètre > 0, humidité 1 à 100 %, λ > 0, émissivité entre 0 et 1.', 'Enter valid values: diameter > 0, humidity 1 to 100 %, λ > 0, emissivity between 0 and 1.', 'Introduzca valores válidos: diámetro > 0, humedad 1 a 100 %, λ > 0, emisividad entre 0 y 1.'],
+    e_h: ['Le coefficient de convection ne peut pas être négatif (laissez vide pour la convection naturelle automatique).', 'The convection coefficient cannot be negative (leave empty for automatic natural convection).', 'El coeficiente de convección no puede ser negativo (déjelo vacío para la convección natural automática).'],
+    e_T: ['Températures hors du domaine du calcul (ambiante −40 à 60 °C, fluide ≥ −100 °C).', 'Temperatures outside the calculation range (ambient −40 to 60 °C, fluid ≥ −100 °C).', 'Temperaturas fuera del dominio del cálculo (ambiente −40 a 60 °C, fluido ≥ −100 °C).'],
+    e_tf: ['La température du fluide doit être inférieure à la température ambiante.', 'The fluid temperature must be lower than the ambient temperature.', 'La temperatura del fluido debe ser inferior a la temperatura ambiente.'],
+    e_range: ['Épaisseur requise supérieure à 500 mm (par exemple humidité de 100 %) : vérifiez les paramètres saisis.', 'Required thickness above 500 mm (for example 100 % humidity): check the entered parameters.', 'Espesor requerido superior a 500 mm (por ejemplo humedad del 100 %): compruebe los parámetros introducidos.'],
+    l: { td: ['Point de rosée', 'Dew point', 'Punto de rocío'], th: ['Épaisseur minimale requise', 'Minimum required thickness', 'Espesor mínimo requerido'], none: ['Aucune (surface nue déjà suffisante)', 'None (bare surface already sufficient)', 'Ninguno (la superficie desnuda ya es suficiente)'],
+      ts: ['Température de surface obtenue', 'Achieved surface temperature', 'Temperatura de superficie obtenida'], hc: ['Coefficient de convection retenu', 'Convection coefficient used', 'Coeficiente de convección adoptado'], hr: ['Coefficient de rayonnement', 'Radiation coefficient', 'Coeficiente de radiación'], au: ['automatique, convection naturelle', 'automatic, natural convection', 'automático, convección natural'] },
+    note: ['Épaisseur théorique limite : la surface atteint exactement le point de rosée, sans marge de sécurité : majorez-la. Calcul en régime permanent par conduction radiale, convection naturelle (Churchill et Chu) ou valeur saisie, et rayonnement. Ne traite ni la diffusion de vapeur d’eau dans l’isolant (pare-vapeur, isolant à cellules fermées), ni les ponts thermiques (colliers, supports), ni le vent ou l’air pulsé. Vérifier avec le fabricant d’isolant pour toute application critique.', 'Theoretical limiting thickness: the surface reaches exactly the dew point, with no safety margin: increase it. Steady-state calculation with radial conduction, natural convection (Churchill and Chu) or the entered value, and radiation. It does not cover water-vapour diffusion in the insulation (vapour barrier, closed-cell insulation), thermal bridges (clamps, supports), wind or forced air. Check with the insulation manufacturer for any critical application.', 'Espesor teórico límite: la superficie alcanza exactamente el punto de rocío, sin margen de seguridad: auméntelo. Cálculo en régimen permanente por conducción radial, convección natural (Churchill y Chu) o el valor introducido, y radiación. No trata la difusión de vapor de agua en el aislamiento (barrera de vapor, aislamiento de celdas cerradas), los puentes térmicos (abrazaderas, soportes), el viento ni el aire forzado. Verificar con el fabricante del aislamiento en toda aplicación crítica.'],
+    lab: ['Coeff. convection externe h (W/m²K) — vide = convection naturelle automatique :', 'External convection coeff. h (W/m²K) — empty = automatic natural convection:', 'Coef. de convección exterior h (W/m²K) — vacío = convección natural automática:']
+  };
+  function lg() { try { if (window.I18N3 && window.I18N3.ov && window.I18N3.ov()) { return 2; } } catch (e) { /* sans effet */ } var l = (typeof lang !== 'undefined') ? lang : window.lang; return l === 'en' ? 1 : 0; }
+  function nf(x, d, i) { var s = x.toFixed(d); return i === 1 ? s : s.replace('.', ','); }
+  function render(o, i) {
+    if (o.err) { return '<div style="color:#ff6b6b;font-size:12px">' + T['e_' + o.err][i] + '</div>'; }
+    var rows = [[T.l.td[i], nf(o.td, 1, i) + ' °C'], [T.l.th[i], o.t === 0 ? T.l.none[i] : nf(o.t, 1, i) + ' mm'], [T.l.ts[i], nf(o.ts, 1, i) + ' °C'],
+      [T.l.hc[i], nf(o.hc, 1, i) + ' W/m²K' + (o.auto ? ' (' + T.l.au[i] + ')' : '')], [T.l.hr[i], nf(o.hr, 1, i) + ' W/m²K']];
+    var sx = typeof window.__sxl === 'function' ? window.__sxl : function (s) { return s; };
+    return rows.map(function (p) { return '<div class="frow"><span class="flb">' + p[0] + ' :</span><b>' + sx(p[1]) + '</b></div>'; }).join('') + '<div style="font-size:9.5px;color:var(--ts);margin-top:8px;line-height:1.6">' + T.note[i] + '</div>';
+  }
+  function num(id) { var e = document.getElementById(id); return e ? parseFloat(String(e.value).replace(',', '.')) : NaN; }
+  window.calcDewPoint = function () {
+    var el = document.getElementById('diResult'); if (!el) { return; }
+    var h = document.getElementById('diHconv'), hs = h ? String(h.value).trim() : '';
+    var o = compute({ d: num('diD1'), tf: num('diTf'), ta: num('diTa'), rh: num('diRH'), lam: num('diLambda'), em: num('diEmis'), hc: hs === '' ? undefined : parseFloat(hs.replace(',', '.')) });
+    el.__last = o; el.__i = lg(); el.innerHTML = render(o, el.__i);
+    if (!o.err && typeof window.logHist === 'function') { try { window.logHist('Dew point: ' + o.td.toFixed(1) + 'C, insulation ' + o.t.toFixed(1) + 'mm'); } catch (e) { /* sans effet */ } }
+  };
+  var patched = false;
+  function ui() {
+    try {
+      var h = document.getElementById('diHconv'); if (!h) { return; }
+      if (!patched) { patched = true; if (String(h.value) === '9') { h.value = ''; } h.placeholder = 'auto'; h.setAttribute('step', '0.1'); h.setAttribute('min', '0'); }
+      var sp = h.parentNode ? h.parentNode.querySelector('.flb') : null, i = lg();
+      if (sp) { sp.setAttribute('data-fr', T.lab[0]); sp.setAttribute('data-en', T.lab[1]); if (sp.textContent !== T.lab[i]) { sp.textContent = T.lab[i]; } }
+      var r = document.getElementById('diResult');
+      if (r && r.__last && r.__i !== i) { r.innerHTML = render(r.__last, i); r.__i = i; }
+    } catch (e) { /* sans effet */ }
+  }
+  window.__di48 = { compute: compute, render: render, psat: psat, dewOfPv: dewOfPv, hNat: hNat, hRad: hRad, tsOf: tsOf };
+  ui();
+  if (typeof setInterval === 'function') { setInterval(ui, 700); }
 })();
 </script>
 <script id="normes-44-module">

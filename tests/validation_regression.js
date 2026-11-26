@@ -21,7 +21,7 @@ pg.appendChild = function (c) { els[c.id] = c; origAppend(c); };
 Object.defineProperty(sandbox, 'lang', { get() { return langV; } });
 new Function('window', 'document', 'setInterval', 'lang', m[1])(sandbox.window, sandbox.document, sandbox.setInterval, undefined);
 const V = sandbox.window.__val46;
-ok(V && V.V.length >= 19, 'au moins 19 modules listes');
+ok(V && V.V.length >= 20, 'au moins 20 modules listes');
 // source de verite : README_TESTS.txt
 let readme = '';
 try { readme = fs.readFileSync(path.join('tests', 'README_TESTS.txt'), 'utf8'); } catch (e) { /* ignore */ }

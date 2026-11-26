@@ -158,3 +158,5 @@ validation_regression.js : page Validation et references (contenu, trois langues
 gaines_ef_regression.js : gaines d air a frottement constant (Colebrook, 2e implementation independante, coherence avec la formule d ajustement ASHRAE a 3,5 % pres) : suite complete et 24 mutations. Commande : node tests\gaines_ef_regression.js
 
 tewi_grid_regression.js : facteurs d emission du reseau par pays (50 pays contre le tableau AIE 2025, 21 contre ADEME 2011, Iran non verifie) : une mutation par pays. Commande : node tests\tewi_grid_regression.js
+
+isolation_regression.js : calcul d epaisseur d isolant anti-condensation (point de rosee CoolProp, convection naturelle Churchill-Chu, bilan thermique, 2e methode) : suite complete et 26 mutations. Commande : node tests\isolation_regression.js
