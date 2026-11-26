@@ -16694,6 +16694,79 @@ if(typeof _sc==='function') window.calcSCOP=function(){
   setTimeout(function () { if (typeof window.renderActuators === 'function' && document.getElementById('actGrid')) { try { window.renderActuators(); } catch (e) { /* sans effet */ } } }, 0);
 })();
 </script>
+<script id="vannes39-module">
+/* THERMOSYS_VANNES_DH_V1 */
+(function () {
+  'use strict';
+  if (window.__vn39) { return; }
+  window.__vn39 = true;
+  function en() { return window.lang === 'en'; }
+  function L(a, b) { return en() ? b : a; }
+  function val(id) { var e = document.getElementById(id); var s = e && e.value != null ? String(e.value).replace(',', '.').trim() : ''; return s === '' ? NaN : Number(s); }
+  function f(x, d) { return en() ? x.toFixed(d) : x.toFixed(d).replace('.', ','); }
+  /* Seuils d'inconfort propres a l'outil (non normatifs) et limites de temperature operative d'ete de l'EN 16798-1 (categories I, II, III : 25,5 / 26 / 27 C, activite sedentaire, REHVA) */
+  var LIM = { I: 100, II: 300, III: 600 };
+  var TOP = { I: 25.5, II: 26, III: 27 };
+  window.calcDH = function () {
+    var Text = val('dh-text'), Tint = val('dh-tint'), Tlim = val('dh-tlim'), h = val('dh-hjour'), d = val('dh-jours');
+    var cat = (document.getElementById('dh-cat') || {}).value || 'II', out = document.getElementById('dh-result'), sol = document.getElementById('dh-solutions');
+    if (!out) { return; }
+    if (sol) { sol.innerHTML = ''; }
+    if (!isFinite(Text) || !isFinite(Tint) || !isFinite(Tlim) || !(h > 0 && h <= 24) || !(d > 0 && d <= 366)) {
+      out.textContent = L('Saisir toutes les températures, des heures d’inconfort par jour entre 0 et 24 et un nombre de jours entre 0 et 366.', 'Enter all temperatures, discomfort hours per day between 0 and 24 and a number of days between 0 and 366.');
+      return;
+    }
+    if (!(cat in LIM) && cat !== 'IV') { cat = 'II'; }
+    var DH = Math.max(0, Tint - Tlim) * h * d, DH28 = Math.max(0, Tint - 28) * h * d;
+    var lim = LIM[cat], ok = cat === 'IV' ? true : DH <= lim, over = ok ? 0 : Math.round((DH / lim - 1) * 100);
+    var lines = [
+      L('T° extérieure max : ', 'Max outdoor T: ') + f(Text, 1) + ' °C',
+      L('T° intérieure : ', 'Indoor T: ') + f(Tint, 1) + ' °C',
+      L('T° limite confort : ', 'Comfort limit T: ') + f(Tlim, 1) + ' °C (' + f(h, 0) + L(' h/j × ', ' h/d × ') + f(d, 0) + L(' jours)', ' days)'),
+      '────────────────────────────',
+      L('DH calculé : ', 'DH calculated: ') + DH.toFixed(0) + ' DH',
+      cat === 'IV' ? L('Catégorie IV : aucun seuil de DH dans l’outil.', 'Category IV: no DH threshold in the tool.') : L('DH limite cat. ', 'DH limit cat. ') + cat + ' : ' + lim + ' DH ' + L('(seuil indicatif propre à l’outil, non normatif)', '(tool’s own indicative threshold, not normative)'),
+      cat === 'IV' ? L('ℹ️ Pas de verdict pour la catégorie IV.', 'ℹ️ No verdict for category IV.') : (ok ? L('✅ Inconfort limité — catégorie ' + cat + ' (critère indicatif)', '✅ Limited discomfort — category ' + cat + ' (indicative criterion)') : L('❌ Critère dépassé : +' + over + ' %', '❌ Criterion exceeded: +' + over + ' %')),
+      '────────────────────────────',
+      L('DH surchauffe sévère (> 28 °C, seuil de l’outil) : ', 'Severe overheating DH (> 28 °C, tool threshold): ') + DH28.toFixed(0) + ' DH'
+    ];
+    if (cat !== 'IV') { lines.push(L('Limite haute de température opérative, EN 16798-1 cat. ', 'Upper operative temperature limit, EN 16798-1 cat. ') + cat + ' : ' + f(TOP[cat], 1) + ' °C ' + (Tint <= TOP[cat] ? '✅' : '⚠️') + L(' (T° intérieure saisie : ' + f(Tint, 1) + ' °C)', ' (entered indoor T: ' + f(Tint, 1) + ' °C)')); }
+    lines.push(L('ℹ️ Calcul simplifié : température intérieure et heures d’inconfort supposées constantes. Pour un calcul horaire, utiliser ESTIMATION HORAIRE ; pour la puissance, CHARGE THERMIQUE / CHARGE PRO.', 'ℹ️ Simplified calculation: indoor temperature and discomfort hours are assumed constant. For an hourly calculation use HOURLY ESTIMATE; for the power use COOLING LOAD / CHARGE PRO.'));
+    out.textContent = lines.join('\n');
+    if (sol) {
+      var r = [];
+      if (cat === 'IV') {
+        r.push('ℹ️ ' + L('Catégorie IV : pas de critère de DH dans l’outil ; analyser l’inconfort avec ESTIMATION HORAIRE.', 'Category IV: no DH criterion in the tool; analyse discomfort with HOURLY ESTIMATE.'));
+      } else if (!ok) {
+        if (DH > lim * 2) { r.push('🔴 ' + L('Dépassement important : le rafraîchissement actif est à étudier (dimensionner avec CHARGE PRO).', 'Large exceedance: active cooling should be studied (size with CHARGE PRO).')); }
+        if (DH28 > 200) { r.push('🔴 ' + L('Surchauffe sévère : ventilation nocturne et inertie thermique à étudier.', 'Severe overheating: night ventilation and thermal mass to be studied.')); }
+        r.push('🟡 ' + L('Brasseurs d’air : élargissent la plage de confort perçue (effet à quantifier selon l’EN 16798-1).', 'Ceiling fans: widen the perceived comfort range (effect to be quantified per EN 16798-1).'));
+        r.push('🟡 ' + L('Protection solaire extérieure (stores, volets) : réduit les apports solaires.', 'External solar shading (blinds, shutters): reduces solar gains.'));
+      } else {
+        r.push('✅ ' + L('Inconfort limité selon le critère indicatif de l’outil.', 'Limited discomfort according to the tool’s indicative criterion.'));
+        if (DH > lim * 0.7) { r.push('🟡 ' + L('Proche du seuil : prévoir une marge (protection solaire, ventilation).', 'Close to the threshold: allow a margin (solar shading, ventilation).')); }
+      }
+      sol.innerHTML = r.map(function (t) { return '<div style="padding:4px 0;border-bottom:1px solid rgba(0,229,255,.07)">' + t + '</div>'; }).join('');
+    }
+  };
+  /* interface : la norme EN 15251 est remplacee par l'EN 16798-1 ; limite cat. I = 25,5 C ; ligne « Surface » (inutilisee) masquee */
+  function ui() {
+    try {
+      var root = document.getElementById('prc-dh'); if (!root || !root.querySelectorAll || root.__vn39) { return; }
+      root.__vn39 = true;
+      var els = root.querySelectorAll('[data-fr],[data-en],td');
+      for (var i = 0; i < els.length; i++) {
+        var e = els[i];
+        ['data-fr', 'data-en'].forEach(function (a) { var v = e.getAttribute && e.getAttribute(a); if (v && v.indexOf('EN 15251') >= 0) { e.setAttribute(a, v.split('EN 15251').join('EN 16798-1')); } });
+        if (e.textContent && e.textContent.indexOf('EN 15251') >= 0) { e.textContent = e.textContent.split('EN 15251').join('EN 16798-1'); }
+        if (e.textContent === '25°C') { e.textContent = '25,5°C'; }
+      }
+      var s = document.getElementById('dh-surf'); if (s && s.parentNode && s.parentNode.style) { s.parentNode.style.display = 'none'; }
+    } catch (x) { /* sans effet */ }
+  }
+  ui(); if (typeof setInterval === 'function') { setInterval(ui, 700); }
+})();
+</script>
 <script id="fluides38-module">
 (function () {
   'use strict';
