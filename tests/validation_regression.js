@@ -36,6 +36,7 @@ V.V.forEach(function (x) {
 });
 ok(V.V.some(x => x.id === 'gaines_ef' && /13 %/.test(x.l[0])), 'gaines_ef : limite honnete presente');
 ok(!/Pas de perte de charge/.test(JSON.stringify(V.V)), 'gaines : ancienne limite retiree');
+ok(V.V.some(x => x.id === 'psychro' && /0,7 %/.test(x.l[0]) && /0\.7 %/.test(x.l[1]) && /0,7 %/.test(x.l[2]) && /Kuehn/.test(x.l[0])), 'psychro : choix gaz parfait documente avec la source ASHRAE');
 // phrases interdites (chiffres non mesures)
 const all = JSON.stringify(V.V) + JSON.stringify(sandbox.window.__val46.render(0));
 ['0,6 % contre EnergyPlus', '0.6 % vs EnergyPlus', 'certifié conforme', 'validé à 0,6'].forEach(function (b) { ok(all.indexOf(b) < 0, 'phrase interdite : ' + b); });
