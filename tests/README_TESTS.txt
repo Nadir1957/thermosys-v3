@@ -195,3 +195,4 @@ journal_init_en_regression.js : traduction anglaise du message de demarrage du j
 actionneurs_fiche_regression.js : fiches actionneurs, unite N/Nm correcte et plus de tirets ni pastilles vides sur les fiches masquees (10 controles).
 aide_traitement_air_regression.js : AIDE rubrique 17, groupe froid selon la charge, refroidissement hiver et en-tete d'impression en FR/EN/ES (12 controles).
 coldroom_ail_regression.js : chambre froide, ail a -2,7 C et pomme de terre a -1,7 C confirmes par des mesures publiees, texte de limites FR/EN/ES (9 controles).
+prg_melanges_regression.js : PRG des melanges recalcules a partir des composants (annexe I, AR4), ecart avec les valeurs HFO du reglement, texte de limites FR/EN/ES.
