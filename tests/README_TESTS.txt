@@ -189,3 +189,5 @@ airtreat_affichage_regression.js : traitement d air, refroidissement sensible d 
 airtreat_note_regression.js : note de dimensionnement du traitement d air, refroidissement sensible d hiver present en section 4 et dans le dictionnaire espagnol, bloc compile ; 4 mutations. Commande : node tests\airtreat_note_regression.js
 
 print_header_regression.js : en-tete d impression (THERMOSYS, titre du module, date, adresse) en FR et EN, cache a l ecran, visible a l impression ; 8 mutations. Commande : node tests\print_header_regression.js
+
+print_coldroom_regression.js : impression de la chambre froide, panneaux coupables entre deux pages (premiere page non vide) sans changer les autres modules ; 5 mutations. Commande : node tests\print_coldroom_regression.js
