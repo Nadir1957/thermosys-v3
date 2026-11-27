@@ -143,7 +143,7 @@ gaines_regression.js : gaines d'air (dimensionnement par la vitesse, diametre eq
 
 airtreat_regression.js : traitement d'air (moteur) : psychrometrie contre CoolProp (390 points), batterie / humidification / recuperateur / roue (bilans), debits EN 16798-1, cascade de pression, donnees ISO 14644-1 / EN 1822 / EN 13053, fichier EPW, energie annuelle : 124 verifications dont 37 mutations. Commande : node tests\airtreat_regression.js
 
-scop_regression.js : SCOP / COP (estimation du SCOP, eta s, classe a 35 C du reglement 811/2013, energie, CO2, rentabilite PAC/gaz) : 79 verifications dont 27 mutations. Commande : node tests\scop_regression.js
+scop_regression.js : SCOP / COP (estimation du SCOP, eta s, classe a 35 C du reglement 811/2013, energie, CO2, rentabilite PAC/gaz) : 90 verifications dont 35 mutations. Commande : node tests\scop_regression.js
 
 vannes_regression.js : VANNES (Kvs, calculateur dP / debit, lecture du Kvs, avertissements du catalogue) : 133 verifications dont 35 mutations. Commande : node tests\vannes_regression.js
 
@@ -179,3 +179,5 @@ pdc_materiaux_regression.js : pertes de charge, 6 materiaux (rugosite DIN 1988-3
 coldroom_resp_regression.js : chambre froide, chaleur de respiration des produits (courbes du tableau 1 du USDA Handbook 66), mise a l'echelle, loi Q10 sans courbe, 7 cas de reference, calcul complet, mutations : lancer node tests\coldroom_resp_regression.js
 
 gwp_source_regression.js : source des PRG (reglement UE 2024/573, annexe I) dans les textes FR/EN/ES et dans le dictionnaire espagnol ; plus aucune citation du 517/2014 comme source des valeurs.
+
+scop_calibrage_regression.js : estimation du SCOP (facteur de climat compare a 7 fiches EN 14825 / Keymark, heures equivalentes du reglement 811/2013, classes energetiques, textes FR/EN/ES).

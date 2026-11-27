@@ -3,11 +3,12 @@
 // Codes de sortie : 0 = tout est bon ; 1 = au moins un test echoue ; 2 = fichier ou module illisible.
 //
 // STATUT DES REFERENCES (rien n'est cache) :
-//  - Le module N'EST PAS un calcul EN 14825 : il estime SCOP = COP(A7/W35) x facteur de climat (fonction lineaire des degres-jours de chauffage, bornee 0,80 a 1,25),
-//    avec une marge annoncee de +-15 %. Le champ « SCOP de la fiche » permet de saisir la valeur reglementaire. Ce test verifie que l'estimation est calculee comme
+//  - Le module N'EST PAS un calcul EN 14825 : il estime SCOP = COP(A7/W35) x facteur de climat (fonction des degres-jours de chauffage, lineaire par morceaux entre les trois
+//    climats de reference : plus chaud 1,03 (1200), moyen 0,91 (2900), plus froid 0,77 (4200), recale sur 7 fiches EN 14825 / Heat Pump KEYMARK, voir scop_calibrage_regression.js),
+//    avec une marge annoncee de +-10 % en climat moyen et +-15 % ailleurs. Le champ « SCOP de la fiche » permet de saisir la valeur reglementaire. Ce test verifie que l'estimation est calculee comme
 //    annoncee, pas qu'elle egale le SCOP reglementaire (cela demanderait la methode des « bins » avec les points de charge partielle de la fiche du constructeur).
-//  - Reglement (UE) 813/2013 : CC = 2,5 ; eta s = SCOP / CC - F(1) - F(2) avec F(1) = 3 % et F(2) = 5 % (eau/saumure) ; HHE = 2066 h (climat moyen) ;
-//    table des bins du climat moyen (4910 h) : verifiee sur le texte du reglement ; les tables des climats plus froid et plus chaud ne figurent pas dans le reglement
+//  - Reglement (UE) 813/2013 : CC = 2,5 ; eta s = SCOP / CC - F(1) - F(2) avec F(1) = 3 % et F(2) = 5 % (eau/saumure) ; HHE = 2066 h (moyen), 2465 h (plus froid), 1336 h (plus chaud) : verifies sur l'annexe VII du reglement 811/2013 ;
+//    table des bins du climat moyen (4910 h) : verifiee sur le texte du reglement ; les tables de bins des climats plus froid et plus chaud ne figurent pas dans le reglement
 //    (norme EN 14825, payante) et n'ont PAS pu etre verifiees.
 //  - Reglement (UE) 811/2013, annexe II, tableau 2 (pompes a chaleur basse temperature, 35 C) : A+++ >= 175 ; A++ 150 ; A+ 123 ; A 115 ; B 107 ; C 100 ; D 61 ; E 59 ; F 55 ; G < 55 : verifie.
 //  - Les 334 villes (degres-jours de chauffage et de refroidissement, temperature de base) : controles de coherence seulement (valeurs numeriques, bornes, doublons) ;
@@ -33,7 +34,7 @@ function makeRun(code) {
   const doc = { readyState: 'complete', getElementById: el, createElement: () => el('__new' + Math.random()), addEventListener() {} };
   const win = { __sc47: 0, lang: 'fr' };
   const sc = {}; for (const k in CLIM) sc[k] = CLIM[k];
-  sc.ZZ = { cities: [{ v: 'ZZ_COLD', l: 'Froid', hdd: 8000, cdd: 0, T_ext: -30 }, { v: 'ZZ_HOT', l: 'Chaud', hdd: 0, cdd: 3000, T_ext: 15 }] };   // villes fictives de test (bornes du facteur)
+  sc.ZZ = { cities: [{ v: 'ZZ_COLD', l: 'Froid', hdd: 8000, cdd: 0, T_ext: -30 }, { v: 'ZZ_HOT', l: 'Chaud', hdd: 0, cdd: 3000, T_ext: 15 }, { v: 'ZZ_MID', l: 'Tres froid moyen', hdd: 4800, cdd: 0, T_ext: -26 }] };   // villes fictives de test (bornes du facteur)
   let lang = 'fr';
   const f = new Function('document', 'window', 'scopClimates', 'countryElec', 'getCountryElec', 'logHist', 'setTimeout', 'setInterval', 'LANGV',
     code + '\nreturn window;');
@@ -55,7 +56,10 @@ function scop(code, inp, lang) {
 const lineOf = (L, key) => (L.find(x => x.indexOf(key) >= 0) || '');
 const REF35 = [[175, 'A+++'], [150, 'A++'], [123, 'A+'], [115, 'A'], [107, 'B'], [100, 'C'], [61, 'D'], [59, 'E'], [55, 'F']];
 const refCls = e => { for (const [t, c] of REF35) if (e >= t) return c; return 'G'; };
-const refFactor = hdd => Math.max(0.80, Math.min(1.25, 1 - 0.10 * (hdd - 2900) / 1000));
+const lin = (x, x0, y0, x1, y1) => y0 + (y1 - y0) * (x - x0) / (x1 - x0);
+const refFactor = h => h <= 1200 ? 1.03 : h <= 2900 ? lin(h, 1200, 1.03, 2900, 0.91) : h <= 4200 ? lin(h, 2900, 0.91, 4200, 0.77) : Math.max(0.65, 0.77 - 0.000108 * (h - 4200));
+const refHH = h => h <= 0 ? 0 : h <= 1200 ? 1336 * h / 1200 : h <= 2900 ? lin(h, 1200, 1336, 2900, 2066) : h <= 4200 ? lin(h, 2900, 2066, 4200, 2465) : Math.min(3000, 2465 + 0.307 * (h - 4200));
+const hh10 = h => Math.round(refHH(h) / 10) * 10;
 
 function suite(code, verbose) {
   let ok = 0, ko = 0;
@@ -73,26 +77,26 @@ function suite(code, verbose) {
   x = scop(code, { scopCap: -3, scopCOP: 0 }); T('deux erreurs : deux messages', x.lines.length === 2 && x.lines.every(l => l.indexOf('⚠') === 0), x.t);
   x = scop(code, { scopCap: 0 }, 'en'); T('message d\'erreur en anglais', x.t.indexOf('Capacity') >= 0, x.t);
 
-  // 2) cas calcules a la main (Paris : HDD 2400 -> facteur 1,05)
+  // 2) cas calcules a la main (Paris : HDD 2400 -> facteur 0,91 + 0,12 x 500/1700 = 0,9453 ; heures 2066 - 730 x 500/1700 = 1851,3 -> 1850 h)
   x = scop(code, { scopCOP: 4.0 });
-  T('Paris, COP 4,0 : facteur de climat 1,05', lineOf(x.lines, 'Facteur climat').indexOf('1.05') >= 0, lineOf(x.lines, 'Facteur climat'));
-  T('Paris, COP 4,0 : SCOP estime 4,20', lineOf(x.lines, 'SCOP estimé').indexOf('4.20') >= 0, lineOf(x.lines, 'SCOP estimé'));
-  T('Paris, COP 4,0 : eta s = 4,2 / 2,5 x 100 - 3 = 165 %', lineOf(x.lines, 'SCOP estimé').indexOf('165 %') >= 0, lineOf(x.lines, 'SCOP estimé'));
-  T('Paris, COP 4,0 : classe A++ a 35 C', lineOf(x.lines, 'Classe énergétique').indexOf('A++') >= 0 && lineOf(x.lines, 'Classe énergétique').indexOf('A+++') < 0, lineOf(x.lines, 'Classe'));
+  T('Paris, COP 4,0 : facteur de climat 0,95', lineOf(x.lines, 'Facteur climat').indexOf('0.95') >= 0, lineOf(x.lines, 'Facteur climat'));
+  T('Paris, COP 4,0 : SCOP estime 3,78 (4 x 0,9453)', lineOf(x.lines, 'SCOP estimé').indexOf('3.78') >= 0, lineOf(x.lines, 'SCOP estimé'));
+  T('Paris, COP 4,0 : eta s = 3,7812 / 2,5 x 100 - 3 = 148 %', lineOf(x.lines, 'SCOP estimé').indexOf('148 %') >= 0, lineOf(x.lines, 'SCOP estimé'));
+  T('Paris, COP 4,0 : classe A+ a 35 C', /: A\+\s*$/.test(lineOf(x.lines, 'Classe énergétique')), lineOf(x.lines, 'Classe'));
   T('HDD, CDD et T de base affiches', lineOf(x.lines, 'HDD').indexOf('HDD: 2400') >= 0 && lineOf(x.lines, 'HDD').indexOf('CDD: 80') >= 0 && lineOf(x.lines, 'HDD').indexOf('-7') >= 0, lineOf(x.lines, 'HDD'));
   const en = lineOf(x.lines, 'Énergie/an');
-  T('energie annuelle = 10 kW x 2000 h / SCOP 4,2 = 4762 kWh', num(en.split(':')[1].split('kWh')[0]) === 4762, en);
+  T('energie annuelle = 10 kW x 1850 h / SCOP 3,7812 = 4893 kWh (heures EN 14825 de la zone)', num(en.split(':')[1].split('kWh')[0]) === 4893 && en.indexOf('≈1850 h') >= 0 && en.indexOf('EN 14825') >= 0, en);
   T('CO2 de la France = energie x facteur du reseau (module TEWI)', true);
   x = scop(code, { scopCOP: 4.0, scopFiche: 4.8 });
   T('SCOP de la fiche prioritaire sur l\'estimation', lineOf(x.lines, 'SCOP (fiche constructeur)').indexOf('4.80') >= 0 && lineOf(x.lines, 'SCOP estimé') === '' && lineOf(x.lines, 'eta') === '' || lineOf(x.lines, '4.80').indexOf('(ηs = 117 %)') >= 0, lineOf(x.lines, '4.80'));
-  T('fiche 4,8 : energie = 10 x 2000 / 4,8 = 4167 kWh', num(lineOf(x.lines, 'Énergie/an').split(':')[1].split('kWh')[0]) === 4167, lineOf(x.lines, 'Énergie/an'));
+  T('fiche 4,8 : energie = 10 x 1850 / 4,8 = 3854 kWh', num(lineOf(x.lines, 'Énergie/an').split(':')[1].split('kWh')[0]) === 3854, lineOf(x.lines, 'Énergie/an'));
   T('avec fiche : pas de mise en garde « estimation a +-15 % »', x.t.indexOf('±15') < 0);
   x = scop(code, { scopCOP: 4.0 });
-  T('sans fiche : mise en garde « estimation a +-15 % »', x.t.indexOf('±15') >= 0);
+  T('sans fiche : mise en garde « estimation a +-10 % / +-15 % » et calage sur les fiches Keymark', x.t.indexOf('±10') >= 0 && x.t.indexOf('±15') >= 0 && x.t.indexOf('KEYMARK') >= 0);
   T('rappel : eta s = SCOP/2,5 - F(1) 3 %', x.t.indexOf('ηs = SCOP/2,5 − F(1) 3 %') >= 0);
 
   // 3) facteur de climat (fonction des degres-jours), bornes
-  const cities = [['DZ', 'DZ_ALG', 800], ['FR', 'FR_PAR', 2400], ['DE', 'DE_BER', 3200], ['GB', 'GB_LON', 2800]];
+  const cities = [['DZ', 'DZ_ALG', 800], ['FR', 'FR_PAR', 2400], ['FR', 'FR_STR', 2900], ['DE', 'DE_BER', 3200], ['GB', 'GB_LON', 2800]];
   cities.forEach(([c, v, hdd]) => {
     const city = CLIM[c].cities.find(y => y.v === v); if (!city) { T('ville ' + v + ' presente', false); return; }
     const r = scop(code, { scopCountry: c, scopZone: v, scopCOP: 4.0 });
@@ -107,8 +111,19 @@ function suite(code, verbose) {
   });
   T('toutes les villes (' + seen.length + ') : SCOP estime = COP x facteur, decroissant quand le climat est plus froid', monoOK && seen.length > 20);
   const rc = scop(code, { scopCountry: 'ZZ', scopZone: 'ZZ_COLD', scopCOP: 5 }), rh = scop(code, { scopCountry: 'ZZ', scopZone: 'ZZ_HOT', scopCOP: 4 });
-  T('climat tres froid (HDD 8000, ville fictive) : facteur borne a 0,80, SCOP 4,00', lineOf(rc.lines, 'Facteur climat').indexOf('0.80') >= 0 && lineOf(rc.lines, 'SCOP estimé').indexOf('4.00') >= 0, lineOf(rc.lines, 'Facteur climat'));
-  T('climat tres chaud (HDD 0, ville fictive) : facteur borne a 1,25, SCOP 5,00, note « peu de sens »', lineOf(rh.lines, 'Facteur climat').indexOf('1.25') >= 0 && lineOf(rh.lines, 'SCOP estimé').indexOf('5.00') >= 0 && rh.t.indexOf('peu de sens') >= 0, lineOf(rh.lines, 'Facteur climat'));
+  T('climat tres froid (HDD 8000, ville fictive) : facteur borne a 0,65, SCOP 3,25', lineOf(rc.lines, 'Facteur climat').indexOf('0.65') >= 0 && lineOf(rc.lines, 'SCOP estimé').indexOf('3.25') >= 0, lineOf(rc.lines, 'Facteur climat'));
+  const rm = scop(code, { scopCountry: 'ZZ', scopZone: 'ZZ_MID', scopCOP: 4 });
+  T('climat froid HDD 4800 (au-dela de 4200) : facteur 0,77 - 0,000108 x 600 = 0,7052, SCOP 2,82', lineOf(rm.lines, 'Facteur climat').indexOf('0.71') >= 0 && lineOf(rm.lines, 'SCOP estimé').indexOf('2.82') >= 0, lineOf(rm.lines, 'SCOP estimé'));
+  T('climat tres chaud (HDD 0, ville fictive) : facteur borne a 1,03, SCOP 4,12, note « peu de sens »', lineOf(rh.lines, 'Facteur climat').indexOf('1.03') >= 0 && lineOf(rh.lines, 'SCOP estimé').indexOf('4.12') >= 0 && rh.t.indexOf('peu de sens') >= 0, lineOf(rh.lines, 'Facteur climat'));
+
+  let hhBad = [];
+  [['DZ', 'DZ_ALG'], ['DZ', 'DZ_CON'], ['FR', 'FR_PAR'], ['FR', 'FR_STR'], ['DE', 'DE_BER'], ['GB', 'GB_LON']].forEach(([c, v]) => {
+    const city = CLIM[c].cities.find(y => y.v === v); const r = scop(code, { scopCountry: c, scopZone: v, scopFiche: 4, scopCap: 10 });
+    const m = /≈(\d+) h/.exec(lineOf(r.lines, 'Énergie/an')); if (!m || +m[1] !== hh10(city.hdd)) hhBad.push(v + ' ' + (m && m[1]) + ' vs ' + hh10(city.hdd));
+  });
+  { const r = scop(code, { scopCountry: 'ZZ', scopZone: 'ZZ_MID', scopFiche: 4, scopCap: 10 }); const m = /≈(\d+) h/.exec(lineOf(r.lines, 'Énergie/an')); if (!m || +m[1] !== hh10(4800)) hhBad.push('ZZ_MID ' + (m && m[1])); }
+  { const r = scop(code, { scopCountry: 'ZZ', scopZone: 'ZZ_COLD', scopFiche: 4, scopCap: 10 }); const m = /≈(\d+) h/.exec(lineOf(r.lines, 'Énergie/an')); if (!m || +m[1] !== hh10(8000)) hhBad.push('ZZ_COLD ' + (m && m[1])); }
+  T('heures equivalentes de chaque zone = interpolation EN 14825 (1336 / 2066 / 2465 h, reglement 811/2013 annexe VII)', hhBad.length === 0, hhBad.join(' | '));
 
   // 4) classes energetiques a 35 C (reglement 811/2013, tableau 2) et eta s
   let clsBad = [];
@@ -135,8 +150,8 @@ function suite(code, verbose) {
   const co2 = c => { const r = scop(code, { scopCountry: c, scopZone: CLIM[c].cities[0].v, scopFiche: 4 }); const m = /\(([0-9.]+) kg\/kWh\)/.exec(r.t); return m ? parseFloat(m[1]) : NaN; };
   T('CO2 Algerie = facteur reseau du module TEWI (0,500)', co2('DZ') === tw('Algeria') && tw('Algeria') === 0.5, [co2('DZ'), tw('Algeria')]);
   T('CO2 France = facteur reseau du module TEWI (0,041)', co2('FR') === tw('France') && tw('France') === 0.041, [co2('FR'), tw('France')]);
-  const rA = scop(code, { scopCountry: 'DZ', scopZone: CLIM.DZ.cities[0].v, scopFiche: 4, scopCap: 10 });
-  T('CO2 Algerie : 10 kW x 2000 h / 4 x 0,500 = 2500 kg', num(/CO₂ : ([\d\s  ]+) kg/.exec(rA.t)[1]) === 2500, rA.t.split('\n').pop());
+  const rA = scop(code, { scopCountry: 'DZ', scopZone: CLIM.DZ.cities[0].v, scopFiche: 4, scopCap: 12 });
+  T('CO2 Algerie (Alger, 890 h) : 12 kW x 890 h / 4 x 0,500 = 1335 kg', num(/CO₂ : ([\d\s  ]+) kg/.exec(rA.t)[1]) === 1335, rA.t.split('\n').pop());
   const rM = scop(code, { scopCountry: 'MA', scopZone: CLIM.MA.cities[0].v, scopFiche: 4 });
   T('pays sans facteur dans le module : renvoi vers TEWI', rM.t.indexOf('module TEWI') >= 0);
   const rW = scop(code, { scopCountry: 'DZ', scopZone: 'DZ_ALG', scopFiche: 4 }), rS = scop(code, { scopCountry: 'DZ', scopZone: 'DZ_ALG' });
@@ -176,10 +191,18 @@ const res = suite(CODE, true);
 // ---- Mutations
 console.log('Mutations (chacune doit etre detectee)');
 const MUT = [
-  ['facteur : pente 0,10 -> 0,20', 'var f=1.00-0.10*((hdd-2900)/1000)', 'var f=1.00-0.20*((hdd-2900)/1000)'],
-  ['facteur : base 2900 -> 2500', '((hdd-2900)/1000)', '((hdd-2500)/1000)'],
-  ['facteur : plancher 0,80 -> 0,70', 'Math.max(0.80,Math.min(1.25,f))', 'Math.max(0.70,Math.min(1.25,f))'],
-  ['facteur : plafond 1,25 -> 1,40', 'Math.max(0.80,Math.min(1.25,f))', 'Math.max(0.80,Math.min(1.40,f))'],
+  ['facteur : climat moyen 0,91 -> 1,00', '[2900,0.91]', '[2900,1.00]'],
+  ['facteur : climat plus chaud 1,03 -> 1,25', '[1200,1.03]', '[1200,1.25]'],
+  ['facteur : climat plus froid 0,77 -> 0,87', '[4200,0.77]', '[4200,0.87]'],
+  ['facteur : borne chaude 1,03 -> 1,10', 'if(hdd<=1200)return 1.03;', 'if(hdd<=1200)return 1.10;'],
+  ['facteur : plancher 0,65 -> 0,80', 'Math.max(0.65,0.77-0.000108', 'Math.max(0.80,0.77-0.000108'],
+  ['facteur : pente au-dela de 4200 doublee', '0.77-0.000108*(hdd-4200)', '0.77-0.000208*(hdd-4200)'],
+  ['heures : moyen 2066 -> 2000', '[2900,2066]', '[2900,2000]'],
+  ['heures : plus chaud 1336 -> 1300', '[1200,1336]', '[1200,1300]'],
+  ['heures : plus froid 2465 -> 2400', '[4200,2465]', '[4200,2400]'],
+  ['heures : plafond 3000 -> 4000', 'Math.min(3000,', 'Math.min(4000,'],
+  ['heures : sous 1200 non proportionnelles', '1336*hdd/1200', '1336'],
+  ['heures : arrondi a 10 h supprime', 'hh=Math.round(hhe(c.hdd)/10)*10', 'hh=Math.round(hhe(c.hdd))'],
   ['CC 2,5 -> 2,0', 'var CC=2.5;', 'var CC=2.0;'],
   ['eta s : F(1) 3 -> 5', 'var etas=used/CC*100-3;', 'var etas=used/CC*100-5;'],
   ['classe : A+++ 175 -> 170', "[[175,'A+++']", "[[170,'A+++']"],
@@ -187,7 +210,7 @@ const MUT = [
   ['classe : B 107 -> 105', "[107,'B']", "[105,'B']"],
   ['classe : D 61 -> 60', "[61,'D']", "[60,'D']"],
   ['classe : E 59 -> 58', "[59,'E']", "[58,'E']"],
-  ['heures equivalentes 2000 -> 2066', 'E=cap*2000/used', 'E=cap*2066/used'],
+  ['energie : heures codees en dur 2000', 'E=cap*hh/used', 'E=cap*2000/used'],
   ['CO2 Algerie 0,587 (ancien)', 'DZ:0.500', 'DZ:0.587'],
   ['CO2 France 0,084 (ancien)', 'FR:0.041', 'FR:0.084'],
   ['SCOP fiche ignore', 'used=(fiche>0)?fiche:est', 'used=est'],
