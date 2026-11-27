@@ -177,3 +177,5 @@ validation_cas_regression.js : page Validation, 10 cas de reference eau et eau g
 pdc_materiaux_regression.js : pertes de charge, 6 materiaux (rugosite DIN 1988-300, Moody, Buderus), Ø interieurs acier EN 10255, Colebrook-White exact contre un solveur independant, zone critique 2300-4000, 11 cas de reference rejoues, texte de calcPDC FR/EN, mutations : lancer node tests\pdc_materiaux_regression.js
 
 coldroom_resp_regression.js : chambre froide, chaleur de respiration des produits (courbes du tableau 1 du USDA Handbook 66), mise a l'echelle, loi Q10 sans courbe, 7 cas de reference, calcul complet, mutations : lancer node tests\coldroom_resp_regression.js
+
+gwp_source_regression.js : source des PRG (reglement UE 2024/573, annexe I) dans les textes FR/EN/ES et dans le dictionnaire espagnol ; plus aucune citation du 517/2014 comme source des valeurs.
