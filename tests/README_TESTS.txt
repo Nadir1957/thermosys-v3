@@ -191,3 +191,4 @@ airtreat_note_regression.js : note de dimensionnement du traitement d air, refro
 print_header_regression.js : en-tete d impression (THERMOSYS, titre du module, date, adresse) en FR et EN, cache a l ecran, visible a l impression ; 8 mutations. Commande : node tests\print_header_regression.js
 
 print_coldroom_regression.js : impression de la chambre froide, panneaux coupables entre deux pages (premiere page non vide) sans changer les autres modules ; 5 mutations. Commande : node tests\print_coldroom_regression.js
+journal_init_en_regression.js : traduction anglaise du message de demarrage du journal, independante des chiffres (6 controles).
