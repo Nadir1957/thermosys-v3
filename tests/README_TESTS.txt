@@ -181,3 +181,5 @@ coldroom_resp_regression.js : chambre froide, chaleur de respiration des produit
 gwp_source_regression.js : source des PRG (reglement UE 2024/573, annexe I) dans les textes FR/EN/ES et dans le dictionnaire espagnol ; plus aucune citation du 517/2014 comme source des valeurs.
 
 scop_calibrage_regression.js : estimation du SCOP (facteur de climat compare a 7 fiches EN 14825 / Keymark, heures equivalentes du reglement 811/2013, classes energetiques, textes FR/EN/ES).
+
+cop_tout_ou_rien_regression.js : groupe froid tout-ou-rien (formule EN 14825, Cc = 0,9) compare a deux groupes mesures (Schibuola et al., IBPSA 2013), branchement dans le calcul annuel, selecteur et textes FR/EN/ES ; 17 mutations. Commande : node tests\cop_tout_ou_rien_regression.js
