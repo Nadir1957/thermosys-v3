@@ -16802,6 +16802,106 @@ if(typeof _sc==='function') window.calcSCOP=function(){
   setTimeout(function () { if (typeof window.renderActuators === 'function' && document.getElementById('actGrid')) { try { window.renderActuators(); } catch (e) { /* sans effet */ } } }, 0);
 })();
 </script>
+<script id="valves-module">
+/* THERMOSYS_VALVES_V1 */
+(function () {
+  'use strict';
+  if (window.__valves1) { return; }
+  window.__valves1 = true;
+  function en() { return window.lang === 'en'; }
+  var DASH = '—';
+  function R(a, b, c, d) { return [a, b, c, d === undefined ? c : d]; }
+  /* OK : fiche deja correcte, controlee sur la fiche du constructeur (le detail existant est conserve). */
+  var OK = {
+    'Danfoss|AB-QM DN10': 'Danfoss AB-QM', 'Danfoss|AB-QM DN15': 'Danfoss AB-QM', 'Danfoss|AB-QM DN20': 'Danfoss AB-QM', 'Danfoss|AB-QM DN25': 'Danfoss AB-QM',
+    'Danfoss|AB-QM DN32': 'Danfoss AB-QM', 'Danfoss|AB-QM DN40': 'Danfoss AB-QM', 'Danfoss|AB-QM DN50': 'Danfoss AB-QM'
+  };
+  /* FIX : valeurs reprises de la fiche du constructeur ; le detail est reconstruit avec les seules donnees lues. */
+  var FIX = {
+    'Danfoss|VB2 DN20': { f: {}, src: 'Danfoss VB 2', note: ['', ''], rows: [R('Constructeur', 'Manufacturer', 'Danfoss'), R('DN/PN', 'DN/PN', 'DN20 / PN25'), R('Kvs', 'Kvs', '6.3 m³/h'), R('T° max', 'Max. temp.', '150°C (mini 2°C)'), R('Connexion', 'Connection', 'Brides', 'Flanges'), R('Fluide', 'Medium', 'Eau de circuit, eau glycolée jusqu’à 30 %', 'Circuit water, glycol water up to 30 %')] },
+    'Belimo|R2015-P63-S1 DN15': { f: {}, src: 'Belimo R2', note: ['', ''], rows: [R('Constructeur', 'Manufacturer', 'Belimo'), R('DN/PN', 'DN/PN', 'DN15 / PN16'), R('Kvs', 'Kvs', '0.63 m³/h'), R('T° max', 'Max. temp.', '120°C')] },
+    'Belimo|R2020-4-S2 DN20': { f: {}, src: 'Belimo R2', note: ['', ''], rows: [R('Constructeur', 'Manufacturer', 'Belimo'), R('DN/PN', 'DN/PN', 'DN20 / PN16'), R('Kvs', 'Kvs', '4 m³/h'), R('T° max', 'Max. temp.', '120°C')] },
+    'Belimo|R2025-6P3-S2 DN25': { f: {}, src: 'Belimo R2', note: ['', ''], rows: [R('Constructeur', 'Manufacturer', 'Belimo'), R('DN/PN', 'DN/PN', 'DN25 / PN16'), R('Kvs', 'Kvs', '6.3 m³/h'), R('T° max', 'Max. temp.', '120°C')] },
+    'Belimo|R2032-16-S3 DN32': { f: {}, src: 'Belimo R2', note: ['', ''], rows: [R('Constructeur', 'Manufacturer', 'Belimo'), R('DN/PN', 'DN/PN', 'DN32 / PN16'), R('Kvs', 'Kvs', '16 m³/h'), R('T° max', 'Max. temp.', '120°C')] },
+    'Belimo|R2040-16-S3 DN40': { f: {}, src: 'Belimo R2', note: ['', ''], rows: [R('Constructeur', 'Manufacturer', 'Belimo'), R('DN/PN', 'DN/PN', 'DN40 / PN16'), R('Kvs', 'Kvs', '16 m³/h'), R('T° max', 'Max. temp.', '120°C')] },
+    'Belimo|R2050-25-S4 DN50': { f: {}, src: 'Belimo R2', note: ['', ''], rows: [R('Constructeur', 'Manufacturer', 'Belimo'), R('DN/PN', 'DN/PN', 'DN50 / PN16'), R('Kvs', 'Kvs', '25 m³/h'), R('T° max', 'Max. temp.', '120°C')] },
+    'Belimo|R314-N DN15': { f: { m: 'R3015-P63-S1-LA DN15', type: '3 voies', dn: 15, kvs: 0.63, pn: 40, tmax: 120 }, src: 'Belimo R3', note: ['Référence corrigée : R314-N n’existe pas, la série s’appelle R3015', 'Reference corrected: R314-N does not exist, the series is R3015'], rows: [R('Constructeur', 'Manufacturer', 'Belimo'), R('Gamme', 'Range', 'R3 (3 voies)', 'R3 (3-way)'), R('DN/PN', 'DN/PN', 'DN15 / PN40'), R('Kvs', 'Kvs', '0.63 m³/h (série DN15 : 0.25 à 4)', '0.63 m³/h (DN15 series: 0.25 to 4)'), R('T° max', 'Max. temp.', '120°C'), R('Connexion', 'Connection', 'Filetage femelle Rp 1/2"', 'Female thread Rp 1/2"')] },
+    'Belimo|R320-N DN20': { f: { m: 'R3020-4-S2-LA DN20', type: '3 voies', dn: 20, kvs: 4, pn: 40, tmax: 120 }, src: 'Belimo R3', note: ['Référence corrigée : R320-N n’existe pas ; en DN20 la série R3 n’existe qu’en Kvs 4 ou 6.3', 'Reference corrected: R320-N does not exist; at DN20 the R3 series is only available with Kvs 4 or 6.3'], rows: [R('Constructeur', 'Manufacturer', 'Belimo'), R('Gamme', 'Range', 'R3 (3 voies)', 'R3 (3-way)'), R('DN/PN', 'DN/PN', 'DN20 / PN40'), R('Kvs', 'Kvs', '4 m³/h (ou 6.3 m³/h)', '4 m³/h (or 6.3 m³/h)'), R('T° max', 'Max. temp.', '120°C'), R('Connexion', 'Connection', 'Filetage femelle Rp 3/4"', 'Female thread Rp 3/4"')] },
+    'Danfoss|AFPQ DN25': { f: { kvs: 8, pn: 16, tmax: 150 }, src: 'Danfoss AFPQ', note: ['Kvs corrigé : 8.0 (et non 2.5)', 'Kvs corrected: 8.0 (not 2.5)'], rows: [R('Constructeur', 'Manufacturer', 'Danfoss'), R('Gamme', 'Range', 'AFPQ (régulateur de pression différentielle et de débit)', 'AFPQ (differential pressure and flow controller)'), R('DN', 'DN', 'DN25'), R('Kvs', 'Kvs', '8.0 m³/h'), R('PN', 'PN', '16, 25 ou 40', '16, 25 or 40'), R('T° max', 'Max. temp.', '150°C (PN16) ; 200°C (PN25 et PN40)', '150°C (PN16); 200°C (PN25 and PN40)'), R('Plage de débit maxi', 'Max. flow setting range', '0.2 à 4 m³/h (Δp restricteur 0.2 bar) ; 0.3 à 6 m³/h (0.5 bar)', '0.2 to 4 m³/h (restrictor Δp 0.2 bar); 0.3 to 6 m³/h (0.5 bar)'), R('Vanne', 'Valve', 'VFQ 2 (étanchéité métallique)', 'VFQ 2 (metallic sealing)')] },
+    'Siemens|VBF21.50E': { f: { m: 'VBF21.50 DN50', type: '3 voies', dn: 50, kvs: 40, pn: 6, tmax: 120 }, src: 'Siemens VBF21', note: ['Corrigé : vanne 3 voies à tiroir, PN6 (et non papillon PN16)', 'Corrected: 3-port slipper valve, PN6 (not a butterfly valve PN16)'], rows: [R('Constructeur', 'Manufacturer', 'Siemens'), R('Type', 'Type', 'Vanne 3 voies à tiroir, à brides', '3-port slipper valve, flanged'), R('DN/PN', 'DN/PN', 'DN50 / PN6'), R('Kvs', 'Kvs', '40 m³/h'), R('T° max', 'Max. temp.', '120°C (plage admise 1 à 120°C)', '120°C (permissible range 1 to 120°C)'), R('Pression de service max.', 'Max. working pressure', '600 kPa (6 bar)'), R('Réglage', 'Setting', 'Réglage manuel', 'Manual adjuster')] },
+    'Honeywell|VBN2 1/2" DN15': { f: {}, src: 'Honeywell VBN2/VBN3', note: ['Bronze, 360 psi', 'Bronze, 360 psi'], rows: [R('Constructeur', 'Manufacturer', 'Honeywell'), R('Taille', 'Size', '1/2 pouce'), R('Cv', 'Cv', '0.38 à 11.7', '0.38 to 11.7'), R('Pression max.', 'Max. pressure', '360 psi (2 482 kPa) ; PN non indiqué sur la fiche', '360 psi (2,482 kPa); PN not stated on the datasheet'), R('T° max', 'Max. temp.', '121°C (250°F)')] },
+    'Honeywell|VBN2 3/4" DN20': { f: {}, src: 'Honeywell VBN2/VBN3', note: ['', ''], rows: [R('Constructeur', 'Manufacturer', 'Honeywell'), R('Taille', 'Size', '3/4 pouce'), R('Cv', 'Cv', '0.31 à 29', '0.31 to 29'), R('Pression max.', 'Max. pressure', '360 psi (2 482 kPa) ; PN non indiqué sur la fiche', '360 psi (2,482 kPa); PN not stated on the datasheet'), R('T° max', 'Max. temp.', '121°C (250°F)')] },
+    'Honeywell|VBN2 1" DN25': { f: {}, src: 'Honeywell VBN2/VBN3', note: ['', ''], rows: [R('Constructeur', 'Manufacturer', 'Honeywell'), R('Taille', 'Size', '1 pouce'), R('Cv', 'Cv', '4.4 à 54', '4.4 to 54'), R('Pression max.', 'Max. pressure', '360 psi (2 482 kPa) ; PN non indiqué sur la fiche', '360 psi (2,482 kPa); PN not stated on the datasheet'), R('T° max', 'Max. temp.', '121°C (250°F)')] },
+    'Honeywell|V5013N DN15': { f: { pn: DASH }, src: 'Honeywell V5013N', note: ['PN non indiqué sur la fiche lue', 'PN not stated on the datasheet read'], rows: [R('Constructeur', 'Manufacturer', 'Honeywell'), R('DN', 'DN', 'DN15'), R('Kvs', 'Kvs', '2.5 m³/h'), R('T° max', 'Max. temp.', '120°C'), R('PN', 'PN', 'Non indiqué sur la fiche lue', 'Not stated on the datasheet read')] },
+    'Honeywell|V5013N DN20': { f: { pn: DASH }, src: 'Honeywell V5013N', note: ['', ''], rows: [R('Constructeur', 'Manufacturer', 'Honeywell'), R('DN', 'DN', 'DN20'), R('Kvs', 'Kvs', '6.3 m³/h'), R('T° max', 'Max. temp.', '120°C'), R('PN', 'PN', 'Non indiqué sur la fiche lue', 'Not stated on the datasheet read')] },
+    'IMI Hydronic|STAD DN15': { f: {}, src: 'IMI STAD', note: ['Équilibrage manuel', 'Manual balancing'], rows: [R('Constructeur', 'Manufacturer', 'IMI Hydronic Engineering'), R('DN/PN', 'DN/PN', 'DN15 / PN25'), R('Kvs (4 tours)', 'Kvs (4 turns)', '2.56 m³/h'), R('T° max', 'Max. temp.', '120°C (150°C par intermittence)', '120°C (150°C intermittent)'), R('Connexion', 'Connection', 'Filetage femelle G1/2 (ISO 228)', 'Female thread G1/2 (ISO 228)')] },
+    'IMI Hydronic|STAD DN20': { f: {}, src: 'IMI STAD', note: ['', ''], rows: [R('Constructeur', 'Manufacturer', 'IMI Hydronic Engineering'), R('DN/PN', 'DN/PN', 'DN20 / PN25'), R('Kvs (4 tours)', 'Kvs (4 turns)', '5.39 m³/h'), R('T° max', 'Max. temp.', '120°C (150°C par intermittence)', '120°C (150°C intermittent)'), R('Connexion', 'Connection', 'Filetage femelle G3/4 (ISO 228)', 'Female thread G3/4 (ISO 228)')] },
+    'IMI Hydronic|STAD DN25': { f: {}, src: 'IMI STAD', note: ['', ''], rows: [R('Constructeur', 'Manufacturer', 'IMI Hydronic Engineering'), R('DN/PN', 'DN/PN', 'DN25 / PN25'), R('Kvs (4 tours)', 'Kvs (4 turns)', '8.59 m³/h'), R('T° max', 'Max. temp.', '120°C (150°C par intermittence)', '120°C (150°C intermittent)'), R('Connexion', 'Connection', 'Filetage femelle G1 (ISO 228)', 'Female thread G1 (ISO 228)')] },
+    'IMI Hydronic|STAD DN32': { f: {}, src: 'IMI STAD', note: ['', ''], rows: [R('Constructeur', 'Manufacturer', 'IMI Hydronic Engineering'), R('DN/PN', 'DN/PN', 'DN32 / PN25'), R('Kvs (4 tours)', 'Kvs (4 turns)', '14.2 m³/h'), R('T° max', 'Max. temp.', '120°C (150°C par intermittence)', '120°C (150°C intermittent)'), R('Connexion', 'Connection', 'Filetage femelle G1 1/4 (ISO 228)', 'Female thread G1 1/4 (ISO 228)')] },
+    'IMI Hydronic|STAD DN40': { f: {}, src: 'IMI STAD', note: ['', ''], rows: [R('Constructeur', 'Manufacturer', 'IMI Hydronic Engineering'), R('DN/PN', 'DN/PN', 'DN40 / PN25'), R('Kvs (4 tours)', 'Kvs (4 turns)', '19.3 m³/h'), R('T° max', 'Max. temp.', '120°C (150°C par intermittence)', '120°C (150°C intermittent)'), R('Connexion', 'Connection', 'Filetage femelle G1 1/2 (ISO 228)', 'Female thread G1 1/2 (ISO 228)')] },
+    'IMI Hydronic|STAD DN50': { f: {}, src: 'IMI STAD', note: ['', ''], rows: [R('Constructeur', 'Manufacturer', 'IMI Hydronic Engineering'), R('DN/PN', 'DN/PN', 'DN50 / PN25'), R('Kvs (4 tours)', 'Kvs (4 turns)', '32.3 m³/h'), R('T° max', 'Max. temp.', '120°C (150°C par intermittence)', '120°C (150°C intermittent)'), R('Connexion', 'Connection', 'Filetage femelle G2 (ISO 228)', 'Female thread G2 (ISO 228)')] },
+    'IMI Hydronic|TA-COMPACT-P DN15': { f: {}, src: 'IMI TA-COMPACT-P', note: ['PICV', 'PICV'], rows: [R('Constructeur', 'Manufacturer', 'IMI Hydronic Engineering'), R('DN/PN', 'DN/PN', 'DN15 / PN16'), R('Plage de débit maxi', 'Max. flow setting range', '88 à 470 l/h (version standard) ; 44 à 245 l/h (version bas débit)', '88 to 470 l/h (standard); 44 to 245 l/h (low flow)'), R('T° max', 'Max. temp.', '90°C (mini 0°C)', '90°C (min 0°C)'), R('Connexion', 'Connection', 'Filetage mâle G3/4', 'Male thread G3/4')] },
+    'IMI Hydronic|TA-COMPACT-P DN20': { f: {}, src: 'IMI TA-COMPACT-P', note: ['', ''], rows: [R('Constructeur', 'Manufacturer', 'IMI Hydronic Engineering'), R('DN/PN', 'DN/PN', 'DN20 / PN16'), R('Plage de débit maxi', 'Max. flow setting range', '210 à 1 150 l/h', '210 to 1,150 l/h'), R('T° max', 'Max. temp.', '90°C (mini 0°C)', '90°C (min 0°C)'), R('Connexion', 'Connection', 'Filetage mâle G1', 'Male thread G1')] }
+  };
+  var VB2 = 'Seule la taille DN20 de la gamme VB 2 (Kvs 6.3, PN25, 150°C) a été lue sur une fiche Danfoss.';
+  var VB2E = 'Only the DN20 size of the VB 2 range (Kvs 6.3, PN25, 150°C) was read on a Danfoss datasheet.';
+  var MASK = {
+    'Danfoss|VB2 DN15': [VB2, VB2E], 'Danfoss|VB2 DN25': [VB2, VB2E], 'Danfoss|VB2 DN32': [VB2, VB2E], 'Danfoss|VB2 DN40': [VB2, VB2E], 'Danfoss|VB2 DN50': [VB2, VB2E],
+    'Danfoss|VB3 DN15': ['Aucune fiche Danfoss VB 3 trouvée.', 'No Danfoss VB 3 datasheet found.'], 'Danfoss|VB3 DN20': ['Aucune fiche Danfoss VB 3 trouvée.', 'No Danfoss VB 3 datasheet found.'], 'Danfoss|VB3 DN25': ['Aucune fiche Danfoss VB 3 trouvée.', 'No Danfoss VB 3 datasheet found.'],
+    'Danfoss|AFQM DN15': ['Aucune fiche Danfoss AFQM trouvée (la gamme AFPQ est documentée séparément).', 'No Danfoss AFQM datasheet found (the AFPQ range is documented separately).'],
+    'Belimo|AFBUP DN50': ['Aucune fiche trouvée ; les vannes papillon Belimo sont de la série D6.', 'No datasheet found; Belimo butterfly valves are the D6 series.'], 'Belimo|AFBUP DN65': ['Aucune fiche trouvée ; les vannes papillon Belimo sont de la série D6.', 'No datasheet found; Belimo butterfly valves are the D6 series.'],
+    'Belimo|AFBUP DN80': ['Aucune fiche trouvée ; les vannes papillon Belimo sont de la série D6.', 'No datasheet found; Belimo butterfly valves are the D6 series.'], 'Belimo|AFBUP DN100': ['Aucune fiche trouvée ; les vannes papillon Belimo sont de la série D6.', 'No datasheet found; Belimo butterfly valves are the D6 series.'],
+    'Belimo|PIQCV DN15': ['Fiche Belimo PIQCV non relue lors de ce contrôle.', 'Belimo PIQCV datasheet not re-read during this check.'],
+    'Siemens|VVF21.15-1.0': ['Absente des fiches Siemens lues (séries VVF32 et VVF42 seulement).', 'Not in the Siemens datasheets read (VVF32 and VVF42 series only).'], 'Siemens|VVF21.20-2.5': ['Absente des fiches Siemens lues (séries VVF32 et VVF42 seulement).', 'Not in the Siemens datasheets read (VVF32 and VVF42 series only).'],
+    'Siemens|VVF21.25-4.0': ['Absente des fiches Siemens lues (séries VVF32 et VVF42 seulement).', 'Not in the Siemens datasheets read (VVF32 and VVF42 series only).'], 'Siemens|VVF21.32-6.3': ['Absente des fiches Siemens lues (séries VVF32 et VVF42 seulement).', 'Not in the Siemens datasheets read (VVF32 and VVF42 series only).'],
+    'Siemens|VXF31.15-0.63': ['Absente des fiches Siemens lues (séries VXF32 et VXF42 seulement).', 'Not in the Siemens datasheets read (VXF32 and VXF42 series only).'], 'Siemens|VXF31.20-2.5': ['Absente des fiches Siemens lues (séries VXF32 et VXF42 seulement).', 'Not in the Siemens datasheets read (VXF32 and VXF42 series only).'],
+    'Watts|FIG-250 DN15': ['La fiche Watts FIG-250W décrit un double clapet anti-pollution, sans Kvs publié.', 'The Watts FIG-250W datasheet describes a double check valve with no published Kvs.'], 'Watts|FIG-250 DN25': ['La fiche Watts FIG-250W décrit un double clapet anti-pollution, sans Kvs publié.', 'The Watts FIG-250W datasheet describes a double check valve with no published Kvs.']
+  };
+  var REMOVE = { 'Tour&Andersson|STAD DN20': 1, 'Tour&Andersson|STAD DN32': 1 };
+  window.__valvesTable = { ok: OK, fix: FIX, mask: MASK, remove: REMOVE };
+  function key(v) { return (v.br || v.brand || '') + '|' + (v.m || v.model || ''); }
+  function apply() {
+    try {
+      if (typeof VALVES === 'undefined' || !VALVES) { return; }
+      if (!VALVES.__valves1) {
+        VALVES.__valves1 = true;
+        for (var i = VALVES.length - 1; i >= 0; i--) { if (REMOVE[key(VALVES[i])]) { VALVES.splice(i, 1); } }
+        VALVES.forEach(function (v) { if (!v.__orig) { v.__orig = key(v); } });
+      }
+      var E = en();
+      VALVES.forEach(function (v) {
+        var k = v.__orig || key(v), x = FIX[k], m = MASK[k], p;
+        if (x) {
+          for (p in x.f) { if (Object.prototype.hasOwnProperty.call(x.f, p)) { v[p] = x.f[p]; } }
+          v.note = E ? x.note[1] : x.note[0];
+          var d = {};
+          x.rows.forEach(function (r) { d[E ? r[1] : r[0]] = E ? r[3] : r[2]; });
+          d.Source = E ? 'Manufacturer datasheet: ' + x.src : 'Fiche constructeur : ' + x.src;
+          v.detail = d;
+        } else if (m) {
+          v.kvs = DASH; v.pn = DASH; v.tmax = DASH; v.app = ''; v.note = E ? 'Reference not confirmed: values hidden' : 'Référence non confirmée : valeurs masquées';
+          var d2 = {}; d2[E ? 'Status' : 'Statut'] = E ? 'Not found in the manufacturer documentation: values hidden until checked' : 'Non retrouvée dans la documentation du constructeur : valeurs masquées jusqu’à vérification';
+          d2[E ? 'What was found' : 'Ce qui a été trouvé'] = E ? m[1] : m[0];
+          v.detail = d2;
+        }
+      });
+    } catch (e) { /* sans effet */ }
+  }
+  function fixBanner(i) {
+    var b = document.getElementById('valveBody'); if (!b || !b.firstElementChild || typeof VALVES === 'undefined') { return; }
+    var t = b.firstElementChild.textContent || '';
+    if (t.indexOf('Fiche indicative') < 0 && t.indexOf('Indicative sheet') < 0) { return; }
+    var v = VALVES[i], k = v && v.__orig;
+    if (k && (FIX[k] || OK[k])) { b.firstElementChild.textContent = en() ? '✔ Values checked on the manufacturer datasheet. Check the official datasheet before ordering.' : '✔ Valeurs vérifiées sur la fiche du constructeur. Contrôler la fiche officielle avant toute commande.'; }
+    else if (k && MASK[k]) { b.firstElementChild.textContent = en() ? '⚠ Reference not confirmed: values hidden.' : '⚠ Référence non confirmée : valeurs masquées.'; }
+  }
+  apply();
+  var oR = window.renderValves, oS = window.showValveDetail;
+  if (typeof oR === 'function') { window.renderValves = function () { apply(); return oR.apply(this, arguments); }; }
+  if (typeof oS === 'function') { window.showValveDetail = function (i) { apply(); var r = oS.apply(this, arguments); fixBanner(i); return r; }; }
+  setTimeout(function () { if (typeof window.renderValves === 'function' && document.getElementById('vanGrid')) { try { window.renderValves(); } catch (e) { /* sans effet */ } } }, 0);
+})();
+</script>
 <script id="vannes39-module">
 /* THERMOSYS_VANNES_DH_V1 */
 (function () {
@@ -17553,7 +17653,7 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 })();
 </script>
 <script id="validation-46-module">
-/* THERMOSYS_VALIDATION_V13 */
+/* THERMOSYS_VALIDATION_V14 */
 (function () {
   'use strict';
   if (window.__val46) { return; }
@@ -17630,7 +17730,11 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
     { id: 'vannes', t: 'vannes_regression.js', k: [133, 35],
       n: ['VANNES (Kv, préréglage)', 'VALVES (Kv, pre-setting)', 'VÁLVULAS (Kv, preajuste)'],
       c: ['Kv = Q·√(ρ/(10·ΔP)), série R5 des Kvs, perte de charge (Swamee-Jain comparé à Colebrook, écart < 2 %), autorité de la vanne. Confort d’été (degrés-heures) : 70 vérifications, 26 mutations ; limites opératives EN 16798-1 : 25,5 / 26 / 27 °C.', 'Kv = Q·√(ρ/(10·ΔP)), R5 series of Kvs, pressure drop (Swamee-Jain compared with Colebrook, deviation < 2 %), valve authority. Summer comfort (degree-hours): 70 checks, 26 mutations; EN 16798-1 operative limits: 25.5 / 26 / 27 °C.', 'Kv = Q·√(ρ/(10·ΔP)), serie R5 de Kvs, pérdida de carga (Swamee-Jain comparado con Colebrook, desviación < 2 %), autoridad de la válvula. Confort de verano (grados-hora): 70 verificaciones, 26 mutaciones; límites operativos EN 16798-1: 25,5 / 26 / 27 °C.'],
-      l: ['Catalogue de 55 vannes non vérifié constructeur par constructeur : chaque fiche est signalée « indicative » (servomoteurs : voir la ligne suivante). Les seuils de DH de l’outil ne sont pas normatifs. Les paliers de préréglage se lisent sur l’abaque du constructeur.', 'Catalogue of 55 valves not verified manufacturer by manufacturer: each sheet is flagged “indicative” (actuators: see the next line). The tool’s DH thresholds are not normative. Pre-setting positions are read on the manufacturer’s chart.', 'Catálogo de 55 válvulas no verificado fabricante por fabricante: cada ficha está señalada como «indicativa» (servomotores: véase la línea siguiente). Los umbrales de DH de la herramienta no son normativos. Las posiciones de preajuste se leen en el ábaco del fabricante.'] },
+      l: ['Catalogue de 53 vannes : 31 vérifiées sur fiche constructeur, 22 masquées faute de fiche (voir les deux lignes suivantes). Les seuils de DH de l’outil ne sont pas normatifs. Les paliers de préréglage se lisent sur l’abaque du constructeur.', 'Catalogue of 53 valves: 31 checked against the manufacturer datasheet, 22 hidden for lack of a datasheet (see the next two lines). The tool’s DH thresholds are not normative. Pre-setting positions are read on the manufacturer’s chart.', 'Catálogo de 53 válvulas: 31 verificadas con la ficha del fabricante, 22 ocultas por falta de ficha (véanse las dos líneas siguientes). Los umbrales de DH de la herramienta no son normativos. Las posiciones de preajuste se leen en el ábaco del fabricante.'] },
+    { id: 'vannesfiches', t: 'vannes_fiches_regression.js', k: [549, 160],
+      n: ['VANNES (fiches constructeurs)', 'VALVES (manufacturer datasheets)', 'VÁLVULAS (fichas de fabricantes)'],
+      c: ['Kvs, DN, PN et température maximale de 31 vannes (Danfoss AB-QM, VB 2 DN20 et AFPQ ; Belimo R2 et R3 ; Honeywell VBN2 et V5013N ; IMI STAD et TA-COMPACT-P ; Siemens VBF21) comparés aux fiches des fabricants. Corrigés : Belimo R314-N et R320-N (références inexistantes, série R3015 et R3020 en PN40), Siemens VBF21.50E (vanne 3 voies à tiroir PN6, pas un papillon PN16), Danfoss AFPQ DN25 (Kvs 8,0, pas 2,5). Deux doublons IMI STAD retirés.', 'Kvs, DN, PN and maximum temperature of 31 valves (Danfoss AB-QM, VB 2 DN20 and AFPQ; Belimo R2 and R3; Honeywell VBN2 and V5013N; IMI STAD and TA-COMPACT-P; Siemens VBF21) compared with the manufacturers’ datasheets. Corrected: Belimo R314-N and R320-N (references that do not exist, series R3015 and R3020 at PN40), Siemens VBF21.50E (3-port slipper valve PN6, not a PN16 butterfly valve), Danfoss AFPQ DN25 (Kvs 8.0, not 2.5). Two IMI STAD duplicates removed.', 'Kvs, DN, PN y temperatura máxima de 31 válvulas (Danfoss AB-QM, VB 2 DN20 y AFPQ; Belimo R2 y R3; Honeywell VBN2 y V5013N; IMI STAD y TA-COMPACT-P; Siemens VBF21) comparados con las fichas de los fabricantes. Corregidos: Belimo R314-N y R320-N (referencias inexistentes, series R3015 y R3020 en PN40), Siemens VBF21.50E (válvula de 3 vías de corredera PN6, no una mariposa PN16), Danfoss AFPQ DN25 (Kvs 8,0, no 2,5). Dos duplicados IMI STAD retirados.'],
+      l: ['22 vannes masquées faute de fiche (Danfoss VB 2 hors DN20, VB 3 et AFQM ; Belimo AFBUP et PIQCV ; Siemens VVF21 et VXF31 ; Watts FIG-250). Les guides constructeurs écrits en dur dans l’application (tableaux Siemens VVF31 et VXF31, par exemple) ne sont pas encore vérifiés. Honeywell VBN2 et V5013N : PN non indiqué sur la fiche lue.', '22 valves hidden for lack of a datasheet (Danfoss VB 2 except DN20, VB 3 and AFQM; Belimo AFBUP and PIQCV; Siemens VVF21 and VXF31; Watts FIG-250). The manufacturer guides written into the application (Siemens VVF31 and VXF31 tables, for example) are not verified yet. Honeywell VBN2 and V5013N: PN not stated on the datasheet read.', '22 válvulas ocultas por falta de ficha (Danfoss VB 2 salvo DN20, VB 3 y AFQM; Belimo AFBUP y PIQCV; Siemens VVF21 y VXF31; Watts FIG-250). Las guías de fabricantes escritas en la aplicación (tablas Siemens VVF31 y VXF31, por ejemplo) aún no están verificadas. Honeywell VBN2 y V5013N: PN no indicado en la ficha leída.'] },
     { id: 'servo', t: 'servomoteurs_regression.js', k: [198, 134],
       n: ['SERVOMOTEURS (catalogue)', 'ACTUATORS (catalogue)', 'SERVOMOTORES (catálogo)'],
       c: ['Force ou couple, temps de course, alimentation, protection et poids de 15 servomoteurs (Belimo, Siemens, Danfoss, Honeywell) comparés aux fiches des fabricants. Accessoire Honeywell ML7984A1001 retiré ; SAX31.03 et SAX61.03 sont des modèles Siemens, pas Sauter ; tableau Danfoss intégré corrigé (AME 55 : 2 000 N ; AME 658 : 2 000 N).', 'Force or torque, running time, supply, protection and weight of 15 actuators (Belimo, Siemens, Danfoss, Honeywell) compared with the manufacturers’ datasheets. Honeywell accessory ML7984A1001 removed; SAX31.03 and SAX61.03 are Siemens models, not Sauter; built-in Danfoss table corrected (AME 55: 2,000 N; AME 658: 2,000 N).', 'Fuerza o par, tiempo de carrera, alimentación, protección y peso de 15 servomotores (Belimo, Siemens, Danfoss, Honeywell) comparados con las fichas de los fabricantes. Accesorio Honeywell ML7984A1001 retirado; SAX31.03 y SAX61.03 son modelos Siemens, no Sauter; tabla Danfoss integrada corregida (AME 55: 2 000 N; AME 658: 2 000 N).'],

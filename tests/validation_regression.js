@@ -52,5 +52,6 @@ ok(p && p._h.indexOf('VALIDATION ET R') >= 0, 'panneau FR');
 es = true; V.install(); ok(p._h.indexOf('VALIDACI') >= 0, 'panneau ES');
 es = false; langV = 'en'; sandbox.window.lang = 'en'; V.install(); ok(p._h.indexOf('VALIDATION AND REFERENCES') >= 0 || p._h.indexOf('VALIDACI') >= 0, 'panneau EN');
 ok(V.V.some(x => x.id === 'servo' && /ML7984A1001/.test(x.c[0]) && /ML7984A1001/.test(x.c[1]) && /ML7984A1001/.test(x.c[2]) && /introuvables/.test(x.l[0]) && /not found/.test(x.l[1]) && /no encontradas/.test(x.l[2]) && /Siemens, pas Sauter/.test(x.c[0]) && /not Sauter/.test(x.c[1]) && /no Sauter/.test(x.c[2])), 'servo : corrections et limites documentees en trois langues');
+ok(V.V.some(x => x.id === 'vannesfiches' && /R314-N/.test(x.c[0]) && /R314-N/.test(x.c[1]) && /R314-N/.test(x.c[2]) && /VBF21\.50E/.test(x.c[0]) && /AFPQ DN25/.test(x.c[1]) && /22 vannes masquées/.test(x.l[0]) && /22 valves hidden/.test(x.l[1]) && /22 válvulas ocultas/.test(x.l[2]) && /pas encore vérifiés/.test(x.l[0]) && /not verified yet/.test(x.l[1]) && /no están verificadas/.test(x.l[2])), 'vannesfiches : corrections et limites documentees en trois langues');
 console.log(fail ? 'ECHECS : ' + fail + ' / ' + (pass + fail) : 'TOUT EST BON : ' + pass + ' verifications');
 process.exit(fail ? 1 : 0);

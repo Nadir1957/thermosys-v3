@@ -167,3 +167,5 @@ heating_exemples_regression.js : chauffage EN 12831, exemples numeriques publies
 heating_regression.js v3 : total du batiment avec la regle de zone 2017 (ventilation naturelle comptee a moitie des qu il y a plusieurs locaux), 60 batiments aleatoires, 18 mutations. Commande : node tests\\heating_regression.js
 
 servomoteurs_regression.js : catalogue des servomoteurs, 15 fiches comparees aux fiches des fabricants (Belimo, Siemens, Danfoss, Honeywell), accessoire retire, 5 references non confirmees masquees, tableau Danfoss integre corrige : 198 verifications, 134 mutations tuees. Lancer : node tests\servomoteurs_regression.js
+
+vannes_fiches_regression.js : catalogue des vannes, 31 vannes comparees aux fiches des fabricants (Danfoss, Belimo, Honeywell, IMI, Siemens), 3 corrections de references et de valeurs, 2 doublons retires, 22 vannes sans fiche masquees : 549 verifications, 160 mutations tuees. Lancer : node tests\vannes_fiches_regression.js
