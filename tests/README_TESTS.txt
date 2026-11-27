@@ -165,3 +165,5 @@ cop_lois_regression.js : lois de COP (pompe a chaleur air-air en chauffage, grou
 
 heating_exemples_regression.js : chauffage EN 12831, exemples numeriques publies (326 W, 640 W, 305 W, 1507 W), rapport de logiciel DIN/TS 12831-1:2020 (ventilation du batiment 790 W pour 1580 W de locaux), tables e, epsilon, nmin (Univ. de Trieste), formules 2003 (SBZ), sol EN ISO 13370 : 42 verifications et 17 mutations. Commande : node tests\\heating_exemples_regression.js
 heating_regression.js v3 : total du batiment avec la regle de zone 2017 (ventilation naturelle comptee a moitie des qu il y a plusieurs locaux), 60 batiments aleatoires, 18 mutations. Commande : node tests\\heating_regression.js
+
+servomoteurs_regression.js : catalogue des servomoteurs, 15 fiches comparees aux fiches des fabricants (Belimo, Siemens, Danfoss, Honeywell), accessoire retire, 5 references non confirmees masquees, tableau Danfoss integre corrige : 198 verifications, 134 mutations tuees. Lancer : node tests\servomoteurs_regression.js
