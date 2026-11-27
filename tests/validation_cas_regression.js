@@ -11,7 +11,7 @@ const FROZEN = { W1: [998.21, 0.05], W2: [1.0016, 0.5], W3: [0.4660, 0.5], G1: [
 function scriptWith(marker) { const re = /<script[^>]*>([\s\S]*?)<\/script>/g; let m; while ((m = re.exec(s))) if (m[1].indexOf(marker) >= 0 && m[1].length < 400000) return m[1]; return null; }
 const gly = scriptWith('THERMOSYS_PDC_GLYCOL_V1'), eau = scriptWith('THERMOSYS_RESEAU_T_V1');
 ok(!!gly && !!eau, 'modules glycol et eau introuvables');
-const a = s.indexOf("['EAU GLYCOLÉE','W1'"), b = s.indexOf("\n];\nfunction run(){", a);
+const a = s.indexOf("['EAU GLYCOLÉE','W1'"), b = Math.min(...[s.indexOf(",\n['PERTES DE CHARGE','D1'", a), s.indexOf("\n];\nfunction run(){", a)].filter(x => x > 0));
 ok(a > 0 && b > a, 'lignes de cas introuvables dans la page Validation');
 function evalRows(glySrc) {
   const sb = { console, Math, JSON, Object, Array, String, Number, isFinite, parseFloat, document: { getElementById: () => null, addEventListener() {} } };

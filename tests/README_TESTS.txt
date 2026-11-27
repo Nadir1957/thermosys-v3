@@ -173,3 +173,5 @@ vannes_fiches_regression.js : catalogue des vannes, 31 vannes comparees aux fich
 glycol_dow_regression.js : tableau eau glycolee compare a cinq sources publiees (guides Dow DOWFROST et DOWTHERM SR-1, fiche Tyfocor L, correlations MEGlobal, ajustements ASHRAE de CoolProp), viscosite et densite, avec ecarts maximaux admis : 114 verifications, 16 mutations tuees. Lancer : node tests\glycol_dow_regression.js
 
 validation_cas_regression.js : page Validation, 10 cas de reference eau et eau glycolee (eau IAPWS, MEGlobal, Melinder) rejoues sur les moteurs, valeurs figees, mutations du tableau glycol : lancer node tests\validation_cas_regression.js
+
+pdc_materiaux_regression.js : pertes de charge, 6 materiaux (rugosite DIN 1988-300, Moody, Buderus), Ø interieurs acier EN 10255, Colebrook-White exact contre un solveur independant, zone critique 2300-4000, 11 cas de reference rejoues, texte de calcPDC FR/EN, mutations : lancer node tests\pdc_materiaux_regression.js
