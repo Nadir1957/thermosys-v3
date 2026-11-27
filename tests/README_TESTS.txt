@@ -155,7 +155,7 @@ acoustique_regression.js : calcul acoustique (niveau sonore a distance) : 31 ver
 
 validation_regression.js : page Validation et references (contenu, trois langues, absence de chiffre non mesure) : verifications automatiques. Commande : node tests\validation_regression.js
 
-gaines_ef_regression.js : gaines d air a frottement constant (Colebrook, 2e implementation independante, coherence avec la formule d ajustement ASHRAE a 3,5 % pres) : suite complete et 24 mutations. Commande : node tests\gaines_ef_regression.js
+gaines_ef_regression.js : gaines a frottement constant (Colebrook, rugosite 0,0003 pi, air standard) : 2e implementation sur 400 cas, formule d ajustement usuelle, Huebscher, singularites, validations, rendu FR/EN/ES, 5 valeurs publiees du manuel ASHRAE Fundamentals (ecart de -1,0 a +3,5 %) ; 24 mutations. Commande : node tests\gaines_ef_regression.js
 
 tewi_grid_regression.js : facteurs d emission du reseau par pays (50 pays contre le tableau AIE 2025, 21 contre ADEME 2011, Iran non verifie) : une mutation par pays. Commande : node tests\tewi_grid_regression.js
 

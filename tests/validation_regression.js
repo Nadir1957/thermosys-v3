@@ -34,7 +34,7 @@ V.V.forEach(function (x) {
   ok(/non v[ée]rifi|not verified|no verificado|ne sont pas|not |No |non corrig|sin corregir|uncorrected|\u00e9cart|deviation|desviaci/i.test(x.l[0] + x.l[1] + x.l[2]), x.id + ' doit dire ce qui n\'est pas verifie');
   if (x.k) { const r = new RegExp(x.t.replace('.', '\\.') + '[^\\n]*?' + x.k[0] + '[^\\n]*?' + x.k[1]); ok(readme === '' || r.test(readme), x.id + ' comptes ' + x.k + ' differents du README'); }
 });
-ok(V.V.some(x => x.id === 'gaines_ef' && /13 %/.test(x.l[0])), 'gaines_ef : limite honnete presente');
+ok(V.V.some(x => x.id === 'gaines_ef' && /3,5 %/.test(x.l[0]) && /3\.5 %/.test(x.l[1]) && /3,5 %/.test(x.l[2]) && /Duct System Design/.test(x.l[0]) && /ASHRAE Fundamentals/.test(x.l[1]) && !/13 %/.test(x.l[0])), 'gaines_ef : limite honnete presente (5 valeurs ASHRAE)');
 ok(!/Pas de perte de charge/.test(JSON.stringify(V.V)), 'gaines : ancienne limite retiree');
 ok(V.V.some(x => x.id === 'psychro' && /0,7 %/.test(x.l[0]) && /0\.7 %/.test(x.l[1]) && /0,7 %/.test(x.l[2]) && /Kuehn/.test(x.l[0])), 'psychro : choix gaz parfait documente avec la source ASHRAE');
 ok(V.V.some(x => x.id === 'psychro' && x.l.every(z => !/3,7 K|3\.7 K/.test(z)) && /givre/.test(x.l[0]) && /frost/.test(x.l[1]) && /escarcha/.test(x.l[2])), 'psychro : point de givre documente, ancienne limite 3,7 K retiree');

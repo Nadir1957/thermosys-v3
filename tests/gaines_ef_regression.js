@@ -36,6 +36,10 @@ function suite(G) {
   [[500, .1], [1000, .1], [2000, .1], [1000, .08], [10000, .1], [4000, .15], [800, .2], [3000, .05]].forEach(c => {
     const fit = Math.pow(0.109136 * Math.pow(c[0], 1.9) / c[1], 1 / 5.02), mine = G.compute({ q: c[0] * cfm * 3600, r: c[1] * inwg }).dExact / 25.4; const e = mine / fit - 1;
     ok(e < 0 && e > -0.035, 'ajustement ' + c + ' ecart ' + (e * 100).toFixed(2) + ' %'); });
+  // 3b. valeurs publiees ASHRAE Fundamentals (exemple 8 : tole galvanisee, rugosite 0,0003 pi, air standard) : ecart de -1,0 a +3,5 % ; vitesses publiees retrouvees
+  [[1500, 12, 0.40, 1910], [500, 8, 0.39, 1432], [2000, 12, 0.67, 2546], [2000, 15, 0.23, 1630], [4000, 17, 0.45, 2538]].forEach(c => {
+    const Q = c[0] * 0.000471947, D = c[1] * 0.0254, v = Q / (Math.PI * D * D / 4), e = G.frict(Q, D) * 30.48 / 249.089 / c[2] - 1;
+    ok(Math.abs(v / 0.00508 - c[3]) < 3, 'vitesse publiee ' + c + ' : ' + (v / 0.00508).toFixed(0)); ok(e > -0.02 && e < 0.045, 'ASHRAE ' + c + ' ecart ' + (e * 100).toFixed(1) + ' %'); });
   // 4. rectangulaire : Huebscher, arrondi a 10 mm, section >= exigee
   for (let i = 0; i < 80; i++) { const q = 300 + rnd() * 20000, r = 0.3 + rnd() * 2, h = 150 + Math.floor(rnd() * 600); const o = G.compute({ q: q, r: r, rect: true, h: h }); ok(!o.err, 'rect err'); if (o.err) continue;
     const de = 1.30 * Math.pow(o.w * h, 0.625) / Math.pow(o.w + h, 0.25); ok(Math.abs(de - o.de) < 1e-9, 'de'); ok(o.de >= o.dExact - 1e-6, 'rect de >= exact'); ok(o.w % 10 === 0, 'arrondi 10');
