@@ -19,15 +19,15 @@ function checks(s,bad){
   const wi=s.indexOf("T('Batterie chaude / préchauffage'"),su=s.indexOf("T('Batterie froide : puissance totale'");
   ok(wi>su&&s.indexOf('Refroidissement sensible (hiver',wi)>wi&&s.indexOf('Refroidissement sensible (hiver',wi)<wi+1500,'ligne placee dans la branche hiver');
   ok(cnt(s,"var tdS = pr ? '' : ' style=\"text-align:right;padding-left:8px\"';")===1,'colonnes espacees');
-  ok(cnt(s,"row('COP du groupe froid selon la charge :', 'Chiller COP versus load:',")===1&&s.indexOf('selon la charge et la température :')<0,'etiquette courte FR/EN');
-  ok(s.indexOf('"Chiller COP versus load:": "COP de la enfriadora según la carga:"')>0&&s.indexOf('"Sensible cooling (winter, internal gains)": "Enfriamiento sensible (invierno, cargas internas)"')>0,'dictionnaire ES');
+  ok(cnt(s,"row('COP du groupe froid / charge :', 'Chiller COP vs load:',")===1&&s.indexOf('selon la charge et la température :')<0,'etiquette courte FR/EN');
+  ok(s.indexOf('"Chiller COP vs load:": "COP de la enfriadora / carga:"')>0&&s.indexOf('"Sensible cooling (winter, internal gains)": "Enfriamiento sensible (invierno, cargas internas)"')>0,'dictionnaire ES');
   ok(s.indexOf('"Chiller COP versus load and temperature:"')<0,'ancienne cle ES retiree');
   ok(/@media print\{[^\n]*\.no-print-creator\{display:none!important\}#at_in,#at_out\{break-inside:auto!important\}\}/.test(s),'impression : panneaux du traitement d air coupables (premiere page non vide)');
 }
 const bad=[];checks(raw,bad);
 const muts=[["#at_in,#at_out{break-inside:auto!important}",""],["#at_in,#at_out{break-inside:auto!important}","#at_in{break-inside:auto!important}"],["l.cool > 0.05 ?","l.cool > 500 ?"],["f1(l.cool) + ' kW</b></td></tr>' : '') +","f1(l.heatTot) + ' kW</b></td></tr>' : '') +"],
- ["padding-left:8px","padding-left:0px"],["'Chiller COP versus load:',","'Chiller COP versus load and temperature:',"],
- ['"Enfriamiento sensible (invierno, cargas internas)"','"Enfriamiento"'],['"COP de la enfriadora según la carga:"','"COP"'],
+ ["padding-left:8px","padding-left:0px"],["'Chiller COP vs load:',","'Chiller COP versus load and temperature:',"],
+ ['"Enfriamiento sensible (invierno, cargas internas)"','"Enfriamiento"'],['"COP de la enfriadora / carga:"','"COP"'],
  ["M.T - 0.01) { o.cool = m * (M.h - Bs.h); o.coolS = o.cool;","M.T - 0.01) { o.cool = 0; o.coolS = 0;"],
  ["if (Tb > M.T + 0.01) { o.heat = m * (Bs.h - M.h);","if (Tb > M.T + 0.01) { o.heat = 0;"]];
 let killed=0;
