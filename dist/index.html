@@ -3955,22 +3955,26 @@ function renderActuators() {
   g.innerHTML = data.map(function(a) {
     var idx = ACTUATORS.indexOf(a);
     var abr = a.brand||a.br||''; var am = a.model||a.m||'';
-    var force = a.torque||a.force||a.couple||'-';
+    var force = actF(a)||'—';
     var alim  = a.supply||a.alim||'';
     var sig   = a.signal||a.sig||'';
     var cat   = a.category||a.cat||'';
     return '<div class="vcard" onclick="showActDetail('+idx+')">'
       +'<div style="flex:1"><div class="vcb">'+abr+'</div>'
       +'<div class="vcm">'+am+'</div>'
-      +'<div style="font-size:9px;color:var(--tm);margin-top:2px">'+cat+' — '+alim+' — '+sig+' — '+force+' Nm</div></div>'
+      +'<div style="font-size:9px;color:var(--tm);margin-top:2px">'+cat+' — '+alim+' — '+sig+' — '+force+'</div></div>'
       +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'
-      +'<span class="vca">'+force+' Nm</span>'
+      +'<span class="vca">'+force+'</span>'
       +'<button class="btn bk" style="padding:4px 8px;font-size:9.5px;min-height:32px" onclick="event.stopPropagation();showActDetail('+idx+')">Détail ▶</button>'
       +'</div></div>';
   }).join('');
   if (!data.length) g.innerHTML = '<div style="color:var(--tm);padding:20px;text-align:center">Aucun actionneur trouvé</div>';
 }
 
+/* fiches actionneurs : valeur absente ou masquee (—) ; l'unite est deja dans la valeur (N ou Nm), sinon Nm */
+function actOk(v) { return !!v && v !== '—' && v !== '-'; }
+function actF(a) { var v = a.torque||a.force||a.couple; if (!actOk(v)) return ''; v = String(v); return /[A-Za-z]/.test(v) ? v : v + ' Nm'; }
+function actSub(a) { var p = [], c = a.category||a.cat, s = a.supply||a.alim, g = a.signal||a.sig; if (actOk(c)) p.push(c); if (actOk(s)) p.push(s); if (actOk(g)) p.push('Signal: ' + g); return p.join(' — '); }
 function showActDetail(idx) {
   var a = ACTUATORS[idx]; if (!a) return;
   var abr = a.brand||a.br||''; var am = a.model||a.m||''; var d = a.detail||{};
@@ -3980,11 +3984,11 @@ function showActDetail(idx) {
   if (body) body.innerHTML =
     '<div style="margin-bottom:12px">'
     +'<div style="font-size:20px;font-weight:700;color:var(--ac)">'+abr+' '+am+'</div>'
-    +'<div style="font-size:10px;color:var(--tm);margin-top:3px">'+(a.category||a.cat||'')+' — '+(a.supply||a.alim||'')+' — Signal: '+(a.signal||a.sig||'')+'</div>'
+    +'<div style="font-size:10px;color:var(--tm);margin-top:3px">'+actSub(a)+'</div>'
     +'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:7px">'
-    +((a.supply||a.alim)?'<span class="chip">'+(a.supply||a.alim)+'</span>':'')
-    +((a.signal||a.sig)?'<span class="chip">'+(a.signal||a.sig)+'</span>':'')
-    +((a.torque||a.force||a.couple)?'<span class="chip">'+(a.torque||a.force||a.couple)+' Nm</span>':'')
+    +(actOk(a.supply||a.alim)?'<span class="chip">'+(a.supply||a.alim)+'</span>':'')
+    +(actOk(a.signal||a.sig)?'<span class="chip">'+(a.signal||a.sig)+'</span>':'')
+    +(actF(a)?'<span class="chip">'+actF(a)+'</span>':'')
     +'</div></div>'
     +(rows?'<div class="panel"><div class="ph">Specifications techniques détaillées</div>'
     +'<div class="tw"><table class="tbl"><thead><tr><th>Parameter</th><th>Valeur</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>':'')
