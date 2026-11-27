@@ -10458,40 +10458,40 @@ authCheckState();
     froz: ['Produits surgelés', 'Frozen products'], misc: ['Pharmacie & divers', 'Pharma & other']
   };
   var PROD = [
-    ['apple', 'fruit', 'Pomme', 'Apple', 1, 92, -1.5, .85, 3, '3 à 8 mois', '3–8 months', 20, 10, 24, 250],
-    ['pear', 'fruit', 'Poire', 'Pear', 0, 92, -1.6, .83, 3, '2 à 7 mois', '2–7 months', 20, 10, 24, 250],
-    ['orange', 'fruit', 'Orange', 'Orange', 5, 88, -0.8, .87, 4, '8 à 12 semaines', '8–12 weeks', 22, 10, 24, 250],
-    ['clem', 'fruit', 'Clémentine / mandarine', 'Clementine / mandarin', 5, 90, -1.0, .87, 4, '2 à 4 semaines', '2–4 weeks', 22, 10, 24, 220],
-    ['lemon', 'fruit', 'Citron', 'Lemon', 12, 88, -1.4, .89, 5, '1 à 4 mois', '1–4 months', 22, 10, 24, 250],
-    ['grape', 'fruit', 'Raisin de table', 'Table grapes', 0, 92, -2.1, .81, 2, '1 à 2 mois (jusqu\'à 6 avec SO₂)', '1–2 months (up to 6 with SO₂)', 20, 10, 20, 200],
-    ['pomeg', 'fruit', 'Grenade', 'Pomegranate', 5, 92, -3.0, .81, 3, '2 à 3 mois', '2–3 months', 22, 10, 24, 250],
-    ['fig', 'fruit', 'Figue fraîche', 'Fresh fig', 0, 87, -2.4, .79, 6, '7 à 10 jours', '7–10 days', 22, 15, 12, 150],
-    ['apricot', 'fruit', 'Abricot', 'Apricot', 0, 92, -1.1, .86, 5, '1 à 3 semaines', '1–3 weeks', 25, 15, 12, 150],
-    ['peach', 'fruit', 'Pêche', 'Peach', 0, 92, -0.9, .89, 5, '2 à 4 semaines', '2–4 weeks', 25, 15, 12, 150],
-    ['straw', 'fruit', 'Fraise', 'Strawberry', 0, 92, -0.8, .91, 8, '5 à 7 jours', '5–7 days', 20, 20, 8, 120],
-    ['melon', 'fruit', 'Melon cantaloup', 'Cantaloupe', 4, 95, -1.2, .90, 6, '10 à 15 jours', '10–15 days', 25, 15, 16, 200],
-    ['wmelon', 'fruit', 'Pastèque', 'Watermelon', 12, 90, -0.4, .92, 3, '2 à 3 semaines', '2–3 weeks', 25, 15, 24, 250],
-    ['date', 'date', 'Dattes', 'Dates', 0, 70, -15.7, .21, 0, '6 à 12 mois à 0 °C ; plus d\'un an à -18 °C', '6–12 months at 0 °C; over 1 year at -18 °C', 25, 5, 24, 330],
-    ['potc', 'veg', 'Pomme de terre de consommation', 'Table potatoes', 5, 92, -1.7, .79, 4, '5 à 8 mois (anti-germinatif)', '5–8 months (sprout inhibitor)', 15, 6, 24, 450],
-    ['pots', 'veg', 'Pomme de terre de semence', 'Seed potatoes', 3, 92, -1.7, .79, 3, '6 à 9 mois', '6–9 months', 12, 6, 24, 420],
-    ['onion', 'veg', 'Oignon sec', 'Dry onion', 0, 68, -0.9, .89, 2, '1 à 8 mois', '1–8 months', 25, 8, 24, 350],
-    ['garlic', 'veg', 'Ail', 'Garlic', 0, 68, -2.7, .61, 2, '6 à 7 mois', '6–7 months', 25, 8, 24, 250],
-    ['carrot', 'veg', 'Carotte', 'Carrot', 0, 98, -1.4, .88, 5, '7 à 9 mois', '7–9 months', 15, 10, 24, 400],
-    ['cabbage', 'veg', 'Chou blanc', 'White cabbage', 0, 98, -0.9, .92, 3, '3 à 6 mois', '3–6 months', 15, 10, 24, 300],
-    ['tomato', 'veg', 'Tomate mûre', 'Ripe tomato', 9, 92, -0.5, .94, 8, '1 à 3 semaines', '1–3 weeks', 22, 15, 16, 200],
-    ['pepper', 'veg', 'Poivron', 'Bell pepper', 8, 92, -0.7, .92, 6, '2 à 3 semaines', '2–3 weeks', 22, 15, 16, 150],
-    ['cucumber', 'veg', 'Concombre', 'Cucumber', 11, 95, -0.5, .96, 8, '10 à 14 jours', '10–14 days', 22, 15, 16, 200],
-    ['zucchini', 'veg', 'Courgette', 'Zucchini', 7, 95, -0.5, .95, 10, '1 à 2 semaines', '1–2 weeks', 22, 15, 16, 200],
-    ['eggplant', 'veg', 'Aubergine', 'Eggplant', 11, 92, -0.8, .93, 10, 'environ 1 semaine', 'about 1 week', 22, 15, 16, 150],
-    ['lettuce', 'veg', 'Laitue', 'Lettuce', 0, 98, -0.2, .95, 10, '2 à 3 semaines', '2–3 weeks', 15, 20, 8, 200],
-    ['beans', 'veg', 'Haricot vert', 'Green bean', 6, 95, -0.7, .90, 25, '7 à 10 jours', '7–10 days', 20, 20, 8, 200],
-    ['broccoli', 'veg', 'Brocoli', 'Broccoli', 0, 97, -0.6, .91, 20, '10 à 14 jours', '10–14 days', 15, 20, 8, 250],
+    ['apple', 'fruit', 'Pomme', 'Apple', 1, 92, -1.5, .85, 3.45, '3 à 8 mois', '3–8 months', 20, 10, 24, 250, { a: 3.81, f: 1.98, L: 280 }],
+    ['pear', 'fruit', 'Poire', 'Pear', 0, 92, -1.6, .83, 3.9, '2 à 7 mois', '2–7 months', 20, 10, 24, 250, { a: 3.8, f: 2.06, L: 280 }],
+    ['orange', 'fruit', 'Orange', 'Orange', 5, 88, -0.8, .87, 6, '8 à 12 semaines', '8–12 weeks', 22, 10, 24, 250, { a: 3.81, f: 1.96, L: 275 }],
+    ['clem', 'fruit', 'Clémentine / mandarine', 'Clementine / mandarin', 5, 90, -1.0, .87, 6, '2 à 4 semaines', '2–4 weeks', 22, 10, 24, 220, { a: 3.9, f: 1.93, L: 293 }],
+    ['lemon', 'fruit', 'Citron', 'Lemon', 12, 88, -1.4, .89, 13.69, '1 à 4 mois', '1–4 months', 22, 10, 24, 250, { a: 3.94, f: 2.02, L: 292 }],
+    ['grape', 'fruit', 'Raisin de table', 'Table grapes', 0, 92, -2.1, .81, 3, '1 à 2 mois (jusqu\'à 6 avec SO₂)', '1–2 months (up to 6 with SO₂)', 20, 10, 20, 200, { a: 3.7, f: 2.16, L: 269 }],
+    ['pomeg', 'fruit', 'Grenade', 'Pomegranate', 5, 92, -3.0, .81, 6, '2 à 3 mois', '2–3 months', 22, 10, 24, 250, { a: 3.7, f: 2.3, L: 270 }],
+    ['fig', 'fruit', 'Figue fraîche', 'Fresh fig', 0, 87, -2.4, .79, 6, '7 à 10 jours', '7–10 days', 22, 15, 12, 150, { a: 3.7, f: 2.25, L: 264 }],
+    ['apricot', 'fruit', 'Abricot', 'Apricot', 0, 92, -1.1, .86, 6, '1 à 3 semaines', '1–3 weeks', 25, 15, 12, 150, { a: 3.87, f: 1.95, L: 288 }],
+    ['peach', 'fruit', 'Pêche', 'Peach', 0, 92, -0.9, .89, 5, '2 à 4 semaines', '2–4 weeks', 25, 15, 12, 150, { a: 3.91, f: 1.9, L: 293 }],
+    ['straw', 'fruit', 'Fraise', 'Strawberry', 0, 92, -0.8, .91, 16, '5 à 7 jours', '5–7 days', 20, 20, 8, 120, { a: 4.0, f: 1.84, L: 306 }],
+    ['melon', 'fruit', 'Melon cantaloup', 'Cantaloupe', 4, 95, -1.2, .90, 9.03, '10 à 15 jours', '10–15 days', 25, 15, 16, 200, { a: 3.93, f: 1.91, L: 300 }],
+    ['wmelon', 'fruit', 'Pastèque', 'Watermelon', 12, 90, -0.4, .92, 9.7, '2 à 3 semaines', '2–3 weeks', 25, 15, 24, 250, { a: 3.97, f: 1.74, L: 306 }],
+    ['date', 'date', 'Dattes', 'Dates', 0, 70, -15.7, .21, 0, '6 à 12 mois à 0 °C ; plus d\'un an à -18 °C', '6–12 months at 0 °C; over 1 year at -18 °C', 25, 5, 24, 330, { a: 2.31, f: 2.3, L: 75 }],
+    ['potc', 'veg', 'Pomme de terre de consommation', 'Table potatoes', 5, 92, -1.7, .79, 12, '5 à 8 mois (anti-germinatif)', '5–8 months (sprout inhibitor)', 15, 6, 24, 450, { a: 3.67, f: 1.93, L: 264 }],
+    ['pots', 'veg', 'Pomme de terre de semence', 'Seed potatoes', 3, 92, -1.7, .79, 10.7, '6 à 9 mois', '6–9 months', 12, 6, 24, 420, { a: 3.67, f: 1.93, L: 264 }],
+    ['onion', 'veg', 'Oignon sec', 'Dry onion', 0, 68, -0.9, .89, 3, '1 à 8 mois', '1–8 months', 25, 8, 24, 350, { a: 3.95, f: 1.87, L: 300 }],
+    ['garlic', 'veg', 'Ail', 'Garlic', 0, 68, -2.7, .61, 8, '6 à 7 mois', '6–7 months', 25, 8, 24, 250, { a: 3.17, f: 2.19, L: 196 }],
+    ['carrot', 'veg', 'Carotte', 'Carrot', 0, 98, -1.4, .88, 15, '7 à 9 mois', '7–9 months', 15, 10, 24, 400, { a: 3.92, f: 2.0, L: 293 }],
+    ['cabbage', 'veg', 'Chou blanc', 'White cabbage', 0, 98, -0.9, .92, 5, '3 à 6 mois', '3–6 months', 15, 10, 24, 300, { a: 4.02, f: 1.85, L: 308 }],
+    ['tomato', 'veg', 'Tomate mûre', 'Ripe tomato', 10, 92, -0.5, .94, 15, '4 à 7 jours', '4–7 days', 22, 15, 16, 200, { a: 4.08, f: 1.79, L: 313 }],
+    ['pepper', 'veg', 'Poivron', 'Bell pepper', 8, 92, -0.7, .92, 9.67, '2 à 3 semaines', '2–3 weeks', 22, 15, 16, 150, { a: 4.01, f: 1.8, L: 308 }],
+    ['cucumber', 'veg', 'Concombre', 'Cucumber', 11, 95, -0.5, .96, 26.57, '10 à 14 jours', '10–14 days', 22, 15, 16, 200, { a: 4.09, f: 1.71, L: 321 }],
+    ['zucchini', 'veg', 'Courgette', 'Zucchini', 7, 95, -0.5, .95, 43.01, '1 à 2 semaines', '1–2 weeks', 22, 15, 16, 200, { a: 4.07, f: 1.74, L: 315 }],
+    ['eggplant', 'veg', 'Aubergine', 'Eggplant', 11, 92, -0.8, .93, 58.9, 'environ 1 semaine', 'about 1 week', 22, 15, 16, 150, { a: 4.02, f: 1.83, L: 307 }],
+    ['lettuce', 'veg', 'Laitue', 'Lettuce', 0, 98, -0.2, .95, 12, '2 à 3 semaines', '2–3 weeks', 15, 20, 8, 200, { a: 4.09, f: 1.65, L: 320 }],
+    ['beans', 'veg', 'Haricot vert', 'Green bean', 6, 95, -0.7, .90, 37.83, '7 à 10 jours', '7–10 days', 20, 20, 8, 200, { a: 3.99, f: 1.85, L: 302 }],
+    ['broccoli', 'veg', 'Brocoli', 'Broccoli', 0, 97, -0.6, .91, 21, '10 à 14 jours', '10–14 days', 15, 20, 8, 250, { a: 4.01, f: 1.82, L: 303 }],
     ['beef', 'meat', 'Carcasses de bœuf', 'Beef carcasses', 0, 87, -1.7, .65, 0, '1 à 3 semaines', '1–3 weeks', 10, 15, 24, 150, { a: 3.22, f: 2.30, L: 191 }],
     ['chicken', 'meat', 'Volaille fraîche', 'Fresh poultry', 0, 85, -2.8, .74, 0, '5 à 7 jours', '5–7 days', 4, 20, 24, 250, { L: 221 }],
     ['fishf', 'meat', 'Poisson frais', 'Fresh fish', 0, 95, -2.2, .80, 0, '5 à 10 jours', '5–10 days', 4, 25, 24, 300, { a: 3.77, f: 2.14, L: 272 }],
-    ['milk', 'dairy', 'Lait & produits laitiers frais', 'Milk & fresh dairy', 3, 85, -0.5, .87, 0, '5 à 15 jours', '5–15 days', 6, 30, 16, 300],
-    ['cheese', 'dairy', 'Fromage affiné', 'Ripened cheese', 4, 80, -8.0, .40, 0, 'variable selon fromage', 'depends on cheese', 15, 5, 24, 350],
-    ['eggs', 'dairy', 'Œufs en coquille', 'Shell eggs', 1, 82, -2.2, .75, 0, '5 à 6 mois', '5–6 months', 15, 10, 24, 250],
+    ['milk', 'dairy', 'Lait & produits laitiers frais', 'Milk & fresh dairy', 3, 85, -0.5, .87, 0, '5 à 15 jours', '5–15 days', 6, 30, 16, 300, { a: 3.89, f: 1.81, L: 293 }],
+    ['cheese', 'dairy', 'Fromage affiné', 'Ripened cheese', 4, 80, -8.0, .40, 0, 'variable selon fromage', 'depends on cheese', 15, 5, 24, 350, { a: 2.8, f: 2.9, L: 128 }],
+    ['eggs', 'dairy', 'Œufs en coquille', 'Shell eggs', 1, 82, -0.6, .75, 0, '5 à 6 mois', '5–6 months', 15, 10, 24, 250, { a: 3.63, f: 1.95, L: 252 }],
     ['fzmeat', 'froz', 'Viande congelée', 'Frozen meat', -20, 90, -1.7, .65, 0, '9 à 12 mois', '9–12 months', -12, 5, 24, 400, { a: 3.22, f: 2.30, L: 191 }],
     ['fzchick', 'froz', 'Volaille congelée', 'Frozen poultry', -20, 90, -2.8, .74, 0, '9 à 12 mois', '9–12 months', -12, 5, 24, 400, { L: 221 }],
     ['fzfish', 'froz', 'Poisson congelé', 'Frozen fish', -25, 90, -2.2, .80, 0, '6 à 12 mois', '6–12 months', -15, 5, 24, 400, { a: 3.77, f: 2.14, L: 272 }],
@@ -10501,10 +10501,13 @@ authCheckState();
     ['pharma', 'misc', 'Produits pharmaceutiques (2–8 °C)', 'Pharmaceutical products (2–8 °C)', 5, 60, -1.0, .70, 0, 'selon notice', 'per leaflet', 20, 5, 24, 150],
     ['custom', 'misc', 'Produit personnalisé', 'Custom product', 2, 85, -1.0, .80, 0, '—', '—', 20, 10, 24, 250]
   ];
+  /* Chaleur de respiration : courbes mg CO2/(kg.h) selon la temperature [T en C, taux], tableau 1 du USDA Agriculture Handbook 66 (Gross, Saltveit et al., 2016).
+     Conversion en chaleur : 61 kcal/(tonne.jour) par mg CO2/(kg.h), soit 2,96 W/t (meme source). Poire : poire asiatique seule (la poire europeenne n'est pas dans le tableau). Datte, aubergine et produit personnalise : pas de courbe, loi en Q10 = 2,5. */
+  var RC = {apple: [[0,3],[5,6],[10,9],[15,15],[20,20]], pear: [[0,3.9],[5,8.8],[10,14.7],[20,44.1]], orange: [[0,4],[5,6],[10,8],[15,18],[20,28]], clem: [[5,6],[10,8],[15,16],[20,25]], lemon: [[10,11],[15,19],[20,24]], grape: [[0,3],[5,7],[10,13],[20,27]], pomeg: [[5,6],[10,12],[20,24]], fig: [[0,6],[5,13],[10,21],[20,50]], apricot: [[0,6],[10,16],[20,40]], peach: [[0,5],[10,20],[20,87]], straw: [[0,16],[10,75],[20,150]], melon: [[0,6],[5,10],[10,15],[15,37],[20,55]], wmelon: [[5,4],[10,8],[20,21]], potc: [[5,12],[10,16],[15,17],[20,22]], pots: [[5,12],[10,16],[15,17],[20,22]], onion: [[0,3],[5,5],[10,7],[15,7],[20,8]], garlic: [[0,8],[5,16],[10,24],[15,22],[20,20]], carrot: [[0,15],[5,20],[10,31],[15,40],[20,70]], cabbage: [[0,5],[5,11],[10,18],[15,28],[20,42]], tomato: [[10,15],[15,22],[20,35]], pepper: [[5,7],[10,12],[15,27],[20,34]], cucumber: [[10,26],[15,29],[20,31]], zucchini: [[0,25],[5,32],[10,67],[15,153],[20,164]], lettuce: [[0,12],[5,17],[10,31],[15,39],[20,56]], beans: [[0,20],[5,34],[10,58],[15,92],[20,130]], broccoli: [[0,21],[5,34],[10,81],[15,170],[20,300]]};
   var PBY = {}; PROD.forEach(function (r) {
     var w = r[7], ov = r[15] || {};
     PBY[r[0]] = {
-      id: r[0], grp: r[1], fr: r[2], en: r[3], Tst: r[4], RH: r[5], Tf: r[6], w: w, resp: r[8], lifeFr: r[9], lifeEn: r[10], Tin: r[11], pct: r[12], tpull: r[13], dens: r[14],
+      id: r[0], grp: r[1], fr: r[2], en: r[3], Tst: r[4], RH: r[5], Tf: r[6], w: w, resp: r[8], lifeFr: r[9], lifeEn: r[10], Tin: r[11], pct: r[12], tpull: r[13], dens: r[14], rc: RC[r[0]] || null,
       cpA: ov.a || (4.19 * w + 0.837 * (1 - w)), cpF: ov.f || (2.09 * w + 0.837 * (1 - w)), L: ov.L || (335 * w)
     };
   });
@@ -10557,7 +10560,19 @@ authCheckState();
     }
     return m * cpF * (Tin - Tout);
   }
-  function respW(p, T) { return p.resp * 2.96 * Math.pow(2.5, (T - p.respT) / 10); } // W par tonne
+  /* taux a la temperature T par interpolation log-lineaire dans la courbe ; hors de la plage : pente du segment d'extremite, jamais decroissante */
+  function rcRate(rc, T) {
+    var n = rc.length, i = 0, s;
+    if (T >= rc[n - 1][0]) { i = n - 2; } else if (T > rc[0][0]) { while (T > rc[i + 1][0]) { i++; } }
+    s = Math.log(rc[i + 1][1] / rc[i][1]) / (rc[i + 1][0] - rc[i][0]);
+    if (T < rc[0][0]) { return rc[0][1] * Math.exp(Math.max(s, 0) * (T - rc[0][0])); }
+    if (T > rc[n - 1][0]) { return rc[n - 1][1] * Math.exp(Math.max(s, 0) * (T - rc[n - 1][0])); }
+    return rc[i][1] * Math.exp(s * (T - rc[i][0]));
+  }
+  function respW(p, T) { // W par tonne ; p.resp = taux a p.respT (modifiable par l'utilisateur), la courbe du produit en donne la dependance a la temperature
+    if (p.rc && p.rc.length > 1) { var r0 = rcRate(p.rc, p.respT); if (r0 > 0) { return p.resp * 2.96 * rcRate(p.rc, T) / r0; } }
+    return p.resp * 2.96 * Math.pow(2.5, (T - p.respT) / 10);
+  }
 
   function compute(p) {
     var r = { warn: [], err: null }, g = 9.81;
@@ -10586,7 +10601,7 @@ authCheckState();
       lat: (p.Tin > p.Tf && Tr < p.Tf) ? mDay * p.Lat / 3600 : 0
     };
     // Respiration
-    var pr = { resp: p.resp, respT: p.respT };
+    var pr = { resp: p.resp, respT: p.respT, rc: p.rc };
     var rs = respW(pr, Tr) * p.stockT / 1000 * 24;
     var ri = (p.Tin > Tr) ? (respW(pr, (p.Tin + Tr) / 2) - respW(pr, Tr)) * (mDay / 1000) / 1000 * p.tpull : 0;
     E.resp = Math.max(0, rs + Math.max(0, ri));
@@ -11330,7 +11345,7 @@ var BID={"R449A":{"dh":[10.99,11.53,12.33,16.3,17.11,18.29,21.5,22.56,24.11,26.5
     var df = DEFR.filter(function (x) { return x.id === $('cr_defr').value; })[0] || DEFR[0];
     return {
       Tr: num('cr_Tr', 0), RHr: num('cr_RHr', 90), Tf: num('cr_Tf', -1), cpA: num('cr_cpA', 3.5), cpF: num('cr_cpF', 1.8), Lat: num('cr_Lat', 250),
-      resp: num('cr_resp', 0), respT: pr.Tst, Tst: pr.Tst, stockT: num('cr_stockT', 0), pct: num('cr_pct', 0), Tin: num('cr_Tin', 20), tpull: Math.max(1, num('cr_tpull', 24)), packPct: num('cr_pack', 0),
+      resp: num('cr_resp', 0), respT: pr.Tst, rc: pr.rc, Tst: pr.Tst, stockT: num('cr_stockT', 0), pct: num('cr_pct', 0), Tin: num('cr_Tin', 20), tpull: Math.max(1, num('cr_tpull', 24)), packPct: num('cr_pack', 0),
       Lg: Math.max(0.5, num('cr_Lg', 5)), Wd: Math.max(0.5, num('cr_Wd', 5)), Hh: Math.max(0.5, num('cr_Hh', 3)),
       lam: pan.lam, dWall: num('cr_dWall', 100), dRoof: num('cr_dRoof', 100), dFloor: num('cr_dFloor', 100), floorAdj: $('cr_floorAdj').value,
       Text: num('cr_Text', 35), RHext: Math.min(100, Math.max(5, num('cr_RHext', 50))), Twall: num('cr_Twall', 35), solW: num('cr_solW', 0), solR: num('cr_solR', 0), Tgnd: num('cr_Tgnd', 15),
@@ -17709,7 +17724,7 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
     { id: 'coldroom', t: 'coldroom_regression.js',
       n: ['CHAMBRE FROIDE', 'COLD ROOM', 'CÁMARA FRIGORÍFICA'],
       c: ['Psychrométrie contre CoolProp, tableaux de renouvellement d’air ASHRAE (via Krack), chaleur du produit (Siebel), modèle de porte, 2e implémentation indépendante sur 200 chambres, 16 mutations.', 'Psychrometrics against CoolProp, ASHRAE air-change tables (via Krack), product heat (Siebel), door model, 2nd independent implementation on 200 rooms, 16 mutations.', 'Psicrometría frente a CoolProp, tablas de renovación de aire ASHRAE (vía Krack), calor del producto (Siebel), modelo de puerta, 2.ª implementación independiente en 200 cámaras, 16 mutaciones.'],
-      l: ['Non vérifié : données des 40 produits, interface, cycle, tuyauterie et charge.', 'Not verified: data of the 40 products, interface, cycle, piping and charge.', 'No verificado: datos de los 40 productos, interfaz, ciclo, tuberías y carga.'] },
+      l: ['Données des produits : chaleur de respiration du tableau 1 du Handbook 66 de l’USDA (2016), courbes en fonction de la température, recoupée avec les fiches de l’université de Californie (Davis) : accord à l’arrondi près pour haricot, brocoli, fraise, ail, concombre, tomate, pomme de terre et carotte (sauf 20 °C, valeur du Handbook 66 incohérente, remplacée) ; écart d’un facteur 2 pour la courgette et l’oignon (Handbook 66 retenu, valeur prudente pour la courgette). Poire : fiche Davis (Anjou, Bosc, Comice) ; aubergine : fiche Davis (type américain, 12,5 °C), loi en Q10 = 2,5 ; datte : pas de valeur, loi en Q10. Chaleurs massiques et chaleur latente : tableau 3 d’ASHRAE Refrigeration (édition 2002, chapitre 8), au lieu de la formule de Siebel qui sous-estimait la datte de 33 % et le fromage de 20 à 100 %. Points de congélation : point de congélation de l’œuf ramené à −0,6 °C (USDA/WFLO : −0,56 °C ; l’ancienne valeur −2,2 °C n’était soutenue par aucune source) ; pour l’ail (−2,7 °C ASHRAE, ou −0,8 °C « point le plus haut » du WFLO, alors que le Handbook 66 le conserve à −1 °C « juste au-dessus » du gel) et la pomme de terre (−1,7 °C ASHRAE, confirmé par une mesure DSC à −1,8 °C ; le Handbook 66 dit « environ −1 °C ») les sources divergent encore : valeurs ASHRAE conservées. Températures et humidités relues dans quatre sources (Maine / Kansas State, Géorgie, FAO, Davis) ; les tableaux de stockage du Handbook 66 n’ont pas pu être lus directement. Non vérifié : interface, cycle, tuyauterie et charge.', 'Product data: heat of respiration from table 1 of USDA Handbook 66 (2016), curves versus temperature, cross-checked with the University of California Davis sheets: agreement to rounding for snap bean, broccoli, strawberry, garlic, cucumber, tomato, potato and carrot (except 20 °C, an inconsistent Handbook 66 value, replaced); a factor of 2 difference for zucchini and onion (Handbook 66 kept, a prudent value for zucchini). Pear: Davis sheet (Anjou, Bosc, Comice); eggplant: Davis sheet (American type, 12.5 °C), Q10 = 2.5 law; dates: no value, Q10 law. Specific and latent heats: ASHRAE Refrigeration table 3 (2002 edition, chapter 8), instead of the Siebel formula that underestimated dates by 33 % and cheese by 20 to 100 %. Freezing points: sources disagree and this is unresolved for garlic (−2.7 or −0.8 °C), potato (−1.7 or −0.6 °C) and egg (corrected to −0.6 °C). Temperatures and humidities checked in four sources (Maine / Kansas State, Georgia, FAO, Davis); the Handbook 66 storage tables could not be read directly. Not verified: interface, cycle, piping and charge.', 'Datos de los productos: calor de respiración de la tabla 1 del Handbook 66 del USDA (2016), curvas en función de la temperatura, contrastado con las fichas de la Universidad de California (Davis): coincidencia salvo redondeo en judía verde, brócoli, fresa, ajo, pepino, tomate, patata y zanahoria (salvo 20 °C, valor incoherente del Handbook 66, sustituido); diferencia de un factor 2 en calabacín y cebolla (se mantiene el Handbook 66, valor prudente para el calabacín). Pera: ficha Davis (Anjou, Bosc, Comice); berenjena: ficha Davis (tipo americano, 12,5 °C), ley Q10 = 2,5; dátil: sin valor, ley Q10. Calores específicos y calor latente: tabla 3 de ASHRAE Refrigeration (edición 2002, capítulo 8), en lugar de la fórmula de Siebel que subestimaba el dátil un 33 % y el queso del 20 al 100 %. Puntos de congelación: desacuerdo sin resolver entre fuentes para el ajo (−2,7 o −0,8 °C), la patata (−1,7 o −0,6 °C) y el huevo (corregido a −0,6 °C). Temperaturas y humedades revisadas en cuatro fuentes (Maine / Kansas State, Georgia, FAO, Davis); las tablas de almacenamiento del Handbook 66 no pudieron leerse directamente. No verificado: interfaz, ciclo, tuberías y carga.'] },
     { id: 'cycle', t: 'cycle_regression.js',
       n: ['CYCLE FRIGORIFIQUE', 'REFRIGERATION CYCLE', 'CICLO FRIGORÍFICO'],
       c: ['10 cas (R134a, R32, R290, R717, R1234yf, R410A, R404A, R407C, R600a) comparés à des valeurs CoolProp 8.0.0 figées (tolérance 0,05 %), identités du cycle, glissement ; propriétés du fluide : écart contrôlé sur 680 cas, 0,2 % au plus. Copeland ZP54 : capacité à 0,67 % en moyenne et 2,4 % au maximum des données du constructeur.', '10 cases (R134a, R32, R290, R717, R1234yf, R410A, R404A, R407C, R600a) compared with frozen CoolProp 8.0.0 values (0.05 % tolerance), cycle identities, glide; fluid properties: deviation checked on 680 cases, 0.2 % at most. Copeland ZP54: capacity within 0.67 % on average and 2.4 % at most of the manufacturer’s data.', '10 casos (R134a, R32, R290, R717, R1234yf, R410A, R404A, R407C, R600a) comparados con valores CoolProp 8.0.0 congelados (tolerancia 0,05 %), identidades del ciclo, deslizamiento; propiedades del fluido: desviación comprobada en 680 casos, 0,2 % como máximo. Copeland ZP54: capacidad al 0,67 % de media y 2,4 % como máximo de los datos del fabricante.'],
@@ -18750,8 +18765,8 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 'use strict';
 if(window.__val56)return; window.__val56=1;
 var VERSION_FR='état du 27/11/2026',VERSION_EN='status of 27/11/2026';
-var MODEN={'PERTES DE CHARGE':'PRESSURE DROP','EAU GLYCOLÉE':'GLYCOL WATER','CHAUFFAGE':'HEATING','ÉLECTRICITÉ':'ELECTRICAL','MÉCATRONIQUE':'MECHATRONICS'};
-var SRCEN={'ISO 2533 (atmosphère standard)':'ISO 2533 (standard atmosphere)','CoolProp 8.0 (Δh à W constant)':'CoolProp 8.0 (Δh at constant W)','CoolProp 8.0 (bilan enthalpie − condensat)':'CoolProp 8.0 (enthalpy balance − condensate)','Calcul manuel EN 12831 / EN ISO 13370':'Manual calculation EN 12831 / EN ISO 13370','Calcul manuel EN 12831':'Manual calculation EN 12831','Formule P / (√3·U·cos φ)':'Formula P / (√3·U·cos φ)','Calcul manuel (ρ à 70 °C, X = 0,08 mΩ/m)':'Manual calculation (ρ at 70 °C, X = 0.08 mΩ/m)','Linéaire (NAMUR NE43)':'Linear (NAMUR NE43)','Calcul manuel π·f·d/√2':'Manual calculation π·f·d/√2','Lois de similitude (P ∝ n³)':'Similarity laws (P ∝ n³)','Calcul manuel (ρ = 1,18 kg/m³, cp = 1 006)':'Manual calculation (ρ = 1.18 kg/m³, cp = 1,006)','Calcul manuel (h_fg = 2 501 kJ/kg)':'Manual calculation (h_fg = 2,501 kJ/kg)','Calcul manuel R = Σ e/λ + films':'Manual calculation R = Σ d/λ + films','CoolProp 8.0 (IAPWS-95)':'CoolProp 8.0 (IAPWS-95)','MEGlobal (corrélation, 50 °F)':'MEGlobal (correlation, 50 °F)','MEGlobal (corrélation, 100 °F)':'MEGlobal (correlation, 100 °F)','CoolProp 8.0 (Melinder MPG)':'CoolProp 8.0 (Melinder MPG)','Colebrook-White résolu à part (ε = 0,046 mm)':'Colebrook-White solved separately (ε = 0.046 mm)','Hagen-Poiseuille (loi exacte)':'Hagen-Poiseuille (exact law)','Colebrook-White + CoolProp 8.0 (Melinder MEG)':'Colebrook-White + CoolProp 8.0 (Melinder MEG)','Colebrook-White résolu à part (ε = 0,0015 mm, DIN 1988-300)':'Colebrook-White solved separately (ε = 0.0015 mm, DIN 1988-300)','Colebrook-White résolu à part (ε = 0,046 mm ; Ø int. EN 10255)':'Colebrook-White solved separately (ε = 0.046 mm; inner Ø EN 10255)','Colebrook-White résolu à part (ε = 0,15 mm, DIN 1988-300 ; Ø int. EN 10255)':'Colebrook-White solved separately (ε = 0.15 mm, DIN 1988-300; inner Ø EN 10255)','Colebrook-White résolu à part (ε = 0,3 mm, valeur indicative ; Ø int. EN 10255)':'Colebrook-White solved separately (ε = 0.3 mm, indicative value; inner Ø EN 10255)','Colebrook-White résolu à part (ε = 0,007 mm, DIN 1988-300)':'Colebrook-White solved separately (ε = 0.007 mm, DIN 1988-300)','Colebrook-White résolu à part (zone critique : loi turbulente retenue)':'Colebrook-White solved separately (critical zone: turbulent law retained)'};
+var MODEN={'CHAMBRE FROIDE':'COLD ROOM','PERTES DE CHARGE':'PRESSURE DROP','EAU GLYCOLÉE':'GLYCOL WATER','CHAUFFAGE':'HEATING','ÉLECTRICITÉ':'ELECTRICAL','MÉCATRONIQUE':'MECHATRONICS'};
+var SRCEN={'ISO 2533 (atmosphère standard)':'ISO 2533 (standard atmosphere)','CoolProp 8.0 (Δh à W constant)':'CoolProp 8.0 (Δh at constant W)','CoolProp 8.0 (bilan enthalpie − condensat)':'CoolProp 8.0 (enthalpy balance − condensate)','Calcul manuel EN 12831 / EN ISO 13370':'Manual calculation EN 12831 / EN ISO 13370','Calcul manuel EN 12831':'Manual calculation EN 12831','Formule P / (√3·U·cos φ)':'Formula P / (√3·U·cos φ)','Calcul manuel (ρ à 70 °C, X = 0,08 mΩ/m)':'Manual calculation (ρ at 70 °C, X = 0.08 mΩ/m)','Linéaire (NAMUR NE43)':'Linear (NAMUR NE43)','Calcul manuel π·f·d/√2':'Manual calculation π·f·d/√2','Lois de similitude (P ∝ n³)':'Similarity laws (P ∝ n³)','Calcul manuel (ρ = 1,18 kg/m³, cp = 1 006)':'Manual calculation (ρ = 1.18 kg/m³, cp = 1,006)','Calcul manuel (h_fg = 2 501 kJ/kg)':'Manual calculation (h_fg = 2,501 kJ/kg)','Calcul manuel R = Σ e/λ + films':'Manual calculation R = Σ d/λ + films','CoolProp 8.0 (IAPWS-95)':'CoolProp 8.0 (IAPWS-95)','MEGlobal (corrélation, 50 °F)':'MEGlobal (correlation, 50 °F)','MEGlobal (corrélation, 100 °F)':'MEGlobal (correlation, 100 °F)','CoolProp 8.0 (Melinder MPG)':'CoolProp 8.0 (Melinder MPG)','USDA Handbook 66 (2016), tableau 1 ; 61 kcal/t/jour par mg CO₂/kg·h':'USDA Handbook 66 (2016), table 1; 61 kcal/t/day per mg CO₂/kg·h','ASHRAE Handbook Refrigeration 2002, chapitre 8, tableau 3':'ASHRAE Handbook Refrigeration 2002, chapter 8, table 3','Colebrook-White résolu à part (ε = 0,046 mm)':'Colebrook-White solved separately (ε = 0.046 mm)','Hagen-Poiseuille (loi exacte)':'Hagen-Poiseuille (exact law)','Colebrook-White + CoolProp 8.0 (Melinder MEG)':'Colebrook-White + CoolProp 8.0 (Melinder MEG)','Colebrook-White résolu à part (ε = 0,0015 mm, DIN 1988-300)':'Colebrook-White solved separately (ε = 0.0015 mm, DIN 1988-300)','Colebrook-White résolu à part (ε = 0,046 mm ; Ø int. EN 10255)':'Colebrook-White solved separately (ε = 0.046 mm; inner Ø EN 10255)','Colebrook-White résolu à part (ε = 0,15 mm, DIN 1988-300 ; Ø int. EN 10255)':'Colebrook-White solved separately (ε = 0.15 mm, DIN 1988-300; inner Ø EN 10255)','Colebrook-White résolu à part (ε = 0,3 mm, valeur indicative ; Ø int. EN 10255)':'Colebrook-White solved separately (ε = 0.3 mm, indicative value; inner Ø EN 10255)','Colebrook-White résolu à part (ε = 0,007 mm, DIN 1988-300)':'Colebrook-White solved separately (ε = 0.007 mm, DIN 1988-300)','Colebrook-White résolu à part (zone critique : loi turbulente retenue)':'Colebrook-White solved separately (critical zone: turbulent law retained)'};
 function mod(s){return EN()&&MODEN[s]?MODEN[s]:s;}
 function src(s){return EN()&&SRCEN[s]?SRCEN[s]:s;}
 function unit(u){return EN()&&u==='mm/s eff.'?'mm/s rms':u;}
@@ -18818,6 +18833,18 @@ var CASES=[
 ['PERTES DE CHARGE','D9','Acier ancien DN80 (Ø int. 80,8 mm), eau 20 °C, 25 m³/h, 100 m','Old steel DN80 (inner Ø 80.8 mm), water 20 °C, 25 m³/h, 100 m',32692.22,0.05,'rel','Pa','Colebrook-White résolu à part (ε = 0,3 mm, valeur indicative ; Ø int. EN 10255)',function(){return calcSegmentPDC(25,pdcInnerD('steel_old',80).di,100,1000,20,pdcMatOf('steel_old').eps).dP;}],
 ['PERTES DE CHARGE','D10','Plastique, Ø int. 13,2 mm, eau 20 °C, 0,6 m³/h, 50 m','Plastic, inner Ø 13.2 mm, water 20 °C, 0.6 m³/h, 50 m',79521.61,0.05,'rel','Pa','Colebrook-White résolu à part (ε = 0,007 mm, DIN 1988-300)',function(){return calcSegmentPDC(0.6,13.2,50,1000,20,pdcMatOf('plastic').eps).dP;}],
 ['PERTES DE CHARGE','D11','Zone critique (Re ≈ 2 800) : eau 20 °C, Ø 50 mm, 0,4 m³/h, 100 m','Critical zone (Re ≈ 2,800): water 20 °C, Ø 50 mm, 0.4 m³/h, 100 m',144.35,0.05,'rel','Pa','Colebrook-White résolu à part (zone critique : loi turbulente retenue)',function(){return calcSegmentPDC(0.4,50,100,1000,20).dP;}]
+,
+['CHAMBRE FROIDE','CR1','Chaleur de respiration, pomme à 10 °C (9 mg CO₂/kg·h)','Heat of respiration, apple at 10 °C (9 mg CO₂/kg·h)',26.6,0.3,'rel','W/t','USDA Handbook 66 (2016), tableau 1 ; 61 kcal/t/jour par mg CO₂/kg·h',function(){return (function(k,T){var p=CR_ENGINE.PBY[k];return CR_ENGINE.respW({resp:p.resp,respT:p.Tst,rc:p.rc},T);})('apple',10);}],
+['CHAMBRE FROIDE','CR2','Chaleur de respiration, pomme de terre à 15 °C (17 mg CO₂/kg·h)','Heat of respiration, potato at 15 °C (17 mg CO₂/kg·h)',50.24,0.3,'rel','W/t','USDA Handbook 66 (2016), tableau 1 ; 61 kcal/t/jour par mg CO₂/kg·h',function(){return (function(k,T){var p=CR_ENGINE.PBY[k];return CR_ENGINE.respW({resp:p.resp,respT:p.Tst,rc:p.rc},T);})('potc',15);}],
+['CHAMBRE FROIDE','CR3','Chaleur de respiration, brocoli à 5 °C (34 mg CO₂/kg·h)','Heat of respiration, broccoli at 5 °C (34 mg CO₂/kg·h)',100.48,0.3,'rel','W/t','USDA Handbook 66 (2016), tableau 1 ; 61 kcal/t/jour par mg CO₂/kg·h',function(){return (function(k,T){var p=CR_ENGINE.PBY[k];return CR_ENGINE.respW({resp:p.resp,respT:p.Tst,rc:p.rc},T);})('broccoli',5);}],
+['CHAMBRE FROIDE','CR4','Chaleur de respiration, fraise à 10 °C (75 mg CO₂/kg·h)','Heat of respiration, strawberry at 10 °C (75 mg CO₂/kg·h)',221.65,0.3,'rel','W/t','USDA Handbook 66 (2016), tableau 1 ; 61 kcal/t/jour par mg CO₂/kg·h',function(){return (function(k,T){var p=CR_ENGINE.PBY[k];return CR_ENGINE.respW({resp:p.resp,respT:p.Tst,rc:p.rc},T);})('straw',10);}],
+['CHAMBRE FROIDE','CR5','Chaleur de respiration, haricot vert à 15 °C (92 mg CO₂/kg·h)','Heat of respiration, snap bean at 15 °C (92 mg CO₂/kg·h)',271.9,0.3,'rel','W/t','USDA Handbook 66 (2016), tableau 1 ; 61 kcal/t/jour par mg CO₂/kg·h',function(){return (function(k,T){var p=CR_ENGINE.PBY[k];return CR_ENGINE.respW({resp:p.resp,respT:p.Tst,rc:p.rc},T);})('beans',15);}],
+['CHAMBRE FROIDE','CR6','Chaleur de respiration, citron à 15 °C (19 mg CO₂/kg·h)','Heat of respiration, lemon at 15 °C (19 mg CO₂/kg·h)',56.15,0.3,'rel','W/t','USDA Handbook 66 (2016), tableau 1 ; 61 kcal/t/jour par mg CO₂/kg·h',function(){return (function(k,T){var p=CR_ENGINE.PBY[k];return CR_ENGINE.respW({resp:p.resp,respT:p.Tst,rc:p.rc},T);})('lemon',15);}],
+['CHAMBRE FROIDE','CR7','Chaleur de respiration, ail à 5 °C (16 mg CO₂/kg·h)','Heat of respiration, garlic at 5 °C (16 mg CO₂/kg·h)',47.29,0.3,'rel','W/t','USDA Handbook 66 (2016), tableau 1 ; 61 kcal/t/jour par mg CO₂/kg·h',function(){return (function(k,T){var p=CR_ENGINE.PBY[k];return CR_ENGINE.respW({resp:p.resp,respT:p.Tst,rc:p.rc},T);})('garlic',5);}],
+['CHAMBRE FROIDE','CR8','Chaleur massique de la datte au-dessus du point de congélation (ASHRAE : 2,31 kJ/kg·K)','Specific heat of dates above freezing (ASHRAE: 2.31 kJ/kg·K)',2.31,0.5,'rel','kJ/kg·K','ASHRAE Handbook Refrigeration 2002, chapitre 8, tableau 3',function(){return CR_ENGINE.PBY.date.cpA;}],
+['CHAMBRE FROIDE','CR9','Chaleur massique de l’ail au-dessous du point de congélation (ASHRAE : 2,19 kJ/kg·K)','Specific heat of garlic below freezing (ASHRAE: 2.19 kJ/kg·K)',2.19,0.5,'rel','kJ/kg·K','ASHRAE Handbook Refrigeration 2002, chapitre 8, tableau 3',function(){return CR_ENGINE.PBY.garlic.cpF;}],
+['CHAMBRE FROIDE','CR10','Chaleur massique de la poire au-dessous du point de congélation (ASHRAE : 2,06 kJ/kg·K)','Specific heat of pear below freezing (ASHRAE: 2.06 kJ/kg·K)',2.06,0.5,'rel','kJ/kg·K','ASHRAE Handbook Refrigeration 2002, chapitre 8, tableau 3',function(){return CR_ENGINE.PBY.pear.cpF;}],
+['CHAMBRE FROIDE','CR11','Chaleur latente de la pomme de terre (ASHRAE : 264 kJ/kg)','Latent heat of potato (ASHRAE: 264 kJ/kg)',264,0.5,'rel','kJ/kg','ASHRAE Handbook Refrigeration 2002, chapitre 8, tableau 3',function(){return CR_ENGINE.PBY.potc.L;}]
 ];
 function run(){
  return CASES.map(function(c){var r={c:c,ok:false,v:null,err:null};

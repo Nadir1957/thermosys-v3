@@ -14,7 +14,7 @@ const EN10255 = { 8: 8.8, 10: 12.5, 15: 16.0, 20: 21.6, 25: 27.2, 32: 35.9, 40: 
 function scriptWith(marker) { const re = /<script[^>]*>([\s\S]*?)<\/script>/g; let m; while ((m = re.exec(s))) if (m[1].indexOf(marker) >= 0 && m[1].length < 400000) return m[1]; return null; }
 const eng = scriptWith('function calcSegmentPDC(');
 ok(!!eng, 'script du moteur introuvable');
-const a = s.indexOf("['PERTES DE CHARGE','D1'"), b = s.indexOf("\n];\nfunction run(){", a);
+const a = s.indexOf("['PERTES DE CHARGE','D1'"), b = Math.min(...[s.indexOf(",\n['CHAMBRE FROIDE','CR1'", a), s.indexOf("\n];\nfunction run(){", a)].filter(x => x > 0));
 ok(a > 0 && b > a, 'lignes de cas introuvables');
 const cs = s.indexOf('window.calcPDC=function(){'), ce = s.indexOf('\n};\n', cs);
 ok(cs > 0 && ce > cs, 'calcPDC introuvable');
