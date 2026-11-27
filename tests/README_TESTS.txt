@@ -162,3 +162,6 @@ tewi_grid_regression.js : facteurs d emission du reseau par pays (50 pays contre
 isolation_regression.js : calcul d epaisseur d isolant anti-condensation (point de rosee CoolProp, convection naturelle Churchill-Chu, bilan thermique, 2e methode) : suite complete et 26 mutations. Commande : node tests\isolation_regression.js
 
 cop_lois_regression.js : lois de COP (pompe a chaleur air-air en chauffage, groupe froid en refroidissement) comparees aux tableaux publies de deux familles de rooftops Carrier (taille 36) et, pour l air-eau, a Wolf FHA et Stiebel Eltron WPL 25 : suite complete et 15 mutations (chauffage, froid, charge partielle). Commande : node tests\cop_lois_regression.js
+
+heating_exemples_regression.js : chauffage EN 12831, exemples numeriques publies (326 W, 640 W, 305 W, 1507 W), rapport de logiciel DIN/TS 12831-1:2020 (ventilation du batiment 790 W pour 1580 W de locaux), tables e, epsilon, nmin (Univ. de Trieste), formules 2003 (SBZ), sol EN ISO 13370 : 42 verifications et 17 mutations. Commande : node tests\\heating_exemples_regression.js
+heating_regression.js v3 : total du batiment avec la regle de zone 2017 (ventilation naturelle comptee a moitie des qu il y a plusieurs locaux), 60 batiments aleatoires, 18 mutations. Commande : node tests\\heating_regression.js

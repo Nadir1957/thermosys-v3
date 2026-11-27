@@ -8,6 +8,8 @@
 //    accidentelle ou une erreur de programmation, mais ne prouvent pas la conformite a la norme.
 //  - Les coefficients de protection au vent e (0,03/0,05 ; 0,02/0,03 ; 0,01/0,02) et de hauteur epsilon (1,0 ; 1,2 ; 1,5 ; seuils 10 m et 30 m)
 //    ont ete confrontes a l'implementation d'un tiers (bibliotheque AixLib, modele InfiltrationRate_DIN12831) : ils concordent.
+//  - v3 : le total du batiment compte la moitie de la ventilation des locaux ventiles naturellement des qu'il y en a au moins deux (regle de zone f_i-z = 0,5 de l'edition 2017,
+//    constatee dans deux rapports de logiciels conformes a DIN/TS 12831-1:2020 ; voir tests\heating_exemples_regression.js). Le calcul d'un local reste la methode classique.
 //  - Le module applique la methode CLASSIQUE (infiltration 2.V.n50.e.eps, facteur de sol 1,45, 0,34 W/(m3/h.K)). L'edition EN 12831-1:2017 decrit
 //    d'autres formules de debit d'air (d'apres les sources consultees) : elles ne sont pas reproduites ici ni verifiees.
 //  - Les 14 mutations de la section 9 introduisent volontairement une erreur dans le moteur : chacune doit faire echouer au moins un test.
@@ -114,9 +116,30 @@ function suite(H, log) {
     const bld = H.building([A, B], g0), ra = H.room(A, g0), rb = H.room(B, g0);
     check('Somme des pieces : Ptot', near(bld.sum.Ptot, ra.Ptot + rb.Ptot, 1e-9));
     check('Echanges internes nuls entre pieces a meme temperature', near(bld.sum.Pint, 0, 1e-9));
-    check('Contribution au batiment = transmission + ventilation + relance', near(bld.sum.Pbld, bld.sum.PT + bld.sum.PV + bld.sum.PRH, 1e-9));
+    check('Ventilation du batiment = moitie de la somme des locaux ventiles naturellement (2 locaux)', near(bld.sum.PV, 0.5 * (ra.PV + rb.PV), 1e-9) && near(bld.sum.PVrooms, ra.PV + rb.PV, 1e-9) && bld.sum.fz === 0.5);
+    check('Contribution au batiment = transmission + ventilation du batiment + relance', near(bld.sum.Pbld, bld.sum.PT + bld.sum.PV + bld.sum.PRH, 1e-9) && near(bld.sum.Pbld, ra.Pbld + rb.Pbld - 0.5 * (ra.PV + rb.PV), 1e-9));
     check('Surface et volume cumules', near(bld.sum.A, 36, 1e-9) && near(bld.sum.V, 90, 1e-9), 'A = ' + bld.sum.A + ', V = ' + bld.sum.V);
-    check('Coefficient G = (HT + HV) / V', near(bld.sum.G, (ra.HT + ra.HV + rb.HT + rb.HV) / 90, 1e-9));
+    check('Coefficient G = (HT + 0,5 HV) / V', near(bld.sum.G, (ra.HT + rb.HT + 0.5 * (ra.HV + rb.HV)) / 90, 1e-9));
+    const b1 = H.building([A], g0);
+    check('Un seul local : ventilation non reduite', near(b1.sum.PV, ra.PV, 1e-9) && b1.sum.fz === 1);
+    const Ab = room(A.elems, { vent: { mode: 'bal', vsu: 40, eta: 0.8 } }), Bb = room(B.elems, { area: 16, vent: { mode: 'bal', vsu: 30, eta: 0.8 } });
+    const bb = H.building([Ab, Bb], g0), rab = H.room(Ab, g0), rbb = H.room(Bb, g0);
+    check('Locaux a ventilation mecanique : non reduits', near(bb.sum.PV, rab.PV + rbb.PV, 1e-9) && bb.sum.fz === 1);
+    const bm = H.building([A, B, Ab], g0);
+    check('Melange : seuls les locaux naturels sont reduits', near(bm.sum.PV, 0.5 * (ra.PV + rb.PV) + rab.PV, 1e-9));
+    const bm1 = H.building([A, Ab], g0);
+    check('Un seul local naturel parmi des locaux mecaniques : pas de reduction', near(bm1.sum.PV, ra.PV + rab.PV, 1e-9));
+    { let badB = 0; seed = 777;
+      for (let k = 0; k < 60; k++) {
+        const n = 1 + Math.floor(rnd() * 5), rs = [];
+        for (let i = 0; i < n; i++) rs.push(room([el('wall', 5 + rnd() * 20, 0.2 + rnd(), 'ext'), el('glaz', 1 + rnd() * 4, 1 + rnd(), 'ext')], { area: 8 + rnd() * 30, h: 2.4 + rnd(), Ti: 18 + rnd() * 6, nmin: pick([0.5, 1]), vent: pick([{ mode: 'nat', vsu: 0, eta: 0 }, { mode: 'bal', vsu: 20 + rnd() * 80, eta: rnd() * 0.9 }]) }));
+        const gg = Object.assign({}, g0, { Te: -10 + rnd() * 8, n50: 1 + rnd() * 8, fRH: pick([0, 10]) });
+        const nNat = rs.filter(q => q.vent.mode === 'nat').length, f = nNat >= 2 ? 0.5 : 1;
+        let PT = 0, PV = 0, PRH = 0; for (const q of rs) { const y = ref(q, gg); PT += y.PT; PV += (q.vent.mode === 'nat' ? f : 1) * y.PV; PRH += y.PRH; }
+        const x = H.building(rs, gg).sum;
+        if (!(rel(x.Pbld, PT + PV + PRH, 1e-9) && rel(x.PV, PV, 1e-9))) badB++;
+      }
+      check('60 batiments aleatoires : moteur = reference independante (' + badB + ' ecart(s))', badB === 0); }
 
     if (log) console.log('7) Proprietes physiques');
     const base = room([el('wall', 10, 0.4, 'ext'), el('glaz', 3, 1.4, 'ext')]);
@@ -177,7 +200,11 @@ const MUT = [
   ['relance sans la surface', 'out.PRH = r.area * g.fRH', 'out.PRH = g.fRH', 0],
   ['plafond de rendement 0,99', 'Math.min(0.95', 'Math.min(0.99', 0],
   ['sol : 0,457 devient 0,5', '0.457 * Bp', '0.5 * Bp', 0],
-  ['sol : facteur 2 oublie', 'U = 2 * lam / (Math.PI * Bp + dt)', 'U = lam / (Math.PI * Bp + dt)', 0]
+  ['sol : facteur 2 oublie', 'U = 2 * lam / (Math.PI * Bp + dt)', 'U = lam / (Math.PI * Bp + dt)', 0],
+  ['batiment : facteur 0,6 au lieu de 0,5', 's.fz = nNat >= 2 ? 0.5 : 1', 's.fz = nNat >= 2 ? 0.6 : 1', 0],
+  ['batiment : reduction des un seul local', 's.fz = nNat >= 2 ? 0.5 : 1', 's.fz = nNat >= 1 ? 0.5 : 1', 0],
+  ['batiment : reduction aussi pour la ventilation mecanique', "var f = rooms[i].vent.mode !== 'bal' ? s.fz : 1", 'var f = s.fz', 0],
+  ['batiment : G sans la reduction', 's.H += o.HT + o.HV * f', 's.H += o.HT + o.HV', 0]
 ];
 let mdet = 0, mok = 0;
 for (const [nm, s, r, n] of MUT) {
