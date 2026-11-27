@@ -157,7 +157,7 @@ validation_regression.js : page Validation et references (contenu, trois langues
 
 gaines_ef_regression.js : gaines a frottement constant (Colebrook, rugosite 0,0003 pi, air standard) : 2e implementation sur 400 cas, formule d ajustement usuelle, Huebscher, singularites, validations, rendu FR/EN/ES, 5 valeurs publiees du manuel ASHRAE Fundamentals (ecart de -1,0 a +3,5 %) ; 24 mutations. Commande : node tests\gaines_ef_regression.js
 
-tewi_grid_regression.js : facteurs d emission du reseau par pays (50 pays contre le tableau AIE 2025, 21 contre ADEME 2011, Iran non verifie) : une mutation par pays. Commande : node tests\tewi_grid_regression.js
+tewi_grid_regression.js : facteurs d emission du reseau par pays (50 pays contre le tableau AIE 2025, 21 contre Ember 2022-2025 pour 22 pays (cycle de vie). Commande : node tests\tewi_grid_regression.js
 
 isolation_regression.js : calcul d epaisseur d isolant anti-condensation (point de rosee CoolProp, convection naturelle Churchill-Chu, bilan thermique, 2e methode) : suite complete et 26 mutations. Commande : node tests\isolation_regression.js
 
@@ -196,3 +196,4 @@ actionneurs_fiche_regression.js : fiches actionneurs, unite N/Nm correcte et plu
 aide_traitement_air_regression.js : AIDE rubrique 17, groupe froid selon la charge, refroidissement hiver et en-tete d'impression en FR/EN/ES (12 controles).
 coldroom_ail_regression.js : chambre froide, ail a -2,7 C et pomme de terre a -1,7 C confirmes par des mesures publiees, texte de limites FR/EN/ES (9 controles).
 prg_melanges_regression.js : PRG des melanges recalcules a partir des composants (annexe I, AR4), ecart avec les valeurs HFO du reglement, texte de limites FR/EN/ES.
+voix_air_regression.js : lecture vocale du RAPPORT, module traitement d'air (COP selon la charge, refroidissement en hiver) en FR/EN/ES (8 controles).
