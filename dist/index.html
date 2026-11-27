@@ -1960,12 +1960,18 @@
 &#9679; <b>Salle très sèche :</b> consigne en point de rosée, roue dessiccante et énergie de régénération.<br>
 &#9679; <b>Énergie annuelle :</b> chargez le fichier météo (.epw ou .zip) de la ville, téléchargeable gratuitement sur climate.onebuilding.org (boutons dans la section 8). Thermosys déduit les conditions de calcul et calcule l'énergie sur 8760 heures, avec comparaison des choix, profils horaires, débit variable et COP du groupe froid.<br>
 &#9679; <b>Compléments (étape 32) :</b> type de flux (simple ou double flux), source de chaleur dont pompe à chaleur réversible (rooftop, COP selon la température extérieure, dégivrage non modélisé), humidification vapeur ou adiabatique (rendement de saturation requis, avertissement hygiène en salle propre), classes de filtres G4 à F9 avec pertes de charge indicatives, silencieux (perte de charge seulement, acoustique non calculée), <b>free-cooling modulant</b> (air neuf jusqu'à 100 % selon l'enthalpie ou la température) avec gain annuel.<br>
+&#9679; <b>Groupe froid selon la charge :</b> le COP du groupe froid peut suivre la charge (menu « COP du groupe froid / charge ») : « vitesse variable ou plusieurs étages » (loi à capacité variable, type ESEER) ou « tout-ou-rien » (une seule vitesse, formule EN 14825 avec Cc = 0,9, plus sévère à faible charge). La loi à capacité variable reste non vérifiée.<br>
+&#9679; <b>Hiver :</b> si les charges internes obligent à refroidir, une ligne « Refroidissement sensible (hiver, charges internes) » apparaît dans les résultats et dans la note imprimée.<br>
+&#9679; <b>Impression :</b> chaque module imprimé avec le bouton IMPR. porte l’en-tête THERMOSYS ; la note du module traitement d’air s’imprime depuis son propre bouton.<br>
 &#9679; <b>Important :</b> pré-dimensionnement. Les valeurs d'ingénierie sont indicatives et modifiables ; chaque note donne ses sources et leur niveau de confiance. Ne remplace ni la sélection du constructeur ni la qualification.<br><br>
 <i>&#9679; Sizes a comfort AHU or rooftop, or a pharmaceutical clean room installation: airflow, fresh air, heat recovery, cooling coil, reheat, humidification, fans, psychrometric chart, printed note.<br>
 &#9679; <b>Clean room:</b> ISO 14644-1 classes and GMP grades (Annex 1), EN 1822 filters, pressure cascade between rooms and airlocks, recovery time.<br>
 &#9679; <b>Very dry room:</b> dew point setpoint, desiccant wheel and regeneration energy.<br>
 &#9679; <b>Annual energy:</b> load the weather file (.epw or .zip) of the city, free to download from climate.onebuilding.org (buttons in section 8). Thermosys derives the design conditions and calculates energy over 8760 hours, with comparison of choices, hourly profiles, variable airflow and chiller COP.<br>
 &#9679; <b>Additions (step 32):</b> flow type (single or double flow), heat source including reversible heat-pump rooftop (COP depending on outdoor temperature, defrost not modelled), steam or adiabatic humidification (required saturation efficiency, hygiene warning in clean rooms), filter classes G4 to F9 with indicative pressure drops, silencers (pressure drop only, acoustics not calculated), <b>modulating free-cooling</b> (fresh air up to 100 % by enthalpy or temperature) with annual saving.<br>
+&#9679; <b>Chiller vs load:</b> the chiller COP can follow the load (menu “Chiller COP vs load”): “variable speed or staged” (variable-capacity law, ESEER type) or “on-off” (single speed, EN 14825 formula with Cc = 0.9, harsher at low load). The variable-capacity law remains not verified.<br>
+&#9679; <b>Winter:</b> if internal gains force cooling, a “Sensible cooling (winter, internal gains)” line appears in the results and in the printed note.<br>
+&#9679; <b>Printing:</b> every module printed with the PRINT button carries the THERMOSYS header; the air-handling note prints from its own button.<br>
 &#9679; <b>Important:</b> preliminary sizing. Engineering values are indicative and editable; each note lists its sources and confidence level. It replaces neither manufacturer selection nor qualification.</i>
 </div>
 </div>
@@ -21398,6 +21404,12 @@ RS.unshift(function(k,mm){ return ex85(k); });
 if(I.mlRules&&I.mlRules.unshift) I.mlRules.unshift(function(k){ if(k.length>700) return null; try{ return ex85(k); }catch(e){ return null; } });
 })();
 
+</script>
+<script id="lang-es-aide-air">
+(window.I18N3=window.I18N3||{dict:{}});
+(function(){var I=window.I18N3;var E=I.dict.es=I.dict.es||{};
+var D={"Chiller vs load:": "Enfriadora según la carga:", "the chiller COP can follow the load (menu “Chiller COP vs load”): “variable speed or staged” (variable-capacity law, ESEER type) or “on-off” (single speed, EN 14825 formula with Cc = 0.9, harsher at low load). The variable-capacity law remains not verified.": "el COP de la enfriadora puede seguir la carga (menú «COP de la enfriadora / carga»): «velocidad variable o varias etapas» (ley de capacidad variable, tipo ESEER) o «todo-o-nada» (una sola velocidad, fórmula EN 14825 con Cc = 0,9, más severa a baja carga). La ley de capacidad variable sigue sin verificar.", "Winter:": "Invierno:", "if internal gains force cooling, a “Sensible cooling (winter, internal gains)” line appears in the results and in the printed note.": "si las cargas internas obligan a enfriar, aparece una línea «Enfriamiento sensible (invierno, cargas internas)» en los resultados y en la nota impresa.", "Printing:": "Impresión:", "every module printed with the PRINT button carries the THERMOSYS header; the air-handling note prints from its own button.": "cada módulo impreso con el botón IMPR. lleva el encabezado THERMOSYS; la nota del módulo de tratamiento de aire se imprime desde su propio botón."};
+Object.keys(D).forEach(function(k){ E[k]=D[k]; });})();
 </script>
 <script id="lang-es-data-14">
 (window.I18N3=window.I18N3||{dict:{}});

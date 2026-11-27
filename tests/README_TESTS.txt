@@ -193,3 +193,4 @@ print_header_regression.js : en-tete d impression (THERMOSYS, titre du module, d
 print_coldroom_regression.js : impression de la chambre froide, panneaux coupables entre deux pages (premiere page non vide) sans changer les autres modules ; 5 mutations. Commande : node tests\print_coldroom_regression.js
 journal_init_en_regression.js : traduction anglaise du message de demarrage du journal, independante des chiffres (6 controles).
 actionneurs_fiche_regression.js : fiches actionneurs, unite N/Nm correcte et plus de tirets ni pastilles vides sur les fiches masquees (10 controles).
+aide_traitement_air_regression.js : AIDE rubrique 17, groupe froid selon la charge, refroidissement hiver et en-tete d'impression en FR/EN/ES (12 controles).
