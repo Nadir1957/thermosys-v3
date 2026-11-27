@@ -18715,9 +18715,9 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 (function(){
 'use strict';
 if(window.__val56)return; window.__val56=1;
-var VERSION_FR='étape 56 — 30/10/2026',VERSION_EN='step 56 — 30/10/2026';
-var MODEN={'CHAUFFAGE':'HEATING','ÉLECTRICITÉ':'ELECTRICAL','MÉCATRONIQUE':'MECHATRONICS'};
-var SRCEN={'ISO 2533 (atmosphère standard)':'ISO 2533 (standard atmosphere)','CoolProp 8.0 (Δh à W constant)':'CoolProp 8.0 (Δh at constant W)','CoolProp 8.0 (bilan enthalpie − condensat)':'CoolProp 8.0 (enthalpy balance − condensate)','Calcul manuel EN 12831 / EN ISO 13370':'Manual calculation EN 12831 / EN ISO 13370','Calcul manuel EN 12831':'Manual calculation EN 12831','Formule P / (√3·U·cos φ)':'Formula P / (√3·U·cos φ)','Calcul manuel (ρ à 70 °C, X = 0,08 mΩ/m)':'Manual calculation (ρ at 70 °C, X = 0.08 mΩ/m)','Linéaire (NAMUR NE43)':'Linear (NAMUR NE43)','Calcul manuel π·f·d/√2':'Manual calculation π·f·d/√2','Lois de similitude (P ∝ n³)':'Similarity laws (P ∝ n³)','Calcul manuel (ρ = 1,18 kg/m³, cp = 1 006)':'Manual calculation (ρ = 1.18 kg/m³, cp = 1,006)','Calcul manuel (h_fg = 2 501 kJ/kg)':'Manual calculation (h_fg = 2,501 kJ/kg)','Calcul manuel R = Σ e/λ + films':'Manual calculation R = Σ d/λ + films'};
+var VERSION_FR='état du 27/11/2026',VERSION_EN='status of 27/11/2026';
+var MODEN={'EAU GLYCOLÉE':'GLYCOL WATER','CHAUFFAGE':'HEATING','ÉLECTRICITÉ':'ELECTRICAL','MÉCATRONIQUE':'MECHATRONICS'};
+var SRCEN={'ISO 2533 (atmosphère standard)':'ISO 2533 (standard atmosphere)','CoolProp 8.0 (Δh à W constant)':'CoolProp 8.0 (Δh at constant W)','CoolProp 8.0 (bilan enthalpie − condensat)':'CoolProp 8.0 (enthalpy balance − condensate)','Calcul manuel EN 12831 / EN ISO 13370':'Manual calculation EN 12831 / EN ISO 13370','Calcul manuel EN 12831':'Manual calculation EN 12831','Formule P / (√3·U·cos φ)':'Formula P / (√3·U·cos φ)','Calcul manuel (ρ à 70 °C, X = 0,08 mΩ/m)':'Manual calculation (ρ at 70 °C, X = 0.08 mΩ/m)','Linéaire (NAMUR NE43)':'Linear (NAMUR NE43)','Calcul manuel π·f·d/√2':'Manual calculation π·f·d/√2','Lois de similitude (P ∝ n³)':'Similarity laws (P ∝ n³)','Calcul manuel (ρ = 1,18 kg/m³, cp = 1 006)':'Manual calculation (ρ = 1.18 kg/m³, cp = 1,006)','Calcul manuel (h_fg = 2 501 kJ/kg)':'Manual calculation (h_fg = 2,501 kJ/kg)','Calcul manuel R = Σ e/λ + films':'Manual calculation R = Σ d/λ + films','CoolProp 8.0 (IAPWS-95)':'CoolProp 8.0 (IAPWS-95)','MEGlobal (corrélation, 50 °F)':'MEGlobal (correlation, 50 °F)','MEGlobal (corrélation, 100 °F)':'MEGlobal (correlation, 100 °F)','CoolProp 8.0 (Melinder MPG)':'CoolProp 8.0 (Melinder MPG)'};
 function mod(s){return EN()&&MODEN[s]?MODEN[s]:s;}
 function src(s){return EN()&&SRCEN[s]?SRCEN[s]:s;}
 function unit(u){return EN()&&u==='mm/s eff.'?'mm/s rms':u;}
@@ -18761,6 +18761,17 @@ var CASES=[
 ['CHARGE PRO','C2','Air neuf latent, 1 000 m³/h, ΔW = 2,7 g/kg','Fresh air latent, 1,000 m³/h, ΔW = 2.7 g/kg',2213,1.5,'rel','W','Calcul manuel (h_fg = 2 501 kJ/kg)',function(){var r=CLE.runDay(cle({vent:{flow:1000,sched:SCHED}}),{nsub:2});return r.hours[11].lat.vent;}],
 ['CHARGE PRO','C3','Mur en régime permanent (U avec films), 50 m², ΔT 11 K','Steady-state wall (U with films), 50 m², ΔT 11 K',219.1,1.5,'rel','W','Calcul manuel R = Σ e/λ + films',function(){var r=CLE.runDay(cle({}),{nsub:2});return r.hours[11].comp.walls;}],
 ['CHARGE PRO','C4','Déclinaison solaire au 21 juillet','Solar declination on 21 July',20.6,0.3,'abs','°','ASHRAE Fundamentals, ch. 14',function(){return CLE.decl(CLE.dayOfYear(7,21));}]
+,
+['EAU GLYCOLÉE','W1','Eau à 20 °C : masse volumique','Water at 20 °C: density',998.21,0.05,'rel','kg/m³','CoolProp 8.0 (IAPWS-95)',function(){return window.reseauWater(20).rho;}],
+['EAU GLYCOLÉE','W2','Eau à 20 °C : viscosité dynamique','Water at 20 °C: dynamic viscosity',1.0016,0.5,'rel','mPa·s','CoolProp 8.0 (IAPWS-95)',function(){return window.reseauWater(20).mu*1000;}],
+['EAU GLYCOLÉE','W3','Eau à 60 °C : viscosité dynamique','Water at 60 °C: dynamic viscosity',0.4660,0.5,'rel','mPa·s','CoolProp 8.0 (IAPWS-95)',function(){return window.reseauWater(60).mu*1000;}],
+['EAU GLYCOLÉE','G1','Éthylène-glycol 40 % masse, 10 °C : masse volumique','Ethylene glycol 40 % by mass, 10 °C: density',1057.0,0.2,'rel','kg/m³','MEGlobal (corrélation, 50 °F)',function(){return window.glyProps('EG40',10).rho;}],
+['EAU GLYCOLÉE','G2','Éthylène-glycol 40 % masse, 10 °C : viscosité (écart connu +3 %)','Ethylene glycol 40 % by mass, 10 °C: viscosity (known +3 % deviation)',3.819,5,'rel','mPa·s','MEGlobal (corrélation, 50 °F)',function(){return window.glyProps('EG40',10).mu*1000;}],
+['EAU GLYCOLÉE','G3','Éthylène-glycol 30 % masse, 37,8 °C : viscosité (écart connu +3 %)','Ethylene glycol 30 % by mass, 37.8 °C: viscosity (known +3 % deviation)',1.322,5,'rel','mPa·s','MEGlobal (corrélation, 100 °F)',function(){return window.glyProps('EG30',37.78).mu*1000;}],
+['EAU GLYCOLÉE','G4','Propylène-glycol 30 % masse, 45 °C : viscosité (interpolation)','Propylene glycol 30 % by mass, 45 °C: viscosity (interpolation)',1.3835,0.5,'rel','mPa·s','CoolProp 8.0 (Melinder MPG)',function(){return window.glyProps('PG30',45).mu*1000;}],
+['EAU GLYCOLÉE','G5','Éthylène-glycol 30 % masse, 37,8 °C : masse volumique','Ethylene glycol 30 % by mass, 37.8 °C: density',1031.2,0.2,'rel','kg/m³','MEGlobal (corrélation, 100 °F)',function(){return window.glyProps('EG30',37.78).rho;}],
+['EAU GLYCOLÉE','G6','Propylène-glycol 30 % masse, 45 °C : masse volumique (interpolation)','Propylene glycol 30 % by mass, 45 °C: density (interpolation)',1010.5,0.1,'rel','kg/m³','CoolProp 8.0 (Melinder MPG)',function(){return window.glyProps('PG30',45).rho;}],
+['EAU GLYCOLÉE','G7','Éthylène-glycol 40 % masse, 10 °C : viscosité (tableau contre sa source)','Ethylene glycol 40 % by mass, 10 °C: viscosity (table against its source)',3.9465,0.5,'rel','mPa·s','CoolProp 8.0 (Melinder MEG)',function(){return window.glyProps('EG40',10).mu*1000;}]
 ];
 function run(){
  return CASES.map(function(c){var r={c:c,ok:false,v:null,err:null};

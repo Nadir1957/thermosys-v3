@@ -171,3 +171,5 @@ servomoteurs_regression.js : catalogue des servomoteurs, 15 fiches comparees aux
 vannes_fiches_regression.js : catalogue des vannes, 31 vannes comparees aux fiches des fabricants (Danfoss, Belimo, Honeywell, IMI, Siemens), 3 corrections de references et de valeurs, 2 doublons retires, 22 vannes sans fiche masquees : 549 verifications, 160 mutations tuees. Lancer : node tests\vannes_fiches_regression.js
 
 glycol_dow_regression.js : tableau eau glycolee compare a cinq sources publiees (guides Dow DOWFROST et DOWTHERM SR-1, fiche Tyfocor L, correlations MEGlobal, ajustements ASHRAE de CoolProp), viscosite et densite, avec ecarts maximaux admis : 114 verifications, 16 mutations tuees. Lancer : node tests\glycol_dow_regression.js
+
+validation_cas_regression.js : page Validation, 10 cas de reference eau et eau glycolee (eau IAPWS, MEGlobal, Melinder) rejoues sur les moteurs, valeurs figees, mutations du tableau glycol : lancer node tests\validation_cas_regression.js
