@@ -150,12 +150,12 @@ export default async function handler(req, res) {
     // Modele reglable depuis Vercel (Settings > Environment Variables) : GEMINI_MODEL, GEMINI_API_VERSION. Defauts : gemini-2.5-flash, v1.
     const okId = s => /^[A-Za-z0-9._-]{1,64}$/.test(s);
     const GEMINI_MODEL = okId((process.env.GEMINI_MODEL || '').trim()) ? process.env.GEMINI_MODEL.trim() : 'gemini-2.5-flash';
-    const GEMINI_API_VERSION = okId((process.env.GEMINI_API_VERSION || '').trim()) ? process.env.GEMINI_API_VERSION.trim() : 'v1';
+    const GEMINI_API_VERSION = okId((process.env.GEMINI_API_VERSION || '').trim()) ? process.env.GEMINI_API_VERSION.trim() : 'v1beta';
     console.log('[THERMOSYS OCR] modele : ' + GEMINI_MODEL + ' (' + GEMINI_API_VERSION + ')');
     const mt = parseInt(process.env.GEMINI_MAX_TOKENS, 10);
     const GEMINI_MAX_TOKENS = (mt >= 1024 && mt <= 32768) ? mt : 8192;
     // Modeles 2.5 Flash : la reflexion interne consomme le plafond de longueur et coupe la reponse ; inutile pour lire une plaque.
-    const THINKING_OFF = /^gemini-2\.5-flash/.test(GEMINI_MODEL) && (process.env.GEMINI_THINKING || '').trim().toLowerCase() !== 'on';
+    const THINKING_OFF = GEMINI_API_VERSION === 'v1beta' && /^gemini-2\.5-flash/.test(GEMINI_MODEL) && (process.env.GEMINI_THINKING || '').trim().toLowerCase() !== 'on';
     const payload = JSON.stringify({
       contents: [{
         parts: [
