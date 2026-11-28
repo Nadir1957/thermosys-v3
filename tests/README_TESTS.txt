@@ -207,3 +207,4 @@ ocr_repetitions_regression.js : OCR, suppression des blocs repetes par l'IA (val
 ocr_repetitions2_regression.js : OCR, consigne anti-repetition retiree (prompt d'origine) ; suppression renforcee des lignes repetees par l'IA.
 ocr_repetitions3_regression.js : OCR, nettoyage des repetitions v3 : titres de section vides, lignes a valeur vide, phrase d'introduction de l'IA.
 ocr_nom_modele_regression.js : le modele OCR n'est plus nomme en dur ("Gemini" sans version) dans les textes FR/EN/ES, la barre d'etat, le pied de page et la voix.
+projets_compte_regression.js : ACCUEIL, section Mes projets (compte) : liste devis/reseaux/favoris, ouverture, suppression en 2 clics, export JSON, textes FR/EN/ES, noms echappes.

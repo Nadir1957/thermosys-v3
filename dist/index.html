@@ -238,6 +238,7 @@
 <button class="btn bs" onclick="goPage('vannes')" style="justify-content:flex-start">&#9881; <span id="t_qa_van">Vannes &amp; Actionneurs</span></button>
 </div></div>
 </div>
+<div class="panel" id="home-projets-panel" style="margin-top:10px;line-height:1.6"></div>
 <div class="panel" id="home-ref-panel" style="margin-top:10px;line-height:1.6"></div>
 
 </div>
@@ -21410,6 +21411,108 @@ if(I.mlRules&&I.mlRules.unshift) I.mlRules.unshift(function(k){ if(k.length>700)
 (window.I18N3=window.I18N3||{dict:{}});
 (function(){var I=window.I18N3;var E=I.dict.es=I.dict.es||{};
 var D={"REFERENCE COMPARISONS AND LIMITS OF THE HOURLY CALCULATION":"COMPARACIONES DE REFERENCIA Y LÍMITES DEL CÁLCULO HORARIO","The HOURLY ESTIMATE has been compared with published references and with real measurements:":"La ESTIMACIÓN HORARIA se ha comparado con referencias publicadas y con mediciones reales:","ASHRAE 140: 27 of the 28 reference results reproduced (example ranges, not official criteria).":"ASHRAE 140: 27 de los 28 resultados de referencia reproducidos (rangos de ejemplo, no criterios oficiales).","EnergyPlus 23.2 on 12 houses (Algiers, Ghardaïa, Ouargla, Denver), same external convection: heating +4 % to +11 %, cooling −2 % to +5 %, heating peaks −13 % to +3 %, cooling peaks +4 % to +12 %.":"EnergyPlus 23.2 en 12 viviendas (Argel, Ghardaïa, Ouargla, Denver), con la misma convección exterior: calefacción de +4 % a +11 %, frío de −2 % a +5 %, puntas de calefacción de −13 % a +3 %, puntas de frío de +4 % a +12 %.","Real measurements on two German test houses (Holzkirchen, IEA EBC Annexes 58 and 71), not tuned to these measurements: temperature within 0.4 to 0.9 K; heating between −23 % and +13 % depending on the test.":"Mediciones reales de dos casas de ensayo alemanas (Holzkirchen, proyectos AIE EBC Anexos 58 y 71), sin ajuste a estas mediciones: temperatura a 0,4–0,9 K; calefacción entre −23 % y +13 % según el ensayo.","Limits:":"Límites:","Not validated by measurements outside temperate climates.":"No validado con mediciones fuera de climas templados.","Six other climates (Paris, Madrid, Oslo-Tryvannshøgda, Singapore, Shanghai, Toluca; 18 houses): heating +0.4 % to +9 %, cooling +2 % to +8 %, heating peaks −15 % to +1 %, cooling peaks −1 % to +12 %, except in Toluca (mild high-altitude climate, small heating demand) where heating is overestimated by +14 % to +32 %.":"Otros seis climas (París, Madrid, Oslo-Tryvannshøgda, Singapur, Shanghái, Toluca; 18 viviendas): calefacción de +0,4 % a +9 %, frío de +2 % a +8 %, puntas de calefacción de −15 % a +1 %, puntas de frío de −1 % a +12 %, salvo en Toluca (clima templado de altitud, poca demanda de calefacción), donde la calefacción está sobrestimada de +14 % a +32 %.","Mild high-altitude climates with small heating demand (Toluca): heating difference up to +32 %.":"Climas templados de altitud con poca demanda de calefacción (Toluca): desviación en calefacción de hasta +32 %.","For small quantities (below 1000 kWh/year), the heating difference reaches +20 % to +29 %; cooling reaches +14 % for one insulated house with small quantities.":"Con cantidades pequeñas (menos de 1000 kWh/año), la diferencia en calefacción alcanza +20 % a +29 %; el frío alcanza +14 % en una vivienda aislada con cantidades pequeñas.","Preliminary sizing: does not replace a full regulatory study.":"Predimensionado: no sustituye un estudio reglamentario completo.","Details and sources: HELP tab, “Validation and references” section.":"Detalles y fuentes: pestaña AYUDA, apartado «Validación y referencias»."};
+Object.keys(D).forEach(function(k){ E[k]=D[k]; });})();
+</script>
+<script id="projets-compte-module">
+/* Thermosys - accueil : "Mes projets" (compte). Liste des devis, reseaux et favoris enregistres dans le compte, ouverture, suppression, export JSON. FR/EN ; ES par le dictionnaire I18N3 */
+(function(){
+'use strict';
+var FR={title:'MES PROJETS (COMPTE)',intro:'Vos devis, réseaux et favoris enregistrés dans votre compte. Vous seul y avez accès.',
+ quotes:'Devis',nets:'Réseaux',favs:'Favoris du catalogue',none_q:'Aucun devis enregistré.',none_n:'Aucun réseau enregistré.',none_f:'Aucun favori enregistré.',
+ open:'Ouvrir',del:'Supprimer',confirm:'Confirmer ?',refresh:'Actualiser',export:'Exporter tout (JSON)',manage:'Gérer dans DEVIS',
+ login:'Connectez-vous pour voir vos projets.',loading:'Chargement…',err:'Erreur de chargement.',
+ hint:'Pour enregistrer : utilisez le bouton de sauvegarde dans DEVIS et dans RÉSEAUX HVAC (Calcul réseau).',
+ deleted:'Projet supprimé',exported:'Export téléchargé',noexp:'Rien à exporter'};
+var EN={title:'MY PROJECTS (ACCOUNT)',intro:'Your quotes, networks and favorites saved in your account. Only you can access them.',
+ quotes:'Quotes',nets:'Networks',favs:'Catalogue favorites',none_q:'No saved quotes.',none_n:'No saved networks.',none_f:'No saved favorites.',
+ open:'Open',del:'Delete',confirm:'Confirm?',refresh:'Refresh',export:'Export all (JSON)',manage:'Manage in QUOTE',
+ login:'Sign in to see your projects.',loading:'Loading…',err:'Loading error.',
+ hint:'To save: use the save button in QUOTE and in HVAC NETWORKS (Network calc).',
+ deleted:'Project deleted',exported:'Export downloaded',noexp:'Nothing to export'};
+var S={rows:[],fav:0,uid:null,state:'init',last:null,pending:null,timer:null,loadedAt:0};
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function L(){return (window.lang==='en')?EN:FR;}
+function okId(x){return /^[A-Za-z0-9-]{8,64}$/.test(String(x));}
+function dstr(v){try{var d=new Date(v);return isNaN(d.getTime())?'':d.toLocaleDateString();}catch(e){return '';}}
+function toast(m,t){try{if(typeof showToast==='function')showToast(m,t||'i');}catch(e){}}
+function sb(){try{return (typeof _sb!=='undefined')?_sb:null;}catch(e){return null;}}
+function btn(label,act,id,mod,cls){return '<button class="btn '+(cls||'bs')+'" style="padding:3px 9px;font-size:11px" onclick="mpAct(\''+act+'\',\''+id+'\',\''+mod+'\')">'+esc(label)+'</button>';}
+function section(T,title,mod,rows,none,extra){
+ var h='<div style="margin:10px 0 4px;font-size:11px;font-weight:700;color:var(--ac)"><span>'+esc(title)+'</span> <span class="mp-n">('+(extra!=null?extra:rows.length)+')</span></div>';
+ if(mod==='dv_favoris'){
+  h+='<div style="font-size:11px;color:var(--ts);display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+(S.fav?'':'<span>'+esc(none)+'</span>')+btn(T.manage,'fav','x','dv_favoris')+'</div>';
+  return h;}
+ if(!rows.length)return h+'<div style="font-size:11px;color:var(--ts)"><span>'+esc(none)+'</span></div>';
+ rows.forEach(function(r){var id=okId(r.id)?r.id:'';if(!id)return;
+  var pend=(S.pending===id);
+  h+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:11px;padding:3px 0;border-bottom:1px solid rgba(128,128,128,.15)"><span style="flex:1;min-width:140px;color:var(--tx)">'+esc(r.name||'—')+'</span><span style="color:var(--ts)">'+esc(dstr(r.created_at))+'</span>'
+   +btn(T.open,'open',id,mod,'bp')+btn(pend?T.confirm:T.del,'del',id,mod,pend?'bp':'bs')+'</div>';});
+ return h;}
+function draw(force){var el=document.getElementById('home-projets-panel');if(!el)return;
+ var T=L(),lk=(window.lang==='en')?'en':'fr';
+ if(!force&&lk===S.last&&el.firstChild)return;S.last=lk;
+ var h='<div class="ph" style="font-size:12px;letter-spacing:1.5px">'+esc(T.title)+'</div><p style="font-size:11px;color:var(--ts);margin:8px 0 4px">'+esc(T.intro)+'</p>';
+ if(S.state==='login')h+='<p style="font-size:11px;color:var(--ts)">'+esc(T.login)+'</p>';
+ else if(S.state==='loading'||S.state==='init')h+='<p style="font-size:11px;color:var(--ts)">'+esc(T.loading)+'</p>';
+ else if(S.state==='error')h+='<p style="font-size:11px;color:var(--ts)">'+esc(T.err)+'</p>'+btn(T.refresh,'refresh','x','x');
+ else{
+  var q=S.rows.filter(function(r){return r.module==='devis';}),n=S.rows.filter(function(r){return r.module==='reseau_hyd';});
+  h+=section(T,T.quotes,'devis',q,T.none_q)+section(T,T.nets,'reseau_hyd',n,T.none_n)+section(T,T.favs,'dv_favoris',[],T.none_f,S.fav);
+  h+='<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'+btn(T.refresh,'refresh','x','x')+btn(T.export,'export','x','x')+'</div><p style="font-size:10.5px;color:var(--ts);margin:8px 0 0">'+esc(T.hint)+'</p>';}
+ el.innerHTML=h;}
+function setState(s){S.state=s;draw(true);}
+function session(){var c=sb();if(!c||!c.auth||!c.auth.getSession)return Promise.resolve(null);
+ return Promise.resolve(c.auth.getSession()).then(function(r){var u=r&&r.data&&r.data.session&&r.data.session.user;return u&&u.id?u:null;}).catch(function(){return null;});}
+function load(){var c=sb();return session().then(function(u){
+ if(!u){S.uid=null;S.rows=[];S.fav=0;setState('login');return;}
+ S.uid=u.id;setState('loading');
+ return Promise.resolve(c.from('projects').select('id,module,name,created_at').in('module',['devis','reseau_hyd']).eq('user_id',u.id).order('created_at',{ascending:false})).then(function(r){
+  if(!r||r.error){setState('error');return;}
+  S.rows=r.data||[];
+  return Promise.resolve(c.from('projects').select('data').eq('module','dv_favoris').eq('user_id',u.id).maybeSingle()).then(function(f){
+   var it=f&&f.data&&f.data.data&&f.data.data.items;S.fav=(it&&it.length)||0;S.loadedAt=Date.now();setState('ready');});
+ });}).catch(function(){setState('error');});}
+function setOpt(selId,id){var sel=document.getElementById(selId);if(!sel)return false;sel.innerHTML='<option value="'+id+'">'+id+'</option>';sel.value=id;return true;}
+function doOpen(id,mod){
+ if(mod==='devis'){if(typeof goPage==='function')goPage('devis');if(setOpt('dvCloudList',id)&&typeof loadDevisFromCloud==='function')return loadDevisFromCloud();}
+ else if(mod==='reseau_hyd'){if(typeof goPage==='function')goPage('hydraulique');
+  try{var b=document.querySelectorAll('#pg-hydraulique .tabs .tab')[10];if(typeof showTab==='function')showTab('hyd',10,b);}catch(e){}
+  if(setOpt('rsCloudList',id)&&typeof loadReseauFromCloud==='function')return loadReseauFromCloud();}
+}
+function doDelete(id){var c=sb();if(!c||!S.uid)return;
+ return Promise.resolve(c.from('projects').delete().eq('id',id).eq('user_id',S.uid)).then(function(r){
+  if(r&&r.error){toast(T().err,'e');return;}toast(T().deleted,'s');return load();});}
+function T(){return L();}
+function download(name,text){try{var b=new Blob([text],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){try{URL.revokeObjectURL(a.href);document.body.removeChild(a);}catch(e){}},500);return true;}catch(e){return false;}}
+function doExport(){var c=sb();if(!c||!S.uid)return;
+ return Promise.resolve(c.from('projects').select('module,name,created_at,updated_at,data').in('module',['devis','reseau_hyd','dv_favoris']).eq('user_id',S.uid).order('created_at',{ascending:false})).then(function(r){
+  if(!r||r.error){toast(T().err,'e');return;}
+  var rows=r.data||[];if(!rows.length){toast(T().noexp,'w');return;}
+  var d=new Date(),p=function(n){return (n<10?'0':'')+n;};
+  var name='thermosys_mes_projets_'+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'.json';
+  var ok=download(name,JSON.stringify({application:'Thermosys v3',exported_at:d.toISOString(),count:rows.length,projects:rows},null,2));
+  if(ok)toast(T().exported,'s');});}
+window.mpAct=function(act,id,mod){
+ if(act==='refresh')return load();
+ if(act==='export')return doExport();
+ if(act==='fav'){if(typeof goPage==='function')goPage('devis');return;}
+ if(!okId(id))return;
+ if(act==='open'){S.pending=null;return doOpen(id,mod);}
+ if(act==='del'){if(S.pending!==id){S.pending=id;draw(true);clearTimeout(S.timer);S.timer=setTimeout(function(){S.pending=null;draw(true);},4000);return;}
+  S.pending=null;clearTimeout(S.timer);return doDelete(id);}};
+window.__mesProjets={S:S,load:load,draw:draw};
+function watch(){session().then(function(u){var id=u?u.id:null;
+ if(!id){if(S.uid||S.state!=='login'){S.uid=null;S.rows=[];S.fav=0;setState('login');}return;}
+ if(id!==S.uid||S.state==='init')load();});}
+function start(){draw(true);watch();setInterval(function(){draw(false);},250);setInterval(watch,3000);}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+})();
+
+</script>
+<script id="lang-es-projets-compte">
+(window.I18N3=window.I18N3||{dict:{}});
+(function(){var I=window.I18N3;var E=I.dict.es=I.dict.es||{};
+var D={"MY PROJECTS (ACCOUNT)":"MIS PROYECTOS (CUENTA)","Your quotes, networks and favorites saved in your account. Only you can access them.":"Sus presupuestos, redes y favoritos guardados en su cuenta. Solo usted tiene acceso.","Quotes":"Presupuestos","Networks":"Redes","Catalogue favorites":"Favoritos del catálogo","No saved quotes.":"Ningún presupuesto guardado.","No saved networks.":"Ninguna red guardada.","No saved favorites.":"Ningún favorito guardado.","Open":"Abrir","Delete":"Eliminar","Confirm?":"¿Confirmar?","Refresh":"Actualizar","Export all (JSON)":"Exportar todo (JSON)","Manage in QUOTE":"Gestionar en PRESUPUESTO","Sign in to see your projects.":"Inicie sesión para ver sus proyectos.","Loading…":"Cargando…","Loading error.":"Error de carga.","To save: use the save button in QUOTE and in HVAC NETWORKS (Network calc).":"Para guardar: use el botón de guardado en PRESUPUESTO y en REDES HVAC (Cálculo de red).","Project deleted":"Proyecto eliminado","Export downloaded":"Exportación descargada","Nothing to export":"Nada que exportar"};
 Object.keys(D).forEach(function(k){ E[k]=D[k]; });})();
 </script>
 <script id="home-ref-module">
