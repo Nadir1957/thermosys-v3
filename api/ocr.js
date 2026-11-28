@@ -236,9 +236,16 @@ export default async function handler(req, res) {
     if (finish && finish !== 'STOP') console.log('[THERMOSYS OCR] finishReason : ' + finish);
     // Filet de securite : supprime les repetitions (meme libelle deja vu avec la meme valeur, ou avec une valeur vide). Une valeur differente et lisible est conservee.
     const dedupeOcr = (txt) => {
-      const L = String(txt).split('\n'), out = [], seen = new Map();
-      const isBlank = v => /^(\(vide\)|\(empty\)|\(illisible\)|\(unreadable\)|[-–—.]*|kW|A|V|Hz|W|kg|MPa|bar|mm)$/i.test(v.trim());
+      const isBlank = v => /^(\(vide\)|\(empty\)|\(illisible\)|\(unreadable\)|\(\s*\)|[-–—.]*|kW|A|V|Hz|W|kg|MPa|bar|mm)$/i.test(v.trim());
       const reL = /^\s*\*?\s*(?:Libell[ée]|Label)\s*:\s*(.+?)\s*$/i, reV = /^\s*\*?\s*(?:Valeur|Value)\s*:\s*(.*?)\s*$/i;
+      const reK = /^\s*\*?\s*([^:*]{3,60}?)\s*:\s*(.*?)\s*$/;
+      const isHead = x => /^\s*\*\*[^*]+\*\*\s*$/.test(x);
+      let L = String(txt).split('\n');
+      // 1) phrase d'introduction de l'IA avant le premier element de la liste
+      let s0 = 0; while (s0 < L.length && L[s0].trim() && !/^\s*\*/.test(L[s0])) s0++;
+      if (s0 > 0 && s0 < L.length && /^\s*(Voici|Here is|Here are|Here's)/i.test(L[0])) L = L.slice(s0);
+      // 2) paires Libelle/Valeur repetees
+      const out = [], seen = new Map();
       for (let i = 0; i < L.length; i++) {
         const m = reL.exec(L[i]), v = (i + 1 < L.length) ? reV.exec(L[i + 1]) : null;
         if (m && v) {
@@ -252,16 +259,25 @@ export default async function handler(req, res) {
         }
         out.push(L[i]);
       }
-      const isHead = x => /^\s*\*\*[^*]+\*\*\s*$/.test(x);
-      const res = [], seenLine = new Set();
-      for (let i = 0; i < out.length; i++) {
-        if (isHead(out[i])) { let j = i + 1; while (j < out.length && !out[j].trim()) j++; if (j >= out.length || isHead(out[j])) continue; }
-        const lk = out[i].trim().toLowerCase();
-        if (lk.length >= 12 && !reL.test(out[i]) && !reV.test(out[i]) && !isHead(out[i])) { if (seenLine.has(lk)) continue; seenLine.add(lk); }
-        if (!out[i].trim() && res.length && !res[res.length - 1].trim()) continue;
-        res.push(out[i]);
+      // 3) lignes repetees : identiques (>= 12 car.) ou "LIBELLE : valeur vide" dont le libelle a deja une valeur
+      const seenLine = new Set(), seenKey = new Set(), mid = [];
+      for (const ln of out) {
+        const lk = ln.trim().toLowerCase();
+        if (!isHead(ln) && !reL.test(ln) && !reV.test(ln)) {
+          if (lk.length >= 12) { if (seenLine.has(lk)) continue; seenLine.add(lk); }
+          const k = reK.exec(ln);
+          if (k) { const key = k[1].toLowerCase(); if (seenKey.has(key) && isBlank(k[2])) continue; seenKey.add(key); }
+        }
+        mid.push(ln);
       }
-      return res.join('\n').replace(/\s+$/, '');
+      // 4) titres de section sans contenu, lignes vides en double
+      const res = [];
+      for (let i = 0; i < mid.length; i++) {
+        if (isHead(mid[i])) { let j = i + 1; while (j < mid.length && !mid[j].trim()) j++; if (j >= mid.length || isHead(mid[j])) continue; }
+        if (!mid[i].trim() && res.length && !res[res.length - 1].trim()) continue;
+        res.push(mid[i]);
+      }
+      return res.join('\n').replace(/^\s+|\s+$/g, '');
     };
     const cleaned = dedupeOcr(textResult);
     const cut = (finish === 'MAX_TOKENS');

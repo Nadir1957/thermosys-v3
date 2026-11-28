@@ -205,3 +205,4 @@ ocr_troncature_regression.js : OCR, reponses coupees : plafond de longueur relev
 ocr_version_regression.js : OCR, version d'API par defaut v1beta ; reflexion interne desactivee seulement sur v1beta (evite l'erreur 400 sur v1).
 ocr_repetitions_regression.js : OCR, suppression des blocs repetes par l'IA (valeurs vides) + consigne anti-repetition dans le prompt.
 ocr_repetitions2_regression.js : OCR, consigne anti-repetition retiree (prompt d'origine) ; suppression renforcee des lignes repetees par l'IA.
+ocr_repetitions3_regression.js : OCR, nettoyage des repetitions v3 : titres de section vides, lignes a valeur vide, phrase d'introduction de l'IA.
