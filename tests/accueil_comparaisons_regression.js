@@ -23,19 +23,19 @@ if(m&&e){
  t('FR : EnergyPlus 12 maisons',fr.indexOf('EnergyPlus 23.2 sur 12 maisons')>=0&&fr.indexOf('+4 % à +11 %')>=0&&fr.indexOf('−2 % à +5 %')>=0&&fr.indexOf('−13 % à +3 %')>=0&&fr.indexOf('+4 % à +12 %')>=0);
  t('FR : Holzkirchen',fr.indexOf('0,4 à 0,9 K')>=0&&fr.indexOf('−23 % et +13 %')>=0&&fr.indexOf('sans réglage sur ces mesures')>=0);
  t('FR : limites',fr.indexOf('+20 % à +29 %')>=0&&fr.indexOf('+14 %')>=0&&fr.indexOf('hors climat tempéré')>=0&&fr.indexOf('1000 kWh/an')>=0);
- t('FR : lien VALIDATION',fr.indexOf("goPage('validation')")>=0);
+ t('FR : lien vers AIDE',fr.indexOf("goPage('aide')")>=0);
  win.lang='en';tick();const en=el.innerHTML;
  t('EN : titre',en.indexOf('REFERENCE COMPARISONS AND LIMITS OF THE HOURLY CALCULATION')>=0);
  t('EN : figures',en.indexOf('27 of the 28 reference results')>=0&&en.indexOf('EnergyPlus 23.2 on 12 houses')>=0&&en.indexOf('+4 % to +11 %')>=0&&en.indexOf('−2 % to +5 %')>=0&&en.indexOf('−13 % to +3 %')>=0&&en.indexOf('+4 % to +12 %')>=0&&en.indexOf('0.4 to 0.9 K')>=0&&en.indexOf('−23 % and +13 %')>=0&&en.indexOf('+20 % to +29 %')>=0&&en.indexOf('1000 kWh/year')>=0);
  t('EN : pas de francais',en.indexOf('COMPARAISONS')<0&&en.indexOf('Limites')<0);
  win.lang='fr';tick();t('retour FR',el.innerHTML===fr);
  const w={};const D=new Function('window',e[1]+';return window.I18N3.dict.es;')(w);
- const keys=Object.keys(D);t('ES : 10 entrees',keys.length===10);
+ const keys=Object.keys(D);t('ES : 12 entrees',keys.length===12);
  t('ES : cles = textes EN affiches',keys.every(k=>en.replace(/&amp;/g,'&').indexOf(k)>=0));
  t('ES : traductions differentes',keys.every(k=>D[k]&&D[k]!==k));
  const all=keys.map(k=>D[k]).join(' ');
  t('ES : chiffres identiques',['27 de los 28','23.2','+4 % a +11 %','−2 % a +5 %','−13 % a +3 %','+4 % a +12 %','0,4–0,9 K','−23 % y +13 %','+20 % a +29 %','1000 kWh/año'].every(x=>all.indexOf(x)>=0));
- t('ES : termes de l\'application',all.indexOf('AIE EBC Anexos 58 y 71')>=0&&all.indexOf('VALIDACIÓN')>=0&&all.indexOf('Argel')>=0);
+ t('ES : termes de l\'application',all.indexOf('AIE EBC Anexos 58 y 71')>=0&&all.indexOf('AYUDA')>=0&&all.indexOf('Argel')>=0);
 }
 ['Alger, Ghardaïa, Ouargla, Denver','27 des 28 résultats de référence reproduits','de +4 % à +11 %','0,4 à 0,9 K près','−23 % et +13 %','+20 % à +29 %'].forEach(x=>t('FR aussi dans la page VALIDATION : '+x,cnt(s,x)>=2||(x.indexOf('de +4')===0&&cnt(s,'+4 % à +11 %')>=2)));
 ['27 of the 28 reference results reproduced','+4 % to +11 %','within 0.4 to 0.9 K','−23 % and +13 %','+20 % to +29 %'].forEach(x=>t('EN aussi dans la page VALIDATION : '+x,cnt(s,x)>=2));

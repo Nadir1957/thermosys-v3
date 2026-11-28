@@ -1,0 +1,20 @@
+/* Test : textes des six climats supplementaires dans l'aide, la page VALIDATION et l'accueil, FR/EN/ES. Usage (depuis files) : node tests/climats_textes_regression.js */
+'use strict';
+const fs=require('fs');
+const s=fs.readFileSync('dist/index.html','utf8').replace(/\r\n/g,'\n');
+let ok=0,ko=0;const t=(n,c)=>{if(c){ok++;}else{ko++;console.log('ECHEC : '+n);}};
+const cnt=(x,o)=>x.split(o).length-1;
+const FR="Six autres climats (Paris, Madrid, Oslo-Tryvannshøgda, Singapour, Shanghai, Toluca ; 18 maisons) : chauffage de +0,4 % à +9 %, froid de +2 % à +8 %, pointes de chauffage de −15 % à +1 %, pointes de froid de −1 % à +12 %, sauf à Toluca (climat doux d’altitude, faible chauffage) où le chauffage est surestimé de +14 % à +32 %.",EN="Six other climates (Paris, Madrid, Oslo-Tryvannshøgda, Singapore, Shanghai, Toluca; 18 houses): heating +0.4 % to +9 %, cooling +2 % to +8 %, heating peaks −15 % to +1 %, cooling peaks −1 % to +12 %, except in Toluca (mild high-altitude climate, small heating demand) where heating is overestimated by +14 % to +32 %.",ES="Otros seis climas (París, Madrid, Oslo-Tryvannshøgda, Singapur, Shanghái, Toluca; 18 viviendas): calefacción de +0,4 % a +9 %, frío de +2 % a +8 %, puntas de calefacción de −15 % a +1 %, puntas de frío de −1 % a +12 %, salvo en Toluca (clima templado de altitud, poca demanda de calefacción), donde la calefacción está sobrestimada de +14 % a +32 %.";
+t('FR : 4 emplacements (aide, validation, note, accueil)',cnt(s,FR)===4);
+t('EN : 5 emplacements (aide, cle ES, validation, note, accueil)',cnt(s,EN)>=5);
+t('ES : 4 emplacements',cnt(s,ES)>=4);
+['+0,4 % à +9 %','+2 % à +8 %','−15 % à +1 %','−1 % à +12 %','+14 % à +32 %','18 maisons'].forEach(x=>t('FR chiffre '+x,FR.indexOf(x)>=0));
+['+0.4 % to +9 %','+2 % to +8 %','−15 % to +1 %','−1 % to +12 %','+14 % to +32 %','18 houses'].forEach(x=>t('EN chiffre '+x,EN.indexOf(x)>=0));
+['+0,4 % a +9 %','+2 % a +8 %','−15 % a +1 %','−1 % a +12 %','+14 % a +32 %','18 viviendas'].forEach(x=>t('ES chiffre '+x,ES.indexOf(x)>=0));
+['Paris','Madrid','Oslo-Tryvannshøgda','Shanghai','Toluca'].forEach(x=>t('ville '+x,FR.indexOf(x)>=0&&EN.indexOf(x)>=0&&ES.indexOf(x.replace('Paris','París').replace('Shanghai','Shanghái'))>=0));
+t('Singapour / Singapore / Singapur',FR.indexOf('Singapour')>=0&&EN.indexOf('Singapore')>=0&&ES.indexOf('Singapur')>=0);
+t('nombre de cas : 30 (FR/EN/ES)',s.indexOf('Ce sont 30 cas (10 climats)')>0&&s.indexOf('These are 30 cases (10 climates)')>0&&s.indexOf('Son 30 casos (10 climas)')>0);
+t('ancien nombre de cas supprime',s.indexOf('Ce sont 12 cas,')<0&&s.indexOf('These are 12 cases,')<0&&s.indexOf('Son 12 casos,')<0);
+t('limite Toluca FR/EN/ES (accueil)',s.indexOf('(Toluca) : écart de chauffage jusqu’à +32 %.')>0&&s.indexOf('(Toluca): heating difference up to +32 %.')>0&&s.indexOf('(Toluca): desviación en calefacción de hasta +32 %.')>0);
+t('texte des 12 maisons conserve',cnt(s,'EnergyPlus 23.2 sur 12 maisons')>=2&&s.indexOf('de +4 % à +11 %')>0);
+console.log('climats_textes : '+ok+' OK, '+ko+' echec(s)');process.exit(ko?1:0);

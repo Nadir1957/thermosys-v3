@@ -198,3 +198,5 @@ coldroom_ail_regression.js : chambre froide, ail a -2,7 C et pomme de terre a -1
 prg_melanges_regression.js : PRG des melanges recalcules a partir des composants (annexe I, AR4), ecart avec les valeurs HFO du reglement, texte de limites FR/EN/ES.
 voix_air_regression.js : lecture vocale du RAPPORT, module traitement d'air (COP selon la charge, refroidissement en hiver) en FR/EN/ES (8 controles).
 accueil_comparaisons_regression.js : page d'accueil, section comparaisons de reference et limites du calcul horaire en FR/EN/ES, chiffres identiques a la page VALIDATION (32 controles).
+climats_textes_regression.js : textes des six climats supplementaires (Paris, Madrid, Oslo, Singapour, Shanghai, Toluca ; 18 maisons) dans l'aide, la page VALIDATION et l'accueil, FR/EN/ES.
+hourly_climats_regression.js : calcul horaire sur ces six climats, derive et ecart avec EnergyPlus 23.2 (fichiers meteo a placer dans tests\meteo ; exit 3 si absents).
