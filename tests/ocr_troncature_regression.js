@@ -12,7 +12,7 @@ src.forEach(function(s,i){const n=F[i];
  t(n+' : reflexion desactivee seulement si 2.5 Flash',s.indexOf('thinkingConfig: { thinkingBudget: 0 }')>0&&s.indexOf('THINKING_OFF')>0);
  t(n+' : avertissement MAX_TOKENS',s.indexOf("finish === 'MAX_TOKENS'")>0&&s.indexOf('Résultat incomplet')>0&&s.indexOf('Incomplete result')>0);
  t(n+' : reponse avec finishReason et truncated',s.indexOf('finishReason: finish, truncated: cut')>0);
- t(n+' : texte inchange si la reponse est complete',s.indexOf(': textResult;')>0);
+ t(n+' : texte inchange si la reponse est complete',s.indexOf(': cleaned;')>0);
  const m=s.match(/const okId = [^\n]*\n\s*const GEMINI_MODEL = [^\n]*\n\s*const GEMINI_API_VERSION = [^\n]*\n[^\n]*\n\s*const mt = [^\n]*\n\s*const GEMINI_MAX_TOKENS = [^\n]*\n[^\n]*\n\s*const THINKING_OFF = [^\n]*\n/);
  t(n+' : bloc de reglages lisible',!!m);
  if(m){const run=env=>new Function('process','console',m[0]+';return {mt:GEMINI_MAX_TOKENS,off:THINKING_OFF,model:GEMINI_MODEL};')({env},{log(){}});

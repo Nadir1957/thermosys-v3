@@ -203,3 +203,4 @@ hourly_climats_regression.js : calcul horaire sur ces six climats, derive et eca
 ocr_modele_regression.js : OCR, modele Gemini reglable depuis Vercel (GEMINI_MODEL, GEMINI_API_VERSION), valeurs par defaut inchangees.
 ocr_troncature_regression.js : OCR, reponses coupees : plafond de longueur releve, reflexion interne desactivee pour 2.5 Flash, avertissement visible si la reponse est coupee (GEMINI_MAX_TOKENS, GEMINI_THINKING).
 ocr_version_regression.js : OCR, version d'API par defaut v1beta ; reflexion interne desactivee seulement sur v1beta (evite l'erreur 400 sur v1).
+ocr_repetitions_regression.js : OCR, suppression des blocs repetes par l'IA (valeurs vides) + consigne anti-repetition dans le prompt.

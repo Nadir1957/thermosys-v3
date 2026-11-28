@@ -1,0 +1,28 @@
+/* Test : OCR, suppression des repetitions (bloc repete avec valeurs vides) et consigne anti-repetition. Usage (depuis files) : node tests/ocr_repetitions_regression.js */
+'use strict';
+const fs=require('fs');
+let ok=0,ko=0;const t=(n,c)=>{if(c){ok++;}else{ko++;console.log('ECHEC : '+n);}};
+const F=['api/ocr.js','dist/api/ocr.js'].filter(p=>fs.existsSync(p));
+t('au moins un fichier ocr.js',F.length>=1);
+const src=F.map(p=>fs.readFileSync(p,'utf8').replace(/\r\n/g,'\n'));
+if(F.length===2)t('api et dist/api identiques',src[0]===src[1]);
+src.forEach(function(s,i){const n=F[i];
+ t(n+' : consigne anti-repetition FR et EN',s.indexOf('RÈGLES : écris chaque libellé une seule fois')>0&&s.indexOf('RULES: write each label only once')>0);
+ const a=s.indexOf('const dedupeOcr = '),b=s.indexOf('const cleaned = dedupeOcr(textResult);',a);t(n+' : fonction trouvee',a>0&&b>a);
+ if(!(a>0&&b>a))return;
+ const D=new Function(s.slice(a,b)+';return dedupeOcr;')();
+ const E=(l,v)=>'* Libellé: '+l+'\n* Valeur: '+v;
+ t(n+' : texte simple inchange',D('abc')==='abc'&&D('* **MODEL :** X\n* **POWER :** 230 V')==='* **MODEL :** X\n* **POWER :** 230 V');
+ const real=[E('INPUT (COOLING)','0.500 kW'),E('CURRENT','2.8 A')].join('\n');
+ const loop=real+'\n'+E('INPUT (COOLING)','kW')+'\n'+E('CURRENT','A')+'\n'+E('INPUT (COOLING)','(vide)');
+ t(n+' : repetitions a valeur vide supprimees',D(loop)===real);
+ t(n+' : repetition identique supprimee',D(real+'\n'+real)===real);
+ t(n+' : valeur differente lisible conservee',D(E('MODEL','A1')+'\n'+E('MODEL','B2')).split('\n').length===4);
+ t(n+' : meme libelle, valeurs differentes dans deux sections : rien perdu',D('**Ext:**\n'+E('MODEL','A1')+'\n**Int:**\n'+E('MODEL','B2')).indexOf('B2')>0);
+ const withHead='**Section 1 :**\n'+real+'\n**Section 2 :**\n'+E('INPUT (COOLING)','kW')+'\n**Pied :**\n'+E('FAB','DAIKIN');
+ const r=D(withHead);t(n+' : titre de section vide supprime',r.indexOf('Section 2')<0&&r.indexOf('Section 1')>=0&&r.indexOf('DAIKIN')>0);
+ const big=real+'\n'+Array(9).fill(E('INPUT (COOLING)','kW')+'\n'+E('CURRENT','A')).join('\n');
+ t(n+' : boucle de 9 repetitions ramenee a un seul bloc',D(big)===real);
+ t(n+' : version anglaise Label/Value',D('* Label: X\n* Value: 1 A\n* Label: X\n* Value: A')==='* Label: X\n* Value: 1 A');
+});
+console.log('ocr_repetitions : '+ok+' OK, '+ko+' echec(s)');process.exit(ko?1:0);

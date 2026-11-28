@@ -144,7 +144,10 @@ export default async function handler(req, res) {
       qrcode:    'Analyze and decode this QR Code. Return the full content, the data type (URL, text, vCard, etc.) and any relevant encoded information.'
     };
     const prompts = (lang === 'en') ? prompts_en : prompts_fr;
-    const promptText = prompts[mode] || prompts.extract;
+    // Consigne anti-repetition ajoutee au prompt (l'IA repetait parfois un meme bloc une dizaine de fois).
+    const promptText = (prompts[mode] || prompts.extract) + ((lang === 'en')
+      ? '\n\nRULES: write each label only once; never repeat a block or a section; if a value is not readable write (unreadable); stop right after the last line of the plate.'
+      : '\n\nRÈGLES : écris chaque libellé une seule fois ; ne répète jamais un bloc ni une section ; si une valeur n’est pas lisible écris (illisible) ; arrête-toi juste après la dernière ligne de la plaque.');
 
     // ── Construction de la requête Gemini 2.5 Flash ────────────────
     // Modele reglable depuis Vercel (Settings > Environment Variables) : GEMINI_MODEL, GEMINI_API_VERSION. Defauts : gemini-2.5-flash, v1.
@@ -234,10 +237,38 @@ export default async function handler(req, res) {
 
     const finish = (parsed && parsed.candidates && parsed.candidates[0] && parsed.candidates[0].finishReason) || '';
     if (finish && finish !== 'STOP') console.log('[THERMOSYS OCR] finishReason : ' + finish);
+    // Filet de securite : supprime les repetitions (meme libelle deja vu avec la meme valeur, ou avec une valeur vide). Une valeur differente et lisible est conservee.
+    const dedupeOcr = (txt) => {
+      const L = String(txt).split('\n'), out = [], seen = new Map();
+      const isBlank = v => /^(\(vide\)|\(empty\)|\(illisible\)|\(unreadable\)|[-–—.]*|kW|A|V|Hz|W|kg|MPa|bar|mm)$/i.test(v.trim());
+      const reL = /^\s*\*?\s*(?:Libell[ée]|Label)\s*:\s*(.+?)\s*$/i, reV = /^\s*\*?\s*(?:Valeur|Value)\s*:\s*(.*?)\s*$/i;
+      for (let i = 0; i < L.length; i++) {
+        const m = reL.exec(L[i]), v = (i + 1 < L.length) ? reV.exec(L[i + 1]) : null;
+        if (m && v) {
+          const key = m[1].toLowerCase(), val = v[1].toLowerCase();
+          if (seen.has(key)) {
+            const s = seen.get(key);
+            if (s.has(val) || isBlank(val)) { i++; continue; }
+            s.add(val);
+          } else seen.set(key, new Set([val]));
+          out.push(L[i], L[i + 1]); i++; continue;
+        }
+        out.push(L[i]);
+      }
+      const isHead = x => /^\s*\*\*[^*]+\*\*\s*$/.test(x);
+      const res = [];
+      for (let i = 0; i < out.length; i++) {
+        if (isHead(out[i])) { let j = i + 1; while (j < out.length && !out[j].trim()) j++; if (j >= out.length || isHead(out[j])) continue; }
+        if (!out[i].trim() && res.length && !res[res.length - 1].trim()) continue;
+        res.push(out[i]);
+      }
+      return res.join('\n').replace(/\s+$/, '');
+    };
+    const cleaned = dedupeOcr(textResult);
     const cut = (finish === 'MAX_TOKENS');
     const textOut = cut
-      ? textResult + '\n\n⚠ Résultat incomplet (limite de longueur atteinte) : relancez l\'analyse ou photographiez la plaque en deux parties. / Incomplete result (length limit reached): run the analysis again or photograph the plate in two parts.'
-      : textResult;
+      ? cleaned + '\n\n⚠ Résultat incomplet (limite de longueur atteinte) : relancez l\'analyse ou photographiez la plaque en deux parties. / Incomplete result (length limit reached): run the analysis again or photograph the plate in two parts.'
+      : cleaned;
     return res.status(200).json({ text: textOut, model: GEMINI_MODEL, finishReason: finish, truncated: cut });
 
   } catch (error) {
