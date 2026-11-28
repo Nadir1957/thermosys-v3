@@ -152,6 +152,10 @@ export default async function handler(req, res) {
     const GEMINI_MODEL = okId((process.env.GEMINI_MODEL || '').trim()) ? process.env.GEMINI_MODEL.trim() : 'gemini-2.5-flash';
     const GEMINI_API_VERSION = okId((process.env.GEMINI_API_VERSION || '').trim()) ? process.env.GEMINI_API_VERSION.trim() : 'v1';
     console.log('[THERMOSYS OCR] modele : ' + GEMINI_MODEL + ' (' + GEMINI_API_VERSION + ')');
+    const mt = parseInt(process.env.GEMINI_MAX_TOKENS, 10);
+    const GEMINI_MAX_TOKENS = (mt >= 1024 && mt <= 32768) ? mt : 8192;
+    // Modeles 2.5 Flash : la reflexion interne consomme le plafond de longueur et coupe la reponse ; inutile pour lire une plaque.
+    const THINKING_OFF = /^gemini-2\.5-flash/.test(GEMINI_MODEL) && (process.env.GEMINI_THINKING || '').trim().toLowerCase() !== 'on';
     const payload = JSON.stringify({
       contents: [{
         parts: [
@@ -162,7 +166,8 @@ export default async function handler(req, res) {
       generationConfig: {
         temperature:     0.1,
         topP:            0.95,
-        maxOutputTokens: 2048
+        maxOutputTokens: GEMINI_MAX_TOKENS,
+        ...(THINKING_OFF ? { thinkingConfig: { thinkingBudget: 0 } } : {})
       }
     });
 
@@ -227,7 +232,13 @@ export default async function handler(req, res) {
     const textResult = parsed?.candidates?.[0]?.content?.parts?.[0]?.text
                     || 'Aucun texte extrait. Vérifiez la qualité de l\'image.';
 
-    return res.status(200).json({ text: textResult, model: GEMINI_MODEL });
+    const finish = (parsed && parsed.candidates && parsed.candidates[0] && parsed.candidates[0].finishReason) || '';
+    if (finish && finish !== 'STOP') console.log('[THERMOSYS OCR] finishReason : ' + finish);
+    const cut = (finish === 'MAX_TOKENS');
+    const textOut = cut
+      ? textResult + '\n\n⚠ Résultat incomplet (limite de longueur atteinte) : relancez l\'analyse ou photographiez la plaque en deux parties. / Incomplete result (length limit reached): run the analysis again or photograph the plate in two parts.'
+      : textResult;
+    return res.status(200).json({ text: textOut, model: GEMINI_MODEL, finishReason: finish, truncated: cut });
 
   } catch (error) {
     console.error('[THERMOSYS OCR] Error:', error.message);

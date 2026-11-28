@@ -12,7 +12,7 @@ src.forEach(function(s,i){const n=F[i];
  t(n+' : constante version',cnt(s,"const GEMINI_API_VERSION = ")===1&&s.indexOf("'v1'")>0);
  t(n+' : chemin construit avec les constantes',s.indexOf('`/${GEMINI_API_VERSION}/models/${GEMINI_MODEL}:generateContent?key=${aiKey}`')>0);
  t(n+' : plus de modele ecrit en dur dans le chemin',s.indexOf('/v1/models/gemini-2.5-flash:generateContent')<0);
- t(n+' : reponse avec le modele',s.indexOf('json({ text: textResult, model: GEMINI_MODEL })')>0);
+ t(n+' : reponse avec le modele',s.indexOf('model: GEMINI_MODEL, finishReason')>0);
  t(n+' : validation de l\'identifiant',s.indexOf('/^[A-Za-z0-9._-]{1,64}$/')>0);
  t(n+' : cle lue depuis l\'environnement',s.indexOf('process.env.GEMINI_API_KEY')>0);
  // comportement : reproduit la logique de selection

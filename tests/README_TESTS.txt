@@ -201,3 +201,4 @@ accueil_comparaisons_regression.js : page d'accueil, section comparaisons de ref
 climats_textes_regression.js : textes des six climats supplementaires (Paris, Madrid, Oslo, Singapour, Shanghai, Toluca ; 18 maisons) dans l'aide, la page VALIDATION et l'accueil, FR/EN/ES.
 hourly_climats_regression.js : calcul horaire sur ces six climats, derive et ecart avec EnergyPlus 23.2 (fichiers meteo a placer dans tests\meteo ; exit 3 si absents).
 ocr_modele_regression.js : OCR, modele Gemini reglable depuis Vercel (GEMINI_MODEL, GEMINI_API_VERSION), valeurs par defaut inchangees.
+ocr_troncature_regression.js : OCR, reponses coupees : plafond de longueur releve, reflexion interne desactivee pour 2.5 Flash, avertissement visible si la reponse est coupee (GEMINI_MAX_TOKENS, GEMINI_THINKING).
