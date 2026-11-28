@@ -1,0 +1,24 @@
+/* Test : OCR, suppression des repetitions renforcee (lignes identiques) et prompt d'origine. Usage (depuis files) : node tests/ocr_repetitions2_regression.js */
+'use strict';
+const fs=require('fs');
+let ok=0,ko=0;const t=(n,c)=>{if(c){ok++;}else{ko++;console.log('ECHEC : '+n);}};
+const F=['api/ocr.js','dist/api/ocr.js'].filter(p=>fs.existsSync(p));
+t('au moins un fichier ocr.js',F.length>=1);
+const src=F.map(p=>fs.readFileSync(p,'utf8').replace(/\r\n/g,'\n'));
+if(F.length===2)t('api et dist/api identiques',src[0]===src[1]);
+src.forEach(function(s,i){const n=F[i];
+ t(n+' : prompt non modifie',s.indexOf('const promptText = prompts[mode] || prompts.extract;')>0&&s.indexOf('RÈGLES : écris')<0);
+ const a=s.indexOf('const dedupeOcr = '),b=s.indexOf('const cleaned = dedupeOcr(textResult);',a);t(n+' : fonction trouvee',a>0&&b>a);
+ if(!(a>0&&b>a))return;
+ const D=new Function(s.slice(a,b)+';return dedupeOcr;')();
+ const real=['ROOM AIR CONDITIONER HEAT PUMP OUTDOOR UNIT','MODEL: RXS20CVMB','REFRIGERANT: R410A 0.80 kg','NET WEIGHT: 30 kg','OPERATION MODE COOLING TOTAL INPUT: 0.500 kW'].join('\n');
+ const loop=['INDOOR UNIT MODEL (illisible) OPERATION MODE','COOLING TOTAL CURRENT: (illisible) A','INDOOR UNIT MODEL (illisible) OPERATION MODE','COOLING TOTAL CURRENT: (illisible) A','INDOOR UNIT MODEL (illisible) OPERATION MODE'].join('\n');
+ const r=D(real+'\n'+loop);
+ t(n+' : lignes de la plaque conservees',r.indexOf(real)===0);
+ t(n+' : boucle ramenee a une occurrence par ligne',r.split('INDOOR UNIT MODEL (illisible) OPERATION MODE').length===2&&r.split('COOLING TOTAL CURRENT: (illisible) A').length===2);
+ t(n+' : lignes courtes non touchees',D('A\nA\nkW\nkW')==='A\nA\nkW\nkW');
+ const E=(l,v)=>'* Libellé: '+l+'\n* Valeur: '+v;
+ t(n+' : paires libelle/valeur non cassees par la regle des lignes',D(E('MODEL','A1')+'\n'+E('MODEL','B2')).split('\n').length===4);
+ t(n+' : valeurs lisibles identiques de deux lignes distinctes',D('FUSE AMP: 15 A\nFUSE AMP: 16 A').split('\n').length===2);
+});
+console.log('ocr_repetitions2 : '+ok+' OK, '+ko+' echec(s)');process.exit(ko?1:0);

@@ -144,10 +144,7 @@ export default async function handler(req, res) {
       qrcode:    'Analyze and decode this QR Code. Return the full content, the data type (URL, text, vCard, etc.) and any relevant encoded information.'
     };
     const prompts = (lang === 'en') ? prompts_en : prompts_fr;
-    // Consigne anti-repetition ajoutee au prompt (l'IA repetait parfois un meme bloc une dizaine de fois).
-    const promptText = (prompts[mode] || prompts.extract) + ((lang === 'en')
-      ? '\n\nRULES: write each label only once; never repeat a block or a section; if a value is not readable write (unreadable); stop right after the last line of the plate.'
-      : '\n\nRÈGLES : écris chaque libellé une seule fois ; ne répète jamais un bloc ni une section ; si une valeur n’est pas lisible écris (illisible) ; arrête-toi juste après la dernière ligne de la plaque.');
+    const promptText = prompts[mode] || prompts.extract;
 
     // ── Construction de la requête Gemini 2.5 Flash ────────────────
     // Modele reglable depuis Vercel (Settings > Environment Variables) : GEMINI_MODEL, GEMINI_API_VERSION. Defauts : gemini-2.5-flash, v1.
@@ -256,9 +253,11 @@ export default async function handler(req, res) {
         out.push(L[i]);
       }
       const isHead = x => /^\s*\*\*[^*]+\*\*\s*$/.test(x);
-      const res = [];
+      const res = [], seenLine = new Set();
       for (let i = 0; i < out.length; i++) {
         if (isHead(out[i])) { let j = i + 1; while (j < out.length && !out[j].trim()) j++; if (j >= out.length || isHead(out[j])) continue; }
+        const lk = out[i].trim().toLowerCase();
+        if (lk.length >= 12 && !reL.test(out[i]) && !reV.test(out[i]) && !isHead(out[i])) { if (seenLine.has(lk)) continue; seenLine.add(lk); }
         if (!out[i].trim() && res.length && !res[res.length - 1].trim()) continue;
         res.push(out[i]);
       }

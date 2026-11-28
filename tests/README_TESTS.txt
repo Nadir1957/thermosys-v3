@@ -204,3 +204,4 @@ ocr_modele_regression.js : OCR, modele Gemini reglable depuis Vercel (GEMINI_MOD
 ocr_troncature_regression.js : OCR, reponses coupees : plafond de longueur releve, reflexion interne desactivee pour 2.5 Flash, avertissement visible si la reponse est coupee (GEMINI_MAX_TOKENS, GEMINI_THINKING).
 ocr_version_regression.js : OCR, version d'API par defaut v1beta ; reflexion interne desactivee seulement sur v1beta (evite l'erreur 400 sur v1).
 ocr_repetitions_regression.js : OCR, suppression des blocs repetes par l'IA (valeurs vides) + consigne anti-repetition dans le prompt.
+ocr_repetitions2_regression.js : OCR, consigne anti-repetition retiree (prompt d'origine) ; suppression renforcee des lignes repetees par l'IA.

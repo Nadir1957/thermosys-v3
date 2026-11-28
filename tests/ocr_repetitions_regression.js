@@ -7,7 +7,7 @@ t('au moins un fichier ocr.js',F.length>=1);
 const src=F.map(p=>fs.readFileSync(p,'utf8').replace(/\r\n/g,'\n'));
 if(F.length===2)t('api et dist/api identiques',src[0]===src[1]);
 src.forEach(function(s,i){const n=F[i];
- t(n+' : consigne anti-repetition FR et EN',s.indexOf('RÈGLES : écris chaque libellé une seule fois')>0&&s.indexOf('RULES: write each label only once')>0);
+ t(n+' : prompt d\'origine (pas de consigne ajoutee)',s.indexOf('RÈGLES : écris chaque libellé')<0&&s.indexOf('RULES: write each label')<0&&s.indexOf('const promptText = prompts[mode] || prompts.extract;')>0);
  const a=s.indexOf('const dedupeOcr = '),b=s.indexOf('const cleaned = dedupeOcr(textResult);',a);t(n+' : fonction trouvee',a>0&&b>a);
  if(!(a>0&&b>a))return;
  const D=new Function(s.slice(a,b)+';return dedupeOcr;')();
