@@ -147,6 +147,11 @@ export default async function handler(req, res) {
     const promptText = prompts[mode] || prompts.extract;
 
     // ── Construction de la requête Gemini 2.5 Flash ────────────────
+    // Modele reglable depuis Vercel (Settings > Environment Variables) : GEMINI_MODEL, GEMINI_API_VERSION. Defauts : gemini-2.5-flash, v1.
+    const okId = s => /^[A-Za-z0-9._-]{1,64}$/.test(s);
+    const GEMINI_MODEL = okId((process.env.GEMINI_MODEL || '').trim()) ? process.env.GEMINI_MODEL.trim() : 'gemini-2.5-flash';
+    const GEMINI_API_VERSION = okId((process.env.GEMINI_API_VERSION || '').trim()) ? process.env.GEMINI_API_VERSION.trim() : 'v1';
+    console.log('[THERMOSYS OCR] modele : ' + GEMINI_MODEL + ' (' + GEMINI_API_VERSION + ')');
     const payload = JSON.stringify({
       contents: [{
         parts: [
@@ -164,7 +169,7 @@ export default async function handler(req, res) {
     const options = {
       hostname: 'generativelanguage.googleapis.com',
       port:     443,
-      path:     `/v1/models/gemini-2.5-flash:generateContent?key=${aiKey}`,
+      path:     `/${GEMINI_API_VERSION}/models/${GEMINI_MODEL}:generateContent?key=${aiKey}`,
       method:   'POST',
       headers:  {
         'Content-Type':   'application/json',
@@ -222,7 +227,7 @@ export default async function handler(req, res) {
     const textResult = parsed?.candidates?.[0]?.content?.parts?.[0]?.text
                     || 'Aucun texte extrait. Vérifiez la qualité de l\'image.';
 
-    return res.status(200).json({ text: textResult });
+    return res.status(200).json({ text: textResult, model: GEMINI_MODEL });
 
   } catch (error) {
     console.error('[THERMOSYS OCR] Error:', error.message);
