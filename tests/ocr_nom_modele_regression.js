@@ -1,0 +1,22 @@
+/* Test : le nom du modele OCR n'est plus ecrit en dur dans l'application (plus de "Gemini 2.5 Flash"). Usage (depuis files) : node tests/ocr_nom_modele_regression.js */
+'use strict';
+const fs=require('fs');
+let ok=0,ko=0;const t=(n,c)=>{if(c){ok++;}else{ko++;console.log('ECHEC : '+n);}};
+const F=['dist/index.html','index.html'].filter(p=>fs.existsSync(p));
+t('au moins un index.html',F.length>=1);
+F.forEach(function(f){const s=fs.readFileSync(f,'utf8').replace(/\r\n/g,'\n');
+ t(f+' : plus de "Gemini 2.5 Flash" (toutes graphies)',!/Gemini 2\.5 Flash/i.test(s)&&!/Gemini\\x202\.5\\x20Flash/i.test(s)&&s.indexOf('Gemini dos punto cinco Flash')<0);
+ t(f+' : plus de "2.5 Flash" isole',!/2\.5[ \\x20]*Flash/i.test(s));
+ t(f+' : bouton rapide',s.indexOf('<span id="t_qa_ocr">OCR Gemini</span>')>0);
+ t(f+' : titre FR/EN',s.indexOf('data-fr="OCR INTELLIGENT — GEMINI" data-en="SMART OCR — GEMINI"')>0);
+ t(f+' : cle ES du titre coherente',s.indexOf('"SMART OCR — GEMINI": "OCR INTELIGENTE — GEMINI"')>0);
+ t(f+' : message d\'attente FR/EN/ES coherent',s.indexOf("l'analyse Gemini...")>0&&s.indexOf('"Load a document to start the Gemini analysis...":')>0&&s.indexOf('data-en="Load a document to start the Gemini analysis..."')>0);
+ t(f+' : mention "Google Gemini" FR/EN/ES coherente',s.indexOf('Propulsé par Google Gemini — reconnaissance')>0&&s.indexOf('<i>&#9679; Powered by Google Gemini — instant nameplate recognition.')>0&&s.indexOf('"● Powered by Google Gemini — instant nameplate recognition.":')>0);
+ t(f+' : journal Bluetooth/ES coherent',s.indexOf('| Gemini activé / active')>0&&s.indexOf('"80 équipements / items | Gemini activé / active":')>0);
+ t(f+' : barre d\'etat',s.indexOf('<span>Gemini</span>')>0);
+ t(f+' : pied de page FR/EN/ES',s.indexOf('80 &eacute;quipements &middot; Gemini &middot; ISO 14118:2018')>0&&s.indexOf('38 manufacturers · 80 products · Gemini · ISO 14118:2018')>0&&s.indexOf('38 fabricantes · 80 productos · Gemini · ISO 14118:2018')>0);
+ t(f+' : analyse en cours FR/EN',s.indexOf('Analyse Gemini en cours...')>0&&s.indexOf('Gemini analysis in progress...')>0);
+ t(f+' : voix ES',s.indexOf('Módulo de diagnóstico inteligente. Gemini. Fotografíe')>0);
+ t(f+' : mention de la politique de confidentialite conservee',s.indexOf('Google Gemini (version gratuite)')>0||s.indexOf('Google Gemini (free version)')>0);
+});
+console.log('ocr_nom_modele : '+ok+' OK, '+ko+' echec(s)');process.exit(ko?1:0);
