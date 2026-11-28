@@ -197,3 +197,4 @@ aide_traitement_air_regression.js : AIDE rubrique 17, groupe froid selon la char
 coldroom_ail_regression.js : chambre froide, ail a -2,7 C et pomme de terre a -1,7 C confirmes par des mesures publiees, texte de limites FR/EN/ES (9 controles).
 prg_melanges_regression.js : PRG des melanges recalcules a partir des composants (annexe I, AR4), ecart avec les valeurs HFO du reglement, texte de limites FR/EN/ES.
 voix_air_regression.js : lecture vocale du RAPPORT, module traitement d'air (COP selon la charge, refroidissement en hiver) en FR/EN/ES (8 controles).
+accueil_comparaisons_regression.js : page d'accueil, section comparaisons de reference et limites du calcul horaire en FR/EN/ES, chiffres identiques a la page VALIDATION (32 controles).

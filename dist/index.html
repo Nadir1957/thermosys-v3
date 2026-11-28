@@ -238,6 +238,7 @@
 <button class="btn bs" onclick="goPage('vannes')" style="justify-content:flex-start">&#9881; <span id="t_qa_van">Vannes &amp; Actionneurs</span></button>
 </div></div>
 </div>
+<div class="panel" id="home-ref-panel" style="margin-top:10px;line-height:1.6"></div>
 
 </div>
 
@@ -21404,6 +21405,32 @@ RS.unshift(function(k,mm){ return ex85(k); });
 if(I.mlRules&&I.mlRules.unshift) I.mlRules.unshift(function(k){ if(k.length>700) return null; try{ return ex85(k); }catch(e){ return null; } });
 })();
 
+</script>
+<script id="lang-es-accueil-ref">
+(window.I18N3=window.I18N3||{dict:{}});
+(function(){var I=window.I18N3;var E=I.dict.es=I.dict.es||{};
+var D={"REFERENCE COMPARISONS AND LIMITS OF THE HOURLY CALCULATION":"COMPARACIONES DE REFERENCIA Y LÍMITES DEL CÁLCULO HORARIO","The HOURLY ESTIMATE has been compared with published references and with real measurements:":"La ESTIMACIÓN HORARIA se ha comparado con referencias publicadas y con mediciones reales:","ASHRAE 140: 27 of the 28 reference results reproduced (example ranges, not official criteria).":"ASHRAE 140: 27 de los 28 resultados de referencia reproducidos (rangos de ejemplo, no criterios oficiales).","EnergyPlus 23.2 on 12 houses (Algiers, Ghardaïa, Ouargla, Denver), same external convection: heating +4 % to +11 %, cooling −2 % to +5 %, heating peaks −13 % to +3 %, cooling peaks +4 % to +12 %.":"EnergyPlus 23.2 en 12 viviendas (Argel, Ghardaïa, Ouargla, Denver), con la misma convección exterior: calefacción de +4 % a +11 %, frío de −2 % a +5 %, puntas de calefacción de −13 % a +3 %, puntas de frío de +4 % a +12 %.","Real measurements on two German test houses (Holzkirchen, IEA EBC Annexes 58 and 71), not tuned to these measurements: temperature within 0.4 to 0.9 K; heating between −23 % and +13 % depending on the test.":"Mediciones reales de dos casas de ensayo alemanas (Holzkirchen, proyectos AIE EBC Anexos 58 y 71), sin ajuste a estas mediciones: temperatura a 0,4–0,9 K; calefacción entre −23 % y +13 % según el ensayo.","Limits:":"Límites:","Not validated by measurements outside temperate climates.":"No validado con mediciones fuera de climas templados.","For small quantities (below 1000 kWh/year), the heating difference reaches +20 % to +29 %; cooling reaches +14 % for one insulated house with small quantities.":"Con cantidades pequeñas (menos de 1000 kWh/año), la diferencia en calefacción alcanza +20 % a +29 %; el frío alcanza +14 % en una vivienda aislada con cantidades pequeñas.","Preliminary sizing: does not replace a full regulatory study.":"Predimensionado: no sustituye un estudio reglamentario completo.","Details and sources: VALIDATION page.":"Detalles y fuentes: página VALIDACIÓN."};
+Object.keys(D).forEach(function(k){ E[k]=D[k]; });})();
+</script>
+<script id="home-ref-module">
+/* Thermosys - accueil : comparaisons de reference et limites du calcul horaire (FR/EN ; ES par le dictionnaire I18N3) */
+(function(){
+'use strict';
+var FR={"title":"COMPARAISONS DE RÉFÉRENCE ET LIMITES DU CALCUL HORAIRE","intro":"L’ESTIMATION HORAIRE a été comparée à des références publiées et à des mesures réelles :","items":["ASHRAE 140 : 27 des 28 résultats de référence reproduits (fourchettes d’exemple, pas des critères officiels).","EnergyPlus 23.2 sur 12 maisons (Alger, Ghardaïa, Ouargla, Denver), même convection extérieure : chauffage de +4 % à +11 %, froid de −2 % à +5 %, pointes de chauffage de −13 % à +3 %, pointes de froid de +4 % à +12 %.","Mesures réelles de deux maisons d’essai allemandes (Holzkirchen, projets AIE EBC Annexes 58 et 71), sans réglage sur ces mesures : température à 0,4 à 0,9 K près ; chauffage entre −23 % et +13 % selon l’essai."],"limTitle":"Limites :","lim":["Non validé par des mesures hors climat tempéré.","Pour de faibles quantités (moins de 1000 kWh/an), l’écart en chauffage atteint +20 % à +29 % ; le froid atteint +14 % pour une maison isolée à faibles quantités.","Pré-dimensionnement : ne remplace pas une étude réglementaire complète."],"more":"Détails et sources : page VALIDATION."};
+var EN={"title":"REFERENCE COMPARISONS AND LIMITS OF THE HOURLY CALCULATION","intro":"The HOURLY ESTIMATE has been compared with published references and with real measurements:","items":["ASHRAE 140: 27 of the 28 reference results reproduced (example ranges, not official criteria).","EnergyPlus 23.2 on 12 houses (Algiers, Ghardaïa, Ouargla, Denver), same external convection: heating +4 % to +11 %, cooling −2 % to +5 %, heating peaks −13 % to +3 %, cooling peaks +4 % to +12 %.","Real measurements on two German test houses (Holzkirchen, IEA EBC Annexes 58 and 71), not tuned to these measurements: temperature within 0.4 to 0.9 K; heating between −23 % and +13 % depending on the test."],"limTitle":"Limits:","lim":["Not validated by measurements outside temperate climates.","For small quantities (below 1000 kWh/year), the heating difference reaches +20 % to +29 %; cooling reaches +14 % for one insulated house with small quantities.","Preliminary sizing: does not replace a full regulatory study."],"more":"Details and sources: VALIDATION page."};
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+var last=null;
+function draw(){var el=document.getElementById('home-ref-panel');if(!el)return;var L=(window.lang==='en')?'en':'fr';if(L===last&&el.firstChild)return;last=L;var T=(L==='en')?EN:FR;
+ var h='<div class="ph" style="font-size:12px;letter-spacing:1.5px">'+esc(T.title)+'</div>';
+ h+='<p style="font-size:11px;color:var(--ts);margin:8px 0 4px">'+esc(T.intro)+'</p><ul style="font-size:11px;color:var(--ts);margin:0 0 8px 18px;padding:0">';
+ T.items.forEach(function(x){h+='<li style="margin:0 0 3px">'+esc(x)+'</li>';});
+ h+='</ul><div style="font-size:10.5px;color:var(--ac);font-weight:700;margin:6px 0 4px">'+esc(T.limTitle)+'</div><ul style="font-size:11px;color:var(--ts);margin:0 0 8px 18px;padding:0">';
+ T.lim.forEach(function(x){h+='<li style="margin:0 0 3px">'+esc(x)+'</li>';});
+ h+='</ul><p style="font-size:11px;margin:0"><a href="#" onclick="goPage(\'validation\');return false;" style="color:var(--ac)">'+esc(T.more)+'</a></p>';
+ el.innerHTML=h;}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',draw);else draw();
+setInterval(draw,250);
+})();
 </script>
 <script id="lang-es-aide-air">
 (window.I18N3=window.I18N3||{dict:{}});

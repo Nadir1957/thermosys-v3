@@ -1,0 +1,42 @@
+/* Test : page d'accueil, section "Comparaisons de reference et limites du calcul horaire", FR/EN/ES, chiffres identiques a la page VALIDATION. Usage (depuis files) : node tests/accueil_comparaisons_regression.js */
+'use strict';
+const fs=require('fs'),vm=require('vm');
+const s=fs.readFileSync('dist/index.html','utf8').replace(/\r\n/g,'\n');
+let ok=0,ko=0;const t=(n,c)=>{if(c){ok++;}else{ko++;console.log('ECHEC : '+n);}};
+const cnt=(x,o)=>x.split(o).length-1;
+t('panneau present une seule fois',cnt(s,'id="home-ref-panel"')===1);
+const a=s.indexOf('id="pg-home"'),b=s.indexOf('<!-- CATALOGUE -->');
+const pi=s.indexOf('id="home-ref-panel"');t('panneau dans la page d\'accueil',a>0&&pi>a&&pi<b);
+t('module une seule fois',cnt(s,'<script id="home-ref-module">')===1);
+t('dictionnaire ES une seule fois',cnt(s,'<script id="lang-es-accueil-ref">')===1);
+const m=s.match(/<script id="home-ref-module">([^]*?)<\/script>/);t('module lisible',!!m);
+const e=s.match(/<script id="lang-es-accueil-ref">([^]*?)<\/script>/);t('dictionnaire lisible',!!e);
+if(m&&e){
+ const mk=()=>{const el={firstChild:null,_h:'',set innerHTML(v){this._h=v;this.firstChild=v?{}:null;},get innerHTML(){return this._h;}};return el;};
+ const el=mk();const win={lang:'fr'};
+ const doc={readyState:'complete',getElementById:i=>i==='home-ref-panel'?el:null,addEventListener(){}};
+ let tick=null;const ctx={window:win,document:doc,setInterval:f=>{tick=f;return 1;}};
+ vm.runInNewContext(m[1],ctx);
+ const fr=el.innerHTML;
+ t('FR : titre',fr.indexOf('COMPARAISONS DE RÉFÉRENCE ET LIMITES DU CALCUL HORAIRE')>=0);
+ t('FR : ASHRAE 140',fr.indexOf('27 des 28 résultats')>=0);
+ t('FR : EnergyPlus 12 maisons',fr.indexOf('EnergyPlus 23.2 sur 12 maisons')>=0&&fr.indexOf('+4 % à +11 %')>=0&&fr.indexOf('−2 % à +5 %')>=0&&fr.indexOf('−13 % à +3 %')>=0&&fr.indexOf('+4 % à +12 %')>=0);
+ t('FR : Holzkirchen',fr.indexOf('0,4 à 0,9 K')>=0&&fr.indexOf('−23 % et +13 %')>=0&&fr.indexOf('sans réglage sur ces mesures')>=0);
+ t('FR : limites',fr.indexOf('+20 % à +29 %')>=0&&fr.indexOf('+14 %')>=0&&fr.indexOf('hors climat tempéré')>=0&&fr.indexOf('1000 kWh/an')>=0);
+ t('FR : lien VALIDATION',fr.indexOf("goPage('validation')")>=0);
+ win.lang='en';tick();const en=el.innerHTML;
+ t('EN : titre',en.indexOf('REFERENCE COMPARISONS AND LIMITS OF THE HOURLY CALCULATION')>=0);
+ t('EN : figures',en.indexOf('27 of the 28 reference results')>=0&&en.indexOf('EnergyPlus 23.2 on 12 houses')>=0&&en.indexOf('+4 % to +11 %')>=0&&en.indexOf('−2 % to +5 %')>=0&&en.indexOf('−13 % to +3 %')>=0&&en.indexOf('+4 % to +12 %')>=0&&en.indexOf('0.4 to 0.9 K')>=0&&en.indexOf('−23 % and +13 %')>=0&&en.indexOf('+20 % to +29 %')>=0&&en.indexOf('1000 kWh/year')>=0);
+ t('EN : pas de francais',en.indexOf('COMPARAISONS')<0&&en.indexOf('Limites')<0);
+ win.lang='fr';tick();t('retour FR',el.innerHTML===fr);
+ const w={};const D=new Function('window',e[1]+';return window.I18N3.dict.es;')(w);
+ const keys=Object.keys(D);t('ES : 10 entrees',keys.length===10);
+ t('ES : cles = textes EN affiches',keys.every(k=>en.replace(/&amp;/g,'&').indexOf(k)>=0));
+ t('ES : traductions differentes',keys.every(k=>D[k]&&D[k]!==k));
+ const all=keys.map(k=>D[k]).join(' ');
+ t('ES : chiffres identiques',['27 de los 28','23.2','+4 % a +11 %','−2 % a +5 %','−13 % a +3 %','+4 % a +12 %','0,4–0,9 K','−23 % y +13 %','+20 % a +29 %','1000 kWh/año'].every(x=>all.indexOf(x)>=0));
+ t('ES : termes de l\'application',all.indexOf('AIE EBC Anexos 58 y 71')>=0&&all.indexOf('VALIDACIÓN')>=0&&all.indexOf('Argel')>=0);
+}
+['Alger, Ghardaïa, Ouargla, Denver','27 des 28 résultats de référence reproduits','de +4 % à +11 %','0,4 à 0,9 K près','−23 % et +13 %','+20 % à +29 %'].forEach(x=>t('FR aussi dans la page VALIDATION : '+x,cnt(s,x)>=2||(x.indexOf('de +4')===0&&cnt(s,'+4 % à +11 %')>=2)));
+['27 of the 28 reference results reproduced','+4 % to +11 %','within 0.4 to 0.9 K','−23 % and +13 %','+20 % to +29 %'].forEach(x=>t('EN aussi dans la page VALIDATION : '+x,cnt(s,x)>=2));
+console.log('accueil_comparaisons : '+ok+' OK, '+ko+' echec(s)');process.exit(ko?1:0);
